@@ -1859,6 +1859,29 @@ function bindEvents(){
     });
   });
 
+  // 2DQH 로고 클릭 시 초기 화면으로 복귀 (모바일 & PC 공통)
+  const brandLink = document.querySelector('.brand');
+  if(brandLink){
+    brandLink.addEventListener('click', function(e){
+      e.preventDefault();
+      showView('inventory');
+      const searchInput = $('assetSearch');
+      if(searchInput) searchInput.value = '';
+      const clearBtn = $('btnClearSearch');
+      if(clearBtn) clearBtn.classList.add('hidden');
+      const filterSel = $('assetFilter');
+      if(filterSel) filterSel.value = 'all';
+      selectedInventoryCategory = 'all';
+      const searchCollapsible = $('searchFilterCollapsible');
+      if(searchCollapsible) searchCollapsible.classList.remove('open');
+      const toggleBtn = $('btnToggleSearch');
+      if(toggleBtn) toggleBtn.classList.remove('active');
+      closeModal();
+      renderInventory();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
   addEvt('btnToggleLoans', 'click', function(){ showView('loans'); });
   addEvt('btnMobileLogin', 'click', function(){ openModal('login'); });
   addEvt('btnBackToInventory', 'click', function(){ showView('inventory'); });
