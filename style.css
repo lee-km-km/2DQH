@@ -2115,6 +2115,12 @@ tbody tr:hover .asset-thumb-box {
   color: #334155;
 }
 
+.controlled-summary-bar.reagent-bar.is-filtered-controlled {
+  background: #fff5f5;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
 .controlled-summary-text {
   display: flex;
   align-items: center;

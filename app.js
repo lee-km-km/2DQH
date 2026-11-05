@@ -1575,19 +1575,30 @@ function renderConsumables(){
       const totalReagents = consumables.filter(function(c){ return c.category === '시약·화학' || c.category === '화학·시약'; }).length;
       const controlledCount = consumables.filter(isControlledSubstance).length;
 
-      summaryHtml = '<div class="controlled-summary-bar reagent-bar">' +
-        '<div class="controlled-summary-text">' +
-          '<span class="summary-icon">🧪</span> ' +
-          '<span><strong>연구실 시약 도감</strong> (' + totalReagents + '종) · ' +
-          '<strong style="color:#b91c1c;">⚠️ 특별관리물질 ' + controlledCount + '종 (30년 법정 보존)</strong></span>' +
-        '</div>' +
-        '<div class="controlled-summary-actions">' +
-          (showOnlyControlledReagents
-            ? '<button type="button" class="btn-filter-controlled active" id="btnToggleControlledFilter">🧪 전체 시약 보기 (' + totalReagents + '종)</button>'
-            : '<button type="button" class="btn-filter-controlled" id="btnToggleControlledFilter">⚠️ 특별관리물질만 (' + controlledCount + '종)</button>') +
-          '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogs" title="고용노동부 법정 서식 CSV 다운로드">📥 취급일지 다운로드 (CSV)</button>' +
-        '</div>' +
-      '</div>';
+      if(showOnlyControlledReagents){
+        summaryHtml = '<div class="controlled-summary-bar reagent-bar is-filtered-controlled">' +
+          '<div class="controlled-summary-text">' +
+            '<span class="summary-icon">⚠️</span> ' +
+            '<span><strong style="color:#b91c1c;">특별관리물질 ' + controlledCount + '종 목록</strong> (산업안전보건법 시행규칙 [별표 12] 해당 시약 · 30년 보존 의무)</span>' +
+          '</div>' +
+          '<div class="controlled-summary-actions">' +
+            '<button type="button" class="btn-filter-controlled active" id="btnToggleControlledFilter">🧪 전체 시약 보기 (' + totalReagents + '종)</button>' +
+            '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogs" title="고용노동부 법정 서식 CSV 다운로드">📥 취급일지 다운로드 (CSV)</button>' +
+          '</div>' +
+        '</div>';
+      } else {
+        summaryHtml = '<div class="controlled-summary-bar reagent-bar">' +
+          '<div class="controlled-summary-text">' +
+            '<span class="summary-icon">🧪</span> ' +
+            '<span><strong>연구실 시약 도감</strong> (' + totalReagents + '종) · ' +
+            '<strong style="color:#b91c1c;">⚠️ 특별관리물질 ' + controlledCount + '종 포함</strong></span>' +
+          '</div>' +
+          '<div class="controlled-summary-actions">' +
+            '<button type="button" class="btn-filter-controlled" id="btnToggleControlledFilter">⚠️ 특별관리물질만 (' + controlledCount + '종)</button>' +
+            '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogs" title="고용노동부 법정 서식 CSV 다운로드">📥 취급일지 다운로드 (CSV)</button>' +
+          '</div>' +
+        '</div>';
+      }
     } else if(selectedConsumableCategory === '자주찾는 소모품'){
       summaryHtml = '<div class="summary-line"><span class="summary-icon">⭐</span> 연구실 핵심 일상 소모품 <strong>' + filteredCount + '</strong>종 (글러브·와이퍼·테이프 등 위치 안내)</div>';
     } else {
@@ -1631,9 +1642,10 @@ function renderConsumables(){
         let ctrlBadgeHtml = '';
         if(isCtrl){
           const ci = getControlledSubstanceInfo(c);
-          const noStr = ci ? ('#' + ci.no) : '';
-          const titleStr = ci ? ('산업안전보건기준에 관한 규칙 제420조 [별표 12] 제' + ci.no + '호 ' + (ci.nameKo || ci.nameEn)) : '법정 특별관리물질';
-          ctrlBadgeHtml = '<span class="badge-controlled-compact" title="' + safe(titleStr) + '">⚠️ 특별관리 ' + safe(noStr) + '</span>';
+          const tooltip = ci
+            ? ('산업안전보건법 시행규칙 [별표 12] 특별관리물질: ' + (ci.nameKo || '') + ' (관리범위: ' + (ci.threshold || '0.1% 이상') + ')')
+            : '법정 특별관리물질 (취급일지 30년 보존 대상)';
+          ctrlBadgeHtml = '<span class="badge-controlled-compact" title="' + safe(tooltip) + '">⚠️ 특별관리</span>';
         }
 
         html += '<div class="consumable-compact-row' + (isCtrl ? ' is-controlled-row' : '') + '">' +
@@ -1681,9 +1693,10 @@ function renderConsumables(){
         let ctrlBadgeHtml = '';
         if(isCtrl){
           const ci = getControlledSubstanceInfo(c);
-          const labelStr = ci ? ('⚠️ 특별관리물질 [제' + ci.no + '호 ' + (ci.nameKo || ci.nameEn) + ']') : '⚠️ 법정 특별관리물질';
-          const titleStr = ci ? ('관리범위: ' + (ci.threshold || '0.1% 이상') + ' (산업안전보건기준에 관한 규칙 제420조 [별표 12])') : '';
-          ctrlBadgeHtml = '<span class="badge-controlled" title="' + safe(titleStr) + '">' + safe(labelStr) + '</span>';
+          const tooltip = ci
+            ? ('산업안전보건법 시행규칙 [별표 12] 특별관리물질: ' + (ci.nameKo || '') + ' (관리범위: ' + (ci.threshold || '0.1% 이상') + ')')
+            : '법정 특별관리물질 (취급일지 30년 보존 대상)';
+          ctrlBadgeHtml = '<span class="badge-controlled" title="' + safe(tooltip) + '">⚠️ 특별관리물질</span>';
           logAction = '<button type="button" class="btn-chemical-log" data-log-chemical="' + safe(c.id) + '"><span>📝 취급일지 작성</span></button>';
         }
 
@@ -1818,7 +1831,7 @@ function exportChemicalLogsCsv(){
     const c = consumableFor(item.consumable_id);
     const ci = c ? getControlledSubstanceInfo(c) : null;
     if(ci){
-      statutoryCategory = '제' + ci.no + '호 ' + ci.nameKo + (ci.threshold ? ' (' + ci.threshold + ')' : '');
+      statutoryCategory = ci.nameKo + (ci.threshold ? ' (' + ci.threshold + ')' : '');
     }
     return [
       idx + 1,
@@ -2072,13 +2085,13 @@ function openModal(mode, id){
 
       const ci = getControlledSubstanceInfo(c);
       const statutoryDesc = ci
-        ? ('제' + ci.no + '호 <b>' + safe(ci.nameKo) + '</b>' + (ci.nameEn ? ' (' + safe(ci.nameEn) + ')' : '') + ' · 관리범위: <b>' + safe(ci.threshold || '0.1% 이상') + '</b>')
+        ? ('<b>' + safe(ci.nameKo) + '</b>' + (ci.nameEn ? ' (' + safe(ci.nameEn) + ')' : '') + ' · 관리범위: <b>' + safe(ci.threshold || '0.1% 이상') + '</b>')
         : '법정 특별관리물질';
 
       parts.push('<div class="controlled-chem-modal-head">');
       parts.push('<div class="controlled-chem-title">🧪 <b>' + safe(c.name) + '</b></div>');
       parts.push('<div class="controlled-chem-meta">CAS No: <code>' + safe(meta.cas || '확인 필요') + '</code> · 보관: ' + safe(c.location) + ' (' + safe(c.sub_location) + ')</div>');
-      parts.push('<div class="controlled-notice-box">⚠️ 본 시약은 산업안전보건기준에 관한 규칙 제420조 [별표 12] <b>' + statutoryDesc + '</b>에 해당하는 <b>특별관리물질</b>입니다. 사용 시 <b>취급일지 30년 보존</b> 법정 의무 대상입니다.</div>');
+      parts.push('<div class="controlled-notice-box">⚠️ 본 시약은 산업안전보건기준에 관한 규칙 제420조 [별표 12] <b>특별관리물질 (' + statutoryDesc + ')</b>에 해당합니다. 사용 시 <b>취급일지 30년 보존</b> 법정 의무 대상입니다.</div>');
       parts.push('</div>');
 
       parts.push('<div class="form-grid" style="margin-top:14px">');
