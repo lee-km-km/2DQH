@@ -2078,7 +2078,9 @@ function showView(name){
   document.body.classList.toggle('home-active', name === 'home');
 
   document.querySelectorAll('.view').forEach(function(el){
-    el.classList.toggle('active', el.id === 'view-' + name);
+    const isActive = el.id === 'view-' + name;
+    el.classList.toggle('active', isActive);
+    if(isActive) el.classList.remove('hidden');
   });
 
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
