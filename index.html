@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
   <title>2DQH 비품 — 비품 대여 관리</title>
-  <link rel="stylesheet" href="style.css?v=20261105_13">
+  <link rel="stylesheet" href="style.css?v=20261105_14">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -18,6 +18,10 @@
     <span class="brand-sub">비품</span>
   </a>
   <div class="top-actions">
+    <button id="btnToggleSearch" class="btn-toggle-search" aria-label="검색 및 카테고리 필터 열기/닫기" type="button" title="검색">
+      <span class="search-btn-icon" aria-hidden="true">🔍</span>
+      <span class="search-btn-label">검색</span>
+    </button>
     <span id="connection" class="pill hidden"></span>
     <button id="loginBtn" class="btn desktop-only">관리자 로그인</button>
     <button id="logoutBtn" class="btn hidden">로그아웃</button>
@@ -60,27 +64,32 @@
 
     <!-- 전체 비품 뷰 -->
     <section class="view active" id="view-inventory">
-      <div class="page-head">
+      <div class="page-head hide-mobile">
         <div class="head-title">
           <h1>전체 비품</h1>
           <span class="count-badge" id="inventoryCountBadge">0</span>
         </div>
         <div class="head-actions">
-          <button class="btn primary" id="inventoryQuickBorrow">대여 신청</button>
           <button class="btn admin-only hidden" id="addAsset">＋ 비품 등록</button>
         </div>
       </div>
       <section class="panel">
-        <div class="toolbar">
-          <input id="assetSearch" aria-label="비품 검색" placeholder="비품명, 식별번호, 분류, 보관 위치 검색...">
-          <select id="assetFilter" aria-label="비품 상태 필터">
-            <option value="all">모든 상태</option>
-            <option value="available">사용 가능</option>
-            <option value="borrowed">대여 중</option>
-            <option value="maintenance">수리 중</option>
-          </select>
+        <div id="searchFilterCollapsible" class="search-collapsible-panel">
+          <div class="toolbar">
+            <div class="search-input-box">
+              <span class="search-input-icon" aria-hidden="true">🔍</span>
+              <input id="assetSearch" aria-label="비품 검색" placeholder="비품명, 이니셜(m=멀티미터), 위치 검색...">
+              <button id="btnClearSearch" class="btn-clear-search hidden" type="button" aria-label="검색어 지우기">✕</button>
+            </div>
+            <select id="assetFilter" aria-label="비품 상태 필터" class="hide-mobile">
+              <option value="all">모든 상태</option>
+              <option value="available">사용 가능</option>
+              <option value="borrowed">대여 중</option>
+              <option value="maintenance">수리 중</option>
+            </select>
+          </div>
+          <div id="inventoryCategories" class="inventory-categories"></div>
         </div>
-        <div id="inventoryCategories" class="inventory-categories"></div>
         <div id="inventoryRows" class="table-wrap"></div>
       </section>
     </section>
@@ -193,8 +202,8 @@
     <form id="modalForm">
       <div id="modalBody" class="modal-body"></div>
       <div class="modal-foot">
-        <button type="button" class="btn" id="cancelModal">취소</button>
-        <button class="btn primary" type="submit" id="saveModal">확인</button>
+        <button type="button" class="btn btn-modal-cancel" id="cancelModal">취소</button>
+        <button class="btn primary btn-modal-save" type="submit" id="saveModal">대여 신청</button>
       </div>
     </form>
   </section>
@@ -208,6 +217,6 @@
   <button class="mobile-action" id="mobileReturn" type="button">반납 처리</button>
 </div>
 
-<script src="app.js?v=20261105_13"></script>
+<script src="app.js?v=20261105_14"></script>
 </body>
 </html>

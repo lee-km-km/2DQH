@@ -496,6 +496,59 @@ function categoryTabsHtml(selected, actionAttr){
     }).join('') + '</div>';
 }
 
+// 연구실 비품 스마트 영문/이니셜 검색 사전 (한글 비품명을 영문 약어로 빠른 검색)
+const LAB_EQUIPMENT_ALIASES = {
+  '멀티미터': ['multimeter', 'multi', 'dmm', 'tester', 'meter', 'm', 'd'],
+  '디지털 멀티미터': ['digital multimeter', 'multimeter', 'multi', 'dmm', 'tester', 'meter', 'm', 'd'],
+  '오실로스코프': ['oscilloscope', 'scope', 'dso', 'oscillo', 'o', 's'],
+  '파워서플라이': ['power supply', 'powersupply', 'psu', 'power', 'p'],
+  '전원공급기': ['power supply', 'powersupply', 'psu', 'power', 'p'],
+  '캘리퍼스': ['calipers', 'caliper', 'vernier', 'c'],
+  '버니어 캘리퍼스': ['calipers', 'caliper', 'vernier', 'c'],
+  '광학현미경': ['microscope', 'optical microscope', 'om', 'scope', 'm'],
+  '현미경': ['microscope', 'optical microscope', 'om', 'scope', 'm'],
+  '가열교반기': ['hotplate', 'stirrer', 'heater', 'h', 's'],
+  '핫플레이트': ['hotplate', 'stirrer', 'heater', 'h'],
+  '스핀코터': ['spin coater', 'spincoater', 'spin', 'coater', 's'],
+  '전자저울': ['balance', 'electronic balance', 'scale', 'b', 's'],
+  '저울': ['balance', 'electronic balance', 'scale', 'b', 's'],
+  '글러브박스': ['glovebox', 'glove box', 'gb', 'g'],
+  '초음파세척기': ['sonicator', 'ultrasonic', 'cleaner', 'sonic', 'u', 's'],
+  '초음파': ['sonicator', 'ultrasonic', 'sonic', 'u', 's'],
+  '인두기': ['soldering iron', 'soldering', 'solder', 'iron', 's'],
+  '진공펌프': ['vacuum pump', 'pump', 'vacuum', 'p', 'v'],
+  '펌프': ['pump', 'p'],
+  '칠러': ['chiller', 'cooler', 'c']
+};
+
+function matchesSmartSearch(asset, query){
+  if(!query) return true;
+  const q = query.toLowerCase().trim();
+  // 1. 기본 필드 직접 매칭 (ID, 이름, 카테고리, 보관 위치, 비고)
+  const textTarget = [(asset.id || ''), (asset.name || ''), (asset.category || ''), (asset.location || ''), (asset.note || '')].join(' ').toLowerCase();
+  if(textTarget.includes(q)) return true;
+
+  // 2. 영문 알리아스 및 이니셜 매칭 (예: 'm' -> 디지털 멀티미터, 'p' -> 파워서플라이)
+  const assetName = (asset.name || '').toLowerCase();
+  for(const [key, aliases] of Object.entries(LAB_EQUIPMENT_ALIASES)){
+    if(assetName.includes(key.toLowerCase())){
+      for(let i = 0; i < aliases.length; i++){
+        const alias = aliases[i];
+        if(alias.startsWith(q) || alias.includes(q) || q.startsWith(alias)){
+          return true;
+        }
+      }
+    }
+  }
+
+  // 3. 비품명 단어별 이니셜 매칭
+  const words = assetName.split(/\s+/);
+  const initials = words.map(function(w){ return w.charAt(0); }).join('');
+  if(initials.startsWith(q)) return true;
+
+  return false;
+}
+
 function renderInventory(){
   const searchEl = $('assetSearch');
   const filterEl = $('assetFilter');
@@ -507,8 +560,7 @@ function renderInventory(){
       topLevelCategory(a) === selectedInventoryCategory;
 
     const matchFilter = f === 'all' ? true : statusFor(a) === f;
-    const textTarget = [a.id, a.name, a.category, a.location, a.note].join(' ').toLowerCase();
-    const matchSearch = textTarget.includes(q);
+    const matchSearch = matchesSmartSearch(a, q);
 
     return matchCategory && matchFilter && matchSearch;
   });
@@ -543,14 +595,15 @@ function renderInventory(){
         actionBtn += '<button class="text-btn btn-action-edit" data-edit="' + safe(a.id) + '">수정</button>';
       }
 
+      // 모바일 비품 카드: [초록색 대여 가능 점] + [시원한 비품명 16px Bold] + [📍 위치 12.5px] + [대여 신청 버튼]
+      // 식별번호(EQ-001)나 분류 태그는 대여 팝업에서만 상세히 노출
       listHtml += '<tr data-status="' + st + '" class="quick-row">' +
         '<td class="col-main">' +
           '<div class="card-meta">' +
             '<span class="status ' + st + '">' + statusLabel(st) + '</span>' +
-            '<span class="asset-id">' + safe(a.id) + '</span>' +
           '</div>' +
           '<b class="asset-name">' + safe(a.name) + '</b>' +
-          '<div class="asset-loc">📍 ' + safe(loc) + ' · ' + safe(a.category) + '</div>' +
+          '<div class="asset-loc">📍 ' + safe(loc) + '</div>' +
         '</td>' +
         '<td class="col-meta hide-mobile">' + safe(a.category) + '</td>' +
         '<td class="col-meta hide-mobile">' + safe(loc) + '</td>' +
@@ -1098,7 +1151,7 @@ function openModal(mode, id){
       parts.push('<div class="selected-asset-box">');
       parts.push('<div class="selected-asset-badge"><span class="status available">대여 가능</span><span class="asset-id">' + safe(preselectedAsset.id) + '</span></div>');
       parts.push('<div class="selected-asset-title">' + safe(preselectedAsset.name) + '</div>');
-      parts.push('<div class="selected-asset-sub">📍 보관 위치: ' + safe(preselectedAsset.location || '연구실 지정 장소') + '</div>');
+      parts.push('<div class="selected-asset-sub">📍 보관 위치: ' + safe(preselectedAsset.location || '연구실 지정 장소') + (preselectedAsset.category ? ' · ' + safe(preselectedAsset.category) : '') + '</div>');
       parts.push('</div>');
       parts.push('<input type="hidden" name="asset_id" value="' + safe(preselectedAsset.id) + '">');
     } else {
@@ -1120,7 +1173,6 @@ function openModal(mode, id){
     parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(lastBorrower) + '"></label>');
     parts.push('<label class="field full">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)"></label>');
     parts.push('</div>');
-    parts.push('<div class="borrow-fast-notice">💡 다른 연구원을 위해 사용 완료 후 제자리에 반납해 주세요.</div>');
   } else if(mode === 'consumable'){
     if(!isAdmin()){
       parts.push('<p>소모품 등록 및 수정은 관리자 로그인이 필요합니다.</p>');
@@ -1952,6 +2004,39 @@ function bindEvents(){
   if(qrBackdrop){
     qrBackdrop.addEventListener('click', function(e){
       if(e.target === qrBackdrop) closeQrScanner();
+    });
+  }
+
+  // 모바일 헤더 돋보기 검색 토글
+  const btnToggleSearch = $('btnToggleSearch');
+  const searchCollapsible = $('searchFilterCollapsible');
+  if(btnToggleSearch && searchCollapsible){
+    btnToggleSearch.addEventListener('click', function(){
+      const isOpen = searchCollapsible.classList.toggle('open');
+      btnToggleSearch.classList.toggle('active', isOpen);
+      if(isOpen){
+        const searchInput = $('assetSearch');
+        if(searchInput) setTimeout(function(){ searchInput.focus(); }, 120);
+      }
+    });
+  }
+
+  // 검색창 지우기 (✕) 버튼 제어
+  const btnClearSearch = $('btnClearSearch');
+  const assetSearchInput = $('assetSearch');
+  if(btnClearSearch && assetSearchInput){
+    assetSearchInput.addEventListener('input', function(){
+      if(assetSearchInput.value.trim().length > 0){
+        btnClearSearch.classList.remove('hidden');
+      } else {
+        btnClearSearch.classList.add('hidden');
+      }
+    });
+    btnClearSearch.addEventListener('click', function(){
+      assetSearchInput.value = '';
+      btnClearSearch.classList.add('hidden');
+      assetSearchInput.focus();
+      renderInventory();
     });
   }
 
