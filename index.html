@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
   <title>2DQH 비품 — 비품 대여 관리</title>
-  <link rel="stylesheet" href="style.css?v=20261105_35">
+  <link rel="stylesheet" href="style.css?v=20261105_36">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -23,8 +23,8 @@
       <span class="tab-label">비품 대여</span>
     </button>
     <button type="button" class="header-tab" data-main-view="consumables" role="tab" aria-selected="false">
-      <span class="tab-emoji">📍</span>
-      <span class="tab-label">소모품 위치</span>
+      <span class="tab-emoji">📦</span>
+      <span class="tab-label">소모품</span>
     </button>
   </div>
   <div class="top-actions">
@@ -45,8 +45,8 @@
       <span>비품 대여</span>
     </button>
     <button class="nav" data-view="consumables">
-      <span class="nav-icon" aria-hidden="true">📍</span>
-      <span>소모품 위치</span>
+      <span class="nav-icon" aria-hidden="true">📦</span>
+      <span>소모품</span>
     </button>
     <button class="nav" data-view="loans">
       <span class="nav-icon" aria-hidden="true">📋</span>
@@ -206,11 +206,11 @@
       </section>
     </section>
 
-    <!-- 소모품 위치 안내 뷰 -->
+    <!-- 소모품 및 시약 도감 뷰 -->
     <section class="view" id="view-consumables">
       <div class="page-head hide-mobile">
         <div class="head-title">
-          <h1>소모품 위치 안내</h1>
+          <h1>소모품</h1>
           <span class="count-badge" id="consumablesCountBadge">0</span>
         </div>
         <div class="head-actions">
@@ -222,7 +222,7 @@
           <div class="toolbar">
             <div class="search-input-box">
               <span class="search-input-icon" aria-hidden="true">🔍</span>
-              <input id="consumableSearch" aria-label="소모품 위치 검색" placeholder="소모품명, CAS, 제조사, 보관위치 검색...">
+              <input id="consumableSearch" aria-label="소모품 및 시약 검색" placeholder="소모품명, 시약명, CAS, 제조사, 위치 검색...">
               <button id="btnClearConsumableSearch" class="btn-clear-search hidden" type="button" aria-label="검색어 지우기">✕</button>
             </div>
             <div class="view-mode-toggle" id="consumableViewModeToggle" role="group" aria-label="보기 모드 전환">
@@ -271,7 +271,7 @@
   <button class="mobile-action" id="mobileReturn" type="button">반납 처리</button>
 </div>
 
-<script src="consumables_catalog.js?v=20261105_35"></script>
-<script src="app.js?v=20261105_35"></script>
+<script src="consumables_catalog.js?v=20261105_36"></script>
+<script src="app.js?v=20261105_36"></script>
 </body>
 </html>

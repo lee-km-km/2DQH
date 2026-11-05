@@ -2064,6 +2064,20 @@ tbody tr:hover .asset-thumb-box {
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35) !important;
 }
 
+.category-tab.tab-reagent {
+  border: 1px solid #bfdbfe !important;
+  color: #1e40af !important;
+  background: #eff6ff !important;
+  font-weight: 700 !important;
+}
+
+.category-tab.tab-reagent.active {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35) !important;
+}
+
 /* 요약 배너 및 다운로드 버튼 */
 .controlled-summary-bar {
   display: flex;
@@ -2091,7 +2105,41 @@ tbody tr:hover .asset-thumb-box {
   align-items: center;
   gap: 6px;
   flex: 1;
-  min-width: 200px;
+  min-width: 220px;
+}
+
+.controlled-summary-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-filter-controlled {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1.5px solid #fca5a5;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+}
+
+.btn-filter-controlled:hover {
+  background: #fecaca;
+}
+
+.btn-filter-controlled.active {
+  background: #991b1b;
+  color: #ffffff;
+  border-color: #7f1d1d;
 }
 
 .btn-export-log-csv {
