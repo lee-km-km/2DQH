@@ -25,8 +25,8 @@ function addEvt(id, evt, handler){
 // ==========================================
 // [기능 스위치 & 로컬 Mock 데이터 스토리지]
 // ==========================================
-// 소모품/재고품 및 구매요청 기능 ON/OFF (현재: 비품 대여/반납에만 집중하기 위해 비활성화)
-const ENABLE_CONSUMABLES = false;
+// 소모품 위치 안내 도감 기능 활성화
+const ENABLE_CONSUMABLES = true;
 let isLocalMode = false;
 
 // 2DQH 이차원양자헤테로구조체연구단 대표 연구장비 및 공구 표준 카탈로그
@@ -163,10 +163,95 @@ const DEFAULT_2DQH_ASSETS = [
 
 const DEFAULT_MOCK_ASSETS = DEFAULT_2DQH_ASSETS;
 
+// 2DQH 이차원양자헤테로구조체연구단 대표 소모품 위치 안내 도감 표준 카탈로그
+const DEFAULT_2DQH_CONSUMABLES = [
+  {
+    id: 'CS-001',
+    name: '4인치 Si/SiO2 웨이퍼 (300nm)',
+    category: '기판·박리',
+    location: '클린룸 광학실',
+    sub_location: '진공 데시케이터 A 2단',
+    specification: 'P-type, Boron doped, 500µm 두께'
+  },
+  {
+    id: 'CS-002',
+    name: '고품위 벌크 그래파이트 (HOPG)',
+    category: '기판·박리',
+    location: '3층 측정실',
+    sub_location: '건식 보관함 1번',
+    specification: '기계적 박리용 샘플'
+  },
+  {
+    id: 'CS-003',
+    name: 'Scotch 3M 매직테이프 (박리용)',
+    category: '기판·박리',
+    location: '클린룸 글러브박스 앞',
+    sub_location: '공용 공구함 서랍 1단',
+    specification: '2D flake exfoliation 전용'
+  },
+  {
+    id: 'CS-004',
+    name: '니트릴 장갑 (M)',
+    category: '클린룸·안전',
+    location: '클린룸 입구',
+    sub_location: '선반 1열 상단',
+    specification: '파우더프리, 박스 단위 (100매)'
+  },
+  {
+    id: 'CS-005',
+    name: '클린룸 와이퍼 (TX1009 9x9)',
+    category: '클린룸·안전',
+    location: '클린룸 벤치',
+    sub_location: '클린벤치 1번 하부 수납장',
+    specification: '폴리에스터 무발진 와이퍼'
+  },
+  {
+    id: 'CS-006',
+    name: '초고순도 아세톤 (HPLC 등급)',
+    category: '화학·시약',
+    location: '화학실험실 흄후드 3',
+    sub_location: '유기용매 전용 방화 캐비닛',
+    specification: '세척 및 레지스트 제거용 (4L)'
+  },
+  {
+    id: 'CS-007',
+    name: '이소프로필알코올 (IPA 99.9%)',
+    category: '화학·시약',
+    location: '화학실험실 흄후드 3',
+    sub_location: '유기용매 전용 방화 캐비닛',
+    specification: '기판 린스용 (4L)'
+  },
+  {
+    id: 'CS-008',
+    name: 'KF25 진공 센터링 링 & O-Ring',
+    category: '진공·배관',
+    location: '장비실',
+    sub_location: '진공 피팅 부품함 서랍 C',
+    specification: 'FKM Viton 재질'
+  },
+  {
+    id: 'CS-009',
+    name: '테프론(PTFE) 씰링 테이프',
+    category: '진공·배관',
+    location: '장비실',
+    sub_location: '가스 배관 작업대',
+    specification: '가스 라인 및 튜빙 씰링용'
+  },
+  {
+    id: 'CS-010',
+    name: '킴와이프스 (소형 S-200)',
+    category: '일반소모품',
+    location: '3층 측정실 작업대 2',
+    sub_location: '측정대 상단 선반',
+    specification: '광학 부품 1차 린스 후 건조용'
+  }
+];
+
 function loadLocalStorage(forceReset){
   isLocalMode = false;
   const storedAssets = localStorage.getItem('labstock_local_assets');
   const storedLoans = localStorage.getItem('labstock_local_loans');
+  const storedConsumables = localStorage.getItem('labstock_local_consumables');
 
   if(!forceReset && storedAssets){
     try {
@@ -190,6 +275,17 @@ function loadLocalStorage(forceReset){
     loans = [];
   }
 
+  if(!forceReset && storedConsumables){
+    try {
+      const parsed = JSON.parse(storedConsumables);
+      consumables = Array.isArray(parsed) && parsed.length ? parsed : [...DEFAULT_2DQH_CONSUMABLES];
+    } catch(e){
+      consumables = [...DEFAULT_2DQH_CONSUMABLES];
+    }
+  } else {
+    consumables = [...DEFAULT_2DQH_CONSUMABLES];
+  }
+
   borrowedAssetIds = new Set();
   activeLoanMap = new Map();
   for(let i=0; i<loans.length; i++){
@@ -205,6 +301,7 @@ function loadLocalStorage(forceReset){
 function saveLocalStorage(){
   localStorage.setItem('labstock_local_assets', JSON.stringify(assets));
   localStorage.setItem('labstock_local_loans', JSON.stringify(loans));
+  localStorage.setItem('labstock_local_consumables', JSON.stringify(consumables));
   
   borrowedAssetIds = new Set();
   activeLoanMap = new Map();
@@ -233,6 +330,7 @@ let activeLoanMap = new Map();
 let lastFocusedElement = null;
 let selectedInventoryCategory = 'all';
 let selectedBorrowCategory = 'all';
+let selectedConsumableCategory = 'all';
 let modalMode = '';
 let modalId = null;
 
@@ -261,6 +359,8 @@ const AppState = {
   set selectedInventoryCategory(v){ selectedInventoryCategory = v; },
   get selectedBorrowCategory(){ return selectedBorrowCategory; },
   set selectedBorrowCategory(v){ selectedBorrowCategory = v; },
+  get selectedConsumableCategory(){ return selectedConsumableCategory; },
+  set selectedConsumableCategory(v){ selectedConsumableCategory = v; },
   get modalMode(){ return modalMode; },
   set modalMode(v){ modalMode = v; },
   get modalId(){ return modalId; },
@@ -379,7 +479,8 @@ async function loadData(){
   try{
     const results = await Promise.all([
       db.from('assets').select('*').order('name'),
-      db.from('loans').select('*').order('borrowed_at', {ascending: false})
+      db.from('loans').select('*').order('borrowed_at', {ascending: false}),
+      db.from('consumables').select('*').order('name')
     ]);
 
     let hasRemoteSuccess = false;
@@ -417,6 +518,36 @@ async function loadData(){
     } else if(results[1].error){
       console.warn('Supabase loans 조회 실패 (빈 목록 유지):', results[1].error);
       loans = [];
+    }
+
+    if(results[2] && !results[2].error && Array.isArray(results[2].data)){
+      const remoteConsumables = results[2].data;
+      const remoteCMap = new Map();
+      remoteConsumables.forEach(function(c){
+        if(c.id) remoteCMap.set(c.id, c);
+      });
+      const mergedC = [...remoteConsumables];
+      DEFAULT_2DQH_CONSUMABLES.forEach(function(def){
+        if(!remoteCMap.has(def.id)){
+          mergedC.push(def);
+        }
+      });
+      consumables = mergedC;
+      try {
+        localStorage.setItem('labstock_real_cache_consumables', JSON.stringify(consumables));
+      } catch(e){}
+    } else {
+      const cachedC = localStorage.getItem('labstock_real_cache_consumables');
+      if(cachedC){
+        try {
+          const parsedC = JSON.parse(cachedC);
+          consumables = Array.isArray(parsedC) && parsedC.length ? parsedC : [...DEFAULT_2DQH_CONSUMABLES];
+        } catch(e){
+          consumables = [...DEFAULT_2DQH_CONSUMABLES];
+        }
+      } else {
+        consumables = [...DEFAULT_2DQH_CONSUMABLES];
+      }
     }
 
     if(!hasRemoteSuccess){
@@ -1140,211 +1271,232 @@ function renderLoans(){
   }
 }
 
-function renderConsumables(){
-  const searchEl = $('consumableSearch');
-  if(!searchEl) return;
+// ==========================================
+// [소모품 위치 안내 도감 (Location Guide) 모듈]
+// ==========================================
+const CONSUMABLE_CATEGORIES = ['기판·박리', '화학·시약', '클린룸·안전', '진공·배관', '일반소모품'];
 
-  const q = searchEl.value.trim().toLowerCase();
-  const filterEl = $('consumableFilter');
+const CONSUMABLE_ALIASES = {
+  '웨이퍼': ['wafer', 'si', 'sio2', 'silicon', 'oxide', 'substrate', 'w', 's'],
+  '4인치 si/sio2 웨이퍼': ['wafer', 'si', 'sio2', 'silicon', 'oxide', 'substrate', 'w', 's'],
+  '그래파이트': ['graphite', 'hopg', 'graphene', 'bulk', 'g'],
+  '고품위 벌크 그래파이트': ['graphite', 'hopg', 'graphene', 'bulk', 'g'],
+  '테이프': ['tape', 'scotch', '3m', 'magic', 'kapton', 't'],
+  '스카치': ['tape', 'scotch', '3m', 'magic', 't'],
+  '매직테이프': ['tape', 'scotch', '3m', 'magic', 't'],
+  '장갑': ['glove', 'nitrile', 'latex', 'gloves', 'g', 'n'],
+  '니트릴 장갑': ['glove', 'nitrile', 'latex', 'gloves', 'g', 'n'],
+  '와이퍼': ['wiper', 'wipes', 'tx1009', 'cleanroom wiper', 'w'],
+  '클린룸 와이퍼': ['wiper', 'wipes', 'tx1009', 'cleanroom wiper', 'w'],
+  '아세톤': ['acetone', 'ace', 'solvent', 'a'],
+  '이소프로필알코올': ['ipa', 'isopropanol', 'alcohol', 'solvent', 'i'],
+  'ipa': ['ipa', 'isopropanol', 'alcohol', 'solvent', 'i'],
+  '오링': ['o-ring', 'oring', 'ring', 'viton', 'fkm', 'o', 'r'],
+  'kf25': ['kf25', 'kf', 'nw', 'flange', 'clamp', 'centering', 'f'],
+  '플랜지': ['flange', 'kf', 'nw', 'clamp', 'centering', 'f'],
+  '테프론': ['teflon', 'ptfe', 'sealing', 'tape', 't'],
+  '킴와이프스': ['kimwipes', 'kimwipe', 'kw', 'k', 'w'],
+  '호일': ['foil', 'aluminum', 'al', 'f'],
+  '알루미늄': ['foil', 'aluminum', 'al', 'f']
+};
 
-  if(!isAdmin() && (filterEl.value === 'low' || filterEl.value === 'ok')){
-    filterEl.value = 'all';
-  }
+const PRECOMPILED_CONSUMABLE_ALIASES = Object.keys(CONSUMABLE_ALIASES).map(function(k){
+  return {
+    key: k.toLowerCase(),
+    aliases: CONSUMABLE_ALIASES[k].map(function(a){ return a.toLowerCase(); })
+  };
+});
 
-  const f = filterEl.value;
+function getConsumableSearchProfile(c){
+  if(c._searchProfile) return c._searchProfile;
+  const id = (c.id || '').toLowerCase();
+  const name = (c.name || '').toLowerCase();
+  const category = (c.category || '').toLowerCase();
+  const location = (c.location || '').toLowerCase();
+  const sub_location = (c.sub_location || '').toLowerCase();
+  const specification = (c.specification || c.note || '').toLowerCase();
+  const textTarget = id + ' ' + name + ' ' + category + ' ' + location + ' ' + sub_location + ' ' + specification;
 
-  const low = consumables.filter(function(c){
-    return Number(c.quantity) <= Number(c.min_quantity);
-  });
-
-  const outOfStock = consumables.filter(function(c){
-    return Number(c.quantity) <= 0;
-  });
-
-  const rows = consumables.filter(function(c){
-    const quantity = Number(c.quantity);
-    const isLow = quantity <= Number(c.min_quantity);
-    const isOut = quantity <= 0;
-    const target = [c.name, c.category, c.location, c.note].join(' ').toLowerCase();
-
-    const filterMatch =
-      f === 'all' ||
-      (f === 'available' && !isOut) ||
-      (f === 'out' && isOut) ||
-      (isAdmin() && f === 'low' && isLow) ||
-      (isAdmin() && f === 'ok' && !isLow);
-
-    return target.includes(q) && filterMatch;
-  });
-
-  // 요약 카드는 관리자에게만 표시
-  const summary = $('consumableSummary');
-
-  if(summary){
-    if(isAdmin()){
-      summary.innerHTML = [
-        ['등록 품목', consumables.length, '등록된 소모품'],
-        ['재고 없음', outOfStock.length, '현재 수량이 0인 품목'],
-        ['최소 보유량 이하', low.length, '관리자 확인 및 재주문 필요'],
-        ['재주문 요청', reorderRequests.filter(function(r){
-          return r.status !== 'received';
-        }).length, '처리 중인 요청']
-      ].map(function(x){
-        return '<div class="metric"><div class="label">' + x[0] +
-          '</div><div class="value">' + x[1] +
-          '</div><div class="foot">' + x[2] + '</div></div>';
-      }).join('');
-    } else {
-      summary.innerHTML = '';
+  const matchedAliases = [];
+  for(let i = 0; i < PRECOMPILED_CONSUMABLE_ALIASES.length; i++){
+    const entry = PRECOMPILED_CONSUMABLE_ALIASES[i];
+    if(name.includes(entry.key)){
+      for(let j = 0; j < entry.aliases.length; j++){
+        matchedAliases.push(entry.aliases[j]);
+      }
     }
   }
 
-  const rowsHost = $('consumableRows');
+  const words = name.split(/\s+/).filter(Boolean);
+  const initials = words.map(function(w){ return w.charAt(0); }).join('');
 
-  if(!consumablesAvailable){
-    // 기능 미설정 안내는 관리자에게만 표시
-    rowsHost.innerHTML = isAdmin()
-      ? '<div class="empty">소모품 기능을 시작하려면 프로젝트 ZIP에 포함된 <b>consumables_migration.sql</b>을 Supabase SQL Editor에서 실행하세요.</div>'
-      : '';
-  } else if(rows.length){
-    let html = '';
-
-    rows.forEach(function(c){
-      const quantity = Number(c.quantity);
-      const isLow = quantity <= Number(c.min_quantity);
-      const isOut = quantity <= 0;
-
-      const status = isOut
-        ? '<span class="status low">재고 없음</span>'
-        : (isAdmin() && isLow
-          ? '<span class="status low">최소 보유량 이하</span>'
-          : '<span class="status available">재고 있음</span>');
-
-let actions = '';
-
-// 재주문 요청과 사용 기록은 비로그인 사용자도 가능
-actions += '<button class="text-btn" data-reorder="' +
-  safe(c.id) + '">' +
-  (isOut ? '구매 요청' : '재주문 요청') +
-  '</button>';
-
-actions += '<button class="text-btn" data-movement="' +
-  safe(c.id) + '" data-movement-type="use">사용 기록</button>';
-
-// 입고 및 품목 정보 수정은 관리자 전용
-if (isAdmin()) {
-  actions += '<button class="text-btn" data-movement="' +
-    safe(c.id) + '" data-movement-type="in">입고 기록</button>';
-
-  actions += '<button class="text-btn" data-edit-consumable="' +
-    safe(c.id) + '">정보 수정</button>';
+  const profile = {
+    textTarget: textTarget,
+    aliases: matchedAliases,
+    initials: initials
+  };
+  c._searchProfile = profile;
+  return profile;
 }
 
-const rowClass = isOut
-  ? 'out-of-stock'
-  : (isAdmin() && isLow ? 'low-row' : '');
+function matchesConsumableSearch(c, query){
+  if(!query) return true;
+  const q = query.toLowerCase().trim();
+  if(!q) return true;
 
-      html += '<tr class="' + rowClass + '">' +
-        '<td><b>' + safe(c.name) +
-        '</b><div class="asset-id">' + safe(c.category || '기타') +
-        '</div></td>' +
-        '<td><b>' + safe(c.quantity) + ' ' + safe(c.unit || '개') + '</b></td>' +
-        (isAdmin()
-          ? '<td class="admin-only"><b>' + safe(c.min_quantity) + ' ' +
-            safe(c.unit || '개') + '</b></td>'
-          : '') +
-        '<td><span class="location-text">' + safe(c.location || '위치 미등록') +
-        '</span></td>' +
-        '<td>' + status + '</td>' +
-        '<td>' + actions + '</td></tr>';
-    });
+  const profile = getConsumableSearchProfile(c);
+  if(profile.textTarget.includes(q)) return true;
 
-    rowsHost.innerHTML = '<table><thead><tr><th>소모품 / 분류</th><th>현재 수량</th>' +
-      (isAdmin() ? '<th class="admin-only">최소 보유량</th>' : '') +
-      '<th>보관 위치</th><th>상태</th><th>작업</th></tr></thead><tbody>' +
-      html + '</tbody></table>';
-  } else if(!isAdmin() && consumables.length === 0){
-    // 비로그인 화면에서는 등록 품목이 없다는 빈 상태 안내를 표시하지 않음
-    rowsHost.innerHTML = '';
-  } else if(!isAdmin()){
-    // 검색 결과가 없는 경우에만 안내 표시
-    rowsHost.innerHTML = '<div class="empty">검색 결과가 없습니다.</div>';
-  } else {
-    rowsHost.innerHTML = '<div class="empty">등록된 소모품이 없습니다. 오른쪽 위에서 첫 소모품을 등록하세요.</div>';
+  const aliases = profile.aliases;
+  for(let i = 0; i < aliases.length; i++){
+    const a = aliases[i];
+    if(a.startsWith(q) || a.includes(q) || q.startsWith(a)){
+      return true;
+    }
   }
 
-  // 재주문 상태 관리 영역은 관리자 전용
-  document.querySelectorAll('.admin-consumables-only').forEach(function(el){
-    el.classList.toggle('hidden', !isAdmin());
+  if(profile.initials && profile.initials.startsWith(q)) return true;
+  return false;
+}
+
+function consumableCategoryTabsHtml(selected){
+  const cats = ['all'].concat(CONSUMABLE_CATEGORIES);
+  return '<div class="category-tabs" aria-label="소모품 대분류">' +
+    cats.map(function(cat){
+      const label = cat === 'all' ? '전체' : cat;
+      const icon = cat === 'all' ? '🏷️' : (
+        cat === '기판·박리' ? '🔬' :
+        cat === '화학·시약' ? '🧪' :
+        cat === '클린룸·안전' ? '🧤' :
+        cat === '진공·배관' ? '⚙️' : '📦'
+      );
+      return '<button type="button" class="category-tab' +
+        (selected === cat ? ' active' : '') + '" data-consumable-category="' + safe(cat) +
+        '" aria-pressed="' + (selected === cat ? 'true' : 'false') +
+        '">' + icon + ' ' + label + '</button>';
+    }).join('') + '</div>';
+}
+
+function getRoomBadgeHtml(loc){
+  const l = (loc || '').toLowerCase();
+  let badgeClass = 'room-default';
+  let icon = '📍';
+  if(l.includes('클린룸')){
+    badgeClass = 'room-cleanroom';
+    icon = '🟦';
+  } else if(l.includes('화학') || l.includes('후드')){
+    badgeClass = 'room-chemical';
+    icon = '🟧';
+  } else if(l.includes('측정') || l.includes('3층')){
+    badgeClass = 'room-measurement';
+    icon = '🟩';
+  } else if(l.includes('장비') || l.includes('가스')){
+    badgeClass = 'room-facility';
+    icon = '🟪';
+  }
+  return '<span class="room-badge ' + badgeClass + '">' + icon + ' ' + safe(loc || '연구실') + '</span>';
+}
+
+function renderConsumables(){
+  const searchEl = $('consumableSearch');
+  const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+
+  const list = consumables.filter(function(c){
+    const matchCategory = selectedConsumableCategory === 'all' ||
+      c.category === selectedConsumableCategory;
+    const matchSearch = matchesConsumableSearch(c, q);
+    return matchCategory && matchSearch;
   });
 
-  if(!isAdmin()){
-    $('reorderRows').innerHTML = '';
-  } else if(!consumablesAvailable){
-    $('reorderRows').innerHTML = '<div class="empty">소모품 데이터베이스 설정이 필요합니다.</div>';
-  } else if(!reorderRequests.length){
-    $('reorderRows').innerHTML = '<div class="empty">아직 재주문 요청이 없습니다.</div>';
-  } else {
-    let requestHtml = '';
+  const categoryHost = $('consumableCategories');
+  if(categoryHost){
+    categoryHost.innerHTML = consumableCategoryTabsHtml(selectedConsumableCategory);
+  }
 
-    reorderRequests.forEach(function(r){
-      const name = (r.consumables && r.consumables.name) ||
-        consumableFor(r.consumable_id)?.name || '삭제된 품목';
+  const countBadge = $('consumablesCountBadge');
+  if(countBadge) countBadge.textContent = list.length;
 
-      const label = r.status === 'received'
-        ? '입고 완료'
-        : r.status === 'ordered' ? '주문 진행 중' : '요청됨';
+  const container = $('consumableRows');
+  if(!container) return;
 
-      let action = '';
+  if(list.length > 0){
+    let html = '<div class="consumables-grid">';
+    for(let i = 0; i < list.length; i++){
+      const c = list[i];
+      const spec = c.specification || c.note || '';
+      const cat = c.category || '일반소모품';
 
-      if(r.status !== 'received'){
-        action = '<button class="text-btn" data-request-status="' +
-          safe(r.id) + '" data-status="' +
-          (r.status === 'pending' ? 'ordered' : 'received') + '">' +
-          (r.status === 'pending' ? '주문 진행' : '입고 완료') + '</button>';
+      let adminActions = '';
+      if(isAdmin()){
+        adminActions = '<button class="text-btn btn-action-edit" data-edit-consumable="' + safe(c.id) + '">수정</button>';
       }
 
-      requestHtml += '<tr><td><b>' + safe(name) +
-        '</b><div class="asset-id">' + safe(r.requester || '요청자 미입력') +
-        ' · ' + dateText(String(r.created_at || '').slice(0,10)) +
-        '</div></td><td>' + safe(r.requested_quantity) + ' ' +
-        safe((r.consumables && r.consumables.unit) || '개') +
-        '</td><td><span class="status ' +
-        (r.status === 'received' ? 'available' : r.status === 'ordered' ? 'ordered' : 'pending') +
-        '">' + label + '</span></td><td>' + safe(r.note || '—') +
-        '</td><td>' + action + '</td></tr>';
-    });
-
-    $('reorderRows').innerHTML = '<table><thead><tr><th>품목 / 요청자</th><th>요청 수량</th><th>진행 상태</th><th>메모</th><th>관리</th></tr></thead><tbody>' +
-      requestHtml + '</tbody></table>';
-  }
-
-  if(!consumablesAvailable){
-    $('movementRows').innerHTML = '<div class="empty">소모품 데이터베이스 설정이 필요합니다.</div>';
-  } else if(!stockMovements.length){
-    $('movementRows').innerHTML = '<div class="empty">아직 재고 변동 기록이 없습니다.</div>';
+      html += '<div class="consumable-card">' +
+        '<div class="consumable-card-header">' +
+          '<div class="consumable-title-wrap">' +
+            '<span class="consumable-cat-tag">' + safe(cat) + '</span>' +
+            '<h3 class="consumable-name">' + safe(c.name) + '</h3>' +
+          '</div>' +
+          '<span class="consumable-id-tag hide-mobile">' + safe(c.id) + '</span>' +
+        '</div>' +
+        '<div class="consumable-location-box">' +
+          '<div class="location-breadcrumbs">' +
+            getRoomBadgeHtml(c.location) +
+            '<span class="sub-loc-text">' + safe(c.sub_location || '위치 지정') + '</span>' +
+          '</div>' +
+        '</div>' +
+        (spec ? '<div class="consumable-spec-text">💡 ' + safe(spec) + '</div>' : '') +
+        '<div class="consumable-card-actions">' +
+          '<button type="button" class="btn-copy-loc" data-copy-consumable="' + safe(c.id) + '">' +
+            '<span>📋 위치 복사</span>' +
+          '</button>' +
+          adminActions +
+        '</div>' +
+      '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
   } else {
-    let movementHtml = '';
-
-    stockMovements.forEach(function(m){
-      const isIn = m.movement_type === 'in';
-
-      movementHtml += '<tr><td><b>' +
-        safe((m.consumables && m.consumables.name) ||
-          consumableFor(m.consumable_id)?.name || '소모품') +
-        '</b><div class="asset-id">' + safe(m.actor || '사용자 미입력') +
-        ' · ' + dateText(String(m.created_at || '').slice(0,10)) +
-        '</div></td><td><span class="status ' +
-        (isIn ? 'available' : 'borrowed') + '">' +
-        (isIn ? '입고' : '사용') +
-        '</span></td><td><b>' + (isIn ? '+' : '−') +
-        safe(m.quantity) + ' ' + safe((m.consumables && m.consumables.unit) || '개') +
-        '</b></td><td>' + safe(m.note || '—') + '</td></tr>';
-    });
-
-    $('movementRows').innerHTML = '<table><thead><tr><th>품목 / 기록자</th><th>유형</th><th>변동 수량</th><th>메모</th></tr></thead><tbody>' +
-      movementHtml + '</tbody></table>';
+    container.innerHTML = '<div class="consumables-empty-state">' +
+      '<div class="empty-icon">🔍</div>' +
+      '<h3>' + (q ? "'" + safe(q) + "' 검색 결과가 없습니다" : '등록된 소모품이 없습니다') + '</h3>' +
+      '<p>연구실에 새로 입고되었거나 위치가 등록되지 않았나요?</p>' +
+      '<div class="empty-actions">' +
+        (isAdmin() ? '<button class="btn primary" id="btnEmptyAddConsumable">＋ 새 소모품 위치 등록하기</button>' : '') +
+      '</div>' +
+    '</div>';
   }
+}
+
+function copyConsumableLocation(id){
+  const c = consumableFor(id);
+  if(!c) return;
+  const text = '[' + (c.location || '연구실') + '] ' + (c.sub_location || '') + ' · ' + c.name;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      toast("✓ '" + c.name + "' 보관 위치가 복사되었습니다!");
+    }).catch(function(){
+      fallbackCopyText(text, c.name);
+    });
+  } else {
+    fallbackCopyText(text, c.name);
+  }
+}
+
+function fallbackCopyText(text, name){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    toast("✓ '" + (name || '소모품') + "' 보관 위치가 복사되었습니다!");
+  } catch(e){
+    toast('위치: ' + text, 5000);
+  }
+  document.body.removeChild(ta);
 }
 
 function consumableFor(id){
@@ -1526,15 +1678,18 @@ function openModal(mode, id){
       parts.push('<p>소모품 등록 및 수정은 관리자 로그인이 필요합니다.</p>');
     } else {
       const c = consumableFor(id);
+      const cat = c ? (c.category || '기판·박리') : '기판·박리';
+
+      const catOpts = CONSUMABLE_CATEGORIES.map(function(k){
+        return '<option value="' + safe(k) + '" ' + (cat === k ? 'selected' : '') + '>' + safe(k) + '</option>';
+      }).join('');
 
       parts.push('<div class="form-grid">');
-      parts.push('<label class="field full">소모품명 *<input name="name" required maxlength="160" value="' + safe(c ? c.name : '') + '" placeholder="예: 200 µL 피펫 팁"></label>');
-      parts.push('<label class="field">분류<input name="category" value="' + safe(c ? c.category : '') + '" placeholder="팁·장갑·시약"></label>');
-      parts.push('<label class="field">단위 *<input name="unit" required value="' + safe(c ? c.unit : '개') + '" placeholder="박스, 병, 팩"></label>');
-      parts.push('<label class="field">현재 수량 *<input name="quantity" type="number" min="0" step="any" required value="' + safe(c ? c.quantity : 0) + '"></label>');
-      parts.push('<label class="field">최소 보유량 *<input name="min_quantity" type="number" min="0" step="any" required value="' + safe(c ? c.min_quantity : 1) + '"></label>');
-      parts.push('<label class="field full">보관 위치 *<input name="location" required maxlength="200" value="' + safe(c ? c.location : '') + '" placeholder="예: 실험실 A · 2번 캐비닛 · 3번째 서랍"></label>');
-      parts.push('<label class="field full">비고<textarea name="note" rows="2" maxlength="500">' + safe(c ? c.note : '') + '</textarea></label>');
+      parts.push('<label class="field full">소모품명 *<input name="name" required maxlength="160" value="' + safe(c ? c.name : '') + '" placeholder="예: 4인치 Si/SiO2 웨이퍼 (300nm)"></label>');
+      parts.push('<label class="field">분류 *<select name="category" required>' + catOpts + '</select></label>');
+      parts.push('<label class="field">보관 구역 (호실) *<input name="location" required maxlength="100" value="' + safe(c ? c.location : '') + '" placeholder="예: 클린룸 광학실, 화학실험실"></label>');
+      parts.push('<label class="field full">상세 위치 (캐비닛/선반) *<input name="sub_location" required maxlength="150" value="' + safe(c ? (c.sub_location || '') : '') + '" placeholder="예: 진공 데시케이터 A 2단, 시약장 1단"></label>');
+      parts.push('<label class="field full">규격 / 주의사항 (선택)<textarea name="specification" rows="2" maxlength="500" placeholder="예: P-type, 500µm 두께, 개봉 후 질소 퍼지">' + safe(c ? (c.specification || c.note || '') : '') + '</textarea></label>');
       parts.push('</div>');
     }
   } else if(mode === 'movement'){
@@ -1685,7 +1840,7 @@ function openModal(mode, id){
   else if(mode === 'return') btnText = '반납 완료';
   else if(mode === 'login') btnText = '로그인';
   else if(mode === 'editLoan') btnText = '수정 저장';
-  else if(mode === 'consumable') btnText = '소모품 저장';
+  else if(mode === 'consumable') btnText = id ? '수정 저장' : '소모품 등록';
   else if(mode === 'reorder') btnText = '재주문 요청';
   else if(mode === 'movement') btnText = '재고 반영';
   else if(mode === 'quickReturn') btnText = '반납 완료';
@@ -1754,6 +1909,24 @@ function showView(name){
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
     el.classList.toggle('active', el.dataset.view === name);
   });
+
+  // 상단 헤더 메인 탭 활성화 상태 동기화
+  document.querySelectorAll('.header-tab[data-main-view]').forEach(function(el){
+    const isActive = el.dataset.mainView === name;
+    el.classList.toggle('active', isActive);
+    el.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+
+  // 모바일 하단 대여/반납 바: 소모품 및 관리자 화면에서는 숨겨서 화면 영역 확보
+  const mobileBar = $('mobileBar');
+  if(mobileBar){
+    mobileBar.classList.toggle('hidden', name === 'consumables' || name === 'dashboard' || name === 'history');
+  }
+
+  // 뷰 진입 시 렌더링 보장
+  if(name === 'consumables'){
+    renderConsumables();
+  }
 }
 
 function scrollToReorderPanel(){
@@ -1973,20 +2146,39 @@ async function saveForm(e){
 
       const payload = {
         name: v.name.trim(),
-        category: (v.category || '기타').trim(),
-        unit: v.unit.trim(),
-        quantity: Number(v.quantity),
-        min_quantity: Number(v.min_quantity),
-        location: v.location.trim(),
-        note: (v.note || '').trim(),
+        category: (v.category || '일반소모품').trim(),
+        location: (v.location || '').trim(),
+        sub_location: (v.sub_location || '').trim(),
+        specification: (v.specification || '').trim(),
         updated_at: new Date().toISOString()
       };
 
-      const result = modalId
-        ? await db.from('consumables').update(payload).eq('id', modalId)
-        : await db.from('consumables').insert(payload);
+      if(!modalId){
+        let max = 0;
+        consumables.forEach(function(c){
+          const m = String(c.id || '').match(/^CS-(\d+)$/i);
+          if(m) max = Math.max(max, Number(m[1]));
+        });
+        payload.id = 'CS-' + String(max + 1).padStart(3, '0');
+      }
 
-      if(result.error) throw result.error;
+      if(!db || isLocalMode){
+        if(modalId){
+          const idx = consumables.findIndex(function(c){ return c.id === modalId; });
+          if(idx >= 0) consumables[idx] = Object.assign(consumables[idx], payload);
+        } else {
+          consumables.push(payload);
+        }
+        localStorage.setItem('labstock_local_consumables', JSON.stringify(consumables));
+      } else {
+        const result = modalId
+          ? await db.from('consumables').update(payload).eq('id', modalId)
+          : await db.from('consumables').insert(payload);
+
+        if(result.error) throw result.error;
+      }
+
+      toast(modalId ? '✓ 소모품 위치 정보가 수정되었습니다.' : '✓ 새 소모품이 등록되었습니다.');
     } else if(modalMode === 'movement'){
       const movementType = v.movement_type === 'in' ? 'in' : 'use';
       if(movementType === 'in' && !isAdmin()){
@@ -2223,9 +2415,33 @@ function bindEvents(){
   addEvt('btnMobileLogin', 'click', function(){ openModal('login'); });
   addEvt('btnBackToInventory', 'click', function(){ showView('inventory'); });
 
+  // 소모품 검색창 입력 시 ✕ 클리어 버튼 토글
+  const consumableSearchInput = $('consumableSearch');
+  const btnClearConsumableSearch = $('btnClearConsumableSearch');
+  if(consumableSearchInput && btnClearConsumableSearch){
+    consumableSearchInput.addEventListener('input', function(){
+      if(consumableSearchInput.value.trim().length > 0){
+        btnClearConsumableSearch.classList.remove('hidden');
+      } else {
+        btnClearConsumableSearch.classList.add('hidden');
+      }
+    });
+    btnClearConsumableSearch.addEventListener('click', function(){
+      consumableSearchInput.value = '';
+      btnClearConsumableSearch.classList.add('hidden');
+      consumableSearchInput.focus();
+      renderConsumables();
+    });
+  }
+
   document.addEventListener('click', function(e){
     const target = e.target.closest('button');
     if(!target) return;
+
+    if(target.dataset.mainView){
+      showView(target.dataset.mainView);
+      return;
+    }
 
     if(target.dataset.goto){
       showView(target.dataset.goto);
@@ -2235,6 +2451,17 @@ function bindEvents(){
     if(target.dataset.inventoryCategory){
       selectedInventoryCategory = target.dataset.inventoryCategory;
       renderInventory();
+      return;
+    }
+
+    if(target.dataset.consumableCategory){
+      selectedConsumableCategory = target.dataset.consumableCategory;
+      renderConsumables();
+      return;
+    }
+
+    if(target.dataset.copyConsumable){
+      copyConsumableLocation(target.dataset.copyConsumable);
       return;
     }
 
@@ -2290,6 +2517,12 @@ function bindEvents(){
         return;
       }
       openModal('consumable', target.dataset.editConsumable);
+      return;
+    }
+
+    if(target.id === 'addConsumable' || target.id === 'btnEmptyAddConsumable'){
+      if(isAdmin()) openModal('consumable');
+      else toast('소모품 등록은 관리자 로그인이 필요합니다.');
       return;
     }
 
@@ -2712,6 +2945,7 @@ function subscribeRealtime(){
     realtimeChannel = db.channel('labstock-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, debouncedRealtimeReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'assets' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'consumables' }, debouncedRealtimeReload)
       .subscribe(function(status){
         if(status === 'SUBSCRIBED'){
           console.log('Supabase Realtime 실시간 동기화 활성화됨 (300ms 디바운스 적용)');
