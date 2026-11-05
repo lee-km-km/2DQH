@@ -697,7 +697,7 @@ function renderDashboard(){
         '</span></td></tr>';
     }
 
-    $('dashboardLoans').innerHTML = '<table><thead><tr><th>비품</th><th>대여자</th><th>반납 예정</th><th>상태</th></tr></thead><tbody>' +
+    $('dashboardLoans').innerHTML = '<table aria-label="현재 대여 중인 비품"><thead><tr><th scope="col">비품</th><th scope="col">대여자</th><th scope="col">반납 예정</th><th scope="col">상태</th></tr></thead><tbody>' +
       rowsHtml + '</tbody></table>';
   } else {
     $('dashboardLoans').innerHTML = '<div class="empty">현재 대여 중인 비품이 없습니다.</div>';
@@ -1791,7 +1791,7 @@ function renderHistory(){
         statText + '</span></td></tr>';
     }
 
-    $('historyRows').innerHTML = '<div class="table-wrap"><table><thead><tr><th>비품 / 식별번호</th><th>대여자</th><th>시작일</th><th>예정 반납일</th><th>실제 반납일</th><th>상태</th></tr></thead><tbody>' +
+    $('historyRows').innerHTML = '<div class="table-wrap"><table aria-label="전체 비품 대여 및 반납 이력"><thead><tr><th scope="col">비품 / 식별번호</th><th scope="col">대여자</th><th scope="col">시작일</th><th scope="col">예정 반납일</th><th scope="col">실제 반납일</th><th scope="col">상태</th></tr></thead><tbody>' +
       histHtml + '</tbody></table></div>';
   } else {
     $('historyRows').innerHTML = '<div class="empty">검색 결과가 없습니다.</div>';
@@ -2156,16 +2156,6 @@ function openModal(mode, id){
     }));
 
   setTimeout(function(){
-    if(mode === 'borrow'){
-      const remembered = localStorage.getItem('labstock_last_borrower_name') || '';
-      if(remembered){
-        const saveBtn = $('saveModal');
-        if(saveBtn && !saveBtn.disabled){
-          saveBtn.focus();
-          return;
-        }
-      }
-    }
     const focusables = $('modalBackdrop').querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled)');
     if(focusables.length > 0){
       let targetFocus = focusables[0];

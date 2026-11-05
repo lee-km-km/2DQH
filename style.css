@@ -6,12 +6,12 @@
 :root {
   --bg: #ffffff;
   --bg-subtle: #f8fafc;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --border: #cbd5e1;
+  --border-strong: #94a3b8;
   
-  --ink: #1e293b;        /* Charcoal / Slate */
-  --muted: #475569;      /* Slate-600 */
-  --faint: #64748b;      /* Slate-500 */
+  --ink: #0f172a;        /* High-contrast Slate-900 */
+  --muted: #334155;      /* Slate-700 (9.0:1) */
+  --faint: #475569;      /* Slate-600 (7.58:1) */
   
   /* 2DQH Research Center Identity */
   --brand-red: #c2272d;  /* 2DQH Crimson Red */
@@ -19,11 +19,12 @@
   --brand-grey: #58595b; /* 2DQH Titanium Grey */
   
   --accent: #c2272d;     /* Primary 2DQH Accent */
-  --accent-blue: #c2272d;/* Focus & Key actions */
+  --accent-blue: #0f172a;/* Focus & Key actions */
   --accent-hover: #a11d23;
   
-  --green: #15803d;      /* Emerald-700 */
+  --green: #15803d;      /* Emerald-700 (5.02:1) */
   --red: #c2272d;        /* 2DQH Red */
+  --danger-red: #991b1b; /* Destructive action red */
   --amber: #b45309;      /* Amber-700 */
 
   --radius: 6px;
@@ -46,8 +47,8 @@ button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 
 :focus-visible {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 1px;
+  outline: 2px solid #0f172a;
+  outline-offset: 2px;
 }
 
 .hidden { display: none !important; }
@@ -582,9 +583,9 @@ td b { font-weight: 600; color: var(--ink); }
   border-radius: 50%;
   background: currentColor;
 }
-.status.available { color: #059669; font-weight: 600; }
-.status.borrowed { color: #64748b; font-weight: 500; }
-.status.borrowed:before { background: #94a3b8; }
+.status.available { color: var(--green, #15803d); font-weight: 700; }
+.status.borrowed { color: #475569; font-weight: 500; }
+.status.borrowed:before { background: #64748b; }
 .status.maintenance { color: var(--amber); }
 
 .status-chip {
@@ -1039,22 +1040,36 @@ tbody tr:hover .asset-thumb-box {
     display: flex !important;
     justify-content: center;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     margin: 28px 0 36px;
     padding-top: 16px;
     border-top: 1px dashed var(--border);
+    flex-wrap: wrap;
   }
   .text-link-sub {
-    background: transparent;
-    border: none;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     color: var(--muted);
-    font-size: 12px;
-    padding: 6px 4px;
-    text-decoration: underline;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: 44px;
+    padding: 10px 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
     cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s ease-in-out;
   }
-  .text-link-sub:hover { color: var(--ink); }
-  .sub-dot { color: var(--border-strong); font-size: 11px; }
+  .text-link-sub:hover,
+  .text-link-sub:active {
+    background: var(--bg-subtle);
+    color: var(--ink);
+    border-color: var(--border-strong);
+  }
+  .sub-dot { display: none; }
 
   /* 쾌적한 화면 호흡 여백: 상단 여백 0으로 헤더와 매끄럽게 연결 */
   main {
@@ -2330,5 +2345,17 @@ tbody tr:hover .asset-thumb-box {
   accent-color: #dc2626;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+/* 감각 및 모션 접근성 (Prefers-Reduced-Motion) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
