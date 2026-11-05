@@ -13,7 +13,14 @@ function ensureDb(){
   }
   return db;
 }
-const $ = function(id){ return document.getElementById(id); };
+function $(id){
+  return document.getElementById(id);
+}
+
+function addEvt(id, evt, handler){
+  const el = $(id);
+  if(el) el.addEventListener(evt, handler);
+}
 
 // ==========================================
 // [기능 스위치 & 로컬 Mock 데이터 스토리지]
@@ -1919,11 +1926,6 @@ function bindEvents(){
         break;
     }
   });
-
-  const addEvt = function(id, evt, handler){
-    const el = $(id);
-    if(el) el.addEventListener(evt, handler);
-  };
 
   addEvt('modalForm', 'submit', saveForm);
 
