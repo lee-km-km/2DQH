@@ -1426,6 +1426,58 @@ function getRoomBadgeHtml(loc){
 
 let displayedConsumablesCount = 24;
 const CONSUMABLES_PAGE_SIZE = 24;
+let consumableViewMode = 'card';
+try {
+  const savedMode = localStorage.getItem('2dqh_consumable_view_mode');
+  if(savedMode === 'compact' || savedMode === 'card') consumableViewMode = savedMode;
+} catch(_) {}
+
+function parseConsumableMeta(c){
+  const spec = c.specification || c.note || '';
+  let maker = '';
+  let cas = '';
+  let cat = '';
+  let hazard = '';
+  let qty = '';
+
+  const mMatch = spec.match(/제조사:\s*([^·]+)/);
+  if(mMatch) maker = mMatch[1].trim();
+
+  const casMatch = spec.match(/CAS:\s*([^·]+)/);
+  if(casMatch) cas = casMatch[1].trim();
+
+  const catMatch = spec.match(/CAT:\s*([^·]+)/);
+  if(catMatch) cat = catMatch[1].trim();
+
+  const hMatch = spec.match(/위험도:\s*([^·]+)/);
+  if(hMatch) hazard = hMatch[1].trim();
+
+  const qMatch = spec.match(/재고수량:\s*([^·]+)/);
+  if(qMatch) qty = qMatch[1].trim();
+
+  return { maker: maker, cas: cas, cat: cat, hazard: hazard, qty: qty, rawSpec: spec };
+}
+
+function getHazardBadgeHtml(hazard){
+  if(!hazard) return '';
+  let cls = 'hazard-low';
+  if(hazard.includes('A') || hazard.includes('B') || hazard.includes('치명') || hazard.includes('높음')){
+    cls = 'hazard-high';
+  } else if(hazard.includes('C') || hazard.includes('D') || hazard.includes('보통') || hazard.includes('주의')){
+    cls = 'hazard-med';
+  }
+  return '<span class="hazard-badge ' + cls + '" title="위험도 등급: ' + safe(hazard) + '">⚠️ ' + safe(hazard) + '</span>';
+}
+
+function getCasBadgeHtml(cas){
+  if(!cas) return '';
+  return '<span class="cas-badge" title="CAS 등록번호">CAS ' + safe(cas) + '</span>';
+}
+
+function getMakerBadgeHtml(maker){
+  if(!maker) return '';
+  return '<span class="maker-badge">' + safe(maker) + '</span>';
+}
 
 function loadMoreConsumables(){
   displayedConsumablesCount += CONSUMABLES_PAGE_SIZE;
@@ -1448,6 +1500,11 @@ function renderConsumables(){
     categoryHost.innerHTML = consumableCategoryTabsHtml(selectedConsumableCategory);
   }
 
+  const toggleButtons = document.querySelectorAll('#consumableViewModeToggle button');
+  toggleButtons.forEach(function(btn){
+    btn.classList.toggle('active', btn.dataset.consumableView === consumableViewMode);
+  });
+
   const countBadge = $('consumablesCountBadge');
   if(countBadge) countBadge.textContent = list.length;
 
@@ -1456,41 +1513,89 @@ function renderConsumables(){
 
   if(list.length > 0){
     const visibleList = list.slice(0, displayedConsumablesCount);
-    let html = '<div class="consumables-grid" id="consumablesGrid">';
-    for(let i = 0; i < visibleList.length; i++){
-      const c = visibleList[i];
-      const spec = c.specification || c.note || '';
-      const cat = c.category || '일반소모품';
+    let html = '';
 
-      let adminActions = '';
-      if(isAdmin()){
-        adminActions = '<button class="text-btn btn-action-edit" data-edit-consumable="' + safe(c.id) + '">수정</button>';
+    if(consumableViewMode === 'compact'){
+      // 컴팩트 고밀도 목록형 뷰 (Dense List Layout)
+      html += '<div class="consumables-compact-list" id="consumablesList">';
+      for(let i = 0; i < visibleList.length; i++){
+        const c = visibleList[i];
+        const meta = parseConsumableMeta(c);
+        const cat = c.category || '일반소모품';
+
+        let adminActions = '';
+        if(isAdmin()){
+          adminActions = '<button class="text-btn btn-action-edit" data-edit-consumable="' + safe(c.id) + '">수정</button>';
+        }
+
+        html += '<div class="consumable-compact-row">' +
+          '<div class="compact-main-info">' +
+            '<div class="compact-row-top">' +
+              '<span class="consumable-cat-tag">' + safe(cat) + '</span>' +
+              '<h3 class="compact-name">' + safe(c.name) + '</h3>' +
+              getCasBadgeHtml(meta.cas) +
+              getHazardBadgeHtml(meta.hazard) +
+            '</div>' +
+            '<div class="compact-row-bottom">' +
+              getRoomBadgeHtml(c.location) +
+              '<span class="compact-sub-loc">📍 ' + safe(c.sub_location || '위치 지정') + '</span>' +
+              getMakerBadgeHtml(meta.maker) +
+              (meta.qty ? '<span class="maker-badge">재고: ' + safe(meta.qty) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="compact-actions">' +
+            '<button type="button" class="btn-compact-copy" data-copy-consumable="' + safe(c.id) + '" title="보관 위치 복사">' +
+              '<span>📋 복사</span>' +
+            '</button>' +
+            adminActions +
+          '</div>' +
+        '</div>';
       }
+      html += '</div>';
+    } else {
+      // 표준 카드형 뷰 (Card Layout)
+      html += '<div class="consumables-grid" id="consumablesGrid">';
+      for(let i = 0; i < visibleList.length; i++){
+        const c = visibleList[i];
+        const meta = parseConsumableMeta(c);
+        const spec = c.specification || c.note || '';
+        const cat = c.category || '일반소모품';
 
-      html += '<div class="consumable-card">' +
-        '<div class="consumable-card-header">' +
-          '<div class="consumable-title-wrap">' +
-            '<span class="consumable-cat-tag">' + safe(cat) + '</span>' +
-            '<h3 class="consumable-name">' + safe(c.name) + '</h3>' +
+        let adminActions = '';
+        if(isAdmin()){
+          adminActions = '<button class="text-btn btn-action-edit" data-edit-consumable="' + safe(c.id) + '">수정</button>';
+        }
+
+        html += '<div class="consumable-card">' +
+          '<div class="consumable-card-header">' +
+            '<div class="consumable-title-wrap">' +
+              '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+                '<span class="consumable-cat-tag">' + safe(cat) + '</span>' +
+                getMakerBadgeHtml(meta.maker) +
+                getHazardBadgeHtml(meta.hazard) +
+              '</div>' +
+              '<h3 class="consumable-name">' + safe(c.name) + '</h3>' +
+              (meta.cas ? '<div>' + getCasBadgeHtml(meta.cas) + '</div>' : '') +
+            '</div>' +
+            '<span class="consumable-id-tag hide-mobile">' + safe(c.id) + '</span>' +
           '</div>' +
-          '<span class="consumable-id-tag hide-mobile">' + safe(c.id) + '</span>' +
-        '</div>' +
-        '<div class="consumable-location-box">' +
-          '<div class="location-breadcrumbs">' +
-            getRoomBadgeHtml(c.location) +
-            '<span class="sub-loc-text">' + safe(c.sub_location || '위치 지정') + '</span>' +
+          '<div class="consumable-location-box">' +
+            '<div class="location-breadcrumbs">' +
+              getRoomBadgeHtml(c.location) +
+              '<span class="sub-loc-text">' + safe(c.sub_location || '위치 지정') + '</span>' +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        (spec ? '<div class="consumable-spec-text">💡 ' + safe(spec) + '</div>' : '') +
-        '<div class="consumable-card-actions">' +
-          '<button type="button" class="btn-copy-loc" data-copy-consumable="' + safe(c.id) + '">' +
-            '<span>📋 위치 복사</span>' +
-          '</button>' +
-          adminActions +
-        '</div>' +
-      '</div>';
+          (spec ? '<div class="consumable-spec-text">💡 ' + safe(spec) + '</div>' : '') +
+          '<div class="consumable-card-actions">' +
+            '<button type="button" class="btn-copy-loc" data-copy-consumable="' + safe(c.id) + '">' +
+              '<span>📋 위치 복사</span>' +
+            '</button>' +
+            adminActions +
+          '</div>' +
+        '</div>';
+      }
+      html += '</div>';
     }
-    html += '</div>';
 
     if(list.length > visibleList.length){
       const remaining = list.length - visibleList.length;
@@ -1526,18 +1631,33 @@ function renderConsumables(){
   }
 }
 
-function copyConsumableLocation(id){
+function copyConsumableLocation(id, btnEl){
   const c = consumableFor(id);
   if(!c) return;
   const text = '[' + (c.location || '연구실') + '] ' + (c.sub_location || '') + ' · ' + c.name;
+
+  function triggerButtonFeedback(){
+    if(!btnEl) return;
+    const originalHtml = btnEl.innerHTML;
+    btnEl.classList.add('copied');
+    btnEl.innerHTML = '<span aria-hidden="true">✓</span> <span>복사 완료!</span>';
+    setTimeout(function(){
+      btnEl.classList.remove('copied');
+      btnEl.innerHTML = originalHtml;
+    }, 1500);
+  }
+
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(text).then(function(){
+      triggerButtonFeedback();
       toast("✓ '" + c.name + "' 보관 위치가 복사되었습니다!");
     }).catch(function(){
       fallbackCopyText(text, c.name);
+      triggerButtonFeedback();
     });
   } else {
     fallbackCopyText(text, c.name);
+    triggerButtonFeedback();
   }
 }
 
@@ -2518,13 +2638,20 @@ function bindEvents(){
       return;
     }
 
+    if(target.dataset.consumableView){
+      consumableViewMode = target.dataset.consumableView;
+      try { localStorage.setItem('2dqh_consumable_view_mode', consumableViewMode); } catch(_) {}
+      renderConsumables();
+      return;
+    }
+
     if(target.id === 'btnLoadMoreConsumables' || target.closest('#btnLoadMoreConsumables')){
       loadMoreConsumables();
       return;
     }
 
     if(target.dataset.copyConsumable){
-      copyConsumableLocation(target.dataset.copyConsumable);
+      copyConsumableLocation(target.dataset.copyConsumable, target);
       return;
     }
 
