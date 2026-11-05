@@ -217,6 +217,9 @@ function saveLocalStorage(){
   render();
 }
 
+// ==========================================
+// 애플리케이션 상태 저장소 (AppState Store)
+// ==========================================
 let assets = [];
 let loans = [];
 let consumables = [];
@@ -228,6 +231,42 @@ let admin = false;
 let borrowedAssetIds = new Set();
 let activeLoanMap = new Map();
 let lastFocusedElement = null;
+let selectedInventoryCategory = 'all';
+let selectedBorrowCategory = 'all';
+let modalMode = '';
+let modalId = null;
+
+const AppState = {
+  get assets(){ return assets; },
+  set assets(v){ assets = v; },
+  get loans(){ return loans; },
+  set loans(v){ loans = v; },
+  get consumables(){ return consumables; },
+  set consumables(v){ consumables = v; },
+  get reorderRequests(){ return reorderRequests; },
+  set reorderRequests(v){ reorderRequests = v; },
+  get stockMovements(){ return stockMovements; },
+  set stockMovements(v){ stockMovements = v; },
+  get consumablesAvailable(){ return consumablesAvailable; },
+  set consumablesAvailable(v){ consumablesAvailable = v; },
+  get session(){ return session; },
+  set session(v){ session = v; },
+  get admin(){ return admin; },
+  set admin(v){ admin = v; },
+  get borrowedAssetIds(){ return borrowedAssetIds; },
+  set borrowedAssetIds(v){ borrowedAssetIds = v; },
+  get activeLoanMap(){ return activeLoanMap; },
+  set activeLoanMap(v){ activeLoanMap = v; },
+  get selectedInventoryCategory(){ return selectedInventoryCategory; },
+  set selectedInventoryCategory(v){ selectedInventoryCategory = v; },
+  get selectedBorrowCategory(){ return selectedBorrowCategory; },
+  set selectedBorrowCategory(v){ selectedBorrowCategory = v; },
+  get modalMode(){ return modalMode; },
+  set modalMode(v){ modalMode = v; },
+  get modalId(){ return modalId; },
+  set modalId(v){ modalId = v; }
+};
+window.AppState = AppState;
 
 function debounce(fn, delay){
   let timer = null;
@@ -240,10 +279,6 @@ function debounce(fn, delay){
     }, delay || 180);
   };
 }
-let selectedInventoryCategory = 'all';
-let selectedBorrowCategory = 'all';
-let modalMode = '';
-let modalId = null;
 
 function today(){
   const d = new Date();
@@ -688,30 +723,69 @@ const LAB_EQUIPMENT_ALIASES = {
   '순환식 저온 냉각 칠러': ['chiller', 'cooler', 'c']
 };
 
-function matchesSmartSearch(asset, query){
-  if(!query) return true;
-  const q = query.toLowerCase().trim();
-  // 1. 기본 필드 직접 매칭 (ID, 이름, 카테고리, 보관 위치, 비고)
-  const textTarget = [(asset.id || ''), (asset.name || ''), (asset.category || ''), (asset.location || ''), (asset.note || '')].join(' ').toLowerCase();
-  if(textTarget.includes(q)) return true;
+// 사전 컴파일된 알리아스 리스트 (Object.entries 반복 호출 방지)
+const PRECOMPILED_ALIASES = Object.keys(LAB_EQUIPMENT_ALIASES).map(function(k){
+  return {
+    key: k.toLowerCase(),
+    aliases: LAB_EQUIPMENT_ALIASES[k].map(function(a){ return a.toLowerCase(); })
+  };
+});
 
-  // 2. 영문 알리아스 및 이니셜 매칭 (예: 'm' -> 디지털 멀티미터, 'p' -> 파워서플라이)
-  const assetName = (asset.name || '').toLowerCase();
-  for(const [key, aliases] of Object.entries(LAB_EQUIPMENT_ALIASES)){
-    if(assetName.includes(key.toLowerCase())){
-      for(let i = 0; i < aliases.length; i++){
-        const alias = aliases[i];
-        if(alias.startsWith(q) || alias.includes(q) || q.startsWith(alias)){
-          return true;
-        }
+// 비품별 스마트 검색 프로필 캐시 생성 (초고속 O(1) 인덱스 매칭)
+function getAssetSearchProfile(asset){
+  if(asset._searchProfile) return asset._searchProfile;
+  const id = (asset.id || '').toLowerCase();
+  const name = (asset.name || '').toLowerCase();
+  const category = (asset.category || '').toLowerCase();
+  const location = (asset.location || '').toLowerCase();
+  const note = (asset.note || '').toLowerCase();
+  const textTarget = id + ' ' + name + ' ' + category + ' ' + location + ' ' + note;
+
+  // 비품명에 해당하는 알리아스 사전 추출
+  const matchedAliases = [];
+  for(let i = 0; i < PRECOMPILED_ALIASES.length; i++){
+    const entry = PRECOMPILED_ALIASES[i];
+    if(name.includes(entry.key)){
+      for(let j = 0; j < entry.aliases.length; j++){
+        matchedAliases.push(entry.aliases[j]);
       }
     }
   }
 
-  // 3. 비품명 단어별 이니셜 매칭
-  const words = assetName.split(/\s+/);
+  // 비품명 단어별 이니셜
+  const words = name.split(/\s+/).filter(Boolean);
   const initials = words.map(function(w){ return w.charAt(0); }).join('');
-  if(initials.startsWith(q)) return true;
+
+  const profile = {
+    textTarget: textTarget,
+    aliases: matchedAliases,
+    initials: initials
+  };
+  asset._searchProfile = profile;
+  return profile;
+}
+
+function matchesSmartSearch(asset, query){
+  if(!query) return true;
+  const q = query.toLowerCase().trim();
+  if(!q) return true;
+
+  const profile = getAssetSearchProfile(asset);
+
+  // 1. 기본 필드 직접 매칭 (ID, 이름, 카테고리, 보관 위치, 비고)
+  if(profile.textTarget.includes(q)) return true;
+
+  // 2. 영문 알리아스 및 약어 매칭 (캐시된 배열 직접 순회)
+  const aliases = profile.aliases;
+  for(let i = 0; i < aliases.length; i++){
+    const alias = aliases[i];
+    if(alias.startsWith(q) || alias.includes(q) || q.startsWith(alias)){
+      return true;
+    }
+  }
+
+  // 3. 비품명 단어별 이니셜 매칭
+  if(profile.initials && profile.initials.startsWith(q)) return true;
 
   return false;
 }
@@ -1442,6 +1516,9 @@ function openModal(mode, id){
 
     parts.push('<div class="form-grid" style="margin-top:10px;">');
     parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(lastBorrower) + '"></label>');
+    if(lastBorrower){
+      parts.push('<div class="borrower-remembered-hint" style="margin-top:-6px;margin-bottom:8px;font-size:12px;color:var(--brand-red, #c2272d);display:flex;align-items:center;gap:4px;"><span>⚡</span><span>최근 대여자 이름이 자동 입력되었습니다 (1-Tap 즉시 대여 가능)</span></div>');
+    }
     parts.push('<label class="field full">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)"></label>');
     parts.push('</div>');
   } else if(mode === 'consumable'){
@@ -1627,6 +1704,16 @@ function openModal(mode, id){
     }));
 
   setTimeout(function(){
+    if(mode === 'borrow'){
+      const remembered = localStorage.getItem('labstock_last_borrower_name') || '';
+      if(remembered){
+        const saveBtn = $('saveModal');
+        if(saveBtn && !saveBtn.disabled){
+          saveBtn.focus();
+          return;
+        }
+      }
+    }
     const focusables = $('modalBackdrop').querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled)');
     if(focusables.length > 0){
       let targetFocus = focusables[0];
@@ -2616,19 +2703,18 @@ let realtimeChannel = null;
 function subscribeRealtime(){
   if(!db || realtimeChannel) return;
 
+  const debouncedRealtimeReload = debounce(function(){
+    console.log('실시간 변동 감지 -> 디바운스 데이터 재로딩');
+    loadData();
+  }, 300);
+
   try {
     realtimeChannel = db.channel('labstock-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, function(){
-        console.log('실시간 대여 변동 감지 -> 데이터 갱신');
-        loadData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'assets' }, function(){
-        console.log('실시간 비품 변동 감지 -> 데이터 갱신');
-        loadData();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'assets' }, debouncedRealtimeReload)
       .subscribe(function(status){
         if(status === 'SUBSCRIBED'){
-          console.log('Supabase Realtime 실시간 동기화 활성화됨');
+          console.log('Supabase Realtime 실시간 동기화 활성화됨 (300ms 디바운스 적용)');
         }
       });
   } catch(e){
