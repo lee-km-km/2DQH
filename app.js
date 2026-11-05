@@ -657,6 +657,9 @@ function isMyLoan(l){
   if(l.client_id && l.client_id === getClientId()) return true;
   // 3. 이 기기/브라우저에서 대여 신청했던 loan_id 목록 대조
   if(getMyLoanIds().has(String(l.id))) return true;
+  // 4. 이 브라우저에서 마지막으로 입력한 대여자 이름과 일치하는 경우
+  const lastName = localStorage.getItem('labstock_last_borrower_name');
+  if(lastName && l.borrower_name && l.borrower_name.trim().toLowerCase() === lastName.trim().toLowerCase()) return true;
   return false;
 }
 
@@ -1636,10 +1639,9 @@ async function saveForm(e){
         borrower_name: v.borrower_name.trim(),
         borrowed_at: v.borrowed_at || today(),
         due_date: v.due_date || today(),
-        memo: (v.memo || '').trim(),
-        client_id: getClientId(),
-        user_id: uid
+        memo: (v.memo || '').trim()
       };
+      if(uid) insPayload.user_id = uid;
 
       const insRes = await db.from('loans').insert(insPayload).select('id');
 
