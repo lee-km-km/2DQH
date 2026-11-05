@@ -29,8 +29,139 @@ function addEvt(id, evt, handler){
 const ENABLE_CONSUMABLES = false;
 let isLocalMode = false;
 
-// 프로덕션 모드: 로컬 목 데이터 비활성화 (Supabase DB 전용)
-const DEFAULT_MOCK_ASSETS = [];
+// 2DQH 이차원양자헤테로구조체연구단 대표 연구장비 및 공구 표준 카탈로그
+const DEFAULT_2DQH_ASSETS = [
+  {
+    id: 'EQ-001',
+    name: '디지털 멀티미터',
+    category: '측정공구',
+    location: '분석실 캐비넷 A',
+    status: 'available',
+    note: 'Fluke 87V 트루 RMS 정밀 멀티미터'
+  },
+  {
+    id: 'EQ-002',
+    name: '버니어 캘리퍼스',
+    category: '측정공구',
+    location: '분석실 캐비넷 B',
+    status: 'available',
+    note: 'Mitutoyo 500-196-30 150mm 디지털 캘리퍼스'
+  },
+  {
+    id: 'EQ-003',
+    name: '육각렌치 세트',
+    category: '공구',
+    location: '공용 공구함',
+    status: 'available',
+    note: 'PB Swiss Tools 볼포인트 L형 육각렌치 9종 세트 (1.5-10mm)'
+  },
+  {
+    id: 'EQ-004',
+    name: '토크 드라이버 세트',
+    category: '공구',
+    location: '장비실 서랍 2',
+    status: 'available',
+    note: 'Wera 7440/41/42 정밀 가변 토크 스크루드라이버 & 비트 세트 (0.3-3.0 N·m)'
+  },
+  {
+    id: 'EQ-005',
+    name: '고정밀 ESD 핀셋 세트',
+    category: '공구',
+    location: '클린룸 글러브박스 앞',
+    status: 'available',
+    note: 'Dumont 스위스제 정밀 비자성 핀셋 5종 (2D 플레이크 전사용)'
+  },
+  {
+    id: 'EQ-006',
+    name: '디지털 오실로스코프',
+    category: '실험장비',
+    location: '3층 측정실 작업대 1',
+    status: 'available',
+    note: 'Tektronix MDO34 1GHz 4채널 혼합신호 오실로스코프'
+  },
+  {
+    id: 'EQ-007',
+    name: 'DC 프로그래머블 전원공급기',
+    category: '실험장비',
+    location: '3층 측정실 작업대 2',
+    status: 'available',
+    note: 'Keithley 2230G-30-1 삼중출력 DC 파워서플라이 (30V/1.5A x 2, 6V/5A x 1)'
+  },
+  {
+    id: 'EQ-008',
+    name: '정밀 광학현미경',
+    category: '실험장비',
+    location: '클린룸 광학실 1',
+    status: 'available',
+    note: 'Olympus BX53M 명시야/암시야 2D 헤테로구조 검사용 현미경'
+  },
+  {
+    id: 'EQ-009',
+    name: '핫플레이트 가열교반기',
+    category: '실험장비',
+    location: '화학실험실 흄후드 3',
+    status: 'available',
+    note: 'Corning PC-420D 디지털 세라믹 가열교반기'
+  },
+  {
+    id: 'EQ-010',
+    name: '초음파 세척기',
+    category: '실험장비',
+    location: '세척실 싱크대 B',
+    status: 'available',
+    note: 'Branson 2800 2.8L 정밀 탈기 초음파 배스 세척기'
+  },
+  {
+    id: 'EQ-011',
+    name: '정밀 분석 전자저울',
+    category: '측정공구',
+    location: '칭량실 제진대',
+    status: 'available',
+    note: 'Mettler Toledo MS105DU 0.01mg 세미마이크로 분석저울'
+  },
+  {
+    id: 'EQ-012',
+    name: '온도조절형 납땜 스테이션',
+    category: '공구',
+    location: '전자작업대 4',
+    status: 'available',
+    note: 'Hakko FX-888D 디지털 ESD 세이프 납땜 인두기'
+  },
+  {
+    id: 'EQ-013',
+    name: '진공 척 스핀코터',
+    category: '실험장비',
+    location: '소자공정 클린룸 B',
+    status: 'available',
+    note: 'Laurell WS-650Mz 진공척 포토레지스트/폴리머 박막 코터'
+  },
+  {
+    id: 'EQ-014',
+    name: '로터리 진공펌프',
+    category: '실험장비',
+    location: '진공챔버 라인 1',
+    status: 'available',
+    note: 'Edwards RV8 듀얼스테이지 오일 씰 로터리 펌프'
+  },
+  {
+    id: 'EQ-015',
+    name: '비접촉 적외선 레이저 온도계',
+    category: '측정공구',
+    location: '분석실 캐비넷 B',
+    status: 'available',
+    note: 'Fluke 62 MAX+ 듀얼 레이저 적외선 온도계 (-30°C~650°C)'
+  },
+  {
+    id: 'EQ-016',
+    name: '순환식 저온 냉각 칠러',
+    category: '실험장비',
+    location: '챔버 냉각라인',
+    status: 'available',
+    note: 'Thermo Scientific ThermoFlex 900 재순환 냉각 칠러'
+  }
+];
+
+const DEFAULT_MOCK_ASSETS = DEFAULT_2DQH_ASSETS;
 
 function loadLocalStorage(forceReset){
   isLocalMode = false;
@@ -40,12 +171,12 @@ function loadLocalStorage(forceReset){
   if(!forceReset && storedAssets){
     try {
       const parsed = JSON.parse(storedAssets);
-      assets = Array.isArray(parsed) ? parsed : [];
+      assets = Array.isArray(parsed) && parsed.length ? parsed : [...DEFAULT_2DQH_ASSETS];
     } catch(e){
-      assets = [];
+      assets = [...DEFAULT_2DQH_ASSETS];
     }
   } else {
-    assets = [];
+    assets = [...DEFAULT_2DQH_ASSETS];
   }
 
   if(!forceReset && storedLoans){
@@ -219,7 +350,21 @@ async function loadData(){
     let hasRemoteSuccess = false;
 
     if(!results[0].error && Array.isArray(results[0].data)){
-      assets = results[0].data;
+      const remoteAssets = results[0].data;
+      const remoteMap = new Map();
+      remoteAssets.forEach(function(a){
+        if(a.id) remoteMap.set(a.id, a);
+      });
+
+      // DB에 없는 표준 2DQH 연구장비 및 공구를 클라이언트 카탈로그에 보강
+      const merged = [...remoteAssets];
+      DEFAULT_2DQH_ASSETS.forEach(function(def){
+        if(!remoteMap.has(def.id)){
+          merged.push(def);
+        }
+      });
+
+      assets = merged;
       hasRemoteSuccess = true;
       try {
         localStorage.setItem('labstock_real_cache_assets', JSON.stringify(assets));
@@ -244,11 +389,16 @@ async function loadData(){
       const cachedAssets = localStorage.getItem('labstock_real_cache_assets');
       if(cachedAssets){
         try {
-          assets = JSON.parse(cachedAssets);
+          const parsed = JSON.parse(cachedAssets);
+          assets = Array.isArray(parsed) && parsed.length ? parsed : [...DEFAULT_2DQH_ASSETS];
           loans = JSON.parse(localStorage.getItem('labstock_real_cache_loans') || '[]');
           const conn = $('connection');
           if(conn) { conn.textContent = '오프라인 (읽기 전용)'; conn.style.color = '#b45309'; }
-        } catch(e){}
+        } catch(e){
+          assets = [...DEFAULT_2DQH_ASSETS];
+        }
+      } else {
+        assets = [...DEFAULT_2DQH_ASSETS];
       }
       return;
     }
@@ -505,20 +655,37 @@ const LAB_EQUIPMENT_ALIASES = {
   '전원공급기': ['power supply', 'powersupply', 'psu', 'power', 'p'],
   '캘리퍼스': ['calipers', 'caliper', 'vernier', 'c'],
   '버니어 캘리퍼스': ['calipers', 'caliper', 'vernier', 'c'],
+  '육각렌치': ['hex wrench', 'allen key', 'allen wrench', 'hex', 'wrench', 'h', 'w'],
+  '육각렌치 세트': ['hex wrench set', 'hex wrench', 'allen wrench', 'allen key', 'hex', 'wrench', 'h', 'w'],
+  '토크 드라이버': ['torque driver', 'torque screwdriver', 'torque', 'driver', 't', 'd'],
+  '토크 드라이버 세트': ['torque driver set', 'torque driver', 'torque screwdriver', 'torque', 'driver', 't', 'd'],
+  '토크드라이버': ['torque driver', 'torque screwdriver', 'torque', 'driver', 't', 'd'],
+  '고정밀 esd 핀셋 세트': ['tweezers', 'tweezer', 'esd tweezers', 'pinset', 't', 'p'],
+  '핀셋': ['tweezers', 'tweezer', 'esd tweezers', 'pinset', 't', 'p'],
   '광학현미경': ['microscope', 'optical microscope', 'om', 'scope', 'm'],
   '현미경': ['microscope', 'optical microscope', 'om', 'scope', 'm'],
   '가열교반기': ['hotplate', 'stirrer', 'heater', 'h', 's'],
   '핫플레이트': ['hotplate', 'stirrer', 'heater', 'h'],
+  '핫플레이트 가열교반기': ['hotplate', 'stirrer', 'heater', 'h'],
   '스핀코터': ['spin coater', 'spincoater', 'spin', 'coater', 's'],
+  '진공 척 스핀코터': ['spin coater', 'spincoater', 'spin', 'coater', 's'],
   '전자저울': ['balance', 'electronic balance', 'scale', 'b', 's'],
+  '정밀 분석 전자저울': ['balance', 'electronic balance', 'scale', 'b', 's'],
   '저울': ['balance', 'electronic balance', 'scale', 'b', 's'],
   '글러브박스': ['glovebox', 'glove box', 'gb', 'g'],
   '초음파세척기': ['sonicator', 'ultrasonic', 'cleaner', 'sonic', 'u', 's'],
   '초음파': ['sonicator', 'ultrasonic', 'sonic', 'u', 's'],
+  '초음파 세척기': ['sonicator', 'ultrasonic', 'cleaner', 'sonic', 'u', 's'],
   '인두기': ['soldering iron', 'soldering', 'solder', 'iron', 's'],
+  '납땜': ['soldering iron', 'soldering station', 'soldering', 'solder', 's'],
+  '온도조절형 납땜 스테이션': ['soldering iron', 'soldering station', 'soldering', 'solder', 's'],
   '진공펌프': ['vacuum pump', 'pump', 'vacuum', 'p', 'v'],
+  '로터리 진공펌프': ['vacuum pump', 'pump', 'vacuum', 'p', 'v'],
   '펌프': ['pump', 'p'],
-  '칠러': ['chiller', 'cooler', 'c']
+  '온도계': ['thermometer', 'ir thermometer', 'temperature', 'fluke 62', 't'],
+  '비접촉 적외선 레이저 온도계': ['thermometer', 'ir thermometer', 'temperature', 'fluke 62', 't'],
+  '칠러': ['chiller', 'cooler', 'c'],
+  '순환식 저온 냉각 칠러': ['chiller', 'cooler', 'c']
 };
 
 function matchesSmartSearch(asset, query){
@@ -559,6 +726,12 @@ const EQUIPMENT_ICONS = {
 
   caliper: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="8" y="27" width="48" height="8" rx="1.5" fill="#94A3B8"/><line x1="16" y1="27" x2="16" y2="30" stroke="#64748B" stroke-width="1"/><line x1="20" y1="27" x2="20" y2="29" stroke="#64748B" stroke-width="0.8"/><line x1="24" y1="27" x2="24" y2="30" stroke="#64748B" stroke-width="1"/><line x1="28" y1="27" x2="28" y2="29" stroke="#64748B" stroke-width="0.8"/><line x1="32" y1="27" x2="32" y2="30" stroke="#64748B" stroke-width="1"/><path d="M8 27 L8 46 Q10 49 13 46 L13 35 L17 35 L17 27 Z" fill="#64748B"/><path d="M8 27 L8 14 Q10 12 12 14 L13 22 L16 27 Z" fill="#64748B"/><rect x="24" y="23" width="18" height="16" rx="3" fill="#1E293B"/><rect x="27" y="26" width="12" height="6" rx="1" fill="#BAE6FD"/><rect x="29" y="28" width="7" height="2" rx="0.5" fill="#0284C7"/><path d="M24 39 L24 47 Q26 50 28 47 L30 39 Z" fill="#475569"/></svg>',
 
+  hex_wrench: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="18" y="24" width="28" height="26" rx="4" fill="#C2272D"/><rect x="20" y="26" width="24" height="22" rx="2" fill="#991B1B"/><polygon points="32,30 38,33.5 38,40.5 32,44 26,40.5 26,33.5" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2"/><polygon points="32,32.5 36,35 36,39.5 32,42 28,39.5 28,35" fill="#1E293B"/><path d="M23 24 L23 16 L27 16" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M29 24 L29 13 L35 13" stroke="#CBD5E1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M35 24 L35 10 L43 10" stroke="#94A3B8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M41 24 L41 7 L51 7" stroke="#64748B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="51" cy="7" r="2.2" fill="#334155"/><polygon points="51,5.5 52.3,6.3 52.3,7.7 51,8.5 49.7,7.7 49.7,6.3" fill="#F8FAFC"/><line x1="23" y1="50" x2="23" y2="54" stroke="#E2E8F0" stroke-width="2.5" stroke-linecap="round"/><line x1="29" y1="50" x2="29" y2="56" stroke="#CBD5E1" stroke-width="3" stroke-linecap="round"/><line x1="35" y1="50" x2="35" y2="58" stroke="#94A3B8" stroke-width="3.5" stroke-linecap="round"/><line x1="41" y1="50" x2="41" y2="60" stroke="#64748B" stroke-width="4" stroke-linecap="round"/></svg>',
+
+  torque_driver: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><path d="M10 27 C10 23 13 21 17 21 L27 21 C30 21 32 23 33 26 L33 38 C32 41 30 43 27 43 L17 43 C13 43 10 41 10 37 Z" fill="#1E293B"/><ellipse cx="12" cy="32" rx="3" ry="7" fill="#334155"/><rect x="18" y="23" width="9" height="18" rx="2" fill="#C2272D"/><rect x="19.5" y="27" width="6" height="10" rx="1" fill="#FEF2F2" stroke="#991B1B" stroke-width="0.8"/><line x1="22.5" y1="28" x2="22.5" y2="36" stroke="#C2272D" stroke-width="1"/><text x="20.5" y="34" font-family="monospace" font-size="4" font-weight="bold" fill="#0F172A">1.2</text><rect x="33" y="25" width="4" height="14" rx="1" fill="#64748B"/><line x1="35" y1="25" x2="35" y2="39" stroke="#334155" stroke-width="0.8" stroke-dasharray="1 1"/><rect x="37" y="29.5" width="13" height="5" fill="#94A3B8"/><line x1="37" y1="31" x2="50" y2="31" stroke="#E2E8F0" stroke-width="1"/><rect x="49" y="28" width="5" height="8" rx="1" fill="#475569"/><path d="M54 30 L59 31 L60 32 L59 33 L54 34 Z" fill="#334155"/><rect x="18" y="47" width="10" height="3" rx="0.8" fill="#64748B"/><polygon points="28,47 31,48.5 28,50" fill="#334155"/><rect x="32" y="47" width="10" height="3" rx="0.8" fill="#64748B"/><polygon points="42,47 45,48.5 42,50" fill="#334155"/></svg>',
+
+  tweezers: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><path d="M12 18 C12 14 16 12 20 12 L24 12 C26 12 28 14 28 17 L22 46 C21 52 19 54 18 54 C17 54 16 52 16 48 Z" fill="#64748B"/><path d="M36 18 C36 14 32 12 28 12 L24 12 C22 12 20 14 20 17 L26 46 C27 52 29 54 30 54 C31 54 32 52 32 48 Z" fill="#94A3B8"/><line x1="18" y1="28" x2="22" y2="28" stroke="#334155" stroke-width="1"/><line x1="18" y1="31" x2="23" y2="31" stroke="#334155" stroke-width="1"/><line x1="19" y1="34" x2="24" y2="34" stroke="#334155" stroke-width="1"/><rect x="18" y="14" width="12" height="6" rx="2" fill="#1E293B"/><circle cx="24" cy="52" r="1.5" fill="#C2272D"/><text x="36" y="32" font-family="sans-serif" font-size="6.5" font-weight="bold" fill="#0284C7">ESD</text><text x="36" y="40" font-family="monospace" font-size="5" fill="#64748B">#5</text></svg>',
+
   microscope: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><ellipse cx="32" cy="53" rx="18" ry="4" fill="#334155"/><rect x="28" y="47" width="8" height="4" rx="1.5" fill="#E2E8F0"/><circle cx="32" cy="46" r="2.5" fill="#F59E0B"/><rect x="20" y="36" width="24" height="3" rx="1.5" fill="#1E293B"/><path d="M38 52 C46 52 48 30 40 22 C37 19 33 21 33 24" stroke="#475569" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="41" cy="38" r="4.5" fill="#94A3B8" stroke="#334155" stroke-width="1.5"/><circle cx="28" cy="27" r="4" fill="#334155"/><rect x="25" y="29" width="3" height="6" rx="1" fill="#C2272D"/><rect x="29" y="29" width="3" height="4.5" rx="1" fill="#F59E0B"/><path d="M28 25 L23 13" stroke="#64748B" stroke-width="4.5" stroke-linecap="round"/><rect x="20" y="9" width="6" height="4" rx="1.5" fill="#1E293B"/></svg>',
 
   hotplate: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="12" y="22" width="40" height="32" rx="6" fill="#334155"/><rect x="14" y="14" width="36" height="16" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/><ellipse cx="32" cy="22" rx="12" ry="4" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1"/><rect x="18" y="34" width="13" height="8" rx="2" fill="#0F172A"/><rect x="20" y="37" width="8" height="2" rx="0.5" fill="#EF4444"/><circle cx="34" cy="38" r="2" fill="#DC2626"/><circle cx="43" cy="38" r="4" fill="#64748B" stroke="#94A3B8" stroke-width="1"/></svg>',
@@ -573,6 +746,10 @@ const EQUIPMENT_ICONS = {
 
   pump: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="12" y="24" width="26" height="24" rx="4" fill="#334155"/><line x1="16" y1="28" x2="16" y2="44" stroke="#475569" stroke-width="1.5"/><line x1="21" y1="28" x2="21" y2="44" stroke="#475569" stroke-width="1.5"/><line x1="26" y1="28" x2="26" y2="44" stroke="#475569" stroke-width="1.5"/><line x1="31" y1="28" x2="31" y2="44" stroke="#475569" stroke-width="1.5"/><rect x="36" y="28" width="16" height="18" rx="3" fill="#1E293B"/><circle cx="44" cy="20" r="6" fill="#F8FAFC" stroke="#334155" stroke-width="1.5"/><line x1="44" y1="20" x2="46" y2="17" stroke="#C2272D" stroke-width="1.2" stroke-linecap="round"/><path d="M20 24 L20 17 L34 17 L34 24" stroke="#64748B" stroke-width="3" stroke-linecap="round" fill="none"/></svg>',
 
+  chiller: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="14" y="16" width="36" height="38" rx="6" fill="#1E293B"/><rect x="16" y="18" width="32" height="34" rx="4" fill="#334155"/><rect x="19" y="21" width="16" height="10" rx="2" fill="#0F172A"/><text x="21" y="28.5" font-family="monospace" font-size="6.5" font-weight="bold" fill="#38BDF8">4.0°C</text><circle cx="41" cy="26" r="3" fill="#10B981"/><line x1="19" y1="36" x2="45" y2="36" stroke="#475569" stroke-width="1.5"/><line x1="19" y1="40" x2="45" y2="40" stroke="#475569" stroke-width="1.5"/><line x1="19" y1="44" x2="45" y2="44" stroke="#475569" stroke-width="1.5"/><rect x="22" y="10" width="5" height="7" rx="1.5" fill="#0284C7"/><rect x="37" y="10" width="5" height="7" rx="1.5" fill="#EF4444"/><circle cx="21" cy="54" r="2.5" fill="#0F172A"/><circle cx="43" cy="54" r="2.5" fill="#0F172A"/></svg>',
+
+  thermometer: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><path d="M18 20 C18 16 21 14 25 14 L42 14 C46 14 48 16 48 20 L48 30 C48 34 45 36 41 36 L34 36 L31 52 C30 55 27 57 24 56 C21 55 20 52 21 48 L25 36 L22 36 C19 36 18 33 18 30 Z" fill="#F59E0B"/><rect x="26" y="18" width="15" height="12" rx="2" fill="#0F172A"/><text x="28" y="26.5" font-family="monospace" font-size="6" font-weight="bold" fill="#EF4444">24.5°</text><circle cx="48" cy="22" r="3" fill="#1E293B"/><circle cx="48" cy="22" r="1.2" fill="#EF4444"/><line x1="51" y1="22" x2="57" y2="22" stroke="#EF4444" stroke-width="1.2" stroke-dasharray="1 1"/><circle cx="58" cy="22" r="1" fill="#EF4444"/></svg>',
+
   tool: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><path d="M16 48 L28 36" stroke="#C2272D" stroke-width="7" stroke-linecap="round"/><path d="M28 36 L44 20" stroke="#94A3B8" stroke-width="3.5" stroke-linecap="round"/><path d="M44 20 L48 16" stroke="#475569" stroke-width="2" stroke-linecap="round"/><path d="M20 18 L42 40 L38 46" stroke="#475569" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
 
   default: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><polygon points="32,14 46,22 46,38 32,46 18,38 18,22" fill="#FEF2F2" stroke="#C2272D" stroke-width="2"/><circle cx="32" cy="14" r="3" fill="#C2272D"/><circle cx="46" cy="22" r="3" fill="#58595B"/><circle cx="46" cy="38" r="3" fill="#C2272D"/><circle cx="32" cy="46" r="3" fill="#58595B"/><circle cx="18" cy="38" r="3" fill="#C2272D"/><circle cx="18" cy="22" r="3" fill="#58595B"/><circle cx="32" cy="30" r="5" fill="#C2272D"/><path d="M32 20 L32 25 M32 35 L32 40 M23 25 L27 28 M37 32 L41 35 M41 25 L37 28 M27 32 L23 35" stroke="#94A3B8" stroke-width="1.2"/></svg>'
@@ -580,6 +757,9 @@ const EQUIPMENT_ICONS = {
 
 function getEquipmentCategoryKey(assetName, category){
   const text = ((assetName || '') + ' ' + (category || '')).toLowerCase();
+  if(/육각|allen|hex.*wrench|l.*렌치/.test(text)) return 'hex_wrench';
+  if(/토크|torque|드라이버|driver/.test(text)) return 'torque_driver';
+  if(/핀셋|tweezer|esd/.test(text)) return 'tweezers';
   if(/멀티미터|multimeter|dmm|테스터|tester|전압계/.test(text)) return 'multimeter';
   if(/오실로스코프|oscilloscope|scope|dso/.test(text)) return 'oscilloscope';
   if(/파워서플라이|전원공급기|power\s*supply|psu/.test(text)) return 'powersupply';
@@ -590,8 +770,10 @@ function getEquipmentCategoryKey(assetName, category){
   if(/저울|balance|scale/.test(text)) return 'scale';
   if(/초음파|세척기|sonicator|ultrasonic/.test(text)) return 'sonicator';
   if(/인두기|납땜|soldering/.test(text)) return 'soldering';
-  if(/진공펌프|펌프|pump|vacuum/.test(text)) return 'pump';
-  if(/드라이버|렌치|토크|공구|wrench|driver|pliers/.test(text)) return 'tool';
+  if(/진공펌프|로터리|펌프|pump|vacuum/.test(text)) return 'pump';
+  if(/칠러|chiller|냉각/.test(text)) return 'chiller';
+  if(/온도계|thermometer|fluke 62|적외선/.test(text)) return 'thermometer';
+  if(/렌치|공구|wrench|pliers/.test(text)) return 'tool';
   return 'default';
 }
 
@@ -662,6 +844,7 @@ function renderInventory(){
               '<span class="status ' + st + '">' + statusLabel(st) + '</span>' +
             '</div>' +
             '<b class="asset-name">' + safe(a.name) + '</b>' +
+            '<span class="asset-id hide-mobile">' + safe(a.id) + '</span>' +
             '<div class="asset-loc">📍 ' + safe(loc) + '</div>' +
           '</div>' +
         '</td>' +
@@ -1549,6 +1732,10 @@ function friendlyError(err){
   if(code === '23505'){
     if(modalMode === 'borrow') return '이미 다른 사람이 대여한 비품입니다. 목록을 새로고침했습니다.';
     if(modalMode === 'asset') return '이미 사용 중인 식별번호입니다.';
+  }
+
+  if(code === '23503'){
+    return '선택하신 비품이 데이터베이스에 등록되어 있지 않습니다. seed_2dqh_assets.sql 스크립트를 Supabase SQL Editor에서 실행해 주세요.';
   }
 
   if(code === '42501'){
