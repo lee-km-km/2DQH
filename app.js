@@ -225,6 +225,9 @@ async function loadData(){
     if(!results[0].error && Array.isArray(results[0].data)){
       assets = results[0].data;
       hasRemoteSuccess = true;
+      try {
+        localStorage.setItem('labstock_real_cache_assets', JSON.stringify(assets));
+      } catch(e){}
     } else if(results[0].error){
       console.warn('Supabase assets 조회 실패:', results[0].error);
     }
@@ -232,20 +235,26 @@ async function loadData(){
     if(!results[1].error && Array.isArray(results[1].data)){
       loans = results[1].data;
       hasRemoteSuccess = true;
+      try {
+        localStorage.setItem('labstock_real_cache_loans', JSON.stringify(loans));
+      } catch(e){}
     } else if(results[1].error){
       console.warn('Supabase loans 조회 실패 (빈 목록 유지):', results[1].error);
       loans = [];
     }
 
     if(!hasRemoteSuccess){
-      console.warn('Supabase DB 연결 실패, 로컬 테스트 모드로 전환합니다.');
-      loadLocalStorage();
+      console.warn('Supabase DB 연결 실패, 캐시된 실제 데이터를 로드합니다.');
+      const cachedAssets = localStorage.getItem('labstock_real_cache_assets');
+      if(cachedAssets){
+        try {
+          assets = JSON.parse(cachedAssets);
+          loans = JSON.parse(localStorage.getItem('labstock_real_cache_loans') || '[]');
+          const conn = $('connection');
+          if(conn) { conn.textContent = '오프라인 (읽기 전용)'; conn.style.color = '#b45309'; }
+        } catch(e){}
+      }
       return;
-    }
-
-    // 만약 DB의 assets가 0개라면 기본 테스트 비품 제공
-    if(assets.length === 0){
-      assets = DEFAULT_MOCK_ASSETS;
     }
 
     // 원격 Supabase 정상 연동 확인 -> 로컬 모드 해제
@@ -626,6 +635,34 @@ function isMyLoan(l){
 // 관리자 또는 해당 대여를 등록한 본인(대여한 브라우저)만 반납/수정 가능
 function canManageLoan(l){
   return isAdmin() || isMyLoan(l);
+}
+
+// 본인 기기(client_id) 또는 지정한 이름 기준 3일 이상 미반납(연체) 비품 탐지
+function getMyOverdueLoan(inputName = null){
+  const now = Date.now();
+  const myClientId = getClientId();
+  const myIds = getMyLoanIds();
+  const normName = inputName ? inputName.trim().toLowerCase() : '';
+
+  for(let i=0; i<loans.length; i++){
+    const l = loans[i];
+    if(l.returned_at) continue;
+
+    const isMyDevice = (l.client_id && l.client_id === myClientId) || myIds.has(String(l.id));
+    const isSameName = normName && l.borrower_name && l.borrower_name.trim().toLowerCase() === normName;
+
+    if(isMyDevice || isSameName){
+      const borrowedTime = new Date(l.borrowed_at).getTime();
+      const dueTime = l.due_date ? new Date(l.due_date).getTime() : (borrowedTime + 3 * 86400000);
+      const isOverdue = (now > dueTime) || (now - borrowedTime > 3 * 86400000);
+
+      if(isOverdue){
+        const days = Math.max(1, Math.floor((now - borrowedTime) / 86400000));
+        return { isLocked: true, loan: l, days: days };
+      }
+    }
+  }
+  return { isLocked: false, loan: null, days: 0 };
 }
 
 function renderLoans(){
@@ -1014,50 +1051,45 @@ function openModal(mode, id){
       return statusFor(x) === 'available';
     });
 
-    selectedBorrowCategory = (id && assetFor(id)) ? topLevelCategory(assetFor(id)) : 'all';
+    const preselectedAsset = id ? assetFor(id) : null;
+    const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
 
-    if(selectedBorrowCategory !== 'all' && !avail.some(function(x){
-      return topLevelCategory(x) === selectedBorrowCategory;
-    })){
-      selectedBorrowCategory = 'all';
+    // 연체 상태 사전 점검 (현재 기기/사용자 기준)
+    const overdueCheck = getMyOverdueLoan(lastBorrower);
+    if(overdueCheck.isLocked){
+      toast('⚠️ 대여 제한: 미반납된 [' + fmtName(overdueCheck.loan.asset_id) + '] 비품을 먼저 반납해 주세요 (' + overdueCheck.days + '일 경과).', 5000);
+      closeModal();
+      setTimeout(function(){ openModal('return', overdueCheck.loan.id); }, 400);
+      return;
     }
 
-    const filteredAvail = avail.filter(function(x){
-      return selectedBorrowCategory === 'all' ||
-        topLevelCategory(x) === selectedBorrowCategory;
-    });
-
-    let optHtml = '';
-
-    if(filteredAvail.length > 0){
-      for(let i=0; i<filteredAvail.length; i++){
-        const x = filteredAvail[i];
-        const isSel = (x.id === id) ? 'selected' : '';
-        optHtml += '<option value="' + safe(x.id) + '" ' + isSel + '>' +
-          safe(x.id) + ' · ' + safe(x.name) + ' (' + safe(x.location || '위치 미지정') + ')' + '</option>';
-      }
-    } else if(avail.length > 0){
-      optHtml = '<option value="" disabled selected>선택한 분류에 대여 가능한 비품이 없습니다 ("전체" 탭을 눌러보세요)</option>';
+    if(preselectedAsset){
+      parts.push('<div class="selected-asset-box">');
+      parts.push('<div class="selected-asset-badge"><span class="status available">대여 가능</span><span class="asset-id">' + safe(preselectedAsset.id) + '</span></div>');
+      parts.push('<div class="selected-asset-title">' + safe(preselectedAsset.name) + '</div>');
+      parts.push('<div class="selected-asset-sub">📍 보관 위치: ' + safe(preselectedAsset.location || '연구실 지정 장소') + '</div>');
+      parts.push('</div>');
+      parts.push('<input type="hidden" name="asset_id" value="' + safe(preselectedAsset.id) + '">');
     } else {
-      optHtml = '<option value="" disabled selected>대여 가능한 비품이 없습니다 (모두 대여 중이거나 비품 없음)</option>';
-    }
-
-    parts.push(categoryTabsHtml(selectedBorrowCategory, 'data-borrow-category'));
-    parts.push('<div class="form-grid">');
-    parts.push('<label class="field full">대여 비품 선택 *<select name="asset_id" required ' + (filteredAvail.length === 0 ? 'disabled' : '') + '>' + optHtml + '</select></label>');
-    parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" placeholder="홍길동 연구원"></label>');
-    parts.push('<label class="field">대여 시작일 *<input name="borrowed_at" type="date" required value="' + today() + '"></label>');
-    parts.push('<label class="field">반납 예정일 *<input name="due_date" type="date" required min="' + today() + '" value="' + today() + '"></label>');
-    parts.push('<label class="field full">사용 목적 / 메모<textarea name="memo" rows="2" maxlength="500" placeholder="선택 입력"></textarea><small>대여 기록은 공용 목록에 저장되며, 반납·수정은 대여한 본인(이 브라우저)만 할 수 있습니다.</small></label>');
-    parts.push('</div>');
-
-    if(avail.length === 0){
-      parts.push('<div style="margin-top:14px; padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; font-size:12px; color:#475569; line-height:1.6;">');
-      parts.push('⚠️ 현재 모든 비품이 대여 중이거나 등록된 비품이 없습니다.<br>');
-      parts.push('기존 대여 건을 반납 처리하거나, 아래 버튼을 눌러 테스트 비품 7종을 복구할 수 있습니다.<br>');
-      parts.push('<button type="button" class="btn secondary" data-reset-mock="true" style="margin-top:8px; padding:4px 10px; font-size:12px; cursor:pointer;">테스트 비품 데이터 복구</button>');
+      let optHtml = '';
+      if(avail.length > 0){
+        for(let i=0; i<avail.length; i++){
+          const x = avail[i];
+          optHtml += '<option value="' + safe(x.id) + '">' + safe(x.id) + ' · ' + safe(x.name) + ' (' + safe(x.location || '위치 미지정') + ')' + '</option>';
+        }
+      } else {
+        optHtml = '<option value="" disabled selected>대여 가능한 비품이 없습니다 (모두 대여 중)</option>';
+      }
+      parts.push('<div class="form-grid">');
+      parts.push('<label class="field full">대여 비품 선택 *<select name="asset_id" required ' + (avail.length === 0 ? 'disabled' : '') + '>' + optHtml + '</select></label>');
       parts.push('</div>');
     }
+
+    parts.push('<div class="form-grid" style="margin-top:10px;">');
+    parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(lastBorrower) + '"></label>');
+    parts.push('<label class="field full">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)"></label>');
+    parts.push('</div>');
+    parts.push('<div class="borrow-fast-notice">⚡ 기본 당일 반납 기준이며, 3일 이상 미반납 시 추가 대여가 제한됩니다.</div>');
   } else if(mode === 'consumable'){
     if(!isAdmin()){
       parts.push('<p>소모품 등록 및 수정은 관리자 로그인이 필요합니다.</p>');
@@ -1560,16 +1592,36 @@ async function saveForm(e){
       session = currentSession;
       const uid = (currentSession && currentSession.user) ? currentSession.user.id : null;
 
-      const insRes = await db.from('loans').insert({
+      // 1. 대여자 이름 로컬 기억
+      if(v.borrower_name){
+        localStorage.setItem('labstock_last_borrower_name', v.borrower_name.trim());
+      }
+
+      // 2. 제출 시 연체 재점검 (우회 입력 방지)
+      const submitOverdue = getMyOverdueLoan(v.borrower_name);
+      if(submitOverdue.isLocked){
+        throw new Error('미반납된 [' + fmtName(submitOverdue.loan.asset_id) + '] 비품을 먼저 반납해야 추가 대여가 가능합니다 (' + submitOverdue.days + '일 경과).');
+      }
+
+      const insPayload = {
         asset_id: v.asset_id,
         borrower_name: v.borrower_name.trim(),
-        borrowed_at: v.borrowed_at,
-        due_date: v.due_date,
+        borrowed_at: v.borrowed_at || today(),
+        due_date: v.due_date || today(),
         memo: (v.memo || '').trim(),
+        client_id: getClientId(),
         user_id: uid
-      }).select('id');
+      };
 
-      if(insRes.error) throw insRes.error;
+      const insRes = await db.from('loans').insert(insPayload).select('id');
+
+      if(insRes.error){
+        if(insRes.error.message && insRes.error.message.includes('OVERDUE_LOCKOUT')){
+          const cleanMsg = insRes.error.message.replace(/^.*OVERDUE_LOCKOUT:\s*/, '');
+          throw new Error(cleanMsg);
+        }
+        throw insRes.error;
+      }
       if(insRes.data && insRes.data.length && insRes.data[0].id){
         recordMyLoanId(insRes.data[0].id);
       }
@@ -1651,6 +1703,16 @@ function exportHistoryCsv(){
 }
 
 function bindEvents(){
+  window.addEventListener('online', function(){
+    toast('네트워크가 복구되었습니다. 최신 데이터를 동기화합니다.');
+    loadData();
+  });
+  window.addEventListener('offline', function(){
+    toast('네트워크 연결이 끊어졌습니다. 읽기 전용 캐시로 동작합니다.');
+    const conn = $('connection');
+    if(conn){ conn.textContent = '오프라인 (읽기 전용)'; conn.style.color = '#b45309'; }
+  });
+
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
     el.addEventListener('click', function(){
       showView(el.dataset.view);
