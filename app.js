@@ -571,11 +571,11 @@ function renderInventory(){
         '<div class="banner-info">' +
           '<span class="banner-icon">💡</span>' +
           '<div>' +
-            '<b>' + safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 대여 중입니다</b>' +
-            '<small>사용이 끝나셨다면 다른 연구원을 위해 반납해 주세요 :)</small>' +
+            '<b>' + safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 사용 중입니다</b>' +
+            '<small>사용 완료 후 다음 연구원을 위해 반납해 주세요.</small>' +
           '</div>' +
         '</div>' +
-        '<button class="text-btn btn-banner-return" data-return="' + l.id + '">✓ 지금 반납하기</button>' +
+        '<button class="text-btn btn-banner-return" data-return="' + l.id + '">✓ 반납하기</button>' +
       '</div>';
     }
 
@@ -1023,9 +1023,9 @@ function openModal(mode, id){
   if(mode === 'asset'){
     titleText = a ? '비품 정보 수정' : '비품 등록';
   } else if(mode === 'borrow'){
-    titleText = '대여';
+    titleText = '비품 대여 신청';
   } else if(mode === 'return'){
-    titleText = '반납 처리';
+    titleText = '비품 반납';
   } else if(mode === 'editLoan'){
     titleText = '대여 기록 수정';
   } else if(mode === 'consumable'){
@@ -1120,7 +1120,7 @@ function openModal(mode, id){
     parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(lastBorrower) + '"></label>');
     parts.push('<label class="field full">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)"></label>');
     parts.push('</div>');
-    parts.push('<div class="borrow-fast-notice">💡 연구실 비품은 다 쓰신 후 언제든 편하게 반납해 주세요 :)</div>');
+    parts.push('<div class="borrow-fast-notice">💡 다른 연구원을 위해 사용 완료 후 제자리에 반납해 주세요.</div>');
   } else if(mode === 'consumable'){
     if(!isAdmin()){
       parts.push('<p>소모품 등록 및 수정은 관리자 로그인이 필요합니다.</p>');
@@ -1692,7 +1692,13 @@ async function saveForm(e){
     }
 
     closeModal();
-    toast('저장했습니다.');
+    if(modalMode === 'borrow'){
+      toast("✓ '" + fmtName(v.asset_id) + "' 대여가 완료되었습니다.");
+    } else if(modalMode === 'return'){
+      toast('✓ 반납 처리되었습니다. 감사합니다.');
+    } else {
+      toast('✓ 저장되었습니다.');
+    }
     await loadData();
   } catch(err){
     console.error('저장/인증 실패:', err);
