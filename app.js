@@ -721,32 +721,42 @@ function canManageLoan(l){
   return isAdmin() || isMyLoan(l);
 }
 
-// 본인 기기(client_id) 또는 지정한 이름 기준 3일 이상 미반납(연체) 비품 탐지
-function getMyOverdueLoan(inputName = null){
-  const now = Date.now();
+// 현재 사용자/기기 기준 활성 대여(미반납) 목록 조회
+function getMyActiveLoans(borrowerName = null){
   const myClientId = getClientId();
   const myIds = getMyLoanIds();
-  const normName = inputName ? inputName.trim().toLowerCase() : '';
+  const lastName = localStorage.getItem('labstock_last_borrower_name') || '';
+  const searchName = (borrowerName || lastName).trim().toLowerCase();
 
-  for(let i=0; i<loans.length; i++){
-    const l = loans[i];
-    if(l.returned_at) continue;
-
-    const isMyDevice = (l.client_id && l.client_id === myClientId) || myIds.has(String(l.id));
-    const isSameName = normName && l.borrower_name && l.borrower_name.trim().toLowerCase() === normName;
-
-    if(isMyDevice || isSameName){
-      const borrowedTime = new Date(l.borrowed_at).getTime();
-      const dueTime = l.due_date ? new Date(l.due_date).getTime() : (borrowedTime + 3 * 86400000);
-      const isOverdue = (now > dueTime) || (now - borrowedTime > 3 * 86400000);
-
-      if(isOverdue){
-        const days = Math.max(1, Math.floor((now - borrowedTime) / 86400000));
-        return { isLocked: true, loan: l, days: days };
-      }
+  return loans.filter(function(l){
+    if(l.returned_at) return false;
+    if(myIds.has(String(l.id))) return true;
+    if(l.client_id && l.client_id === myClientId) return true;
+    if(l.user_id && session && session.user && l.user_id === session.user.id) return true;
+    if(searchName && l.borrower_name && l.borrower_name.trim().toLowerCase() === searchName){
+      return true;
     }
-  }
-  return { isLocked: false, loan: null, days: 0 };
+    return false;
+  });
+}
+
+// 24시간 이상 경과한 미반납 비품 목록 조회 (오래된 순 정렬)
+function getMy24hOverdueLoans(borrowerName = null){
+  const active = getMyActiveLoans(borrowerName);
+  const now = Date.now();
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+  return active.filter(function(l){
+    const dateStr = l.borrowed_at || l.created_at;
+    if(!dateStr) return false;
+    const bTime = new Date(dateStr).getTime();
+    if(isNaN(bTime)) return false;
+    return (now - bTime) >= ONE_DAY_MS;
+  }).sort(function(a, b){
+    const tA = new Date(a.borrowed_at || a.created_at).getTime() || 0;
+    const tB = new Date(b.borrowed_at || b.created_at).getTime() || 0;
+    return tA - tB;
+  });
 }
 
 function renderLoans(){
@@ -1138,14 +1148,29 @@ function openModal(mode, id){
     const preselectedAsset = id ? assetFor(id) : null;
     const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
 
-    // 미반납 비품 사전 점검 (친절한 리마인드)
-    const overdueCheck = getMyOverdueLoan(lastBorrower);
-    if(overdueCheck.isLocked){
-      toast('💡 대여 중인 [' + fmtName(overdueCheck.loan.asset_id) + '] 비품이 있어요! 사용이 끝나셨다면 먼저 반납 처리해 드릴게요 :)', 4500);
+    // 1. 기본 동시 대여 제한: 1인당 최대 3개까지
+    const activeLoans = getMyActiveLoans(lastBorrower);
+    if(activeLoans.length >= 3){
+      toast('💡 비품은 1인당 최대 3개까지 동시 대여 가능합니다. 기존 비품을 먼저 반납해 주세요 :)', 4000);
       closeModal();
-      setTimeout(function(){ openModal('return', overdueCheck.loan.id); }, 350);
+      setTimeout(function(){ openModal('return', activeLoans[0].id); }, 350);
       return;
     }
+
+    // 2. 24시간 이상 경과 비품이 2개 이상일 때: 반납 팝업 먼저 노출 (단, 취소 시 대여창으로 복귀)
+    if(!window.__bypass24hPrompt){
+      const overdue24h = getMy24hOverdueLoans(lastBorrower);
+      if(overdue24h.length >= 2){
+        window.__pendingBorrowAssetId = id || null;
+        window.__isPromptingReturnBeforeBorrow = true;
+        closeModal();
+        setTimeout(function(){
+          openModal('return', overdue24h[0].id);
+        }, 120);
+        return;
+      }
+    }
+    window.__bypass24hPrompt = false;
 
     if(preselectedAsset){
       parts.push('<div class="selected-asset-box">');
@@ -1298,6 +1323,12 @@ function openModal(mode, id){
     parts.push('<label class="field full">메모<textarea name="memo" rows="2" maxlength="500">' + safe(lMemo) + '</textarea></label>');
     parts.push('</div>');
   } else if(mode === 'return'){
+    if(window.__isPromptingReturnBeforeBorrow){
+      parts.push('<div class="borrow-fast-notice" style="background:var(--bg-subtle); border-left:4px solid var(--brand-red); margin-bottom:14px; padding:10px 14px; font-size:13px; line-height:1.5; border-radius:8px;">');
+      parts.push('<b style="color:var(--brand-red);">⏰ 24시간 이상 대여 중인 비품이 2개 이상 있습니다.</b><br>');
+      parts.push('먼저 반납하시겠습니까? <b>[취소]</b>를 누르면 신규 비품 대여 화면으로 바로 이동합니다.');
+      parts.push('</div>');
+    }
     parts.push('<p><b>' + safe(assetObjName) + '</b> · ' + safe(lName) + '</p>');
     parts.push('<div class="form-grid">');
     parts.push('<label class="field full">실제 반납일 *<input name="returned_at" type="date" required value="' + today() + '" min="' + lStart + '"></label>');
@@ -1424,6 +1455,17 @@ function openBestReorder(){
 function closeModal(){
   $('modalBackdrop').classList.remove('open');
   $('modalForm').reset();
+
+  if(window.__isPromptingReturnBeforeBorrow){
+    window.__isPromptingReturnBeforeBorrow = false;
+    const targetAssetId = window.__pendingBorrowAssetId;
+    window.__pendingBorrowAssetId = null;
+    window.__bypass24hPrompt = true; // 취소 누르면 대여창으로 바로 이동
+    setTimeout(function(){
+      openModal('borrow', targetAssetId);
+    }, 120);
+    return;
+  }
 
   if(window.__labstockFromHome){
     window.__labstockFromHome = false;
@@ -1684,10 +1726,10 @@ async function saveForm(e){
         localStorage.setItem('labstock_last_borrower_name', v.borrower_name.trim());
       }
 
-      // 2. 제출 시 기존 대여 비품 친절 안내
-      const submitOverdue = getMyOverdueLoan(v.borrower_name);
-      if(submitOverdue.isLocked){
-        throw new Error('대여 중인 [' + fmtName(submitOverdue.loan.asset_id) + '] 비품이 아직 반납되지 않았어요. 기존 비품을 먼저 반납해 주세요 :)');
+      // 2. 동시 대여 개수 제한: 1인당 최대 3개까지
+      const activeLoans = getMyActiveLoans(v.borrower_name);
+      if(activeLoans.length >= 3){
+        throw new Error('비품은 1인당 최대 3개까지 대여 가능합니다. 현재 ' + activeLoans.length + '개 비품을 대여 중이므로 기존 비품을 반납 후 대여해 주세요.');
       }
 
       const insPayload = {
@@ -1745,6 +1787,12 @@ async function saveForm(e){
       requireRows(result, '수정되지 않았습니다. 대여한 기기/브라우저인지 확인하거나 관리자에게 요청하세요.');
     } else {
       throw new Error('알 수 없는 작업입니다.');
+    }
+
+    if(modalMode === 'return' || modalMode === 'quickReturn'){
+      window.__isPromptingReturnBeforeBorrow = false;
+      window.__pendingBorrowAssetId = null;
+      window.__bypass24hPrompt = false;
     }
 
     closeModal();

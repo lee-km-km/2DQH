@@ -72,52 +72,9 @@ ALTER TABLE public.loans
 ALTER TABLE public.loans
   ADD CONSTRAINT loans_date_validity CHECK (due_date >= borrowed_at);
 
--- 6. 장기 연체자(3일 이상 미반납) 신규 대여 차단 트리거
-CREATE INDEX IF NOT EXISTS idx_loans_overdue_lookup
-  ON public.loans (borrower_name, client_id)
-  WHERE returned_at IS NULL;
-
-CREATE OR REPLACE FUNCTION trg_check_overdue_lockout()
-RETURNS TRIGGER AS $$
-DECLARE
-  v_overdue_asset_name text;
-  v_overdue_days int;
-BEGIN
-  SELECT 
-    COALESCE(a.name, l.asset_id),
-    GREATEST(1, EXTRACT(DAY FROM (NOW() - l.borrowed_at))::int)
-  INTO 
-    v_overdue_asset_name,
-    v_overdue_days
-  FROM public.loans l
-  LEFT JOIN public.assets a ON a.id = l.asset_id
-  WHERE l.returned_at IS NULL
-    AND (
-      TRIM(LOWER(l.borrower_name)) = TRIM(LOWER(NEW.borrower_name))
-      OR (NEW.client_id IS NOT NULL AND l.client_id = NEW.client_id)
-    )
-    AND (
-      NOW() > l.due_date 
-      OR NOW() - l.borrowed_at > INTERVAL '3 days'
-    )
-  ORDER BY l.borrowed_at ASC
-  LIMIT 1;
-
-  IF FOUND THEN
-    RAISE EXCEPTION 'OVERDUE_LOCKOUT: 대여 중인 [%] 비품이 아직 반납되지 않았어요. 기존 비품을 먼저 반납해 주세요 :)',
-      v_overdue_asset_name
-      USING ERRCODE = '23514';
-  END IF;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
+-- 6. 장기 연체자 강제 차단 트리거 해제 (연구소 환경: 최대 3개 대여 및 24시간 알림은 웹앱에서 유연하게 제어)
 DROP TRIGGER IF EXISTS check_overdue_before_loan ON public.loans;
-CREATE TRIGGER check_overdue_before_loan
-BEFORE INSERT ON public.loans
-FOR EACH ROW
-EXECUTE FUNCTION trg_check_overdue_lockout();
+DROP FUNCTION IF EXISTS trg_check_overdue_lockout();
 
 -- 7. 실시간(Realtime) 자동 반영 활성화
 DO $$
