@@ -22,87 +22,23 @@ const $ = function(id){ return document.getElementById(id); };
 const ENABLE_CONSUMABLES = false;
 let isLocalMode = false;
 
-// 로컬 테스트용 기본 비품 7종 (모든 대분류 카테고리 포함, 오프라인/DB 미연결 시 즉시 사용 가능)
-const DEFAULT_MOCK_ASSETS = [
-  {
-    id: 'EQ-001',
-    name: '디지털 정밀 오실로스코프 (100MHz)',
-    category: '전기·전자',
-    location: '제1연구실 랙 B-3',
-    status: 'available',
-    note: '프로브 2개 및 전원 케이블 포함'
-  },
-  {
-    id: 'EQ-002',
-    name: '디지털 멀티미터 (Fluke 87V)',
-    category: '측정공구',
-    location: '제1연구실 서랍 A-1',
-    status: 'available',
-    note: '정밀 전압/전류 측정기'
-  },
-  {
-    id: 'EQ-003',
-    name: '정밀 버니어 캘리퍼스 (Mitutoyo 150mm)',
-    category: '측정공구',
-    location: '제1연구실 서랍 A-2',
-    status: 'available',
-    note: '외측/내측/깊이 정밀 측정'
-  },
-  {
-    id: 'EQ-004',
-    name: '전동 정밀 드라이버 세트 (BOSCH Go 2)',
-    category: '공구',
-    location: '공구함 B-1',
-    status: 'available',
-    note: '정밀 비트 32종 포함'
-  },
-  {
-    id: 'EQ-005',
-    name: '마이크로 피펫 세트 (0.5~1000μL)',
-    category: '실험장비',
-    location: '화학분석실 선반 C',
-    status: 'available',
-    note: '교정 성적서 포함'
-  },
-  {
-    id: 'EQ-006',
-    name: '광학 현미경 (Olympus CX23)',
-    category: '실험장비',
-    location: '현미경실 테이블 1',
-    status: 'available',
-    note: '대물렌즈 4x/10x/40x/100x'
-  },
-  {
-    id: 'EQ-007',
-    name: '실험실용 보안경 및 내화학 장갑 세트',
-    category: '안전용품',
-    location: '안전장비 보관함 S-1',
-    status: 'available',
-    note: '보안경 5개, 내화학 장갑 M/L 각 2팩'
-  }
-];
+// 프로덕션 모드: 로컬 목 데이터 비활성화 (Supabase DB 전용)
+const DEFAULT_MOCK_ASSETS = [];
 
 function loadLocalStorage(forceReset){
-  isLocalMode = true;
+  isLocalMode = false;
   const storedAssets = localStorage.getItem('labstock_local_assets');
   const storedLoans = localStorage.getItem('labstock_local_loans');
 
   if(!forceReset && storedAssets){
     try {
       const parsed = JSON.parse(storedAssets);
-      if(Array.isArray(parsed) && parsed.length > 0){
-        assets = parsed;
-      } else {
-        assets = JSON.parse(JSON.stringify(DEFAULT_MOCK_ASSETS));
-        localStorage.setItem('labstock_local_assets', JSON.stringify(assets));
-      }
+      assets = Array.isArray(parsed) ? parsed : [];
     } catch(e){
-      assets = JSON.parse(JSON.stringify(DEFAULT_MOCK_ASSETS));
-      localStorage.setItem('labstock_local_assets', JSON.stringify(assets));
+      assets = [];
     }
   } else {
-    assets = JSON.parse(JSON.stringify(DEFAULT_MOCK_ASSETS));
-    localStorage.setItem('labstock_local_assets', JSON.stringify(assets));
+    assets = [];
   }
 
   if(!forceReset && storedLoans){
@@ -113,6 +49,11 @@ function loadLocalStorage(forceReset){
       loans = [];
     }
   } else {
+    loans = [];
+  }
+
+  render();
+}
     loans = [];
     localStorage.setItem('labstock_local_loans', JSON.stringify(loans));
   }
@@ -2193,7 +2134,11 @@ async function initApp(){
 
   showView('inventory');
 
-  // 1. 화면 즉시 렌더링: 로컬 스토리지/Mock 데이터를 최우선 로드하여 비품 목록 및 대여창이 바로 뜨도록 보장
+  // 이전 로컬 테스트 잔여 목 데이터 캐시 제거 (Supabase DB 전용)
+  localStorage.removeItem('labstock_local_assets');
+  localStorage.removeItem('labstock_local_loans');
+
+  // 1. 초기 렌더링
   loadLocalStorage();
 
   // Supabase 클라이언트 확인 및 초기화
