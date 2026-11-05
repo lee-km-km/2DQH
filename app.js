@@ -1971,7 +1971,7 @@ function openModal(mode, id){
       parts.push('<label class="field">취급 일시 *<input name="used_at" type="datetime-local" required value="' + nowStr + '"></label>');
 
       parts.push('<label class="field">사용량 (취급량) *<input name="quantity" type="number" min="0.001" step="any" required placeholder="예: 25"></label>');
-      parts.push('<label class="field">단위 *<select name="unit"><option value="mL">mL (밀리리터)</option><option value="g">g (그램)</option><option value="mg">mg (밀리그램)</option><option value="L">L (리터)</option><option value="kg">kg (킬로그램)</option></select></label>');
+      parts.push('<label class="field">단위 *<select name="unit"><option value="mL">mL (밀리리터)</option><option value="mg">mg (밀리그램)</option><option value="g">g (그램)</option></select></label>');
 
       parts.push('<label class="field full">작업 장소 *<input name="work_location" required maxlength="100" value="화학실험실 흄후드" placeholder="예: 3층 화학실 흄후드 3번"></label>');
       parts.push('<label class="field full">취급 작업 내용 *<input name="work_description" required maxlength="200" placeholder="예: 2D Flake 박리 기판 세척 및 린스"></label>');

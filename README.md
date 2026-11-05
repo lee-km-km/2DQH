@@ -1,122 +1,98 @@
-# 2DQH 비품 (2DQH Equipment Management)
+# 2DQH 연구실 비품 대여 및 시약 위치 안내 시스템 (LabStock)
 
-**IBS 이차원양자헤테로구조체연구단(Center for 2D Quantum Heterostructures)** 연구원들을 위한 전용 비품 대여 및 소모품 관리 시스템입니다.
+> **IBS 이차원양자헤테로구조체연구단 (Center for 2D Quantum Heterostructures)**  
+> 연구실 공용 비품 대여·반납 관리 및 327종 시약 보관 위치 안내, 산업안전보건법 특별관리물질 취급일지 관리 통합 웹앱
 
-별도의 유료 백엔드 서버 없이 정적 호스팅([Vercel](https://vercel.com), GitHub Pages 등)과 [Supabase](https://supabase.com) 무료 플랜만으로 동작하며, 연구실 내 태블릿, 스마트폰, PC 어디서나 쾌적하게 사용할 수 있습니다.
-
----
-
-## 🔬 핵심 설계 철학
-
-1. **모바일 우선 초간편 퀵 대여 (Quick-Borrow First)**
-   - 95%의 연구원 행동 패턴: *"비품 터치 ➔ 이름 확인 ➔ 대여 완료"*
-   - 모바일 접속 시 복잡한 사이드바, 검색창, 거대한 현황 테이블을 배제하고 **68px 컴팩트 비품 카드**로 즉시 진입합니다.
-   - 비품이 수십 개로 늘어나도 버벅임 없이 시원하게 스크롤 및 카테고리 필터링이 가능합니다.
-
-2. **상호 신뢰 기반의 부드러운 반납 리마인드**
-   - 불필요한 연체 독촉 메일이나 공개적인 연체자 망신 주기 기능을 배제했습니다.
-   - 본인이 현재 빌린 비품이 있는 경우에만 화면 최상단에 **`💡 [연구원]님, 현재 [비품명] 사용 중입니다 [✓ 반납하기]`** 배너가 노출되어 1초 만에 제자리에 반납할 수 있습니다.
-
-3. **이차원양자헤테로구조체연구단(2DQH) 공식 브랜딩**
-   - 2DQH 공식 로고 및 시그니처 딥 크림슨 레드(`#C2272D`), 티타늄 차콜 그레이(`#58595B`) 디자인 토큰 적용.
-   - 일반 연구원 화면에서 "공용 DB 연결됨", "관리자 로그인" 등의 시각적 소음을 걷어내고 정갈한 연구소풍 UI를 구현했습니다.
-
-4. **365일 영구 무료 가동 (Supabase 7일 휴면 원천 방지)**
-   - Supabase 무료 플랜의 7일 비활성 시 자동 일시 정지(Pause) 문제를 방지하기 위해, **GitHub Actions가 3일마다 자동으로 가벼운 Keep-Alive 핑**을 보내 영구 활성 상태를 유지합니다.
+별도의 유료 서버 없이 정적 호스팅([Vercel](https://vercel.com), GitHub Pages)과 [Supabase](https://supabase.com) 무료 플랜만으로 완전하게 동작하며, 연구원들의 스마트폰, 태블릿, PC 어디서나 쾌적하게 사용할 수 있는 모바일 퍼스트 웹앱입니다.
 
 ---
 
-## 📋 주요 기능
+## 🚀 주요 핵심 기능
 
-### 1. 비품 관리 (Equipment)
-- **비품 현황 조회**: 실시간 대여 가능 여부(`대여 가능` / `대여 중` / `수리 중`) 표시.
-- **초간편 대여**: 비품 카드 터치 ➔ 이름 확인 ➔ 즉시 대여 등록.
-- **안전한 중복 대여 방지**: 동일 비품의 동시 중복 대여를 데이터베이스(RLS & Unique Index) 레벨에서 원천 차단.
-- **간편 반납**: 본인이 대여한 비품은 상단 배너 또는 현황 목록에서 클릭 한 번으로 반납 처리.
+### 1. 🛠️ 연구실 공용 비품 대여·반납 관리
+- **모바일 원터치 대여 신청**: 연구원이 이동 중에도 스마트폰으로 간편 대여 (대여자 이름 자동 기억)
+- **1인 3개 대여 한도 및 24시간 장기 대여 리마인드**: 특정 인원의 비품 독점을 방지하고 미반납 비품이 있을 경우 부드러운 우선 반납 유도
+- **실시간 비품 상태 확인**: `대여 가능`, `대여 중 (대여자 및 반납 예정일 표시)`, `수리·점검 중` 실시간 시각화
+- **QR / 바코드 스캔 지원**: 비품에 부착된 바코드·QR을 모바일 카메라로 즉시 스캔하여 대여/반납 연동
+- **24시간 자동 휴면 방지**: GitHub Actions Keep-Alive 워크플로우를 내장하여 Supabase 무료 플랜 7일 미사용 자동 일시정지 완전 방지
 
-### 2. 소모품 관리 (Consumables - 선택적 활용)
-- 피펫 팁, 시약, 장갑 등 연구실 소모품의 실시간 재고 관리.
-- 연구원의 자율적인 사용 수량 입력 시 재고 자동 차감.
-- 최소 보유량 이하 도달 시 "부족" 경고 표시.
+### 2. 📍 327종 연구실 시약 위치 안내 도감 (Reagent Location Guide)
+- **327종 실제 시약 데이터베이스 탑재**: 연구실 내 보관 중인 327종 화학 시약의 보관실(`화학재료합성실`, `PVD실`, `이차원소재합성실` 등) 및 상세 보관 위치(`시약 보관 선반`, `방화/유독물 전용 시약장`, `2D 합성 재료 보관함` 등) 즉시 확인
+- **초고속 초성 및 영문 검색**: 시약명, CAS 번호, 제조사(Sigma-Aldrich, Alfa Aesar, TCI, Thermo 등) 실시간 인덱스 검색
+- **연구실 실무 중심 UI (불필요한 복사 버튼 배제)**: 현장에서 스마트폰을 보며 캐비닛으로 이동하는 행동 패턴에 맞춰, 불필요한 클립보드 복사 버튼을 없애고 **`📍 위치 정보`** 가독성을 극대화
+- **듀얼 뷰 모드 지원**:
+  - **[📇 카드 뷰]**: 상세 정보(위치, CAS, 위험도 등급, 제조사, 규격)를 한눈에 보는 카드 레이아웃
+  - **[📋 컴팩트 뷰]**: 좁은 모바일 화면에서도 수많은 시약을 스크롤 없이 빠르게 훑어볼 수 있는 고밀도 리스트 레이아웃
 
-### 3. 관리자 전용 기능 (Admin)
-- 일반 사용자 화면을 방해하지 않도록 화면 최하단 서브푸터(`⚙️ 관리자`)로 로그인 분리.
-- 비품 신규 등록 / 정보 수정 / 상태 변경(수리 중 등).
-- 전체 대여 이력 조회 및 CSV 내보내기.
+### 3. ⚠️ 산업안전보건법 특별관리물질 취급일지 관리 (Statutory Compliance)
+- **법정 의무 준수**: 산업안전보건법 제123조 및 산업안전보건기준에 관한 규칙 제420조·제439조 반영
+- **법정 규제 대상 26종 자동 태깅**: Dichloromethane, Hydrazine, Nickel/Cobalt/Lead 화합물, Benzene 등 연구실 규제 시약 자동 식별
+- **전용 카테고리 탭 (`[⚠️ 특별관리물질]`)**: 시약을 번거롭게 검색할 필요 없이 첫 번째 탭 터치 한 번으로 규제 물질만 즉시 확인
+- **모바일 원터치 취급일지 작성**:
+  - 취급자 성명 자동완성 (이전 대여자명 연동)
+  - 취급 일시 분 단위 자동 기입
+  - 물질명 및 CAS 번호 자동 바인딩
+  - **취급량(사용량) 및 단위 선택**: 연구실 실무 맞춤 3대 단위 (`mL`, `mg`, `g`) 지원
+  - 작업 장소 및 작업 내용 빠른 입력 (기본값 제공)
+  - **법정 안전조치 확인 필수 체크**: 개인보호구(내화학장갑, 보안경, 방진/방독마스크) 착용 및 국소배기장치(흄후드) 정상 작동 확인
+- **고용노동부 법정 서식 호환 CSV 내보내기 (`[📥 취급일지 다운로드 (CSV)]`)**:
+  - 산업안전보건기준에 관한 규칙 제439조 규격 12개 법정 컬럼을 준수한 CSV 즉시 생성
+  - Excel 한글 깨짐 방지 **UTF-8 with BOM (`\uFEFF`)** 인코딩 적용으로 안전관리 포털 등록 및 법정 비치용 출력 바로 가능
+- **30년 법정 보존 대비 이중 데이터 저장**:
+  - **로컬 영구 스토리지 (`localStorage`)**: 네트워크 단절이나 오프라인 환경에서도 기기에 일지 영구 보존
+  - **중앙 클라우드 DB (`chemical_logs`)**: Supabase 연동 시 클라우드 자동 동기화
+
+### 4. 🔒 관리자 전용 기능 (Admin Controls)
+- 화면 최하단 전용 로그인 모달 분리 (일반 연구원 사용 간섭 최소화)
+- 비품 신규 등록, 정보 수정, 수리/점검 상태 변경
+- 대여 이력 전체 조회 및 비품 대여 CSV 내보내기
+- 시약 보관 위치 정보 수정 및 신규 소모품 등록
 
 ---
 
-## 📁 파일 구조
+## 📁 프로젝트 파일 구조
 
 ```
 2DQH-equipment/
-├── index.html                           # 메인 웹앱 마크업 (2DQH 공식 헤더 및 뷰포트 구성)
-├── style.css                            # 2DQH 디자인 시스템 CSS (딥 레드 토큰, 68px 퀵 카드)
-├── app.js                              # 프론트엔드 비즈니스 로직 & Supabase 연동
-├── logo_2dqh.jpg                       # IBS 이차원양자헤테로구조체연구단 공식 심볼 로고
-├── vercel.json                         # Vercel 배포 보안 정책(CSP 헤더 설정)
-├── supabase.sql                        # Supabase 기본 테이블(assets, loans, user_roles) 스키마
-├── consumables_migration.sql           # 소모품/재고변동 함수 및 스키마
-├── repair_rls.sql                      # RLS 권한 및 안전성 패치 스크립트
-├── .github/
-│   └── workflows/
-│       └── supabase-keepalive.yml      # 3일 주기 자동 Keep-Alive 핑 (7일 휴면 방지)
-└── README.md                           # 본 문서
+├── index.html                   # 메인 웹앱 마크업 (모바일 뷰포트, 상단바, 바텀바)
+├── style.css                    # 2DQH 디자인 시스템 CSS (브랜드 레드 테마, 특별관리물질 스타일)
+├── app.js                       # 프론트엔드 비즈니스 로직 & 취급일지 모달 & Supabase 연동
+├── consumables_catalog.js       # 2DQH 연구실 시약 327종 표준 도감 (특별관리물질 26종 태깅)
+├── create_chemical_logs.sql     # 특별관리물질 취급일지 법정 테이블 및 RLS 스키마
+├── seed_reagents.sql            # 시약 327종 Supabase DB 적재용 쿼리
+├── consumables_migration.sql    # 소모품/시약 위치 안내 테이블 마이그레이션
+├── supabase.sql                 # 비품(assets), 대여(loans), 관리자(user_roles) 테이블 스키마
+├── security_patch.sql           # Supabase 보안 및 RLS 강화 패치
+├── logo_2dqh.jpg                # 2DQH 연구단 공식 로고
+├── vercel.json                  # Vercel 배포 보안 정책 (CSP 헤더 설정)
+└── .github/workflows/
+    └── supabase-keepalive.yml   # Supabase 인스턴스 3일 주기 자동 Keep-Alive 핑
 ```
 
 ---
 
-## 🚀 설치 및 배포 가이드
+## 🛠️ 기술 스택
 
-### 1. Supabase 프로젝트 준비
-1. [supabase.com](https://supabase.com)에 로그인하고 새 프로젝트를 생성합니다.
-2. **Project Settings → API**에서 `Project URL`과 `anon (public) key`를 복사합니다.
-3. `app.js` 상단의 연결 정보를 설정합니다:
-   ```javascript
-   const SUPABASE_URL = 'https://YOUR_PROJECT_REF.supabase.co';
-   const SUPABASE_ANON_KEY = 'YOUR_PUBLISHABLE_ANON_KEY';
-   ```
-4. **SQL Editor**에서 `supabase.sql` 내용을 실행하여 테이블과 보안 정책을 구성합니다.
-
-### 2. 관리자 계정 생성 (선택)
-1. Supabase 대시보드 ➔ **Authentication ➔ Users ➔ Add user**에서 관리자 이메일/비밀번호 생성.
-2. **SQL Editor**에서 해당 계정에 관리자 권한 부여:
-   ```sql
-   INSERT INTO public.user_roles (user_id, role)
-   SELECT id, 'admin' FROM auth.users WHERE email = 'admin@example.com';
-   ```
-
-### 3. Vercel 또는 GitHub 배포
-1. 본 리포지토리를 GitHub에 푸시합니다.
-2. [Vercel](https://vercel.com)에서 GitHub 저장소를 연결하여 배포합니다 (`Framework Preset: Other / Static`).
-3. 배포된 URL을 QR 코드로 만들어 연구실 비품실 출입문 또는 선반에 부착하면 모든 연구원이 스마트폰 카메라로 즉시 접속할 수 있습니다.
+- **Frontend**: Vanilla JavaScript (ES6+), CSS3 (CSS Variables, Flexbox/Grid, Mobile First), HTML5
+- **Backend / Database**: [Supabase](https://supabase.com) (PostgreSQL 15, Row Level Security, Trigram Full-Text Search)
+- **Deployment**: [Vercel](https://vercel.com) / GitHub Pages
+- **Automation**: GitHub Actions (Keep-Alive Cron Workflow)
 
 ---
 
-## ⚡ Supabase 7일 휴면 방지 자동화 (Keep-Alive)
+## ⚙️ 설정 및 배포 방법
 
-이 리포지토리에는 [GitHub Actions Keep-Alive 워크플로우](.github/workflows/supabase-keepalive.yml)가 내장되어 있습니다.
+### 1. 로컬 환경 실행
+별도의 빌드 도구(`npm install` 등) 없이 브라우저에서 `index.html`을 바로 열거나 로컬 웹 서버(`Live Server`, `python -m http.server`)로 즉시 구동할 수 있습니다.
 
-- **작동 방식**: 매 3일마다 오전 0시(UTC)에 자동으로 실행되어 Supabase REST API에 가벼운 핑을 보내 프로젝트를 상시 활성 상태로 유지합니다.
-- **수동 실행**: GitHub 저장소의 **Actions** 탭 ➔ **Supabase Keep-Alive** 선택 ➔ **Run workflow**를 누르면 언제든 즉시 핑을 테스트할 수 있습니다.
-- **GitHub Secrets 설정 (선택 권장)**:
-  - Repository **Settings ➔ Secrets and variables ➔ Actions**
-  - `SUPABASE_URL`: `https://YOUR_PROJECT_REF.supabase.co`
-  - `SUPABASE_ANON_KEY`: `YOUR_ANON_KEY`
+### 2. 정적 웹 배포 (Vercel / GitHub Pages)
+GitHub 저장소(`main` 브랜치)에 푸시하면 Vercel 또는 GitHub Pages를 통해 별도 설정 없이 즉시 자동 배포됩니다.
 
----
-
-## 💡 연구원 이용 안내 (Q&A)
-
-**Q. 비품 대여 시 로그인이 필요한가요?**  
-아닙니다. 연구원의 시간을 아끼기 위해 별도 회원가입/로그인 없이 본인 이름만 입력하면 1초 만에 대여할 수 있습니다.
-
-**Q. 내가 빌린 비품을 반납하려면 어떻게 하나요?**  
-대여했던 스마트폰이나 PC로 접속하시면 화면 상단에 **`[지금 반납하기]`** 배너가 자동으로 뜹니다. 해당 버튼을 누르면 즉시 반납 완료됩니다.
-
-**Q. 다른 기기나 PC에서 반납하고 싶을 때는요?**  
-목록에서 해당 비품을 찾거나, 화면 하단 `대여 현황`에서 본인 이름을 확인하고 반납 처리를 누르시면 됩니다.
-
----
-
-© IBS 이차원양자헤테로구조체연구단 (Center for 2D Quantum Heterostructures)
+### 3. Supabase 연동 (선택 사항)
+1. [supabase.com](https://supabase.com)에서 프로젝트를 생성합니다.
+2. Supabase SQL Editor에서 아래 쿼리를 순차 실행합니다:
+   - `supabase.sql` (비품 및 대여 기본 테이블)
+   - `consumables_migration.sql` (시약/소모품 위치 안내 테이블)
+   - `create_chemical_logs.sql` (특별관리물질 취급일지 법정 테이블)
+3. `app.js` 상단의 `SUPABASE_URL`과 `SUPABASE_ANON_KEY`에 프로젝트 API 키를 입력합니다.  
+   *(미입력 시에도 브라우저 로컬 저장소를 통해 100% 정상 작동합니다.)*
