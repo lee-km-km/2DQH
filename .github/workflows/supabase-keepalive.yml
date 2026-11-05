@@ -1,0 +1,50 @@
+name: Supabase Keep-Alive (Prevent Pausing)
+
+on:
+  schedule:
+    # 매 3일마다 오전 0시 (UTC) = 한국 시간 오전 9시 자동 실행
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # GitHub 웹 UI의 Actions 탭에서 수동 실행 가능
+
+jobs:
+  keepalive-ping:
+    name: Ping Supabase REST API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Keep-Alive Request
+        env:
+          # GitHub Secrets에 등록되어 있으면 우선 사용하고, 미설정 시 기본 프로젝트 URL/Key 자동 적용
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://nngownhoxrtymzvwscyc.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_ijsPGWswYcZKdhrjoy4hSw_9jRaQGbv' }}
+        run: |
+          echo "================================================="
+          echo "🔄 Supabase Keep-Alive 자동 핑 실행 중..."
+          echo "Target: $SUPABASE_URL"
+          echo "================================================="
+          
+          # assets 테이블에서 식별번호 1건만 가볍게 조회
+          HTTP_STATUS=$(curl -s -o response.json -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/assets?select=id&limit=1")
+          
+          echo "HTTP Response Status Code: $HTTP_STATUS"
+          echo "Response Body Content:"
+          cat response.json
+          echo ""
+          
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 206 ]; then
+            echo "================================================="
+            echo "✅ [성공] Supabase 데이터베이스가 정상 활성 상태입니다."
+            echo "🎉 7일 미사용 자동 휴면(Project Pausing)이 방지되었습니다."
+            echo "================================================="
+          else
+            echo "================================================="
+            echo "⚠️ [주의] HTTP 상태 코드 $HTTP_STATUS 반환됨."
+            if grep -qi "paused" response.json; then
+              echo "🚨 [경고] 프로젝트가 현재 일시 휴면(Paused) 상태입니다!"
+              echo "👉 Supabase 대시보드(https://supabase.com/dashboard/project/nngownhoxrtymzvwscyc)에서 Restore project를 클릭하세요."
+              exit 1
+            fi
+            echo "================================================="
+          fi

@@ -1398,6 +1398,10 @@ function friendlyError(err){
     return '권한이 없습니다. 대여한 기기에서 처리하거나 관리자 로그인 후 다시 시도하세요.';
   }
 
+  if(msg.includes('paused') || msg.includes('503') || (err && err.status === 503)){
+    return 'Supabase 데이터베이스가 일시 휴면(Paused) 상태입니다. Supabase 대시보드에서 Restore를 진행해 주세요.';
+  }
+
   return msg || '요청 처리에 실패했습니다.';
 }
 
