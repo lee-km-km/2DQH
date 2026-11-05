@@ -2043,3 +2043,242 @@ tbody tr:hover .asset-thumb-box {
     padding: 4px 0 36px !important;
   }
 }
+
+/* ============================================================
+   특별관리물질(Specially Controlled Chemical Substances) 규제 스타일
+   산업안전보건기준에 관한 규칙 제420조/제439조 법정 관리
+   ============================================================ */
+
+/* 카테고리 탭 하이라이트 */
+.category-tab.tab-controlled {
+  border: 1px solid #f87171 !important;
+  color: #991b1b !important;
+  background: #fff1f2 !important;
+  font-weight: 700 !important;
+}
+
+.category-tab.tab-controlled.active {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35) !important;
+}
+
+/* 요약 배너 및 다운로드 버튼 */
+.controlled-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #7f1d1d;
+  flex-wrap: wrap;
+}
+
+.controlled-summary-bar.reagent-bar {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #334155;
+}
+
+.controlled-summary-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.btn-export-log-csv {
+  background: #ffffff;
+  color: #b91c1c;
+  border: 1.5px solid #dc2626;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+}
+
+.btn-export-log-csv:hover,
+.btn-export-log-csv:active {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.btn-text-export {
+  background: none;
+  border: none;
+  color: #dc2626;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 4px;
+  margin-left: 8px;
+}
+
+/* 법정 특별관리물질 뱃지 */
+.badge-controlled {
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #fca5a5;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  letter-spacing: -0.2px;
+}
+
+.badge-controlled-compact {
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #fecaca;
+  white-space: nowrap;
+}
+
+/* 특별관리물질 카드 및 행 하이라이트 */
+.consumable-card.is-controlled-card {
+  border-left: 3.5px solid #dc2626 !important;
+  background: linear-gradient(to right, #fff5f5, #ffffff 15%) !important;
+}
+
+.consumable-compact-row.is-controlled-row {
+  border-left: 3.5px solid #dc2626 !important;
+  background: #fffafa !important;
+}
+
+/* 취급일지 작성 버튼 */
+.btn-chemical-log {
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 38px;
+  transition: background 0.15s ease-in-out;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25);
+}
+
+.btn-chemical-log:hover,
+.btn-chemical-log:active {
+  background: #b91c1c;
+}
+
+.btn-compact-log {
+  min-height: 32px;
+  padding: 4px 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-compact-log:hover,
+.btn-compact-log:active {
+  background: #fecaca;
+}
+
+/* 취급일지 작성 모달 전용 헤더 및 알림 */
+.controlled-chem-modal-head {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.controlled-chem-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #991b1b;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.controlled-chem-meta {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.controlled-chem-meta code {
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: #0f172a;
+}
+
+.controlled-notice-box {
+  font-size: 12px;
+  color: #991b1b;
+  background: #ffffff;
+  border-left: 3px solid #dc2626;
+  padding: 6px 10px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.ppe-checkbox-group {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 4px;
+}
+
+.ppe-checkbox-group .checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  margin-top: 6px;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.ppe-checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: #dc2626;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+

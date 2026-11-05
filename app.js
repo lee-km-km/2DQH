@@ -1301,7 +1301,20 @@ function renderLoans(){
 // ==========================================
 // [소모품 위치 안내 도감 (Location Guide) 모듈]
 // ==========================================
-const CONSUMABLE_CATEGORIES = ['기판·박리', '화학·시약', '클린룸·안전', '진공·배관', '일반소모품'];
+const CONSUMABLE_CATEGORIES = ['특별관리물질', '화학·시약', '기판·박리', '클린룸·안전', '진공·배관', '일반소모품'];
+
+// 산업안전보건기준에 관한 규칙 제420조 및 [별표 12] 특별관리물질 자동 판별
+function isControlledSubstance(c){
+  if(!c) return false;
+  if(c.is_controlled === true) return true;
+  const target = ((c.name || '') + ' ' + (c.specification || '')).toLowerCase();
+  const patterns = [
+    'dichloromethane', 'hydrazine', 'lead(ii)', '납',
+    'nickel', 'cobalt', 'cadmium', 'benzene', 'chromium',
+    'thioacetamide', 'formaldehyde', 'arsenic', 'chlorobenzene'
+  ];
+  return patterns.some(function(p){ return target.includes(p); });
+}
 
 const CONSUMABLE_ALIASES = {
   '웨이퍼': ['wafer', 'si', 'sio2', 'silicon', 'oxide', 'substrate', 'w', 's'],
@@ -1392,12 +1405,15 @@ function consumableCategoryTabsHtml(selected){
     cats.map(function(cat){
       const label = cat === 'all' ? '전체' : cat;
       const icon = cat === 'all' ? '🏷️' : (
-        cat === '기판·박리' ? '🔬' :
+        cat === '특별관리물질' ? '⚠️' :
         cat === '화학·시약' ? '🧪' :
+        cat === '기판·박리' ? '🔬' :
         cat === '클린룸·안전' ? '🧤' :
         cat === '진공·배관' ? '⚙️' : '📦'
       );
+      const isCtrlTab = cat === '특별관리물질';
       return '<button type="button" class="category-tab' +
+        (isCtrlTab ? ' tab-controlled' : '') +
         (selected === cat ? ' active' : '') + '" data-consumable-category="' + safe(cat) +
         '" aria-pressed="' + (selected === cat ? 'true' : 'false') +
         '">' + icon + ' ' + label + '</button>';
@@ -1489,11 +1505,27 @@ function renderConsumables(){
   const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
 
   const list = consumables.filter(function(c){
-    const matchCategory = selectedConsumableCategory === 'all' ||
-      c.category === selectedConsumableCategory;
+    let matchCategory = false;
+    if(selectedConsumableCategory === 'all'){
+      matchCategory = true;
+    } else if(selectedConsumableCategory === '특별관리물질'){
+      matchCategory = isControlledSubstance(c);
+    } else {
+      matchCategory = c.category === selectedConsumableCategory;
+    }
     const matchSearch = matchesConsumableSearch(c, q);
     return matchCategory && matchSearch;
   });
+
+  // 화학·시약 또는 전체 조회 시 특별관리물질을 상단에 자동 우선 배치
+  if(!q && (selectedConsumableCategory === '화학·시약' || selectedConsumableCategory === 'all')){
+    list.sort(function(a, b){
+      const aCtrl = isControlledSubstance(a) ? 1 : 0;
+      const bCtrl = isControlledSubstance(b) ? 1 : 0;
+      if(aCtrl !== bCtrl) return bCtrl - aCtrl;
+      return String(a.name || '').localeCompare(String(b.name || ''));
+    });
+  }
 
   const categoryHost = $('consumableCategories');
   if(categoryHost){
@@ -1508,18 +1540,32 @@ function renderConsumables(){
   const countBadge = $('consumablesCountBadge');
   if(countBadge) countBadge.textContent = list.length;
 
-  // 실시간 검색/필터 결과 요약 카운트 뱃지 (P1 UX 개선)
+  // 실시간 검색/필터 결과 요약 카운트 뱃지 & 특별관리물질 안내 배너
   const summaryEl = $('consumablesResultSummary');
   if(summaryEl){
     const totalCount = consumables.length;
     const filteredCount = list.length;
     let summaryHtml = '';
     if(q){
-      summaryHtml = '<span class="summary-icon">🔍</span> \'' + safe(q) + '\' 검색 결과: <strong>' + filteredCount + '</strong>개 <span class="summary-sub">(전체 ' + totalCount + '개 중)</span>';
+      summaryHtml = '<div class="summary-line"><span class="summary-icon">🔍</span> \'' + safe(q) + '\' 검색 결과: <strong>' + filteredCount + '</strong>개 <span class="summary-sub">(전체 ' + totalCount + '개 중)</span></div>';
+    } else if(selectedConsumableCategory === '특별관리물질'){
+      summaryHtml = '<div class="controlled-summary-bar">' +
+        '<div class="controlled-summary-text">' +
+          '<span class="controlled-icon">⚠️</span> <span><strong>특별관리물질</strong> (' + filteredCount + '종): 산업안전보건법 제439조 법정 취급일지 작성 대상</span>' +
+        '</div>' +
+        '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogs" title="고용노동부 법정 서식 CSV 다운로드">📥 취급일지 다운로드 (CSV)</button>' +
+      '</div>';
+    } else if(selectedConsumableCategory === '화학·시약'){
+      summaryHtml = '<div class="controlled-summary-bar reagent-bar">' +
+        '<div class="controlled-summary-text">' +
+          '<span class="summary-icon">🧪</span> <span><strong>화학·시약</strong> (' + filteredCount + '종) · ⚠️특별관리물질 상단 배치</span>' +
+        '</div>' +
+        '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogs" title="고용노동부 법정 서식 CSV 다운로드">📥 취급일지 다운로드 (CSV)</button>' +
+      '</div>';
     } else if(selectedConsumableCategory && selectedConsumableCategory !== 'all'){
-      summaryHtml = '<span class="summary-icon">🏷️</span> <strong>' + safe(selectedConsumableCategory) + '</strong>: ' + filteredCount + '개 품목';
+      summaryHtml = '<div class="summary-line"><span class="summary-icon">🏷️</span> <strong>' + safe(selectedConsumableCategory) + '</strong>: ' + filteredCount + '개 품목</div>';
     } else {
-      summaryHtml = '<span class="summary-icon">📦</span> 전체 <strong>' + filteredCount + '</strong>개의 시약 및 소모품';
+      summaryHtml = '<div class="summary-line"><span class="summary-icon">📦</span> 전체 <strong>' + filteredCount + '</strong>개의 시약 및 소모품 <button type="button" class="btn-text-export" id="btnExportChemicalLogs">📥 특별관리물질 일지 다운로드</button></div>';
     }
     summaryEl.innerHTML = summaryHtml;
   }
@@ -1544,16 +1590,22 @@ function renderConsumables(){
         const c = visibleList[i];
         const meta = parseConsumableMeta(c);
         const cat = c.category || '일반소모품';
+        const isCtrl = isControlledSubstance(c);
 
         let adminActions = '';
         if(isAdmin()){
           adminActions = '<button class="text-btn btn-action-edit" data-edit-consumable="' + safe(c.id) + '">수정</button>';
         }
 
-        html += '<div class="consumable-compact-row">' +
+        let logAction = '';
+        if(isCtrl){
+          logAction = '<button type="button" class="btn-compact-log" data-log-chemical="' + safe(c.id) + '" title="특별관리물질 취급일지 작성"><span>📝 일지</span></button>';
+        }
+
+        html += '<div class="consumable-compact-row' + (isCtrl ? ' is-controlled-row' : '') + '">' +
           '<div class="compact-main-info">' +
             '<div class="compact-row-top">' +
-              '<span class="consumable-cat-tag">' + safe(cat) + '</span>' +
+              (isCtrl ? '<span class="badge-controlled-compact">⚠️ 특별관리</span>' : '<span class="consumable-cat-tag">' + safe(cat) + '</span>') +
               '<h3 class="compact-name">' + safe(c.name) + '</h3>' +
               getCasBadgeHtml(meta.cas) +
               getHazardBadgeHtml(meta.hazard) +
@@ -1566,6 +1618,7 @@ function renderConsumables(){
             '</div>' +
           '</div>' +
           '<div class="compact-actions">' +
+            logAction +
             '<button type="button" class="btn-compact-copy" data-copy-consumable="' + safe(c.id) + '" title="보관 위치 복사">' +
               '<span>📋 복사</span>' +
             '</button>' +
@@ -1582,16 +1635,23 @@ function renderConsumables(){
         const meta = parseConsumableMeta(c);
         const spec = c.specification || c.note || '';
         const cat = c.category || '일반소모품';
+        const isCtrl = isControlledSubstance(c);
 
         let adminActions = '';
         if(isAdmin()){
           adminActions = '<button class="text-btn btn-action-edit" data-edit-consumable="' + safe(c.id) + '">수정</button>';
         }
 
-        html += '<div class="consumable-card">' +
+        let logAction = '';
+        if(isCtrl){
+          logAction = '<button type="button" class="btn-chemical-log" data-log-chemical="' + safe(c.id) + '"><span>📝 취급일지 작성</span></button>';
+        }
+
+        html += '<div class="consumable-card' + (isCtrl ? ' is-controlled-card' : '') + '">' +
           '<div class="consumable-card-header">' +
             '<div class="consumable-title-wrap">' +
               '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
+                (isCtrl ? '<span class="badge-controlled">⚠️ 법정 특별관리물질</span>' : '') +
                 '<span class="consumable-cat-tag">' + safe(cat) + '</span>' +
                 getMakerBadgeHtml(meta.maker) +
                 getHazardBadgeHtml(meta.hazard) +
@@ -1609,7 +1669,8 @@ function renderConsumables(){
           '</div>' +
           (spec ? '<div class="consumable-spec-text">💡 ' + safe(spec) + '</div>' : '') +
           '<div class="consumable-card-actions">' +
-            '<button type="button" class="btn-copy-loc" data-copy-consumable="' + safe(c.id) + '">' +
+            logAction +
+            '<button type="button" class="btn-copy-loc' + (isCtrl ? ' secondary' : '') + '" data-copy-consumable="' + safe(c.id) + '">' +
               '<span>📋 위치 복사</span>' +
             '</button>' +
             adminActions +
@@ -1681,6 +1742,66 @@ function copyConsumableLocation(id, btnEl){
     fallbackCopyText(text, c.name);
     triggerButtonFeedback();
   }
+}
+
+// 특별관리물질 취급일지 법정 서식(산업안전보건기준에 관한 규칙 제439조) CSV 다운로드
+function exportChemicalLogsCsv(){
+  let logs = [];
+  try {
+    logs = JSON.parse(localStorage.getItem('labstock_chemical_logs') || '[]');
+  } catch(_) {}
+
+  if(!logs || logs.length === 0){
+    toast('⚠️ 등록된 특별관리물질 취급일지가 없습니다. 시약 카드의 [📝 취급일지 작성]을 통해 먼저 일지를 작성해 주세요.');
+    return;
+  }
+
+  const headers = [
+    '연번',
+    '취급일시',
+    '취급자 성명',
+    '물질명(화학명)',
+    'CAS 번호',
+    '취급량(사용량)',
+    '단위',
+    '작업 장소',
+    '취급 작업 내용',
+    '개인보호구 착용 여부',
+    '국소배기장치 가동 여부',
+    '사용 후 잔여량 및 비고'
+  ];
+
+  const rows = logs.map(function(item, idx){
+    return [
+      idx + 1,
+      item.used_at ? item.used_at.replace('T', ' ') : '',
+      item.handler_name || '',
+      item.chemical_name || '',
+      item.cas_number || '',
+      item.quantity || '',
+      item.unit || 'mL',
+      item.work_location || '',
+      item.work_description || '',
+      item.ppe_checked ? 'O (착용)' : 'X',
+      item.ventilation_checked ? 'O (정상가동)' : 'X',
+      item.remaining_qty || item.note || ''
+    ].map(function(cell){
+      const s = String(cell || '').replace(/"/g, '""');
+      return '"' + s + '"';
+    }).join(',');
+  });
+
+  const csvContent = '\uFEFF' + headers.join(',') + '\r\n' + rows.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '2DQH_특별관리물질_취급일지_' + today() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✓ 특별관리물질 취급일지(' + logs.length + '건)가 법정 서식 CSV로 다운로드되었습니다.');
 }
 
 function fallbackCopyText(text, name){
@@ -1770,6 +1891,8 @@ function openModal(mode, id){
     titleText = '빠른 반납';
   } else if(mode === 'quickReorder'){
     titleText = '빠른 구매요청';
+  } else if(mode === 'chemicalLog'){
+    titleText = '📝 특별관리물질 취급일지 작성';
   }
 
   $('modalTitle').textContent = titleText;
@@ -1887,6 +2010,44 @@ function openModal(mode, id){
       parts.push('<label class="field">보관 구역 (호실) *<input name="location" required maxlength="100" value="' + safe(c ? c.location : '') + '" placeholder="예: 클린룸 광학실, 화학실험실"></label>');
       parts.push('<label class="field full">상세 위치 (캐비닛/선반) *<input name="sub_location" required maxlength="150" value="' + safe(c ? (c.sub_location || '') : '') + '" placeholder="예: 진공 데시케이터 A 2단, 시약장 1단"></label>');
       parts.push('<label class="field full">규격 / 주의사항 (선택)<textarea name="specification" rows="2" maxlength="500" placeholder="예: P-type, 500µm 두께, 개봉 후 질소 퍼지">' + safe(c ? (c.specification || c.note || '') : '') + '</textarea></label>');
+      parts.push('</div>');
+    }
+  } else if(mode === 'chemicalLog'){
+    const c = consumableFor(id);
+    if(!c){
+      parts.push('<p>시약 정보를 찾을 수 없습니다.</p>');
+    } else {
+      const meta = parseConsumableMeta(c);
+      const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
+      const nowStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+      parts.push('<div class="controlled-chem-modal-head">');
+      parts.push('<div class="controlled-chem-title">🧪 <b>' + safe(c.name) + '</b></div>');
+      parts.push('<div class="controlled-chem-meta">CAS No: <code>' + safe(meta.cas || '확인 필요') + '</code> · 보관: ' + safe(c.location) + ' (' + safe(c.sub_location) + ')</div>');
+      parts.push('<div class="controlled-notice-box">⚠️ 본 물질은 산업안전보건기준에 관한 규칙 제420조에 따른 <b>특별관리물질</b>로, 사용 시 <b>취급일지 30년 보존</b> 법정 의무 대상입니다.</div>');
+      parts.push('</div>');
+
+      parts.push('<div class="form-grid" style="margin-top:14px">');
+      parts.push('<input type="hidden" name="consumable_id" value="' + safe(c.id) + '">');
+      parts.push('<input type="hidden" name="chemical_name" value="' + safe(c.name) + '">');
+      parts.push('<input type="hidden" name="cas_number" value="' + safe(meta.cas || '') + '">');
+
+      parts.push('<label class="field">취급자 성명 *<input name="handler_name" required maxlength="50" value="' + safe(lastBorrower) + '" placeholder="예: 홍길동"></label>');
+      parts.push('<label class="field">취급 일시 *<input name="used_at" type="datetime-local" required value="' + nowStr + '"></label>');
+
+      parts.push('<label class="field">사용량 (취급량) *<input name="quantity" type="number" min="0.001" step="any" required placeholder="예: 25"></label>');
+      parts.push('<label class="field">단위 *<select name="unit"><option value="mL">mL (밀리리터)</option><option value="g">g (그램)</option><option value="mg">mg (밀리그램)</option><option value="L">L (리터)</option><option value="kg">kg (킬로그램)</option></select></label>');
+
+      parts.push('<label class="field full">작업 장소 *<input name="work_location" required maxlength="100" value="화학실험실 흄후드" placeholder="예: 3층 화학실 흄후드 3번"></label>');
+      parts.push('<label class="field full">취급 작업 내용 *<input name="work_description" required maxlength="200" placeholder="예: 2D Flake 박리 기판 세척 및 린스"></label>');
+
+      parts.push('<div class="field full ppe-checkbox-group">');
+      parts.push('<span class="field-label" style="font-weight:700;margin-bottom:6px;display:block;">법정 안전조치 확인 *</span>');
+      parts.push('<label class="checkbox-row"><input type="checkbox" name="ppe_checked" value="true" checked required> <span>개인보호구 착용 (내화학장갑, 보안경, 방진/방독마스크)</span></label>');
+      parts.push('<label class="checkbox-row"><input type="checkbox" name="ventilation_checked" value="true" checked required> <span>국소배기장치(흄후드) 정상 배기 작동 확인</span></label>');
+      parts.push('</div>');
+
+      parts.push('<label class="field full">사용 후 잔여량 및 비고 (선택)<input name="note" maxlength="100" placeholder="예: 잔여량 약 3.8L / 밀봉 보관 완료"></label>');
       parts.push('</div>');
     }
   } else if(mode === 'movement'){
@@ -2042,6 +2203,7 @@ function openModal(mode, id){
   else if(mode === 'movement') btnText = '재고 반영';
   else if(mode === 'quickReturn') btnText = '반납 완료';
   else if(mode === 'quickReorder') btnText = '구매요청';
+  else if(mode === 'chemicalLog') btnText = '취급일지 등록 (법정 기록)';
 
   $('saveModal').textContent = btnText;
 
@@ -2236,6 +2398,75 @@ async function saveForm(e){
   const v = formValues(form);
   const btn = $('saveModal');
   btn.disabled = true;
+
+  // [특별관리물질 취급일지 등록 처리]
+  if(modalMode === 'chemicalLog'){
+    try {
+      const logEntry = {
+        id: 'log-' + Date.now(),
+        consumable_id: v.consumable_id || modalId,
+        chemical_name: (v.chemical_name || '').trim(),
+        cas_number: (v.cas_number || '').trim(),
+        handler_name: (v.handler_name || '').trim(),
+        used_at: v.used_at || new Date().toISOString(),
+        quantity: Number(v.quantity) || 0,
+        unit: (v.unit || 'mL').trim(),
+        work_location: (v.work_location || '').trim(),
+        work_description: (v.work_description || '').trim(),
+        ppe_checked: v.ppe_checked === 'true' || v.ppe_checked === true || v.ppe_checked === 'on',
+        ventilation_checked: v.ventilation_checked === 'true' || v.ventilation_checked === true || v.ventilation_checked === 'on',
+        note: (v.note || '').trim(),
+        created_at: new Date().toISOString()
+      };
+
+      if(v.handler_name){
+        localStorage.setItem('labstock_last_borrower_name', v.handler_name.trim());
+      }
+
+      // 1. 브라우저 로컬 영구 보존 (30년 보존 규정 대비 오프라인 및 즉시 보존)
+      let currentLogs = [];
+      try {
+        currentLogs = JSON.parse(localStorage.getItem('labstock_chemical_logs') || '[]');
+      } catch(_) {
+        currentLogs = [];
+      }
+      currentLogs.unshift(logEntry);
+      localStorage.setItem('labstock_chemical_logs', JSON.stringify(currentLogs));
+
+      // 2. Supabase 연동 시 DB 저장 시도
+      if(db && !isLocalMode){
+        try {
+          const { error: dbErr } = await db.from('chemical_logs').insert({
+            consumable_id: logEntry.consumable_id,
+            chemical_name: logEntry.chemical_name,
+            cas_number: logEntry.cas_number,
+            handler_name: logEntry.handler_name,
+            used_at: logEntry.used_at,
+            quantity: logEntry.quantity,
+            unit: logEntry.unit,
+            work_location: logEntry.work_location,
+            work_description: logEntry.work_description,
+            ppe_checked: logEntry.ppe_checked,
+            ventilation_checked: logEntry.ventilation_checked,
+            note: logEntry.note
+          });
+          if(dbErr) console.warn('Supabase chemical_logs 저장 건너뜀 (로컬 스토리지에 보존됨):', dbErr);
+        } catch(netErr) {
+          console.warn('Supabase 동기화 건너뜀 (로컬 스토리지에 보존됨):', netErr);
+        }
+      }
+
+      closeModal();
+      toast('✓ 특별관리물질 취급일지가 성공적으로 등록되었습니다.');
+      renderConsumables();
+    } catch(logErr){
+      console.error('취급일지 등록 실패:', logErr);
+      toast('취급일지 저장 중 오류가 발생했습니다.');
+    } finally {
+      btn.disabled = false;
+    }
+    return;
+  }
 
   // [로컬 테스트 모드 처리]
   if(isLocalMode || !db){
@@ -2766,6 +2997,17 @@ function bindEvents(){
 
     if(target.dataset.requestStatus){
       updateRequestStatus(target.dataset.requestStatus, target.dataset.status);
+      return;
+    }
+
+    if(target.dataset.logChemical || target.closest('[data-log-chemical]')){
+      const btn = target.dataset.logChemical ? target : target.closest('[data-log-chemical]');
+      openModal('chemicalLog', btn.dataset.logChemical);
+      return;
+    }
+
+    if(target.id === 'btnExportChemicalLogs' || target.closest('#btnExportChemicalLogs')){
+      exportChemicalLogsCsv();
       return;
     }
 
