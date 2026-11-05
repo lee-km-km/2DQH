@@ -1249,17 +1249,107 @@ function consumableCategoryTabsHtml(selected){
     }).join('') + '</div>';
 }
 
-// 산업안전보건기준에 관한 규칙 제420조 및 [별표 12] 특별관리물질 자동 판별
+// 산업안전보건기준에 관한 규칙 제420조 [별표 12] 특별관리물질 44종 법정 기준 테이블
+const STATUTORY_CONTROLLED_TABLE = [
+  { no: 1, nameKo: '디니트로톨루엔', nameEn: 'Dinitrotoluene', cas: ['25321-14-6', '121-14-2', '606-20-2'], threshold: '0.1% 이상' },
+  { no: 2, nameKo: 'N,N-디메틸아세트아미드', nameEn: 'N,N-Dimethylacetamide', cas: ['127-19-5'], threshold: '0.3% 이상' },
+  { no: 3, nameKo: '디메틸포름아미드', nameEn: 'Dimethylformamide', cas: ['68-12-2'], threshold: '0.3% 이상' },
+  { no: 4, nameKo: '1,2-디클로로에탄', nameEn: '1,2-Dichloroethane', cas: ['107-06-2'], threshold: '0.1% 이상' },
+  { no: 5, nameKo: '1,2-디클로로프로판', nameEn: '1,2-Dichloropropane', cas: ['78-87-5'], threshold: '0.1% 이상' },
+  { no: 6, nameKo: '2-메톡시에탄올', nameEn: '2-Methoxyethanol', cas: ['109-86-4'], threshold: '0.3% 이상' },
+  { no: 7, nameKo: '2-메톡시에틸 아세테이트', nameEn: '2-Methoxyethyl acetate', cas: ['110-49-6'], threshold: '0.3% 이상' },
+  { no: 8, nameKo: '벤젠', nameEn: 'Benzene', cas: ['71-43-2'], threshold: '0.1% 이상' },
+  { no: 9, nameKo: '1,3-부타디엔', nameEn: '1,3-Butadiene', cas: ['106-99-0'], threshold: '0.1% 이상' },
+  { no: 10, nameKo: '1-브로모프로판', nameEn: '1-Bromopropane', cas: ['106-94-5'], threshold: '0.3% 이상' },
+  { no: 11, nameKo: '2-브로모프로판', nameEn: '2-Bromopropane', cas: ['75-26-3'], threshold: '0.3% 이상' },
+  { no: 12, nameKo: '사염화탄소', nameEn: 'Carbon tetrachloride', cas: ['56-23-5'], threshold: '0.1% 이상' },
+  { no: 13, nameKo: '스토다드 솔벤트', nameEn: 'Stoddard solvent', cas: ['8052-41-3'], threshold: '0.1% 이상' },
+  { no: 14, nameKo: '아크릴로니트릴', nameEn: 'Acrylonitrile', cas: ['107-13-1'], threshold: '0.1% 이상' },
+  { no: 15, nameKo: '아크릴아미드', nameEn: 'Acrylamide', cas: ['79-06-1'], threshold: '0.1% 이상' },
+  { no: 16, nameKo: '2-에톡시에탄올', nameEn: '2-Ethoxyethanol', cas: ['110-80-5'], threshold: '0.3% 이상' },
+  { no: 17, nameKo: '2-에톡시에틸 아세테이트', nameEn: '2-Ethoxyethyl acetate', cas: ['111-15-9'], threshold: '0.3% 이상' },
+  { no: 18, nameKo: '에틸렌이민', nameEn: 'Ethyleneimine', cas: ['151-56-4'], threshold: '0.1% 이상' },
+  { no: 19, nameKo: '2,3-에폭시-1-프로판올', nameEn: '2,3-Epoxy-1-propanol', cas: ['556-52-5', '57044-25-4'], threshold: '0.1% 이상' },
+  { no: 20, nameKo: '1,2-에폭시프로판', nameEn: '1,2-Epoxypropane', cas: ['75-56-9'], threshold: '0.1% 이상' },
+  { no: 21, nameKo: '에피클로로히드린', nameEn: 'Epichlorohydrin', cas: ['106-89-8'], threshold: '0.1% 이상' },
+  { no: 22, nameKo: '트리클로로에틸렌', nameEn: 'Trichloroethylene', cas: ['79-01-6'], threshold: '0.1% 이상' },
+  { no: 23, nameKo: '1,2,3-트리클로로프로판', nameEn: '1,2,3-Trichloropropane', cas: ['96-18-4'], threshold: '0.1% 이상' },
+  { no: 24, nameKo: '퍼클로로에틸렌', nameEn: 'Perchloroethylene (Tetrachloroethylene)', cas: ['127-18-4'], threshold: '0.1% 이상' },
+  { no: 25, nameKo: '페놀', nameEn: 'Phenol', cas: ['108-95-2'], threshold: '0.3% 이상' },
+  { no: 26, nameKo: '포름알데히드', nameEn: 'Formaldehyde', cas: ['50-00-0'], threshold: '0.1% 이상' },
+  { no: 27, nameKo: '프로필렌이민', nameEn: 'Propyleneimine', cas: ['75-55-8'], threshold: '0.1% 이상' },
+  { no: 28, nameKo: '황산 디메틸', nameEn: 'Dimethyl sulfate', cas: ['77-78-1'], threshold: '0.1% 이상' },
+  { no: 29, nameKo: '히드라진 및 그 수화물', nameEn: 'Hydrazine and its hydrates', cas: ['302-01-2', '10217-52-4', '7803-57-8'], threshold: '0.1% 이상' },
+  { no: 30, nameKo: '납 및 그 무기화합물', nameEn: 'Lead and its inorganic compounds', cas: ['7439-92-1', '10101-63-0', '1317-36-8', '1344-37-2', '7758-95-4'], threshold: '0.3% 이상' },
+  { no: 31, nameKo: '니켈 및 그 무기화합물', nameEn: 'Nickel and its inorganic compounds', cas: ['7440-02-0', '7791-20-0', '10101-97-0', '13478-00-7', '1313-99-1', '7718-54-9'], threshold: '0.1% 이상' },
+  { no: 32, nameKo: '수은 및 그 화합물', nameEn: 'Mercury and its compounds', cas: ['7439-97-6'], threshold: '0.3% 이상' },
+  { no: 33, nameKo: '삼산화안티몬', nameEn: 'Antimony trioxide', cas: ['1309-64-4'], threshold: '0.1% 이상' },
+  { no: 34, nameKo: '카드뮴 및 그 화합물', nameEn: 'Cadmium and its compounds', cas: ['7440-43-9', '543-90-8', '10108-64-2', '10124-36-4', '1306-19-0'], threshold: '0.1% 이상' },
+  { no: 35, nameKo: '6가크롬 및 그 화합물', nameEn: 'Chromium(VI) compounds', cas: ['18540-29-9', '1333-82-0', '7778-50-9', '7789-00-6', '13765-19-0', '26299-14-9'], threshold: '0.1% 이상' },
+  { no: 36, nameKo: '황산 (pH 2.0 이하)', nameEn: 'Sulfuric acid', cas: ['7664-93-9'], threshold: '0.1% 이상' },
+  { no: 37, nameKo: '산화에틸렌', nameEn: 'Ethylene oxide', cas: ['75-21-8'], threshold: '0.1% 이상' },
+  { no: 38, nameKo: '2-니트로톨루엔', nameEn: '2-Nitrotoluene', cas: ['88-72-2'], threshold: '0.1% 이상' },
+  { no: 39, nameKo: '디부틸 프탈레이트', nameEn: 'Dibutyl phthalate', cas: ['84-74-2'], threshold: '0.3% 이상' },
+  { no: 40, nameKo: '벤조(a)피렌', nameEn: 'Benzo(a)pyrene', cas: ['50-32-8'], threshold: '0.1% 이상' },
+  { no: 41, nameKo: '와파린', nameEn: 'Warfarin', cas: ['81-81-2'], threshold: '0.3% 이상' },
+  { no: 42, nameKo: '포름아미드', nameEn: 'Formamide', cas: ['75-12-7'], threshold: '0.3% 이상' },
+  { no: 43, nameKo: '산화붕소', nameEn: 'Boron oxide', cas: ['1303-86-2'], threshold: '0.3% 이상' },
+  { no: 44, nameKo: '사붕소산 나트륨', nameEn: 'Sodium tetraborate', cas: ['1330-43-4', '12179-04-3', '1303-96-4'], threshold: '0.3% 이상' }
+];
+
+// 법정 특별관리물질 정보 조회 (고용노동부 법정 44종과 1:1 대조)
+function getControlledSubstanceInfo(c){
+  if(!c) return null;
+  if(c.is_controlled && c.controlled_no){
+    const found = STATUTORY_CONTROLLED_TABLE.find(function(s){ return s.no === c.controlled_no; });
+    return found || {
+      no: c.controlled_no,
+      nameKo: c.controlled_name || '',
+      nameEn: '',
+      threshold: c.controlled_threshold || '0.1% 이상'
+    };
+  }
+  const spec = c.specification || '';
+  const casMatch = spec.match(/CAS:\s*([0-9\-]+)/i);
+  const cas = casMatch ? casMatch[1].trim() : '';
+  const name = (c.name || '').trim();
+
+  for(let i = 0; i < STATUTORY_CONTROLLED_TABLE.length; i++){
+    const s = STATUTORY_CONTROLLED_TABLE[i];
+    if(cas && s.cas.includes(cas)){
+      return s;
+    }
+  }
+  if(/^Benzene(\b|,)/i.test(name) && !/hexaphenyl|boronic/i.test(name)){
+    return STATUTORY_CONTROLLED_TABLE[7]; // #8 벤젠
+  }
+  if(/tetrachloroethylene|perchloroethylene/i.test(name)){
+    return STATUTORY_CONTROLLED_TABLE[23]; // #24 퍼클로로에틸렌
+  }
+  if(/^Sulfuric acid/i.test(name)){
+    return STATUTORY_CONTROLLED_TABLE[35]; // #36 황산
+  }
+  if(/dimethylformamide|\bDMF\b/i.test(name)){
+    return STATUTORY_CONTROLLED_TABLE[2]; // #3 디메틸포름아미드
+  }
+  if(/hydrazine.*hydrate/i.test(name)){
+    return STATUTORY_CONTROLLED_TABLE[28]; // #29 히드라진 및 그 수화물
+  }
+  if(/benzo\[?a\]?pyrene/i.test(name)){
+    return STATUTORY_CONTROLLED_TABLE[39]; // #40 벤조(a)피렌
+  }
+  if(/^(Boron oxide|Boric anhydride)/i.test(name)){
+    return STATUTORY_CONTROLLED_TABLE[42]; // #43 산화붕소
+  }
+  return null;
+}
+
+// 산업안전보건기준에 관한 규칙 제420조 및 [별표 12] 특별관리물질 엄밀 판별
 function isControlledSubstance(c){
   if(!c) return false;
   if(c.is_controlled === true) return true;
-  const target = ((c.name || '') + ' ' + (c.specification || '')).toLowerCase();
-  const patterns = [
-    'dichloromethane', 'hydrazine', 'lead(ii)', '납',
-    'nickel', 'cobalt', 'cadmium', 'benzene', 'chromium',
-    'thioacetamide', 'formaldehyde', 'arsenic', 'chlorobenzene'
-  ];
-  return patterns.some(function(p){ return target.includes(p); });
+  if(c.is_controlled === false) return false;
+  return getControlledSubstanceInfo(c) !== null;
 }
 
 const CONSUMABLE_ALIASES = {
@@ -1538,10 +1628,18 @@ function renderConsumables(){
           logAction = '<button type="button" class="btn-compact-log" data-log-chemical="' + safe(c.id) + '" title="특별관리물질 취급일지 작성"><span>📝 일지</span></button>';
         }
 
+        let ctrlBadgeHtml = '';
+        if(isCtrl){
+          const ci = getControlledSubstanceInfo(c);
+          const noStr = ci ? ('#' + ci.no) : '';
+          const titleStr = ci ? ('산업안전보건기준에 관한 규칙 제420조 [별표 12] 제' + ci.no + '호 ' + (ci.nameKo || ci.nameEn)) : '법정 특별관리물질';
+          ctrlBadgeHtml = '<span class="badge-controlled-compact" title="' + safe(titleStr) + '">⚠️ 특별관리 ' + safe(noStr) + '</span>';
+        }
+
         html += '<div class="consumable-compact-row' + (isCtrl ? ' is-controlled-row' : '') + '">' +
           '<div class="compact-main-info">' +
             '<div class="compact-row-top">' +
-              (isCtrl ? '<span class="badge-controlled-compact">⚠️ 특별관리</span>' : '<span class="consumable-cat-tag">' + safe(cat) + '</span>') +
+              (isCtrl ? ctrlBadgeHtml : '<span class="consumable-cat-tag">' + safe(cat) + '</span>') +
               '<h3 class="compact-name">' + safe(c.name) + '</h3>' +
               getCasBadgeHtml(meta.cas) +
               getHazardBadgeHtml(meta.hazard) +
@@ -1580,7 +1678,12 @@ function renderConsumables(){
         }
 
         let logAction = '';
+        let ctrlBadgeHtml = '';
         if(isCtrl){
+          const ci = getControlledSubstanceInfo(c);
+          const labelStr = ci ? ('⚠️ 특별관리물질 [제' + ci.no + '호 ' + (ci.nameKo || ci.nameEn) + ']') : '⚠️ 법정 특별관리물질';
+          const titleStr = ci ? ('관리범위: ' + (ci.threshold || '0.1% 이상') + ' (산업안전보건기준에 관한 규칙 제420조 [별표 12])') : '';
+          ctrlBadgeHtml = '<span class="badge-controlled" title="' + safe(titleStr) + '">' + safe(labelStr) + '</span>';
           logAction = '<button type="button" class="btn-chemical-log" data-log-chemical="' + safe(c.id) + '"><span>📝 취급일지 작성</span></button>';
         }
 
@@ -1588,7 +1691,7 @@ function renderConsumables(){
           '<div class="consumable-card-header">' +
             '<div class="consumable-title-wrap">' +
               '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
-                (isCtrl ? '<span class="badge-controlled">⚠️ 법정 특별관리물질</span>' : '') +
+                (isCtrl ? ctrlBadgeHtml : '') +
                 '<span class="consumable-cat-tag">' + safe(cat) + '</span>' +
                 getMakerBadgeHtml(meta.maker) +
                 getHazardBadgeHtml(meta.hazard) +
@@ -1696,9 +1799,10 @@ function exportChemicalLogsCsv(){
 
   const headers = [
     '연번',
+    '법정 물질분류(별표12)',
     '취급일시',
     '취급자 성명',
-    '물질명(화학명)',
+    '물질명(제품명)',
     'CAS 번호',
     '취급량(사용량)',
     '단위',
@@ -1710,8 +1814,15 @@ function exportChemicalLogsCsv(){
   ];
 
   const rows = logs.map(function(item, idx){
+    let statutoryCategory = '';
+    const c = consumableFor(item.consumable_id);
+    const ci = c ? getControlledSubstanceInfo(c) : null;
+    if(ci){
+      statutoryCategory = '제' + ci.no + '호 ' + ci.nameKo + (ci.threshold ? ' (' + ci.threshold + ')' : '');
+    }
     return [
       idx + 1,
+      statutoryCategory,
       item.used_at ? item.used_at.replace('T', ' ') : '',
       item.handler_name || '',
       item.chemical_name || '',
@@ -1959,10 +2070,15 @@ function openModal(mode, id){
       const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
       const nowStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
+      const ci = getControlledSubstanceInfo(c);
+      const statutoryDesc = ci
+        ? ('제' + ci.no + '호 <b>' + safe(ci.nameKo) + '</b>' + (ci.nameEn ? ' (' + safe(ci.nameEn) + ')' : '') + ' · 관리범위: <b>' + safe(ci.threshold || '0.1% 이상') + '</b>')
+        : '법정 특별관리물질';
+
       parts.push('<div class="controlled-chem-modal-head">');
       parts.push('<div class="controlled-chem-title">🧪 <b>' + safe(c.name) + '</b></div>');
       parts.push('<div class="controlled-chem-meta">CAS No: <code>' + safe(meta.cas || '확인 필요') + '</code> · 보관: ' + safe(c.location) + ' (' + safe(c.sub_location) + ')</div>');
-      parts.push('<div class="controlled-notice-box">⚠️ 본 물질은 산업안전보건기준에 관한 규칙 제420조에 따른 <b>특별관리물질</b>로, 사용 시 <b>취급일지 30년 보존</b> 법정 의무 대상입니다.</div>');
+      parts.push('<div class="controlled-notice-box">⚠️ 본 시약은 산업안전보건기준에 관한 규칙 제420조 [별표 12] <b>' + statutoryDesc + '</b>에 해당하는 <b>특별관리물질</b>입니다. 사용 시 <b>취급일지 30년 보존</b> 법정 의무 대상입니다.</div>');
       parts.push('</div>');
 
       parts.push('<div class="form-grid" style="margin-top:14px">');

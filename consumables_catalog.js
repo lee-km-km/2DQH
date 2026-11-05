@@ -1,4 +1,5 @@
 // 2DQH 연구실 공용 소모품 및 시약 도감 표준 카탈로그 (337종)
+// 산업안전보건기준에 관한 규칙 제420조 [별표 12] 특별관리물질 44종 법정 기준 정확 반영
 window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-001",
@@ -86,8 +87,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "화학재료합성실 / PVD실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 25.0g · 제조사: Sigma-Aldrich · CAT: 172502-25G · CAS: 62-55-5 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 25.0g · 제조사: Sigma-Aldrich · CAT: 172502-25G · CAS: 62-55-5 · 위험도: D (보통)"
   },
   {
     "id": "CS-012",
@@ -112,7 +112,10 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "location": "화학재료합성실 / PVD실",
     "sub_location": "방화/유독물 전용 시약장",
     "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 203866-5G · CAS: 7791-20-0 · 위험도: D (보통)",
-    "is_controlled": true
+    "is_controlled": true,
+    "controlled_no": 31,
+    "controlled_name": "니켈 및 그 무기화합물 (Nickel and its inorganic compounds)",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-015",
@@ -136,8 +139,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "화학재료합성실 / PVD실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 50.0g · 제조사: Sigma-Aldrich · CAT: 221643-50G · CAS: 1308-06-1 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 50.0g · 제조사: Sigma-Aldrich · CAT: 221643-50G · CAS: 1308-06-1 · 위험도: D (보통)"
   },
   {
     "id": "CS-018",
@@ -146,7 +148,10 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "location": "화학재료합성실 / PVD실",
     "sub_location": "시약 보관 선반",
     "specification": "용량: 100.0g · 제조사: Sigma-Aldrich · CAT: 227676-100G · CAS: 10101-97-0 · 위험도: D (보통)",
-    "is_controlled": true
+    "is_controlled": true,
+    "controlled_no": 31,
+    "controlled_name": "니켈 및 그 무기화합물 (Nickel and its inorganic compounds)",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-019",
@@ -331,7 +336,10 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "location": "화학재료합성실 / PVD실",
     "sub_location": "시약 보관 선반",
     "specification": "용량: 250.0g · 제조사: Sigma-Aldrich · CAT: 225819-250g · CAS: 10217-52-4 · 위험도: D (보통)",
-    "is_controlled": true
+    "is_controlled": true,
+    "controlled_no": 29,
+    "controlled_name": "히드라진 및 그 수화물 (Hydrazine and its hydrates)",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-042",
@@ -435,7 +443,11 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "화학재료합성실 / PVD실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 50.0g · 제조사: Sigma-Aldrich · CAT: 15678-50G · CAS: 1303-86-2 · 위험도: D (보통)"
+    "specification": "용량: 50.0g · 제조사: Sigma-Aldrich · CAT: 15678-50G · CAS: 1303-86-2 · 위험도: D (보통)",
+    "is_controlled": true,
+    "controlled_no": 43,
+    "controlled_name": "산화붕소 (Boron oxide (Boric anhydride))",
+    "controlled_threshold": "0.3% 이상"
   },
   {
     "id": "CS-055",
@@ -459,8 +471,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "화학재료합성실 / PVD실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 203114-5G · CAS: 1308-06-1 · 위험도: E (낮음)",
-    "is_controlled": true
+    "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 203114-5G · CAS: 1308-06-1 · 위험도: E (낮음)"
   },
   {
     "id": "CS-058",
@@ -484,8 +495,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "화학재료합성실 / PVD실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 500.0g · 제조사: 덕산약품공업(주) · CAT: 3518 · CAS: 1308-38-9 · 위험도: F (매우낮음)",
-    "is_controlled": true
+    "specification": "용량: 500.0g · 제조사: 덕산약품공업(주) · CAT: 3518 · CAS: 1308-38-9 · 위험도: F (매우낮음)"
   },
   {
     "id": "CS-061",
@@ -749,7 +759,11 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 25.0g · 제조사: Sigma-Aldrich · CAT: 190144-25G · CAS: 26299-14-9 · 위험도: D (보통)"
+    "specification": "용량: 25.0g · 제조사: Sigma-Aldrich · CAT: 190144-25G · CAS: 26299-14-9 · 위험도: D (보통)",
+    "is_controlled": true,
+    "controlled_no": 35,
+    "controlled_name": "6가크롬 및 그 화합물 (Chromium(VI) compounds (PCC))",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-094",
@@ -757,7 +771,11 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 100.0mg · 제조사: Sigma-Aldrich · CAT: B1760-100MG · CAS: 50-32-8 · 위험도: D (보통)"
+    "specification": "용량: 100.0mg · 제조사: Sigma-Aldrich · CAT: B1760-100MG · CAS: 50-32-8 · 위험도: D (보통)",
+    "is_controlled": true,
+    "controlled_no": 40,
+    "controlled_name": "벤조(a)피렌 (Benzo(a)pyrene)",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-095",
@@ -781,8 +799,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "방화/유독물 전용 시약장",
-    "specification": "용량: 25.0g · 제조사: Sigma-Aldrich · CAT: 200050-25G · CAS: 10025-73-7 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 25.0g · 제조사: Sigma-Aldrich · CAT: 200050-25G · CAS: 10025-73-7 · 위험도: D (보통)"
   },
   {
     "id": "CS-098",
@@ -798,8 +815,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 50.0g · 제조사: Sigma-Aldrich · CAT: 203106-50G · CAS: 10026-22-9 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 50.0g · 제조사: Sigma-Aldrich · CAT: 203106-50G · CAS: 10026-22-9 · 위험도: D (보통)"
   },
   {
     "id": "CS-100",
@@ -816,7 +832,10 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
     "specification": "용량: 20.0g · 제조사: Sigma-Aldrich · CAT: 203874-20G · CAS: 13478-00-7 · 위험도: D (보통)",
-    "is_controlled": true
+    "is_controlled": true,
+    "controlled_no": 31,
+    "controlled_name": "니켈 및 그 무기화합물 (Nickel and its inorganic compounds)",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-102",
@@ -873,7 +892,10 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
     "specification": "용량: 50.0g · 제조사: Sigma-Aldrich · CAT: 211168-50G · CAS: 10101-63-0 · 위험도: D (보통) · 재고수량: 2개",
-    "is_controlled": true
+    "is_controlled": true,
+    "controlled_no": 30,
+    "controlled_name": "납 및 그 무기화합물 (Lead and its inorganic compounds)",
+    "controlled_threshold": "0.3% 이상"
   },
   {
     "id": "CS-109",
@@ -961,8 +983,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "방화/유독물 전용 시약장",
-    "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 232696-5G · CAS: 7646-79-9 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 232696-5G · CAS: 7646-79-9 · 위험도: D (보통)"
   },
   {
     "id": "CS-120",
@@ -1122,8 +1143,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "유기용매 전용 캐비닛",
-    "specification": "용량: 100.0mL · 제조사: Sigma-Aldrich · CAT: 270997-100ML · CAS: 75-09-2 · 위험도: D (보통) · 재고수량: 3개",
-    "is_controlled": true
+    "specification": "용량: 100.0mL · 제조사: Sigma-Aldrich · CAT: 270997-100ML · CAS: 75-09-2 · 위험도: D (보통) · 재고수량: 3개"
   },
   {
     "id": "CS-140",
@@ -1131,8 +1151,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "유기용매 전용 캐비닛",
-    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 270997-1L · CAS: 75-09-2 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 270997-1L · CAS: 75-09-2 · 위험도: D (보통)"
   },
   {
     "id": "CS-141",
@@ -1172,8 +1191,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "유기용매 전용 캐비닛",
-    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 284513-1L · CAS: 108-90-7 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 284513-1L · CAS: 108-90-7 · 위험도: D (보통)"
   },
   {
     "id": "CS-146",
@@ -1285,8 +1303,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 360635-5G · CAS: 14055-02-8 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 360635-5G · CAS: 14055-02-8 · 위험도: D (보통)"
   },
   {
     "id": "CS-160",
@@ -1590,8 +1607,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 25.0g · 제조사: Sigma-Aldrich · CAT: 727970-25G · CAS: 14024-48-7 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 25.0g · 제조사: Sigma-Aldrich · CAT: 727970-25G · CAS: 14024-48-7 · 위험도: D (보통)"
   },
   {
     "id": "CS-198",
@@ -1624,7 +1640,10 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
     "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 755087-5G · CAS: 543-90-8 · 위험도: D (보통)",
-    "is_controlled": true
+    "is_controlled": true,
+    "controlled_no": 34,
+    "controlled_name": "카드뮴 및 그 화합물 (Cadmium and its compounds)",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-202",
@@ -1672,8 +1691,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "유기용매 전용 캐비닛",
-    "specification": "용량: 1.0g · 제조사: Sigma-Aldrich · CAT: 149454-1G · CAS: 992-04-1 · 위험도: F (매우낮음)",
-    "is_controlled": true
+    "specification": "용량: 1.0g · 제조사: Sigma-Aldrich · CAT: 149454-1G · CAS: 992-04-1 · 위험도: F (매우낮음)"
   },
   {
     "id": "CS-208",
@@ -1881,7 +1899,11 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 100.0g · 제조사: Sigma-Aldrich · CAT: 339075-100G · CAS: 1303-86-2 · 위험도: D (보통)"
+    "specification": "용량: 100.0g · 제조사: Sigma-Aldrich · CAT: 339075-100G · CAS: 1303-86-2 · 위험도: D (보통)",
+    "is_controlled": true,
+    "controlled_no": 43,
+    "controlled_name": "산화붕소 (Boron oxide (Boric anhydride))",
+    "controlled_threshold": "0.3% 이상"
   },
   {
     "id": "CS-234",
@@ -2090,7 +2112,10 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "location": "이차원소재합성실",
     "sub_location": "유기용매 전용 캐비닛",
     "specification": "용량: 100.0mL · 제조사: Sigma-Aldrich · CAT: 270709-100ML · CAS: 71-43-2 · 위험도: D (보통)",
-    "is_controlled": true
+    "is_controlled": true,
+    "controlled_no": 8,
+    "controlled_name": "벤젠 (Benzene)",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-260",
@@ -2114,7 +2139,11 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 16211-1L · CAS: 127-18-4 · 위험도: D (보통)"
+    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 16211-1L · CAS: 127-18-4 · 위험도: D (보통)",
+    "is_controlled": true,
+    "controlled_no": 24,
+    "controlled_name": "퍼클로로에틸렌 (Perchloroethylene (Tetrachloroethylene))",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-263",
@@ -2130,8 +2159,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "유기용매 전용 캐비닛",
-    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 494453-1L · CAS: 75-09-2 · 위험도: D (보통) · 재고수량: 2개",
-    "is_controlled": true
+    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 494453-1L · CAS: 75-09-2 · 위험도: D (보통) · 재고수량: 2개"
   },
   {
     "id": "CS-265",
@@ -2283,7 +2311,11 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 10.0g · 제조사: Alfa Aesar · CAT: 041786.09 · CAS: 1303-86-2 · 위험도: D (보통)"
+    "specification": "용량: 10.0g · 제조사: Alfa Aesar · CAT: 041786.09 · CAS: 1303-86-2 · 위험도: D (보통)",
+    "is_controlled": true,
+    "controlled_no": 43,
+    "controlled_name": "산화붕소 (Boron oxide)",
+    "controlled_threshold": "0.3% 이상"
   },
   {
     "id": "CS-284",
@@ -2355,8 +2387,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
-    "specification": "용량: 100.0g · 제조사: Alfa Aesar · CAT: 036418.22 · CAS: 10026-22-9 · 위험도: D (보통)",
-    "is_controlled": true
+    "specification": "용량: 100.0g · 제조사: Alfa Aesar · CAT: 036418.22 · CAS: 10026-22-9 · 위험도: D (보통)"
   },
   {
     "id": "CS-293",
@@ -2420,7 +2451,11 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "방화/유독물 전용 시약장",
-    "specification": "용량: 500.0mL · 제조사: Sigma-Aldrich · CAT: 258105-500ML · CAS: 7664-93-9 · 위험도: D (보통)"
+    "specification": "용량: 500.0mL · 제조사: Sigma-Aldrich · CAT: 258105-500ML · CAS: 7664-93-9 · 위험도: D (보통)",
+    "is_controlled": true,
+    "controlled_no": 36,
+    "controlled_name": "황산 (Sulfuric acid (pH 2.0 이하))",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-301",
@@ -2468,8 +2503,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "방화/유독물 전용 시약장",
-    "specification": "용량: 250.0mg · 제조사: Sigma-Aldrich · CAT: 492183-250MG · CAS: 70110-03-1 · 위험도: B (높음)",
-    "is_controlled": true
+    "specification": "용량: 250.0mg · 제조사: Sigma-Aldrich · CAT: 492183-250MG · CAS: 70110-03-1 · 위험도: B (높음)"
   },
   {
     "id": "CS-307",
@@ -2566,7 +2600,10 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "location": "이차원소재합성실",
     "sub_location": "시약 보관 선반",
     "specification": "용량: 100.0g · 제조사: Sigma-Aldrich · CAT: 207942-100G · CAS: 7803-57-8 · 위험도: D (보통)",
-    "is_controlled": true
+    "is_controlled": true,
+    "controlled_no": 29,
+    "controlled_name": "히드라진 및 그 수화물 (Hydrazine and its hydrates)",
+    "controlled_threshold": "0.1% 이상"
   },
   {
     "id": "CS-319",
@@ -2606,8 +2643,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "방화/유독물 전용 시약장",
-    "specification": "용량: 100.0g · 제조사: Sigma-Aldrich · CAT: 255599 · CAS: 7791-13-1 · 위험도: B (높음)",
-    "is_controlled": true
+    "specification": "용량: 100.0g · 제조사: Sigma-Aldrich · CAT: 255599 · CAS: 7791-13-1 · 위험도: B (높음)"
   },
   {
     "id": "CS-324",
@@ -2655,7 +2691,11 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "방화/유독물 전용 시약장",
-    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 319937 · CAS: 68-12-2 · 위험도: B (높음)"
+    "specification": "용량: 1.0L · 제조사: Sigma-Aldrich · CAT: 319937 · CAS: 68-12-2 · 위험도: B (높음)",
+    "is_controlled": true,
+    "controlled_no": 3,
+    "controlled_name": "디메틸포름아미드 (Dimethylformamide (DMF))",
+    "controlled_threshold": "0.3% 이상"
   },
   {
     "id": "CS-330",
@@ -2679,8 +2719,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
     "category": "시약·화학",
     "location": "이차원소재합성실",
     "sub_location": "방화/유독물 전용 시약장",
-    "specification": "용량: 1.0g · 제조사: Alfa Aesar · CAT: B24064 · CAS: 4612-26-4 · 위험도: F (매우낮음)",
-    "is_controlled": true
+    "specification": "용량: 1.0g · 제조사: Alfa Aesar · CAT: B24064 · CAS: 4612-26-4 · 위험도: F (매우낮음)"
   },
   {
     "id": "CS-333",
