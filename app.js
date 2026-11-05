@@ -1424,6 +1424,14 @@ function getRoomBadgeHtml(loc){
   return '<span class="room-badge ' + badgeClass + '">' + icon + ' ' + safe(loc || '연구실') + '</span>';
 }
 
+let displayedConsumablesCount = 24;
+const CONSUMABLES_PAGE_SIZE = 24;
+
+function loadMoreConsumables(){
+  displayedConsumablesCount += CONSUMABLES_PAGE_SIZE;
+  renderConsumables();
+}
+
 function renderConsumables(){
   const searchEl = $('consumableSearch');
   const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
@@ -1447,9 +1455,10 @@ function renderConsumables(){
   if(!container) return;
 
   if(list.length > 0){
-    let html = '<div class="consumables-grid">';
-    for(let i = 0; i < list.length; i++){
-      const c = list[i];
+    const visibleList = list.slice(0, displayedConsumablesCount);
+    let html = '<div class="consumables-grid" id="consumablesGrid">';
+    for(let i = 0; i < visibleList.length; i++){
+      const c = visibleList[i];
       const spec = c.specification || c.note || '';
       const cat = c.category || '일반소모품';
 
@@ -1482,7 +1491,29 @@ function renderConsumables(){
       '</div>';
     }
     html += '</div>';
+
+    if(list.length > visibleList.length){
+      const remaining = list.length - visibleList.length;
+      html += '<div class="consumables-load-more-wrap">' +
+        '<button type="button" class="btn-load-more" id="btnLoadMoreConsumables">' +
+          '<span>더보기 (+' + Math.min(CONSUMABLES_PAGE_SIZE, remaining) + '개)</span>' +
+          '<span class="load-more-count">(' + visibleList.length + ' / ' + list.length + '개 표시 중)</span>' +
+        '</button>' +
+      '</div>';
+    }
+
     container.innerHTML = html;
+
+    const loadMoreBtn = $('btnLoadMoreConsumables');
+    if(loadMoreBtn && 'IntersectionObserver' in window){
+      const observer = new IntersectionObserver(function(entries){
+        if(entries[0].isIntersecting){
+          observer.disconnect();
+          loadMoreConsumables();
+        }
+      }, { rootMargin: '240px' });
+      observer.observe(loadMoreBtn);
+    }
   } else {
     container.innerHTML = '<div class="consumables-empty-state">' +
       '<div class="empty-icon">🔍</div>' +
@@ -1949,6 +1980,7 @@ function showView(name){
 
   // 뷰 진입 시 렌더링 보장
   if(name === 'consumables'){
+    displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
     renderConsumables();
   }
 }
@@ -2454,6 +2486,7 @@ function bindEvents(){
       consumableSearchInput.value = '';
       btnClearConsumableSearch.classList.add('hidden');
       consumableSearchInput.focus();
+      displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
       renderConsumables();
     });
   }
@@ -2480,7 +2513,13 @@ function bindEvents(){
 
     if(target.dataset.consumableCategory){
       selectedConsumableCategory = target.dataset.consumableCategory;
+      displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
       renderConsumables();
+      return;
+    }
+
+    if(target.id === 'btnLoadMoreConsumables' || target.closest('#btnLoadMoreConsumables')){
+      loadMoreConsumables();
       return;
     }
 
@@ -2672,16 +2711,19 @@ function bindEvents(){
     });
   }
 
-  // 모바일 헤더 돋보기 검색 토글
+  // 모바일 헤더 돋보기 검색 토글 (현재 활성 뷰에 맞게 패널 토글)
   const btnToggleSearch = $('btnToggleSearch');
-  const searchCollapsible = $('searchFilterCollapsible');
-  if(btnToggleSearch && searchCollapsible){
+  if(btnToggleSearch){
     btnToggleSearch.addEventListener('click', function(){
-      const isOpen = searchCollapsible.classList.toggle('open');
-      btnToggleSearch.classList.toggle('active', isOpen);
-      if(isOpen){
-        const searchInput = $('assetSearch');
-        if(searchInput) setTimeout(function(){ searchInput.focus(); }, 120);
+      const isConsumablesView = document.getElementById('view-consumables') && document.getElementById('view-consumables').classList.contains('active');
+      const targetPanel = isConsumablesView ? $('consumableSearchPanel') : $('searchFilterCollapsible');
+      if(targetPanel){
+        const isOpen = targetPanel.classList.toggle('open');
+        btnToggleSearch.classList.toggle('active', isOpen);
+        if(isOpen){
+          const searchInput = isConsumablesView ? $('consumableSearch') : $('assetSearch');
+          if(searchInput) setTimeout(function(){ searchInput.focus(); }, 120);
+        }
       }
     });
   }
@@ -2707,8 +2749,14 @@ function bindEvents(){
 
   addEvt('assetSearch', 'input', debounce(renderInventory, 180));
   addEvt('assetFilter', 'change', renderInventory);
-  addEvt('consumableSearch', 'input', debounce(renderConsumables, 180));
-  addEvt('consumableFilter', 'change', renderConsumables);
+  addEvt('consumableSearch', 'input', debounce(function(){
+    displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
+    renderConsumables();
+  }, 180));
+  addEvt('consumableFilter', 'change', function(){
+    displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
+    renderConsumables();
+  });
   addEvt('loanSearch', 'input', debounce(renderLoans, 180));
   addEvt('loanFilter', 'change', renderLoans);
   addEvt('historySearch', 'input', debounce(renderHistory, 180));
