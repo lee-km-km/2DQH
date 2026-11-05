@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0f172a">
   <title>2DQH 비품 — 비품 대여 관리</title>
-  <link rel="stylesheet" href="style.css?v=20261105_09">
+  <link rel="stylesheet" href="style.css?v=20261105_10">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -13,12 +13,12 @@
 
 <header class="topbar">
   <a class="brand" href="#inventory">
-    <span class="logo" aria-hidden="true">2</span>
-    <span>2DQH 비품</span>
+    <img src="logo_2dqh.jpg" alt="2DQH" class="brand-img-logo">
+    <span class="brand-sub">비품</span>
   </a>
   <div class="top-actions">
-    <span id="connection" class="pill">연결 확인 중</span>
-    <button id="loginBtn" class="btn">관리자 로그인</button>
+    <span id="connection" class="pill hidden"></span>
+    <button id="loginBtn" class="btn desktop-only">관리자 로그인</button>
     <button id="logoutBtn" class="btn hidden">로그아웃</button>
   </div>
 </header>
@@ -207,6 +207,6 @@
   <button class="mobile-action" id="mobileReturn" type="button">반납 처리</button>
 </div>
 
-<script src="app.js?v=20261105_09"></script>
+<script src="app.js?v=20261105_10"></script>
 </body>
 </html>

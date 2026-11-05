@@ -9,16 +9,21 @@
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
   
-  --ink: #0f172a;        /* Slate-900 */
+  --ink: #1e293b;        /* Charcoal / Slate */
   --muted: #475569;      /* Slate-600 */
   --faint: #64748b;      /* Slate-500 */
   
-  --accent: #0f172a;     /* Linear-style Deep Monotone Accent */
-  --accent-blue: #2563eb;/* Single Brand Blue for focus/links */
-  --accent-hover: #1e293b;
+  /* 2DQH Research Center Identity */
+  --brand-red: #c2272d;  /* 2DQH Crimson Red */
+  --brand-red-hover: #a11d23;
+  --brand-grey: #58595b; /* 2DQH Titanium Grey */
+  
+  --accent: #c2272d;     /* Primary 2DQH Accent */
+  --accent-blue: #c2272d;/* Focus & Key actions */
+  --accent-hover: #a11d23;
   
   --green: #15803d;      /* Emerald-700 */
-  --red: #b91c1c;        /* Red-700 */
+  --red: #c2272d;        /* 2DQH Red */
   --amber: #b45309;      /* Amber-700 */
 
   --radius: 6px;
@@ -66,19 +71,22 @@ button { cursor: pointer; }
   gap: 8px;
   text-decoration: none;
   color: var(--ink);
-  font-weight: 600;
-  font-size: 14px;
 }
-.logo {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  background: var(--ink);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-size: 12px;
+.brand-img-logo {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+.brand-sub {
+  font-size: 13.5px;
   font-weight: 700;
+  color: var(--brand-grey);
+  letter-spacing: -0.02em;
+  padding-left: 2px;
+}
+#connection {
+  display: none !important;
 }
 .top-actions {
   display: flex;
@@ -348,15 +356,15 @@ td b { font-weight: 500; color: var(--ink); }
   border: 1px solid #e2e8f0;
 }
 .btn-action-borrow {
-  background: var(--ink);
+  background: var(--brand-red);
   color: #ffffff;
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 .btn-action-borrow:hover {
-  background: #1e293b;
+  background: var(--brand-red-hover);
 }
 .btn-action-return {
   background: var(--green);
@@ -663,6 +671,9 @@ td b { font-weight: 500; color: var(--ink); }
 @media(max-width: 700px) {
   .layout { display: block; }
   
+  /* 모바일 상단 바 클린업: 공용 DB 상태 및 관리자 로그인 버튼 완전 숨김 */
+  .desktop-only, #loginBtn, #connection { display: none !important; }
+  
   /* 모바일: 사이드바 및 구형 하단바 완전 비활성화 */
   .sidebar { display: none !important; }
   .mobile-bar { display: none !important; }
@@ -762,7 +773,7 @@ td b { font-weight: 500; color: var(--ink); }
     font-size: 13.5px !important;
     font-weight: 600 !important;
     border-radius: 8px !important;
-    background: var(--ink) !important;
+    background: var(--brand-red) !important;
     color: #ffffff !important;
     display: flex !important;
     align-items: center !important;
