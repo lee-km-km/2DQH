@@ -2100,6 +2100,14 @@ function showView(name){
     mobileBar.classList.toggle('hidden', name === 'consumables' || name === 'dashboard' || name === 'history');
   }
 
+  // 모바일 돋보기 버튼 상태 동기화
+  const btnToggleSearch = $('btnToggleSearch');
+  if(btnToggleSearch){
+    const targetPanel = (name === 'consumables') ? $('consumableSearchPanel') : $('searchFilterCollapsible');
+    const isOpen = targetPanel && targetPanel.classList.contains('open');
+    btnToggleSearch.classList.toggle('active', !!isOpen);
+  }
+
   // 뷰 진입 시 렌더링 보장
   if(name === 'consumables'){
     displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;

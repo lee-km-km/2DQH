@@ -1033,8 +1033,14 @@ tbody tr:hover .asset-thumb-box {
   .text-link-sub:hover { color: var(--ink); }
   .sub-dot { color: var(--border-strong); font-size: 11px; }
 
-  /* 쾌적한 화면 호흡 여백 */
-  main { padding: 14px 16px 36px !important; }
+  /* 쾌적한 화면 호흡 여백: 상단 여백 0으로 헤더와 매끄럽게 연결 */
+  main {
+    padding: 0 12px 36px !important;
+  }
+  .view {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
   .panel {
     background: transparent !important;
     border: none !important;
@@ -1920,6 +1926,61 @@ tbody tr:hover .asset-thumb-box {
     display: none;
   }
 
+  /* 모바일 소모품 검색창: 상단 여백 완전 제거 및 리스트를 가리지 않는 정적 플로우 */
+  #view-consumables .search-collapsible-panel {
+    position: static !important;
+    top: auto !important;
+    z-index: 1 !important;
+    padding: 8px 4px 6px 4px !important;
+    margin: 0 0 6px 0 !important;
+    background: transparent !important;
+    border-bottom: 1px dashed var(--border) !important;
+    box-shadow: none !important;
+  }
+
+  .toolbar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 0 0 6px 0 !important;
+  }
+
+  .search-input-box {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .view-mode-toggle {
+    flex-shrink: 0 !important;
+    padding: 1px !important;
+  }
+
+  .btn-view-mode {
+    padding: 5px 8px !important;
+    font-size: 11.5px !important;
+  }
+
+  .category-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 6px !important;
+    padding: 2px 0 6px 0 !important;
+    scrollbar-width: none !important;
+  }
+
+  .category-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .category-tab {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+  }
+
   .consumables-grid {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -1929,6 +1990,6 @@ tbody tr:hover .asset-thumb-box {
     gap: 8px;
   }
   .consumables-container {
-    padding: 6px 8px 36px;
+    padding: 4px 0 36px !important;
   }
 }
