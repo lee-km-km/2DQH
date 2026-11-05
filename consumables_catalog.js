@@ -1,85 +1,5 @@
-// 2DQH 연구실 공용 소모품 및 시약 위치 안내 표준 카탈로그 (337종)
+// 2DQH 연구실 공용 소모품 및 시약 위치 안내 표준 카탈로그 (327종)
 window.DEFAULT_2DQH_CONSUMABLES = [
-  {
-    "id": "CS-001",
-    "name": "4인치 Si/SiO2 웨이퍼 (300nm)",
-    "category": "기판·박리",
-    "location": "클린룸 광학실",
-    "sub_location": "진공 데시케이터 A 2단",
-    "specification": "P-type, Boron doped, 500µm 두께"
-  },
-  {
-    "id": "CS-002",
-    "name": "고품위 벌크 그래파이트 (HOPG)",
-    "category": "기판·박리",
-    "location": "3층 측정실",
-    "sub_location": "건식 보관함 1번",
-    "specification": "기계적 박리용 샘플"
-  },
-  {
-    "id": "CS-003",
-    "name": "Scotch 3M 매직테이프 (박리용)",
-    "category": "기판·박리",
-    "location": "클린룸 글러브박스 앞",
-    "sub_location": "공용 공구함 서랍 1단",
-    "specification": "2D flake exfoliation 전용"
-  },
-  {
-    "id": "CS-004",
-    "name": "니트릴 장갑 (M)",
-    "category": "클린룸·안전",
-    "location": "클린룸 입구",
-    "sub_location": "선반 1열 상단",
-    "specification": "파우더프리, 박스 단위 (100매)"
-  },
-  {
-    "id": "CS-005",
-    "name": "클린룸 와이퍼 (TX1009 9x9)",
-    "category": "클린룸·안전",
-    "location": "클린룸 벤치",
-    "sub_location": "클린벤치 1번 하부 수납장",
-    "specification": "폴리에스터 무발진 와이퍼"
-  },
-  {
-    "id": "CS-006",
-    "name": "초고순도 아세톤 (HPLC 등급)",
-    "category": "화학·시약",
-    "location": "화학실험실 흄후드 3",
-    "sub_location": "유기용매 전용 방화 캐비닛",
-    "specification": "세척 및 레지스트 제거용 (4L)"
-  },
-  {
-    "id": "CS-007",
-    "name": "이소프로필알코올 (IPA 99.9%)",
-    "category": "화학·시약",
-    "location": "화학실험실 흄후드 3",
-    "sub_location": "유기용매 전용 방화 캐비닛",
-    "specification": "기판 린스용 (4L)"
-  },
-  {
-    "id": "CS-008",
-    "name": "KF25 진공 센터링 링 & O-Ring",
-    "category": "진공·배관",
-    "location": "장비실",
-    "sub_location": "진공 피팅 부품함 서랍 C",
-    "specification": "FKM Viton 재질"
-  },
-  {
-    "id": "CS-009",
-    "name": "테프론(PTFE) 씰링 테이프",
-    "category": "진공·배관",
-    "location": "장비실",
-    "sub_location": "가스 배관 작업대",
-    "specification": "가스 라인 및 튜빙 씰링용"
-  },
-  {
-    "id": "CS-010",
-    "name": "킴와이프스 (소형 S-200)",
-    "category": "일반소모품",
-    "location": "3층 측정실 작업대 2",
-    "sub_location": "측정대 상단 선반",
-    "specification": "광학 부품 1차 린스 후 건조용"
-  },
   {
     "id": "CS-011",
     "name": "Thioacetamide",
@@ -92,7 +12,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-012",
     "name": "Polyacrylonitrile",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "화학재료합성실 / PVD실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 50.0g · 제조사: Sigma-Aldrich · CAT: 181315-50G · CAS: 25014-41-9 · 위험도: F (매우낮음)"
@@ -634,7 +554,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-079",
     "name": "Carbon graphite",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "화학재료합성실 / PVD실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 100.0g · 제조사: Sigma-Aldrich · CAT: 104206 · CAS: 7782-42-5 · 위험도: F (매우낮음) · 재고수량: 2개"
@@ -658,7 +578,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-082",
     "name": "ARGON",
-    "category": "진공·배관",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "가스 실린더 보관대",
     "specification": "용량: 10.0L · 제조사: Matheson TRIGAS · CAS: 7440-37-1 · 위험도: E (낮음)"
@@ -666,7 +586,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-083",
     "name": "Carbon Nanotube Single-walled (>85%) below 3nm(Average diam.), over 5µm(Average length)",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 200.0mg · 제조사: TCI · CAT: C3133 · CAS: 308068-56-6 · 위험도: E (낮음)"
@@ -674,7 +594,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-084",
     "name": "HELIUM, H. P.",
-    "category": "진공·배관",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "가스 실린더 보관대",
     "specification": "용량: 10.0L · 제조사: Matheson TRIGAS · CAS: 7440-59-7 · 위험도: E (낮음)"
@@ -690,7 +610,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-086",
     "name": "Oxygen",
-    "category": "진공·배관",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "가스 실린더 보관대",
     "specification": "용량: 47.0L · 제조사: Sigma-Aldrich · CAS: 7782-44-7 · 위험도: E (낮음) · 재고수량: 7개"
@@ -722,7 +642,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-090",
     "name": "Polystyrene",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 25.0g · 제조사: Sigma-Aldrich · CAT: 182427-25G · CAS: 9003-53-6 · 위험도: F (매우낮음)"
@@ -1395,7 +1315,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-173",
     "name": "Polystyrene",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 1.0kg · 제조사: Sigma-Aldrich · CAT: 441147-1KG · CAS: 9003-53-6 · 위험도: F (매우낮음)"
@@ -1467,7 +1387,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-182",
     "name": "Fullerene-C60",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 250.0mg · 제조사: Sigma-Aldrich · CAT: 572500-250MG · CAS: 99685-96-8 · 위험도: D (보통)"
@@ -1475,7 +1395,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-183",
     "name": "Polypyrrole",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 577030-5G · CAS: 30604-81-0 · 위험도: F (매우낮음)"
@@ -1507,7 +1427,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-187",
     "name": "Diamond",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 5.0g · 제조사: Sigma-Aldrich · CAT: 636444-5G · CAS: 7782-40-3 · 위험도: F (매우낮음)"
@@ -1563,7 +1483,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-194",
     "name": "[5,6]-Fullerene-C70",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 25.0mg · 제조사: Sigma-Aldrich · CAT: 709476 · CAS: 115383-22-7 · 위험도: D (보통)"
@@ -1629,7 +1549,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-202",
     "name": "Hydrogen",
-    "category": "진공·배관",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "가스 실린더 보관대",
     "specification": "용량: 47.0L · 제조사: Sigma-Aldrich · CAS: 1333-74-0 · 위험도: E (낮음) · 재고수량: 8개"
@@ -1637,7 +1557,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-203",
     "name": "Methane",
-    "category": "진공·배관",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "가스 실린더 보관대",
     "specification": "용량: 47.0L · 제조사: Sigma-Aldrich · CAS: 74-82-8 · 위험도: E (낮음)"
@@ -1645,7 +1565,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-204",
     "name": "Fluorescent nanodiamond",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 5.0mL · 제조사: Sigma-Aldrich · CAT: 798088-5ML · 위험도: F (매우낮음)"
@@ -1926,7 +1846,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-239",
     "name": "혼합 가스 (질소80%, 산소20%)",
-    "category": "진공·배관",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "가스 실린더 보관대",
     "specification": "용량: 47.0L · 제조사: 알파가스 · CAS: 7727-37-9 · 위험도: E (낮음)"
@@ -1934,7 +1854,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-240",
     "name": "아르곤",
-    "category": "진공·배관",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "가스 실린더 보관대",
     "specification": "용량: 47.0L · 제조사: 알파가스 · CAS: 7440-37-1 · 위험도: E (낮음) · 재고수량: 19개"
@@ -2006,7 +1926,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-249",
     "name": "SYLGARD 184 Silicone Elastomer Base",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 1.0kg · 제조사: Dow Corning · CAS: 68083-19-2 · 위험도: F (매우낮음)"
@@ -2014,7 +1934,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-250",
     "name": "SYLGARD 184 Silicone Elastomer Curing Agent",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 1.0kg · 제조사: Dow Corning · CAS: 68037-59-2 · 위험도: F (매우낮음)"
@@ -2184,7 +2104,7 @@ window.DEFAULT_2DQH_CONSUMABLES = [
   {
     "id": "CS-271",
     "name": "Boron nitride nanotubes",
-    "category": "기판·박리",
+    "category": "화학·시약",
     "location": "이차원소재합성실",
     "sub_location": "2D 합성 재료 보관함",
     "specification": "용량: 100.0mg · 제조사: Sigma-Aldrich · CAT: 912085-100MG · CAS: 10043-11-5 · 위험도: F (매우낮음)"

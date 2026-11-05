@@ -163,91 +163,10 @@ const DEFAULT_2DQH_ASSETS = [
 
 const DEFAULT_MOCK_ASSETS = DEFAULT_2DQH_ASSETS;
 
-// 2DQH 이차원양자헤테로구조체연구단 대표 소모품 및 시약 도감 표준 카탈로그 (외부 consumables_catalog.js 우선 연동)
+// 2DQH 이차원양자헤테로구조체연구단 시약 도감 표준 카탈로그 (외부 consumables_catalog.js 연동)
 const DEFAULT_2DQH_CONSUMABLES = (typeof window !== 'undefined' && Array.isArray(window.DEFAULT_2DQH_CONSUMABLES) && window.DEFAULT_2DQH_CONSUMABLES.length > 0)
   ? window.DEFAULT_2DQH_CONSUMABLES
-  : [
-    {
-      id: 'CS-001',
-      name: '4인치 Si/SiO2 웨이퍼 (300nm)',
-      category: '기판·박리',
-      location: '클린룸 광학실',
-      sub_location: '진공 데시케이터 A 2단',
-      specification: 'P-type, Boron doped, 500µm 두께'
-    },
-    {
-      id: 'CS-002',
-      name: '고품위 벌크 그래파이트 (HOPG)',
-      category: '기판·박리',
-      location: '3층 측정실',
-      sub_location: '건식 보관함 1번',
-      specification: '기계적 박리용 샘플'
-    },
-    {
-      id: 'CS-003',
-      name: 'Scotch 3M 매직테이프 (박리용)',
-      category: '기판·박리',
-      location: '클린룸 글러브박스 앞',
-      sub_location: '공용 공구함 서랍 1단',
-      specification: '2D flake exfoliation 전용'
-    },
-    {
-      id: 'CS-004',
-      name: '니트릴 장갑 (M)',
-      category: '클린룸·안전',
-      location: '클린룸 입구',
-      sub_location: '선반 1열 상단',
-      specification: '파우더프리, 박스 단위 (100매)'
-    },
-    {
-      id: 'CS-005',
-      name: '클린룸 와이퍼 (TX1009 9x9)',
-      category: '클린룸·안전',
-      location: '클린룸 벤치',
-      sub_location: '클린벤치 1번 하부 수납장',
-      specification: '폴리에스터 무발진 와이퍼'
-    },
-    {
-      id: 'CS-006',
-      name: '초고순도 아세톤 (HPLC 등급)',
-      category: '화학·시약',
-      location: '화학실험실 흄후드 3',
-      sub_location: '유기용매 전용 방화 캐비닛',
-      specification: '세척 및 레지스트 제거용 (4L)'
-    },
-    {
-      id: 'CS-007',
-      name: '이소프로필알코올 (IPA 99.9%)',
-      category: '화학·시약',
-      location: '화학실험실 흄후드 3',
-      sub_location: '유기용매 전용 방화 캐비닛',
-      specification: '기판 린스용 (4L)'
-    },
-    {
-      id: 'CS-008',
-      name: 'KF25 진공 센터링 링 & O-Ring',
-      category: '진공·배관',
-      location: '장비실',
-      sub_location: '진공 피팅 부품함 서랍 C',
-      specification: 'FKM Viton 재질'
-    },
-    {
-      id: 'CS-009',
-      name: '테프론(PTFE) 씰링 테이프',
-      category: '진공·배관',
-      location: '장비실',
-      sub_location: '가스 배관 작업대',
-      specification: '가스 라인 및 튜빙 씰링용'
-    },
-    {
-      id: 'CS-010',
-      name: '킴와이프스 (소형 S-200)',
-      category: '일반소모품',
-      location: '3층 측정실 작업대 2',
-      sub_location: '측정대 상단 선반',
-      specification: '광학 부품 1차 린스 후 건조용'
-    }
-  ];
+  : [];
 
 function loadLocalStorage(forceReset){
   isLocalMode = false;
@@ -279,16 +198,19 @@ function loadLocalStorage(forceReset){
 
   if(!forceReset && storedConsumables){
     try {
-      const parsed = JSON.parse(storedConsumables);
+      let parsed = JSON.parse(storedConsumables);
       if(Array.isArray(parsed) && parsed.length > 0){
-        if(parsed.length < DEFAULT_2DQH_CONSUMABLES.length){
-          const existingIds = new Set(parsed.map(c => c.id));
-          const additions = DEFAULT_2DQH_CONSUMABLES.filter(c => !existingIds.has(c.id));
-          consumables = [...parsed, ...additions];
-          try { localStorage.setItem('labstock_local_consumables', JSON.stringify(consumables)); } catch(_) {}
+        // 이전 임시 모의 소모품(CS-001 ~ CS-010) 자동 정리
+        parsed = parsed.filter(function(c){ return !/^CS-(00[1-9]|010)$/.test(c.id); });
+
+        if(parsed.length === 0 || (DEFAULT_2DQH_CONSUMABLES.length > 0 && parsed.length < DEFAULT_2DQH_CONSUMABLES.length)){
+          const existingIds = new Set(parsed.map(function(c){ return c.id; }));
+          const additions = DEFAULT_2DQH_CONSUMABLES.filter(function(c){ return !existingIds.has(c.id); });
+          consumables = parsed.concat(additions);
         } else {
           consumables = parsed;
         }
+        try { localStorage.setItem('labstock_local_consumables', JSON.stringify(consumables)); } catch(_) {}
       } else {
         consumables = [...DEFAULT_2DQH_CONSUMABLES];
       }
@@ -1301,7 +1223,17 @@ function renderLoans(){
 // ==========================================
 // [소모품 위치 안내 도감 (Location Guide) 모듈]
 // ==========================================
-const CONSUMABLE_CATEGORIES = ['특별관리물질', '화학·시약', '기판·박리', '클린룸·안전', '진공·배관', '일반소모품'];
+const CONSUMABLE_CATEGORIES = ['특별관리물질', '화학·시약'];
+
+function getActiveConsumableCategories(){
+  const set = new Set(CONSUMABLE_CATEGORIES);
+  consumables.forEach(function(c){
+    if(c.category && c.category.trim()){
+      set.add(c.category.trim());
+    }
+  });
+  return Array.from(set);
+}
 
 // 산업안전보건기준에 관한 규칙 제420조 및 [별표 12] 특별관리물질 자동 판별
 function isControlledSubstance(c){
@@ -1400,7 +1332,7 @@ function matchesConsumableSearch(c, query){
 }
 
 function consumableCategoryTabsHtml(selected){
-  const cats = ['all'].concat(CONSUMABLE_CATEGORIES);
+  const cats = ['all'].concat(getActiveConsumableCategories());
   return '<div class="category-tabs" aria-label="소모품 대분류">' +
     cats.map(function(cat){
       const label = cat === 'all' ? '전체' : cat;
@@ -1409,7 +1341,8 @@ function consumableCategoryTabsHtml(selected){
         cat === '화학·시약' ? '🧪' :
         cat === '기판·박리' ? '🔬' :
         cat === '클린룸·안전' ? '🧤' :
-        cat === '진공·배관' ? '⚙️' : '📦'
+        cat === '진공·배관' ? '⚙️' :
+        cat.includes('벌크') ? '📦' : '📦'
       );
       const isCtrlTab = cat === '특별관리물질';
       return '<button type="button" class="category-tab' +
@@ -1616,15 +1549,16 @@ function renderConsumables(){
               getMakerBadgeHtml(meta.maker) +
               (meta.qty ? '<span class="maker-badge">재고: ' + safe(meta.qty) + '</span>' : '') +
             '</div>' +
-          '</div>' +
-          '<div class="compact-actions">' +
+          '</div>';
+
+        if(logAction || adminActions){
+          html += '<div class="compact-actions">' +
             logAction +
-            '<button type="button" class="btn-compact-copy" data-copy-consumable="' + safe(c.id) + '" title="보관 위치 복사">' +
-              '<span>📋 복사</span>' +
-            '</button>' +
             adminActions +
-          '</div>' +
-        '</div>';
+          '</div>';
+        }
+
+        html += '</div>';
       }
       html += '</div>';
     } else {
@@ -1664,18 +1598,19 @@ function renderConsumables(){
           '<div class="consumable-location-box">' +
             '<div class="location-breadcrumbs">' +
               getRoomBadgeHtml(c.location) +
-              '<span class="sub-loc-text">' + safe(c.sub_location || '위치 지정') + '</span>' +
+              '<span class="sub-loc-text">📍 ' + safe(c.sub_location || '위치 지정') + '</span>' +
             '</div>' +
           '</div>' +
-          (spec ? '<div class="consumable-spec-text">💡 ' + safe(spec) + '</div>' : '') +
-          '<div class="consumable-card-actions">' +
+          (spec ? '<div class="consumable-spec-text">💡 ' + safe(spec) + '</div>' : '');
+
+        if(logAction || adminActions){
+          html += '<div class="consumable-card-actions">' +
             logAction +
-            '<button type="button" class="btn-copy-loc' + (isCtrl ? ' secondary' : '') + '" data-copy-consumable="' + safe(c.id) + '">' +
-              '<span>📋 위치 복사</span>' +
-            '</button>' +
             adminActions +
-          '</div>' +
-        '</div>';
+          '</div>';
+        }
+
+        html += '</div>';
       }
       html += '</div>';
     }
@@ -2910,11 +2845,6 @@ function bindEvents(){
 
     if(target.id === 'btnLoadMoreConsumables' || target.closest('#btnLoadMoreConsumables')){
       loadMoreConsumables();
-      return;
-    }
-
-    if(target.dataset.copyConsumable){
-      copyConsumableLocation(target.dataset.copyConsumable, target);
       return;
     }
 

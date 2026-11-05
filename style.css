@@ -2168,19 +2168,21 @@ tbody tr:hover .asset-thumb-box {
 
 /* 취급일지 작성 버튼 */
 .btn-chemical-log {
+  width: 100%;
+  flex: 1;
   background: #dc2626;
   color: #ffffff;
   border: none;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
-  padding: 8px 12px;
+  padding: 10px 14px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-height: 38px;
+  gap: 6px;
+  min-height: 42px;
   transition: background 0.15s ease-in-out;
   box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25);
 }
