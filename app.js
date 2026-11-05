@@ -583,20 +583,22 @@ function renderInventory(){
       let actionBtn = '';
 
       if(st === 'available'){
-        actionBtn += '<button class="text-btn" data-borrow="' + safe(a.id) + '">대여</button>';
+        actionBtn += '<button class="text-btn btn-action-borrow" data-borrow="' + safe(a.id) + '">⚡ 대여 신청</button>';
+      } else if(st === 'borrowed'){
+        actionBtn += '<span class="status-chip borrowed-chip">대여 중 (' + safe(bName) + ')</span>';
       }
 
       if(isAdmin()){
-        actionBtn += '<button class="text-btn" data-edit="' + safe(a.id) + '">수정</button>';
+        actionBtn += '<button class="text-btn btn-action-edit" data-edit="' + safe(a.id) + '">수정</button>';
       }
 
-      listHtml += '<tr><td><b>' + safe(a.name) +
-        '</b><div class="asset-id">' + safe(a.id) +
-        '</div></td><td>' + safe(a.category) +
-        '</td><td>' + safe(loc) +
-        '</td><td><span class="status ' + st + '">' +
-        statusLabel(st) + '</span></td><td>' + safe(bName) +
-        '</td><td>' + actionBtn + '</td></tr>';
+      listHtml += '<tr data-status="' + st + '">' +
+        '<td data-label="비품명"><b>' + safe(a.name) + '</b><div class="asset-id">' + safe(a.id) + '</div></td>' +
+        '<td data-label="분류">' + safe(a.category) + '</td>' +
+        '<td data-label="보관 위치">' + safe(loc) + '</td>' +
+        '<td data-label="상태"><span class="status ' + st + '">' + statusLabel(st) + '</span></td>' +
+        '<td data-label="현재 대여자">' + safe(bName) + '</td>' +
+        '<td data-label="작업">' + actionBtn + '</td></tr>';
     }
 
     $('inventoryRows').innerHTML = '<table aria-label="비품 목록"><thead><tr><th scope="col">비품명 / 식별번호</th><th scope="col">분류</th><th scope="col">보관 위치</th><th scope="col">상태</th><th scope="col">현재 대여자</th><th scope="col">작업</th></tr></thead><tbody>' +
@@ -710,24 +712,30 @@ function renderLoans(){
       let action = '';
 
       if(canManageLoan(l)){
-        action += '<button class="text-btn" data-edit-loan="' + l.id + '">수정</button>';
+        if(isAdmin()){
+          action += '<button class="text-btn btn-action-edit" data-edit-loan="' + l.id + '">수정</button> ';
+        }
 
         if(!l.returned_at){
-          action += '<button class="text-btn" data-return="' + l.id + '">반납 처리</button>';
+          action += '<button class="text-btn btn-action-return" data-return="' + l.id + '">✓ 반납하기</button>';
         } else {
-          action += '<span class="status available">완료</span>';
+          action += '<span class="status available">반납 완료</span>';
         }
       } else {
-        action = '—';
+        if(!l.returned_at){
+          action = '<span class="status-chip locked-chip">대여 중 (타인 대여)</span>';
+        } else {
+          action = '<span class="status available">반납 완료</span>';
+        }
       }
 
-      loanHtml += '<tr><td><b>' + safe(fmtName(l.asset_id)) +
-        '</b><div class="asset-id">' + safe(l.asset_id) +
-        '</div></td><td>' + safe(l.borrower_name) +
-        '</td><td>' + dateText(l.borrowed_at) +
-        '</td><td>' + dateText(l.due_date) +
-        '</td><td>' + dateText(l.returned_at) +
-        '</td><td>' + action + '</td></tr>';
+      loanHtml += '<tr data-status="' + (l.returned_at ? 'returned' : 'active') + '">' +
+        '<td data-label="비품"><b>' + safe(fmtName(l.asset_id)) + '</b><div class="asset-id">' + safe(l.asset_id) + '</div></td>' +
+        '<td data-label="대여자">' + safe(l.borrower_name) + '</td>' +
+        '<td data-label="대여 시작일">' + dateText(l.borrowed_at) + '</td>' +
+        '<td data-label="반납 예정일">' + dateText(l.due_date) + '</td>' +
+        '<td data-label="실제 반납일">' + dateText(l.returned_at) + '</td>' +
+        '<td data-label="처리">' + action + '</td></tr>';
     }
 
     $('loanRows').innerHTML = '<table aria-label="대여 현황"><thead><tr><th scope="col">비품</th><th scope="col">대여자</th><th scope="col">대여 시작일</th><th scope="col">반납 예정일</th><th scope="col">실제 반납일</th><th scope="col">처리</th></tr></thead><tbody>' +
@@ -2183,9 +2191,7 @@ function subscribeRealtime(){
 async function initApp(){
   bindEvents();
 
-  if(window.matchMedia('(max-width:700px)').matches){
-    showView('home');
-  }
+  showView('inventory');
 
   // 1. 화면 즉시 렌더링: 로컬 스토리지/Mock 데이터를 최우선 로드하여 비품 목록 및 대여창이 바로 뜨도록 보장
   loadLocalStorage();

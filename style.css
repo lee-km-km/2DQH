@@ -28,7 +28,7 @@
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  background: var(--bg);
+  background: #f8fafc;
   color: var(--ink);
   font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 13px;
@@ -242,11 +242,12 @@ input:focus, select:focus, textarea:focus {
 
 /* High-Density Panels & Tables */
 .panel {
-  background: var(--bg);
+  background: #ffffff;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .panel-head {
   padding: 10px 14px;
@@ -309,7 +310,7 @@ td b { font-weight: 500; color: var(--ink); }
   margin-left: 6px;
 }
 
-/* Minimal Status Dots */
+/* Minimal Status Dots & Chips */
 .status {
   display: inline-flex;
   align-items: center;
@@ -327,6 +328,47 @@ td b { font-weight: 500; color: var(--ink); }
 .status.available { color: var(--green); }
 .status.borrowed { color: var(--red); }
 .status.maintenance { color: var(--amber); }
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.borrowed-chip {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+.locked-chip {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.btn-action-borrow {
+  background: var(--ink);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.btn-action-borrow:hover {
+  background: #1e293b;
+}
+.btn-action-return {
+  background: var(--green);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.btn-action-return:hover {
+  background: #166534;
+}
 
 /* Metrics Bar (Compact Strip) */
 .metrics {
@@ -670,6 +712,16 @@ td b { font-weight: 500; color: var(--ink); }
     height: auto;
     font-size: 13.5px;
   }
+  .table-wrap td::before {
+    content: attr(data-label);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .table-wrap td:first-child::before,
+  .table-wrap td:last-child::before {
+    display: none;
+  }
   .table-wrap td:first-child {
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border);
@@ -678,19 +730,20 @@ td b { font-weight: 500; color: var(--ink); }
   .table-wrap td:last-child {
     border-bottom: 0;
     padding-top: 10px;
-    justify-content: flex-end;
+    justify-content: stretch;
   }
-  .table-wrap td:last-child .text-btn {
+  .table-wrap td:last-child .text-btn,
+  .table-wrap td:last-child .status-chip {
     width: 100%;
-    height: 40px;
-    background: var(--ink);
-    color: #fff;
+    min-height: 44px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 14px;
     font-weight: 600;
+    text-align: center;
+    box-sizing: border-box;
   }
 
   /* Horizontal Category Scroll */
