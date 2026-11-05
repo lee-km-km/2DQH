@@ -52,12 +52,6 @@ function loadLocalStorage(forceReset){
     loans = [];
   }
 
-  render();
-}
-    loans = [];
-    localStorage.setItem('labstock_local_loans', JSON.stringify(loans));
-  }
-
   borrowedAssetIds = new Set();
   activeLoanMap = new Map();
   for(let i=0; i<loans.length; i++){
@@ -67,11 +61,6 @@ function loadLocalStorage(forceReset){
     }
   }
 
-  const conn = $('connection');
-  if(conn){
-    conn.textContent = '로컬 테스트 모드';
-    conn.style.color = '#15803d';
-  }
   render();
 }
 
@@ -276,8 +265,13 @@ async function loadData(){
     }
     render();
   }catch(e){
-    // 예외 발생 시 로컬 모드로 자동 전환
-    console.warn('DB 통신 예외 발생, 로컬 테스트 모드로 전환합니다:', e);
+    // 예외 발생 시 로컬 캐시로 자동 전환 및 배지 갱신
+    console.warn('DB 통신 예외 발생, 로컬 모드로 전환합니다:', e);
+    const conn = $('connection');
+    if(conn){
+      conn.textContent = '연결 지연 (로컬 캐시)';
+      conn.style.color = '#b45309';
+    }
     loadLocalStorage();
   }
 }
