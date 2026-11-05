@@ -551,7 +551,27 @@ function renderInventory(){
         '<td data-label="작업">' + actionBtn + '</td></tr>';
     }
 
-    $('inventoryRows').innerHTML = '<table aria-label="비품 목록"><thead><tr><th scope="col">비품명 / 식별번호</th><th scope="col">분류</th><th scope="col">보관 위치</th><th scope="col">상태</th><th scope="col">현재 대여자</th><th scope="col">작업</th></tr></thead><tbody>' +
+    // 본인이 현재 대여 중인 비품이 있는 경우, 최상단에 원클릭 반납 리마인드 배너 노출
+    let personalBannerHtml = '';
+    const myActiveLoans = loans.filter(function(l){
+      return !l.returned_at && isMyLoan(l);
+    });
+
+    if(myActiveLoans.length > 0){
+      const l = myActiveLoans[0];
+      personalBannerHtml = '<div class="my-active-loan-banner">' +
+        '<div class="banner-info">' +
+          '<span class="banner-icon">💡</span>' +
+          '<div>' +
+            '<b>' + safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 대여 중입니다</b>' +
+            '<small>사용이 끝나셨다면 다른 연구원을 위해 반납해 주세요 :)</small>' +
+          '</div>' +
+        '</div>' +
+        '<button class="text-btn btn-banner-return" data-return="' + l.id + '">✓ 지금 반납하기</button>' +
+      '</div>';
+    }
+
+    $('inventoryRows').innerHTML = personalBannerHtml + '<table aria-label="비품 목록"><thead><tr><th scope="col">비품명 / 식별번호</th><th scope="col">분류</th><th scope="col">보관 위치</th><th scope="col">상태</th><th scope="col">현재 대여자</th><th scope="col">작업</th></tr></thead><tbody>' +
       listHtml + '</tbody></table>';
   } else {
     $('inventoryRows').innerHTML = '<div class="empty">검색 결과가 없습니다.</div>';
@@ -1054,12 +1074,12 @@ function openModal(mode, id){
     const preselectedAsset = id ? assetFor(id) : null;
     const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
 
-    // 연체 상태 사전 점검 (현재 기기/사용자 기준)
+    // 미반납 비품 사전 점검 (친절한 리마인드)
     const overdueCheck = getMyOverdueLoan(lastBorrower);
     if(overdueCheck.isLocked){
-      toast('⚠️ 대여 제한: 미반납된 [' + fmtName(overdueCheck.loan.asset_id) + '] 비품을 먼저 반납해 주세요 (' + overdueCheck.days + '일 경과).', 5000);
+      toast('💡 대여 중인 [' + fmtName(overdueCheck.loan.asset_id) + '] 비품이 있어요! 사용이 끝나셨다면 먼저 반납 처리해 드릴게요 :)', 4500);
       closeModal();
-      setTimeout(function(){ openModal('return', overdueCheck.loan.id); }, 400);
+      setTimeout(function(){ openModal('return', overdueCheck.loan.id); }, 350);
       return;
     }
 
@@ -1089,7 +1109,7 @@ function openModal(mode, id){
     parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(lastBorrower) + '"></label>');
     parts.push('<label class="field full">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)"></label>');
     parts.push('</div>');
-    parts.push('<div class="borrow-fast-notice">⚡ 기본 당일 반납 기준이며, 3일 이상 미반납 시 추가 대여가 제한됩니다.</div>');
+    parts.push('<div class="borrow-fast-notice">💡 연구실 비품은 다 쓰신 후 언제든 편하게 반납해 주세요 :)</div>');
   } else if(mode === 'consumable'){
     if(!isAdmin()){
       parts.push('<p>소모품 등록 및 수정은 관리자 로그인이 필요합니다.</p>');
@@ -1597,10 +1617,10 @@ async function saveForm(e){
         localStorage.setItem('labstock_last_borrower_name', v.borrower_name.trim());
       }
 
-      // 2. 제출 시 연체 재점검 (우회 입력 방지)
+      // 2. 제출 시 기존 대여 비품 친절 안내
       const submitOverdue = getMyOverdueLoan(v.borrower_name);
       if(submitOverdue.isLocked){
-        throw new Error('미반납된 [' + fmtName(submitOverdue.loan.asset_id) + '] 비품을 먼저 반납해야 추가 대여가 가능합니다 (' + submitOverdue.days + '일 경과).');
+        throw new Error('대여 중인 [' + fmtName(submitOverdue.loan.asset_id) + '] 비품이 아직 반납되지 않았어요. 기존 비품을 먼저 반납해 주세요 :)');
       }
 
       const insPayload = {

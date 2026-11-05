@@ -104,8 +104,8 @@ BEGIN
   LIMIT 1;
 
   IF FOUND THEN
-    RAISE EXCEPTION 'OVERDUE_LOCKOUT: [%] 비품이 %일째 미반납 상태입니다. 기존 비품을 먼저 반납해야 추가 대여가 가능합니다.',
-      v_overdue_asset_name, v_overdue_days
+    RAISE EXCEPTION 'OVERDUE_LOCKOUT: 대여 중인 [%] 비품이 아직 반납되지 않았어요. 기존 비품을 먼저 반납해 주세요 :)',
+      v_overdue_asset_name
       USING ERRCODE = '23514';
   END IF;
 
