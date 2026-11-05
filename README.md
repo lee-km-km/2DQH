@@ -1,259 +1,122 @@
-# LabStock Ver 1.1
+# 2DQH 비품 (2DQH Equipment Management)
 
-연구실·실험실용 **비품 대여/반납 + 소모품 재고 관리** 웹앱입니다.
-서버 없이 정적 파일(HTML/JS/CSS)과 [Supabase](https://supabase.com)만으로 동작하며, Vercel/GitHub Pages 등에 바로 올려 쓸 수 있습니다.
+**IBS 이차원양자헤테로구조체연구단(Center for 2D Quantum Heterostructures)** 연구원들을 위한 전용 비품 대여 및 소모품 관리 시스템입니다.
 
----
-
-## 목차
-1. [주요 기능](#1-주요-기능)
-2. [권한 정리](#2-권한-정리)
-3. [파일 구성](#3-파일-구성)
-4. [설치 방법 (처음 쓰는 경우)](#4-설치-방법-처음-쓰는-경우)
-5. [이메일 알림 설정 (선택)](#5-이메일-알림-설정-선택)
-6. [배포 (Vercel)](#6-배포-vercel)
-7. [기존 사용자 업데이트 안내](#7-기존-사용자-업데이트-안내)
-8. [동작 확인 체크리스트](#8-동작-확인-체크리스트)
-9. [운영 시 주의사항](#9-운영-시-주의사항)
-10. [자주 묻는 질문](#10-자주-묻는-질문)
-11. [커스터마이징](#11-커스터마이징)
+별도의 유료 백엔드 서버 없이 정적 호스팅([Vercel](https://vercel.com), GitHub Pages 등)과 [Supabase](https://supabase.com) 무료 플랜만으로 동작하며, 연구실 내 태블릿, 스마트폰, PC 어디서나 쾌적하게 사용할 수 있습니다.
 
 ---
 
-## 1. 주요 기능
+## 🔬 핵심 설계 철학
 
-### 비품
-- 비품 목록, 분류 탭, 검색, 대여 가능/대여 중/수리 중 상태 표시
-- **대여**: 누구나 가능 (이름, 시작일, 반납 예정일, 메모)
-- **반납 처리 / 대여 기록 수정**: 대여한 **본인** 또는 관리자만 가능
-- 동일 비품의 중복 대여 방지 (DB 유니크 인덱스), 수리 중 비품은 DB에서도 대여 불가
-- 대여 현황, 대여 이력, 기한 초과 표시
+1. **모바일 우선 초간편 퀵 대여 (Quick-Borrow First)**
+   - 95%의 연구원 행동 패턴: *"비품 터치 ➔ 이름 확인 ➔ 대여 완료"*
+   - 모바일 접속 시 복잡한 사이드바, 검색창, 거대한 현황 테이블을 배제하고 **68px 컴팩트 비품 카드**로 즉시 진입합니다.
+   - 비품이 수십 개로 늘어나도 버벅임 없이 시원하게 스크롤 및 카테고리 필터링이 가능합니다.
 
-### 소모품
-- 소모품 목록, 보관 위치 공유, 최소 보유량 이하 **부족 표시**
-- **사용/입고 기록**으로 수량 자동 증감 (DB 함수가 수량과 이력을 한 번에 처리)
-- 재고보다 많은 사용 수량은 거부
-- 재주문(구매요청) 등록 및 상태 추적
+2. **상호 신뢰 기반의 부드러운 반납 리마인드**
+   - 불필요한 연체 독촉 메일이나 공개적인 연체자 망신 주기 기능을 배제했습니다.
+   - 본인이 현재 빌린 비품이 있는 경우에만 화면 최상단에 **`💡 [연구원]님, 현재 [비품명] 사용 중입니다 [✓ 반납하기]`** 배너가 노출되어 1초 만에 제자리에 반납할 수 있습니다.
 
-### 알림 (선택)
-- 재고가 최소 보유량 이하로 **처음** 내려갈 때 공용 이메일 발송
-- 구매요청이 등록되면 즉시 이메일 발송
-- Supabase Edge Function + Resend 사용 (API 키는 서버에만 보관)
+3. **이차원양자헤테로구조체연구단(2DQH) 공식 브랜딩**
+   - 2DQH 공식 로고 및 시그니처 딥 크림슨 레드(`#C2272D`), 티타늄 차콜 그레이(`#58595B`) 디자인 토큰 적용.
+   - 일반 연구원 화면에서 "공용 DB 연결됨", "관리자 로그인" 등의 시각적 소음을 걷어내고 정갈한 연구소풍 UI를 구현했습니다.
 
-### 화면
-- PC: 대시보드/표 중심의 플랫한 레이아웃
-- 모바일(폭 700px 이하): **대여 / 반납 / 구매요청** 큰 버튼 3개만 있는 QR용 홈 화면
-  (비품실에 배포 주소 QR을 붙여 두면 편리합니다)
-
-> 수량은 센서로 자동 감지되는 값이 아닙니다. 사람이 사용/입고를 기록하면 DB가 재고를 계산합니다.
+4. **365일 영구 무료 가동 (Supabase 7일 휴면 원천 방지)**
+   - Supabase 무료 플랜의 7일 비활성 시 자동 일시 정지(Pause) 문제를 방지하기 위해, **GitHub Actions가 3일마다 자동으로 가벼운 Keep-Alive 핑**을 보내 영구 활성 상태를 유지합니다.
 
 ---
 
-## 2. 권한 정리
+## 📋 주요 기능
 
-| 기능 | 누구나 | 대여한 본인 | 관리자 |
-|---|:-:|:-:|:-:|
-| 비품/소모품/대여 현황 조회 | O | O | O |
-| 비품 대여 | O | O | O |
-| 대여 기록 반납 · 수정 | X | **O** | O |
-| 소모품 사용 기록 | O | O | O |
-| 소모품 입고 기록 | X | X | O |
-| 구매요청 등록 (로그인 불필요) | O | O | O |
-| 비품·소모품 등록/수정, 대여 이력, 대시보드 | X | X | O |
+### 1. 비품 관리 (Equipment)
+- **비품 현황 조회**: 실시간 대여 가능 여부(`대여 가능` / `대여 중` / `수리 중`) 표시.
+- **초간편 대여**: 비품 카드 터치 ➔ 이름 확인 ➔ 즉시 대여 등록.
+- **안전한 중복 대여 방지**: 동일 비품의 동시 중복 대여를 데이터베이스(RLS & Unique Index) 레벨에서 원천 차단.
+- **간편 반납**: 본인이 대여한 비품은 상단 배너 또는 현황 목록에서 클릭 한 번으로 반납 처리.
 
-- **"본인"의 기준**: 대여할 때 만들어진 익명 로그인 세션(`user_id`)입니다. 대여한 **같은 기기·같은 브라우저**에서만 본인으로 인식됩니다.
-- 이 제한은 화면뿐 아니라 DB(RLS)에서도 적용됩니다. 소모품 **입고**도 DB 함수에서 관리자만 허용합니다.
-- 대여 기록은 **반납일·예정일·대여자 이름·메모**만 수정할 수 있고, 비품/시작일/소유자는 등록 후 바꿀 수 없습니다.
-- 구매요청은 항상 `pending` 상태로만 등록되며, 최근 1시간에 20건을 넘으면 거부됩니다(메일 폭주 방지).
-- 구매요청은 로그인하지 않은 방문자도 PC/모바일 모두에서 할 수 있습니다. (DB 정책은 `consumables_migration.sql`에 이미 포함)
+### 2. 소모품 관리 (Consumables - 선택적 활용)
+- 피펫 팁, 시약, 장갑 등 연구실 소모품의 실시간 재고 관리.
+- 연구원의 자율적인 사용 수량 입력 시 재고 자동 차감.
+- 최소 보유량 이하 도달 시 "부족" 경고 표시.
+
+### 3. 관리자 전용 기능 (Admin)
+- 일반 사용자 화면을 방해하지 않도록 화면 최하단 서브푸터(`⚙️ 관리자`)로 로그인 분리.
+- 비품 신규 등록 / 정보 수정 / 상태 변경(수리 중 등).
+- 전체 대여 이력 조회 및 CSV 내보내기.
 
 ---
 
-## 3. 파일 구성
+## 📁 파일 구조
 
 ```
-├─ index.html                     화면 구조
-├─ style.css                      디자인 (색상 변수는 파일 맨 위)
-├─ app.js                         앱 로직 (Supabase URL/키 설정 포함)
-├─ supabase.sql                   [신규 설치] 비품/대여 테이블 + 권한(RLS) + 중복대여 방지
-├─ consumables_migration.sql      [신규 설치] 소모품/재주문/재고변동 테이블 + 함수
-├─ security_patch.sql             [기존 DB 업데이트용] v1.1 보안 패치 (여러 번 실행해도 안전)
-├─ supabase/
-│   ├─ config.toml                Edge Function 설정
-│   └─ functions/low-stock-email/index.ts   이메일 알림 Edge Function
-└─ README.md                      이 문서
+2DQH-equipment/
+├── index.html                           # 메인 웹앱 마크업 (2DQH 공식 헤더 및 뷰포트 구성)
+├── style.css                            # 2DQH 디자인 시스템 CSS (딥 레드 토큰, 68px 퀵 카드)
+├── app.js                              # 프론트엔드 비즈니스 로직 & Supabase 연동
+├── logo_2dqh.jpg                       # IBS 이차원양자헤테로구조체연구단 공식 심볼 로고
+├── vercel.json                         # Vercel 배포 보안 정책(CSP 헤더 설정)
+├── supabase.sql                        # Supabase 기본 테이블(assets, loans, user_roles) 스키마
+├── consumables_migration.sql           # 소모품/재고변동 함수 및 스키마
+├── repair_rls.sql                      # RLS 권한 및 안전성 패치 스크립트
+├── .github/
+│   └── workflows/
+│       └── supabase-keepalive.yml      # 3일 주기 자동 Keep-Alive 핑 (7일 휴면 방지)
+└── README.md                           # 본 문서
 ```
 
 ---
 
-## 4. 설치 방법 (처음 쓰는 경우)
+## 🚀 설치 및 배포 가이드
 
-### 4-1. Supabase 프로젝트 만들기
-1. [supabase.com](https://supabase.com)에서 새 프로젝트를 만듭니다.
-2. **Project Settings → API**에서 `Project URL`과 `Publishable(anon) key`를 확인합니다.
-3. `app.js` 맨 위의 두 값을 내 프로젝트 값으로 교체합니다.
-   ```js
-   const SUPABASE_URL = 'https://xxxx.supabase.co';
-   const SUPABASE_ANON_KEY = 'sb_publishable_...';
+### 1. Supabase 프로젝트 준비
+1. [supabase.com](https://supabase.com)에 로그인하고 새 프로젝트를 생성합니다.
+2. **Project Settings → API**에서 `Project URL`과 `anon (public) key`를 복사합니다.
+3. `app.js` 상단의 연결 정보를 설정합니다:
+   ```javascript
+   const SUPABASE_URL = 'https://YOUR_PROJECT_REF.supabase.co';
+   const SUPABASE_ANON_KEY = 'YOUR_PUBLISHABLE_ANON_KEY';
    ```
-   > `service_role` 키는 **절대** 브라우저 코드에 넣지 마세요.
+4. **SQL Editor**에서 `supabase.sql` 내용을 실행하여 테이블과 보안 정책을 구성합니다.
 
-### 4-2. 인증 설정
-**Authentication → Providers(또는 Sign In / Providers)**
-- **Anonymous Sign-Ins: 켜기** (대여자 본인 식별에 필요)
-- **Email: 켜되, 회원가입(Allow new users to sign up)은 끄기** (관리자 계정은 직접 만듭니다)
-
-### 4-3. DB 생성 (순서대로 실행)
-**SQL Editor**에서 다음 순서로 파일 내용 전체를 실행합니다.
-1. `supabase.sql`
-2. `consumables_migration.sql`
-
-> 기존 데이터가 있다면 먼저 백업하세요. `supabase.sql`은 `assets/loans/user_roles`의 기존 정책을 지우고 새로 만듭니다.
-
-### 4-4. 관리자 계정 만들기
-1. **Authentication → Users → Add user**로 관리자 이메일/비밀번호 계정을 만듭니다.
-2. SQL Editor에서 그 계정을 관리자로 등록합니다.
+### 2. 관리자 계정 생성 (선택)
+1. Supabase 대시보드 ➔ **Authentication ➔ Users ➔ Add user**에서 관리자 이메일/비밀번호 생성.
+2. **SQL Editor**에서 해당 계정에 관리자 권한 부여:
    ```sql
-   insert into public.user_roles (user_id, role)
-   select id, 'admin' from auth.users where email = 'admin@example.com';
+   INSERT INTO public.user_roles (user_id, role)
+   SELECT id, 'admin' FROM auth.users WHERE email = 'admin@example.com';
    ```
-3. 앱 우측 상단 로그인 버튼으로 로그인하면 관리자 기능이 열립니다.
 
-### 4-5. 샘플 데이터
-`supabase.sql`에는 예시 비품 4개(EQ-001~004)가 들어 있습니다. 필요 없으면 관리자 화면에서 삭제하세요.
-
----
-
-## 5. 이메일 알림 설정 (선택)
-
-알림이 필요 없다면 이 장은 건너뛰어도 앱은 정상 동작합니다.
-
-### 5-1. Edge Function 배포
-```bash
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-supabase functions deploy low-stock-email --no-verify-jwt
-```
-
-### 5-2. Resend 설정
-1. [resend.com](https://resend.com)에서 계정을 만들고 발신 도메인을 인증합니다. (테스트 단계에서는 허용된 수신자에게만 발송됩니다.)
-2. API Key를 발급합니다.
-3. Supabase **Edge Functions → low-stock-email → Secrets**에 등록합니다.
-
-| Secret | 설명 |
-|---|---|
-| `RESEND_API_KEY` | Resend API 키 |
-| `LABSTOCK_ALERT_EMAIL` | 연구실 공용 수신 이메일 |
-| `LABSTOCK_WEBHOOK_SECRET` | 임의의 긴 랜덤 문자열 (아래 Webhook 헤더와 동일해야 함) |
-| `RESEND_FROM_EMAIL` | 인증된 발신 주소. 예: `LabStock <alerts@your-domain.com>` |
-
-### 5-3. Database Webhook 2개 만들기
-**Database → Webhooks**에서 생성합니다. 공통: Type `HTTP Request`, Method `POST`,
-URL `https://YOUR_PROJECT_REF.supabase.co/functions/v1/low-stock-email`,
-Header `x-labstock-webhook-secret: (LABSTOCK_WEBHOOK_SECRET과 같은 값)`
-
-| 용도 | Table | Events |
-|---|---|---|
-| 재고 부족 알림 | `public.consumables` | INSERT, UPDATE |
-| 구매요청 즉시 알림 | `public.reorder_requests` | INSERT |
-
-재고 부족 알림은 "충분 → 부족"으로 **바뀔 때만** 발송되며, 이미 부족한 품목을 수정해도 반복 발송하지 않습니다. 재고를 보충한 뒤 다시 부족해지면 새로 발송됩니다.
+### 3. Vercel 또는 GitHub 배포
+1. 본 리포지토리를 GitHub에 푸시합니다.
+2. [Vercel](https://vercel.com)에서 GitHub 저장소를 연결하여 배포합니다 (`Framework Preset: Other / Static`).
+3. 배포된 URL을 QR 코드로 만들어 연구실 비품실 출입문 또는 선반에 부착하면 모든 연구원이 스마트폰 카메라로 즉시 접속할 수 있습니다.
 
 ---
 
-## 6. 배포 (Vercel)
+## ⚡ Supabase 7일 휴면 방지 자동화 (Keep-Alive)
 
-1. 이 폴더의 파일을 GitHub 저장소 **루트**에 올립니다. (`index.html`, `style.css`, `app.js`, SQL 파일, `README.md`, `supabase/`)
-2. Vercel에서 저장소를 Import합니다. Framework는 `Other`(정적 사이트)로 두고, **Root Directory**가 위 파일이 있는 폴더인지 확인합니다.
-3. 배포 후 `Ctrl + F5`로 강력 새로고침해 최신 파일이 반영됐는지 확인합니다.
-4. 배포 주소를 QR로 만들어 비품실에 붙입니다.
+이 리포지토리에는 [GitHub Actions Keep-Alive 워크플로우](.github/workflows/supabase-keepalive.yml)가 내장되어 있습니다.
 
----
-
-## 7. 기존 사용자 업데이트 안내
-
-### v1.0 → v1.1 (보안 패치)
-1. 새 `index.html`, `style.css`, `app.js`로 교체하고 재배포합니다. (`app.js` 맨 위의 Supabase URL/키 값은 **기존 값으로 유지**)
-2. 소모품 기능을 아직 설치하지 않았다면 `consumables_migration.sql`을 먼저 실행합니다.
-3. SQL Editor에서 **`security_patch.sql`을 한 번 실행**합니다. (DB 백업 권장)
-   - 실행하지 않으면 화면에서만 막히고, DB에서는 입고 위조·대여 기록 위조·구매요청 상태 위조가 여전히 가능합니다.
-   - 같은 비품에 반납되지 않은 대여가 2건 이상 남아 있으면 안내 메시지와 함께 중단됩니다. 하나를 반납 처리한 뒤 다시 실행하세요.
-4. Edge Function을 다시 배포합니다. (`supabase functions deploy low-stock-email --no-verify-jwt`)
-5. 루트의 `index.ts`, `config.toml`, `loans_owner_policy.sql`은 더 이상 쓰지 않습니다. (삭제해도 됩니다. `loans_owner_policy.sql`의 내용은 `security_patch.sql`에 포함되었습니다.)
-
-### 이전 버전(누구나 반납 가능 / 관리자만 반납 가능)에서 올리는 경우
-위 v1.1 절차(1~4)를 그대로 따르면 됩니다.
-
-### 참고
-- `user_id`가 없는 **예전 대여 기록**은 관리자만 반납·수정할 수 있습니다.
+- **작동 방식**: 매 3일마다 오전 0시(UTC)에 자동으로 실행되어 Supabase REST API에 가벼운 핑을 보내 프로젝트를 상시 활성 상태로 유지합니다.
+- **수동 실행**: GitHub 저장소의 **Actions** 탭 ➔ **Supabase Keep-Alive** 선택 ➔ **Run workflow**를 누르면 언제든 즉시 핑을 테스트할 수 있습니다.
+- **GitHub Secrets 설정 (선택 권장)**:
+  - Repository **Settings ➔ Secrets and variables ➔ Actions**
+  - `SUPABASE_URL`: `https://YOUR_PROJECT_REF.supabase.co`
+  - `SUPABASE_ANON_KEY`: `YOUR_ANON_KEY`
 
 ---
 
-## 8. 동작 확인 체크리스트
+## 💡 연구원 이용 안내 (Q&A)
 
-**비품**
-- [ ] 비품을 대여하면 목록에 "대여 중"으로 표시됨
-- [ ] 같은 기기에서 `대여 현황`의 `수정`, `반납 처리`가 보임
-- [ ] 다른 기기/시크릿 창에서는 그 기록의 버튼이 `—`로 보임
-- [ ] 이미 대여 중인 비품은 중복 대여가 거부됨 ("이미 다른 사람이 대여한 비품입니다")
-- [ ] 수리 중인 비품은 대여가 거부됨
-- [ ] 관리자는 모든 기록을 반납·수정할 수 있음
+**Q. 비품 대여 시 로그인이 필요한가요?**  
+아닙니다. 연구원의 시간을 아끼기 위해 별도 회원가입/로그인 없이 본인 이름만 입력하면 1초 만에 대여할 수 있습니다.
 
-**소모품**
-- [ ] 소모품 등록 (관리자)
-- [ ] 사용 기록 저장 시 수량 감소 및 이력 생성
-- [ ] 입고 기록 저장 시 수량 증가 (관리자)
-- [ ] 재고가 0인 품목도 관리자는 입고 기록을 할 수 있음
-- [ ] 재고보다 큰 사용 수량은 거부됨
-- [ ] 일반 사용자는 입고 기록이 안 됨 (브라우저 콘솔에서 직접 호출해도 거부)
-- [ ] 최소 보유량 이하가 되면 "부족" 표시
+**Q. 내가 빌린 비품을 반납하려면 어떻게 하나요?**  
+대여했던 스마트폰이나 PC로 접속하시면 화면 상단에 **`[지금 반납하기]`** 배너가 자동으로 뜹니다. 해당 버튼을 누르면 즉시 반납 완료됩니다.
 
-**알림 (설정한 경우)**
-- [ ] 재고 부족 시 공용 이메일 수신
-- [ ] 구매요청 시 `[LabStock 구매요청]` 메일 수신
+**Q. 다른 기기나 PC에서 반납하고 싶을 때는요?**  
+목록에서 해당 비품을 찾거나, 화면 하단 `대여 현황`에서 본인 이름을 확인하고 반납 처리를 누르시면 됩니다.
 
 ---
 
-## 9. 운영 시 주의사항
-
-- **조회와 대여는 공개 모델입니다.** 배포 주소를 아는 사람은 누구나 목록을 보고 대여할 수 있으므로, 연구실 내부 구성원에게만 주소/QR을 공유하세요. 더 엄격한 통제가 필요하면 로그인 필수 구조로 바꾸는 것을 권장합니다.
-- 본인 확인은 "같은 브라우저 세션" 기준이라 **이름 입력만으로는 본인 확인이 되지 않습니다.** 대여자 이름은 표시용입니다.
-- Webhook Secret, Resend API Key는 서버 Secret으로만 관리하세요. HTML/JS에 넣지 마세요.
-- 이메일은 Resend의 발신 도메인/계정 정책을 따릅니다. 설정 전에는 코드만 배포해도 메일이 발송되지 않습니다.
-- SQL 실행 전에는 DB 백업을 권장합니다.
-- **봇/스팸 방어**: 익명 로그인은 누구나 세션을 만들 수 있습니다. 배포 주소가 외부에 노출될 가능성이 있다면 Supabase **Authentication → Attack Protection**에서 CAPTCHA(Cloudflare Turnstile 등)를 켜는 것을 권장합니다. (CAPTCHA를 켜면 `app.js`의 `signInAnonymously()` 호출에 토큰을 전달하도록 수정이 필요합니다.)
-- **개인정보**: 대여자 이름과 메모는 공개 조회 대상입니다. 민감한 정보를 메모에 적지 않도록 안내하세요.
-- 구매요청 폭주 제한(1시간 20건)을 바꾸려면 `consumables_migration.sql`/`security_patch.sql`의 `limit_reorder_request_rate` 함수 안 숫자를 수정하세요.
-- 관리자 이력 CSV는 `=`, `+`, `-`, `@`로 시작하는 값을 자동으로 문자열 처리하여 엑셀 수식 실행을 막습니다.
-
----
-
-## 10. 자주 묻는 질문
-
-**Q. 반납 버튼이 안 보이거나 "본인이 대여한 기록만…" 메시지가 나옵니다.**
-대여한 기기/브라우저가 아니기 때문입니다. 대여했던 기기에서 처리하거나 관리자가 대신 처리하세요.
-
-**Q. 브라우저 데이터를 지웠더니 내가 빌린 기록을 반납할 수 없습니다.**
-익명 세션이 사라져 본인 연결이 끊긴 것입니다. 관리자에게 반납 처리를 요청하세요.
-
-**Q. 대여 시 "로그인 세션을 생성하지 못했습니다"가 나옵니다.**
-Supabase에서 **Anonymous Sign-Ins**가 꺼져 있습니다. 4-2 단계를 확인하세요.
-
-**Q. 소모품 메뉴가 비어 있거나 오류가 납니다.**
-`consumables_migration.sql`을 실행했는지 확인하세요.
-
-**Q. 관리자로 로그인했는데 관리자 메뉴가 안 보입니다.**
-`user_roles`에 해당 계정이 등록되었는지(4-4 단계) 확인하세요.
-
----
-
-## 11. 커스터마이징
-
-- **색상/디자인**: `style.css` 맨 위의 CSS 변수(`--accent` 등)
-- **글꼴**: Pretendard(CDN). 불러오지 못하면 시스템 글꼴로 대체
-- **분류 목록**: `app.js`의 `TOP_LEVEL_CATEGORIES` 및 분류 판별 규칙
-- **모바일 홈 전환 폭**: 기본 700px 이하
-
----
-
-LabStock Ver 1.1
+© IBS 이차원양자헤테로구조체연구단 (Center for 2D Quantum Heterostructures)
