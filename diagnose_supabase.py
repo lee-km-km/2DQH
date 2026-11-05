@@ -5,8 +5,8 @@ except ImportError:
     print("supabase 라이브러리가 필요합니다: pip install supabase")
     exit(1)
 
-SUPABASE_URL = "https://wrnzxduqvhxxadiojuei.supabase.co"
-SUPABASE_KEY = "sb_publishable_q8u_SQKOMIypR-5jOvO4NQ_lNjfcRHk"
+SUPABASE_URL = "https://nngownhoxrtymzvwscyc.supabase.co"
+SUPABASE_KEY = "sb_publishable_ijsPGWswYcZKdhrjoy4hSw_9jRaQGbv"
 
 def main():
     print("=" * 60)
