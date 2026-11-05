@@ -163,89 +163,91 @@ const DEFAULT_2DQH_ASSETS = [
 
 const DEFAULT_MOCK_ASSETS = DEFAULT_2DQH_ASSETS;
 
-// 2DQH 이차원양자헤테로구조체연구단 대표 소모품 위치 안내 도감 표준 카탈로그
-const DEFAULT_2DQH_CONSUMABLES = [
-  {
-    id: 'CS-001',
-    name: '4인치 Si/SiO2 웨이퍼 (300nm)',
-    category: '기판·박리',
-    location: '클린룸 광학실',
-    sub_location: '진공 데시케이터 A 2단',
-    specification: 'P-type, Boron doped, 500µm 두께'
-  },
-  {
-    id: 'CS-002',
-    name: '고품위 벌크 그래파이트 (HOPG)',
-    category: '기판·박리',
-    location: '3층 측정실',
-    sub_location: '건식 보관함 1번',
-    specification: '기계적 박리용 샘플'
-  },
-  {
-    id: 'CS-003',
-    name: 'Scotch 3M 매직테이프 (박리용)',
-    category: '기판·박리',
-    location: '클린룸 글러브박스 앞',
-    sub_location: '공용 공구함 서랍 1단',
-    specification: '2D flake exfoliation 전용'
-  },
-  {
-    id: 'CS-004',
-    name: '니트릴 장갑 (M)',
-    category: '클린룸·안전',
-    location: '클린룸 입구',
-    sub_location: '선반 1열 상단',
-    specification: '파우더프리, 박스 단위 (100매)'
-  },
-  {
-    id: 'CS-005',
-    name: '클린룸 와이퍼 (TX1009 9x9)',
-    category: '클린룸·안전',
-    location: '클린룸 벤치',
-    sub_location: '클린벤치 1번 하부 수납장',
-    specification: '폴리에스터 무발진 와이퍼'
-  },
-  {
-    id: 'CS-006',
-    name: '초고순도 아세톤 (HPLC 등급)',
-    category: '화학·시약',
-    location: '화학실험실 흄후드 3',
-    sub_location: '유기용매 전용 방화 캐비닛',
-    specification: '세척 및 레지스트 제거용 (4L)'
-  },
-  {
-    id: 'CS-007',
-    name: '이소프로필알코올 (IPA 99.9%)',
-    category: '화학·시약',
-    location: '화학실험실 흄후드 3',
-    sub_location: '유기용매 전용 방화 캐비닛',
-    specification: '기판 린스용 (4L)'
-  },
-  {
-    id: 'CS-008',
-    name: 'KF25 진공 센터링 링 & O-Ring',
-    category: '진공·배관',
-    location: '장비실',
-    sub_location: '진공 피팅 부품함 서랍 C',
-    specification: 'FKM Viton 재질'
-  },
-  {
-    id: 'CS-009',
-    name: '테프론(PTFE) 씰링 테이프',
-    category: '진공·배관',
-    location: '장비실',
-    sub_location: '가스 배관 작업대',
-    specification: '가스 라인 및 튜빙 씰링용'
-  },
-  {
-    id: 'CS-010',
-    name: '킴와이프스 (소형 S-200)',
-    category: '일반소모품',
-    location: '3층 측정실 작업대 2',
-    sub_location: '측정대 상단 선반',
-    specification: '광학 부품 1차 린스 후 건조용'
-  }
-];
+// 2DQH 이차원양자헤테로구조체연구단 대표 소모품 및 시약 도감 표준 카탈로그 (외부 consumables_catalog.js 우선 연동)
+const DEFAULT_2DQH_CONSUMABLES = (typeof window !== 'undefined' && Array.isArray(window.DEFAULT_2DQH_CONSUMABLES) && window.DEFAULT_2DQH_CONSUMABLES.length > 0)
+  ? window.DEFAULT_2DQH_CONSUMABLES
+  : [
+    {
+      id: 'CS-001',
+      name: '4인치 Si/SiO2 웨이퍼 (300nm)',
+      category: '기판·박리',
+      location: '클린룸 광학실',
+      sub_location: '진공 데시케이터 A 2단',
+      specification: 'P-type, Boron doped, 500µm 두께'
+    },
+    {
+      id: 'CS-002',
+      name: '고품위 벌크 그래파이트 (HOPG)',
+      category: '기판·박리',
+      location: '3층 측정실',
+      sub_location: '건식 보관함 1번',
+      specification: '기계적 박리용 샘플'
+    },
+    {
+      id: 'CS-003',
+      name: 'Scotch 3M 매직테이프 (박리용)',
+      category: '기판·박리',
+      location: '클린룸 글러브박스 앞',
+      sub_location: '공용 공구함 서랍 1단',
+      specification: '2D flake exfoliation 전용'
+    },
+    {
+      id: 'CS-004',
+      name: '니트릴 장갑 (M)',
+      category: '클린룸·안전',
+      location: '클린룸 입구',
+      sub_location: '선반 1열 상단',
+      specification: '파우더프리, 박스 단위 (100매)'
+    },
+    {
+      id: 'CS-005',
+      name: '클린룸 와이퍼 (TX1009 9x9)',
+      category: '클린룸·안전',
+      location: '클린룸 벤치',
+      sub_location: '클린벤치 1번 하부 수납장',
+      specification: '폴리에스터 무발진 와이퍼'
+    },
+    {
+      id: 'CS-006',
+      name: '초고순도 아세톤 (HPLC 등급)',
+      category: '화학·시약',
+      location: '화학실험실 흄후드 3',
+      sub_location: '유기용매 전용 방화 캐비닛',
+      specification: '세척 및 레지스트 제거용 (4L)'
+    },
+    {
+      id: 'CS-007',
+      name: '이소프로필알코올 (IPA 99.9%)',
+      category: '화학·시약',
+      location: '화학실험실 흄후드 3',
+      sub_location: '유기용매 전용 방화 캐비닛',
+      specification: '기판 린스용 (4L)'
+    },
+    {
+      id: 'CS-008',
+      name: 'KF25 진공 센터링 링 & O-Ring',
+      category: '진공·배관',
+      location: '장비실',
+      sub_location: '진공 피팅 부품함 서랍 C',
+      specification: 'FKM Viton 재질'
+    },
+    {
+      id: 'CS-009',
+      name: '테프론(PTFE) 씰링 테이프',
+      category: '진공·배관',
+      location: '장비실',
+      sub_location: '가스 배관 작업대',
+      specification: '가스 라인 및 튜빙 씰링용'
+    },
+    {
+      id: 'CS-010',
+      name: '킴와이프스 (소형 S-200)',
+      category: '일반소모품',
+      location: '3층 측정실 작업대 2',
+      sub_location: '측정대 상단 선반',
+      specification: '광학 부품 1차 린스 후 건조용'
+    }
+  ];
 
 function loadLocalStorage(forceReset){
   isLocalMode = false;
@@ -278,7 +280,18 @@ function loadLocalStorage(forceReset){
   if(!forceReset && storedConsumables){
     try {
       const parsed = JSON.parse(storedConsumables);
-      consumables = Array.isArray(parsed) && parsed.length ? parsed : [...DEFAULT_2DQH_CONSUMABLES];
+      if(Array.isArray(parsed) && parsed.length > 0){
+        if(parsed.length < DEFAULT_2DQH_CONSUMABLES.length){
+          const existingIds = new Set(parsed.map(c => c.id));
+          const additions = DEFAULT_2DQH_CONSUMABLES.filter(c => !existingIds.has(c.id));
+          consumables = [...parsed, ...additions];
+          try { localStorage.setItem('labstock_local_consumables', JSON.stringify(consumables)); } catch(_) {}
+        } else {
+          consumables = parsed;
+        }
+      } else {
+        consumables = [...DEFAULT_2DQH_CONSUMABLES];
+      }
     } catch(e){
       consumables = [...DEFAULT_2DQH_CONSUMABLES];
     }
@@ -541,7 +554,21 @@ async function loadData(){
       if(cachedC){
         try {
           const parsedC = JSON.parse(cachedC);
-          consumables = Array.isArray(parsedC) && parsedC.length ? parsedC : [...DEFAULT_2DQH_CONSUMABLES];
+          if(Array.isArray(parsedC) && parsedC.length > 0){
+            if(parsedC.length < DEFAULT_2DQH_CONSUMABLES.length){
+              const cMap = new Map(parsedC.map(c => [c.id, c]));
+              const merged = [...parsedC];
+              DEFAULT_2DQH_CONSUMABLES.forEach(c => {
+                if(!cMap.has(c.id)) merged.push(c);
+              });
+              consumables = merged;
+              try { localStorage.setItem('labstock_real_cache_consumables', JSON.stringify(consumables)); } catch(_) {}
+            } else {
+              consumables = parsedC;
+            }
+          } else {
+            consumables = [...DEFAULT_2DQH_CONSUMABLES];
+          }
         } catch(e){
           consumables = [...DEFAULT_2DQH_CONSUMABLES];
         }
