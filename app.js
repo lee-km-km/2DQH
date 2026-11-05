@@ -1508,6 +1508,28 @@ function renderConsumables(){
   const countBadge = $('consumablesCountBadge');
   if(countBadge) countBadge.textContent = list.length;
 
+  // 실시간 검색/필터 결과 요약 카운트 뱃지 (P1 UX 개선)
+  const summaryEl = $('consumablesResultSummary');
+  if(summaryEl){
+    const totalCount = consumables.length;
+    const filteredCount = list.length;
+    let summaryHtml = '';
+    if(q){
+      summaryHtml = '<span class="summary-icon">🔍</span> \'' + safe(q) + '\' 검색 결과: <strong>' + filteredCount + '</strong>개 <span class="summary-sub">(전체 ' + totalCount + '개 중)</span>';
+    } else if(selectedConsumableCategory && selectedConsumableCategory !== 'all'){
+      summaryHtml = '<span class="summary-icon">🏷️</span> <strong>' + safe(selectedConsumableCategory) + '</strong>: ' + filteredCount + '개 품목';
+    } else {
+      summaryHtml = '<span class="summary-icon">📦</span> 전체 <strong>' + filteredCount + '</strong>개의 시약 및 소모품';
+    }
+    summaryEl.innerHTML = summaryHtml;
+  }
+
+  // 검색창 클리어 버튼(✕) 상태 동기화
+  const btnClear = $('btnClearConsumableSearch');
+  if(btnClear && searchEl){
+    btnClear.classList.toggle('hidden', searchEl.value.trim().length === 0);
+  }
+
   const container = $('consumableRows');
   if(!container) return;
 
