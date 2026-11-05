@@ -1138,7 +1138,6 @@ tbody tr:hover .asset-thumb-box {
     white-space: nowrap !important;
     flex-shrink: 0 !important;
   }
-  }
   .col-action .btn-action-borrow:active {
     background: var(--brand-red-hover) !important;
     transform: scale(0.96) !important;
