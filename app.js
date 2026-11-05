@@ -1668,9 +1668,6 @@ function openModal(mode, id){
 
     parts.push('<div class="form-grid" style="margin-top:10px;">');
     parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(lastBorrower) + '"></label>');
-    if(lastBorrower){
-      parts.push('<div class="borrower-remembered-hint" style="margin-top:-6px;margin-bottom:8px;font-size:12px;color:var(--brand-red, #c2272d);display:flex;align-items:center;gap:4px;"><span>⚡</span><span>최근 대여자 이름이 자동 입력되었습니다 (1-Tap 즉시 대여 가능)</span></div>');
-    }
     parts.push('<label class="field full">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)"></label>');
     parts.push('</div>');
   } else if(mode === 'consumable'){
