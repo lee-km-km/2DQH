@@ -181,12 +181,12 @@ button { cursor: pointer; }
 /* Layout & Sidebar */
 .layout {
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: calc(100vh - 58px);
 }
 .sidebar {
   border-right: 1px solid var(--border);
-  padding: 20px 14px;
+  padding: 22px 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -198,18 +198,18 @@ button { cursor: pointer; }
   background: transparent;
   border-radius: 8px;
   text-align: left;
-  padding: 10px 14px;
+  padding: 11px 16px;
   color: #475569;
   font-weight: 500;
-  font-size: 14px;
+  font-size: 14.5px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .nav .nav-icon {
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1;
 }
 .nav:hover {
@@ -221,6 +221,7 @@ button { cursor: pointer; }
   color: var(--brand-red);
   font-weight: 600;
   border: 1px solid var(--border);
+  border-left: 3.5px solid var(--brand-red);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 .nav.mobile-only { display: none; }
@@ -259,13 +260,30 @@ button { cursor: pointer; }
 
 /* Main Workspace */
 main {
-  padding: 24px 32px 60px;
-  max-width: 1560px;
+  padding: 24px 36px 60px;
+  max-width: 1600px;
   width: 100%;
   margin: 0;
 }
 .view { display: none; }
 .view.active { display: block; }
+
+@media (min-width: 1400px) {
+  .layout {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  main {
+    padding: 28px 40px 60px;
+    max-width: 1720px;
+  }
+  .sidebar {
+    padding: 24px 18px;
+  }
+  .nav {
+    font-size: 15px;
+    padding: 12px 18px;
+  }
+}
 
 /* Page Header */
 .page-head {
@@ -807,26 +825,30 @@ td b { font-weight: 600; color: var(--ink); }
 .home-links { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
 
 /* Category Pills */
-.inventory-categories { padding: 4px 0 12px; }
-.category-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 12px; }
+.inventory-categories { padding: 4px 0 14px; }
+.category-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
 .category-tab {
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 18px;
   background: var(--bg);
-  color: var(--muted);
-  padding: 6px 14px;
-  font-size: 13px;
+  color: #475569;
+  height: 35px;
+  padding: 0 16px;
+  font-size: 13.5px;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.category-tab:hover { background: var(--bg-subtle); border-color: #cbd5e1; color: var(--ink); }
+.category-tab:hover { background: var(--bg-subtle); border-color: #94a3b8; color: var(--ink); }
 .category-tab.active {
   background: var(--brand-red);
   border-color: var(--brand-red);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(194, 39, 45, 0.2);
+  box-shadow: 0 2px 8px rgba(194, 39, 45, 0.22);
 }
 
 /* Quick-Row & Mobile Compact Columns (Desktop Baseline) */
