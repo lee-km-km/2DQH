@@ -582,25 +582,56 @@ td b { font-weight: 600; color: var(--ink); }
 .selected-asset-box {
   background: #f8fafc;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 12px 14px;
   margin-bottom: 12px;
+}
+.selected-asset-box.has-modal-thumb {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+}
+.modal-asset-thumb-wrap {
+  width: 68px;
+  height: 68px;
+  min-width: 68px;
+  min-height: 68px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+}
+.modal-asset-thumb-wrap svg, .modal-asset-thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.modal-asset-info {
+  flex: 1;
+  min-width: 0;
 }
 .selected-asset-badge {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .selected-asset-title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ink);
 }
 .selected-asset-sub {
   font-size: 12px;
   color: var(--muted);
-  margin-top: 3px;
+  margin-top: 2px;
 }
 .borrow-fast-notice {
   margin-top: 14px;
@@ -800,8 +831,43 @@ td b { font-weight: 600; color: var(--ink); }
 
 /* Quick-Row & Mobile Compact Columns (Desktop Baseline) */
 .hide-mobile { display: table-cell; }
-.col-main .card-meta,
-.col-main .asset-loc { display: none; }
+.col-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.asset-thumb-box {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.asset-thumb-box svg, .asset-thumb-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+tbody tr:hover .asset-thumb-box {
+  transform: scale(1.06);
+}
+.asset-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.asset-info-col .card-meta,
+.asset-info-col .asset-loc { display: none; }
 .mobile-sub-footer { display: none; }
 .back-link-btn {
   background: transparent;
@@ -905,31 +971,68 @@ td b { font-weight: 600; color: var(--ink); }
   }
   .col-main {
     display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
     border-bottom: 0 !important;
     padding: 0 !important;
     text-align: left !important;
     flex: 1 !important;
+    min-width: 0 !important;
   }
-  .col-main .card-meta {
+  .asset-thumb-box {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    border-radius: 12px !important;
+    background: #f8fafc !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  }
+  .asset-thumb-box svg, .asset-thumb-box img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+  .asset-info-col {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    gap: 2px !important;
+  }
+  .asset-info-col .card-meta {
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
-    margin-bottom: 3px !important;
+    margin-bottom: 2px !important;
   }
-  .col-main .asset-name {
-    font-size: 16px !important;
+  .asset-info-col .asset-name {
+    font-size: 15.5px !important;
     font-weight: 700 !important;
     color: var(--ink) !important;
     letter-spacing: -0.015em !important;
-    line-height: 1.35 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
-  .col-main .asset-loc {
+  .asset-info-col .asset-loc {
     display: block !important;
-    font-size: 12.5px !important;
+    font-size: 12px !important;
     color: var(--muted) !important;
-    margin-top: 3px !important;
+    margin-top: 1px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
   .col-action {
     display: flex !important;

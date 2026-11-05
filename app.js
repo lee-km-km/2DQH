@@ -549,6 +549,62 @@ function matchesSmartSearch(asset, query){
   return false;
 }
 
+// 연구실 비품 3D 아이소메트릭 벡터 일러스트 에셋 라이브러리 (2DQH 톤앤매너 테마)
+const EQUIPMENT_ICONS = {
+  multimeter: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="15" y="8" width="34" height="48" rx="8" fill="#F59E0B"/><rect x="18" y="11" width="28" height="42" rx="5" fill="#1E293B"/><rect x="21" y="14" width="22" height="12" rx="3" fill="#E0F2FE"/><rect x="23" y="17" width="10" height="2" rx="1" fill="#0284C7"/><rect x="23" y="21" width="14" height="2" rx="1" fill="#0284C7"/><circle cx="32" cy="35" r="7" fill="#334155" stroke="#475569" stroke-width="1.5"/><line x1="32" y1="35" x2="32" y2="30" stroke="#C2272D" stroke-width="2" stroke-linecap="round"/><circle cx="24" cy="46" r="2" fill="#C2272D"/><circle cx="32" cy="46" r="2" fill="#0F172A"/><circle cx="40" cy="46" r="2" fill="#F59E0B"/></svg>',
+
+  oscilloscope: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="10" y="13" width="44" height="38" rx="6" fill="#1E293B"/><rect x="12" y="15" width="40" height="34" rx="4" fill="#334155"/><rect x="15" y="18" width="26" height="26" rx="3" fill="#0F172A"/><line x1="15" y1="31" x2="41" y2="31" stroke="#1E293B" stroke-width="0.8" stroke-dasharray="1 1"/><line x1="28" y1="18" x2="28" y2="44" stroke="#1E293B" stroke-width="0.8" stroke-dasharray="1 1"/><path d="M16 31 Q20 20 24 31 T32 31 T40 31" stroke="#06B6D4" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="46" cy="22" r="3" fill="#94A3B8"/><circle cx="46" cy="30" r="3" fill="#94A3B8"/><circle cx="46" cy="38" r="2" fill="#C2272D"/><circle cx="46" cy="44" r="2" fill="#38BDF8"/></svg>',
+
+  powersupply: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="11" y="11" width="42" height="42" rx="6" fill="#1E293B"/><rect x="13" y="13" width="38" height="38" rx="4" fill="#334155"/><rect x="16" y="16" width="15" height="10" rx="2" fill="#0F172A"/><text x="17.5" y="24" font-family="monospace" font-size="6.5" font-weight="bold" fill="#EF4444">30V</text><rect x="33" y="16" width="15" height="10" rx="2" fill="#0F172A"/><text x="34.5" y="24" font-family="monospace" font-size="6.5" font-weight="bold" fill="#10B981">5.0A</text><circle cx="23" cy="34" r="4" fill="#64748B" stroke="#94A3B8" stroke-width="1"/><circle cx="41" cy="34" r="4" fill="#64748B" stroke="#94A3B8" stroke-width="1"/><circle cx="20" cy="45" r="2.5" fill="#EF4444"/><circle cx="32" cy="45" r="2.5" fill="#10B981"/><circle cx="44" cy="45" r="2.5" fill="#0F172A"/></svg>',
+
+  caliper: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="8" y="27" width="48" height="8" rx="1.5" fill="#94A3B8"/><line x1="16" y1="27" x2="16" y2="30" stroke="#64748B" stroke-width="1"/><line x1="20" y1="27" x2="20" y2="29" stroke="#64748B" stroke-width="0.8"/><line x1="24" y1="27" x2="24" y2="30" stroke="#64748B" stroke-width="1"/><line x1="28" y1="27" x2="28" y2="29" stroke="#64748B" stroke-width="0.8"/><line x1="32" y1="27" x2="32" y2="30" stroke="#64748B" stroke-width="1"/><path d="M8 27 L8 46 Q10 49 13 46 L13 35 L17 35 L17 27 Z" fill="#64748B"/><path d="M8 27 L8 14 Q10 12 12 14 L13 22 L16 27 Z" fill="#64748B"/><rect x="24" y="23" width="18" height="16" rx="3" fill="#1E293B"/><rect x="27" y="26" width="12" height="6" rx="1" fill="#BAE6FD"/><rect x="29" y="28" width="7" height="2" rx="0.5" fill="#0284C7"/><path d="M24 39 L24 47 Q26 50 28 47 L30 39 Z" fill="#475569"/></svg>',
+
+  microscope: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><ellipse cx="32" cy="53" rx="18" ry="4" fill="#334155"/><rect x="28" y="47" width="8" height="4" rx="1.5" fill="#E2E8F0"/><circle cx="32" cy="46" r="2.5" fill="#F59E0B"/><rect x="20" y="36" width="24" height="3" rx="1.5" fill="#1E293B"/><path d="M38 52 C46 52 48 30 40 22 C37 19 33 21 33 24" stroke="#475569" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="41" cy="38" r="4.5" fill="#94A3B8" stroke="#334155" stroke-width="1.5"/><circle cx="28" cy="27" r="4" fill="#334155"/><rect x="25" y="29" width="3" height="6" rx="1" fill="#C2272D"/><rect x="29" y="29" width="3" height="4.5" rx="1" fill="#F59E0B"/><path d="M28 25 L23 13" stroke="#64748B" stroke-width="4.5" stroke-linecap="round"/><rect x="20" y="9" width="6" height="4" rx="1.5" fill="#1E293B"/></svg>',
+
+  hotplate: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="12" y="22" width="40" height="32" rx="6" fill="#334155"/><rect x="14" y="14" width="36" height="16" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/><ellipse cx="32" cy="22" rx="12" ry="4" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1"/><rect x="18" y="34" width="13" height="8" rx="2" fill="#0F172A"/><rect x="20" y="37" width="8" height="2" rx="0.5" fill="#EF4444"/><circle cx="34" cy="38" r="2" fill="#DC2626"/><circle cx="43" cy="38" r="4" fill="#64748B" stroke="#94A3B8" stroke-width="1"/></svg>',
+
+  spincoater: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="12" y="22" width="40" height="32" rx="6" fill="#1E293B"/><ellipse cx="32" cy="22" rx="16" ry="7" fill="#334155" stroke="#64748B" stroke-width="1.5"/><ellipse cx="32" cy="22" rx="7" ry="3" fill="#0F172A"/><circle cx="32" cy="22" r="3" fill="#C2272D"/><path d="M16 22 C16 11 48 11 48 22 Z" fill="#38BDF8" fill-opacity="0.25" stroke="#38BDF8" stroke-width="1.5"/><rect x="18" y="36" width="16" height="8" rx="2" fill="#0F172A"/><rect x="21" y="39" width="10" height="2" rx="0.5" fill="#06B6D4"/><circle cx="41" cy="40" r="3.5" fill="#10B981"/></svg>',
+
+  scale: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="12" y="36" width="40" height="18" rx="4" fill="#334155"/><rect x="16" y="12" width="32" height="24" rx="2" fill="#E0F2FE" fill-opacity="0.35" stroke="#94A3B8" stroke-width="1.5"/><rect x="30" y="27" width="4" height="9" fill="#64748B"/><ellipse cx="32" cy="27" rx="9" ry="2.5" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1"/><rect x="18" y="42" width="18" height="7" rx="2" fill="#0F172A"/><rect x="20" y="44" width="12" height="2" rx="0.5" fill="#38BDF8"/><rect x="39" y="42" width="7" height="7" rx="1.5" fill="#C2272D"/></svg>',
+
+  sonicator: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="13" y="16" width="38" height="36" rx="5" fill="#475569"/><rect x="9" y="24" width="4" height="8" rx="1.5" fill="#334155"/><rect x="51" y="24" width="4" height="8" rx="1.5" fill="#334155"/><rect x="15" y="14" width="34" height="5" rx="1.5" fill="#94A3B8"/><ellipse cx="32" cy="19" rx="12" ry="2.5" fill="#38BDF8" fill-opacity="0.4"/><path d="M27 28 Q32 25 37 28" stroke="#38BDF8" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M25 32 Q32 28 39 32" stroke="#38BDF8" stroke-width="1.5" fill="none" stroke-linecap="round"/><rect x="23" y="38" width="18" height="8" rx="2" fill="#0F172A"/><rect x="26" y="41" width="11" height="2" rx="0.5" fill="#10B981"/></svg>',
+
+  soldering: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="11" y="22" width="28" height="30" rx="5" fill="#1E293B"/><rect x="16" y="27" width="16" height="8" rx="2" fill="#0F172A"/><rect x="19" y="30" width="10" height="2" rx="0.5" fill="#EF4444"/><circle cx="24" cy="42" r="3.5" fill="#475569" stroke="#64748B" stroke-width="1"/><rect x="42" y="36" width="12" height="16" rx="3" fill="#334155"/><path d="M47 36 L39 12" stroke="#1E293B" stroke-width="4" stroke-linecap="round"/><path d="M39 12 L36 7" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round"/><path d="M48 48 C44 54 28 54 24 50" stroke="#0F172A" stroke-width="2" fill="none"/></svg>',
+
+  pump: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><rect x="12" y="24" width="26" height="24" rx="4" fill="#334155"/><line x1="16" y1="28" x2="16" y2="44" stroke="#475569" stroke-width="1.5"/><line x1="21" y1="28" x2="21" y2="44" stroke="#475569" stroke-width="1.5"/><line x1="26" y1="28" x2="26" y2="44" stroke="#475569" stroke-width="1.5"/><line x1="31" y1="28" x2="31" y2="44" stroke="#475569" stroke-width="1.5"/><rect x="36" y="28" width="16" height="18" rx="3" fill="#1E293B"/><circle cx="44" cy="20" r="6" fill="#F8FAFC" stroke="#334155" stroke-width="1.5"/><line x1="44" y1="20" x2="46" y2="17" stroke="#C2272D" stroke-width="1.2" stroke-linecap="round"/><path d="M20 24 L20 17 L34 17 L34 24" stroke="#64748B" stroke-width="3" stroke-linecap="round" fill="none"/></svg>',
+
+  tool: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><path d="M16 48 L28 36" stroke="#C2272D" stroke-width="7" stroke-linecap="round"/><path d="M28 36 L44 20" stroke="#94A3B8" stroke-width="3.5" stroke-linecap="round"/><path d="M44 20 L48 16" stroke="#475569" stroke-width="2" stroke-linecap="round"/><path d="M20 18 L42 40 L38 46" stroke="#475569" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
+
+  default: '<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="#F8FAFC"/><polygon points="32,14 46,22 46,38 32,46 18,38 18,22" fill="#FEF2F2" stroke="#C2272D" stroke-width="2"/><circle cx="32" cy="14" r="3" fill="#C2272D"/><circle cx="46" cy="22" r="3" fill="#58595B"/><circle cx="46" cy="38" r="3" fill="#C2272D"/><circle cx="32" cy="46" r="3" fill="#58595B"/><circle cx="18" cy="38" r="3" fill="#C2272D"/><circle cx="18" cy="22" r="3" fill="#58595B"/><circle cx="32" cy="30" r="5" fill="#C2272D"/><path d="M32 20 L32 25 M32 35 L32 40 M23 25 L27 28 M37 32 L41 35 M41 25 L37 28 M27 32 L23 35" stroke="#94A3B8" stroke-width="1.2"/></svg>'
+};
+
+function getEquipmentCategoryKey(assetName, category){
+  const text = ((assetName || '') + ' ' + (category || '')).toLowerCase();
+  if(/멀티미터|multimeter|dmm|테스터|tester|전압계/.test(text)) return 'multimeter';
+  if(/오실로스코프|oscilloscope|scope|dso/.test(text)) return 'oscilloscope';
+  if(/파워서플라이|전원공급기|power\s*supply|psu/.test(text)) return 'powersupply';
+  if(/캘리퍼스|caliper|버니어/.test(text)) return 'caliper';
+  if(/현미경|microscope/.test(text)) return 'microscope';
+  if(/핫플레이트|가열교반기|교반기|stirrer|hotplate|히터/.test(text)) return 'hotplate';
+  if(/스핀코터|spin\s*coater/.test(text)) return 'spincoater';
+  if(/저울|balance|scale/.test(text)) return 'scale';
+  if(/초음파|세척기|sonicator|ultrasonic/.test(text)) return 'sonicator';
+  if(/인두기|납땜|soldering/.test(text)) return 'soldering';
+  if(/진공펌프|펌프|pump|vacuum/.test(text)) return 'pump';
+  if(/드라이버|렌치|토크|공구|wrench|driver|pliers/.test(text)) return 'tool';
+  return 'default';
+}
+
+function getEquipmentImageHtml(asset, sizeVariant = 'thumb'){
+  if(!asset) return '';
+  if(asset.image_url && typeof asset.image_url === 'string' && asset.image_url.trim()){
+    const safeUrl = safe(asset.image_url.trim());
+    return '<img src="' + safeUrl + '" class="asset-img" alt="' + safe(asset.name) + '" loading="lazy">';
+  }
+  const key = getEquipmentCategoryKey(asset.name, asset.category);
+  return EQUIPMENT_ICONS[key] || EQUIPMENT_ICONS['default'];
+}
+
 function renderInventory(){
   const searchEl = $('assetSearch');
   const filterEl = $('assetFilter');
@@ -595,15 +651,19 @@ function renderInventory(){
         actionBtn += '<button class="text-btn btn-action-edit" data-edit="' + safe(a.id) + '">수정</button>';
       }
 
-      // 모바일 비품 카드: [초록색 대여 가능 점] + [시원한 비품명 16px Bold] + [📍 위치 12.5px] + [대여 신청 버튼]
-      // 식별번호(EQ-001)나 분류 태그는 대여 팝업에서만 상세히 노출
+      // 모바일 비품 카드: [좌측 56px 썸네일] + [중앙: 상태점, 비품명 16px Bold, 📍위치] + [우측 대여 신청 버튼]
       listHtml += '<tr data-status="' + st + '" class="quick-row">' +
         '<td class="col-main">' +
-          '<div class="card-meta">' +
-            '<span class="status ' + st + '">' + statusLabel(st) + '</span>' +
+          '<div class="asset-thumb-box" aria-hidden="true">' +
+            getEquipmentImageHtml(a, 'thumb') +
           '</div>' +
-          '<b class="asset-name">' + safe(a.name) + '</b>' +
-          '<div class="asset-loc">📍 ' + safe(loc) + '</div>' +
+          '<div class="asset-info-col">' +
+            '<div class="card-meta">' +
+              '<span class="status ' + st + '">' + statusLabel(st) + '</span>' +
+            '</div>' +
+            '<b class="asset-name">' + safe(a.name) + '</b>' +
+            '<div class="asset-loc">📍 ' + safe(loc) + '</div>' +
+          '</div>' +
         '</td>' +
         '<td class="col-meta hide-mobile">' + safe(a.category) + '</td>' +
         '<td class="col-meta hide-mobile">' + safe(loc) + '</td>' +
@@ -1173,10 +1233,13 @@ function openModal(mode, id){
     window.__bypass24hPrompt = false;
 
     if(preselectedAsset){
-      parts.push('<div class="selected-asset-box">');
+      parts.push('<div class="selected-asset-box has-modal-thumb">');
+      parts.push('<div class="modal-asset-thumb-wrap">' + getEquipmentImageHtml(preselectedAsset, 'modal') + '</div>');
+      parts.push('<div class="modal-asset-info">');
       parts.push('<div class="selected-asset-badge"><span class="status available">대여 가능</span><span class="asset-id">' + safe(preselectedAsset.id) + '</span></div>');
       parts.push('<div class="selected-asset-title">' + safe(preselectedAsset.name) + '</div>');
       parts.push('<div class="selected-asset-sub">📍 보관 위치: ' + safe(preselectedAsset.location || '연구실 지정 장소') + (preselectedAsset.category ? ' · ' + safe(preselectedAsset.category) : '') + '</div>');
+      parts.push('</div>');
       parts.push('</div>');
       parts.push('<input type="hidden" name="asset_id" value="' + safe(preselectedAsset.id) + '">');
     } else {
