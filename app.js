@@ -643,11 +643,44 @@ function updateBorrowCategory(category){
   });
 }
 
-function isMyLoan(l){
-  return !!(l && l.user_id && session && session.user && l.user_id === session.user.id);
+function getClientId(){
+  let cid = localStorage.getItem('labstock_client_id');
+  if(!cid){
+    cid = 'client_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now();
+    localStorage.setItem('labstock_client_id', cid);
+  }
+  return cid;
 }
 
-// 관리자 또는 해당 대여를 등록한 본인(같은 브라우저 세션)만 반납/수정 가능
+function getMyLoanIds(){
+  try {
+    const raw = localStorage.getItem('labstock_my_loan_ids');
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(arr) ? arr.map(String) : []);
+  } catch(e){
+    return new Set();
+  }
+}
+
+function recordMyLoanId(id){
+  if(!id) return;
+  const set = getMyLoanIds();
+  set.add(String(id));
+  localStorage.setItem('labstock_my_loan_ids', JSON.stringify(Array.from(set)));
+}
+
+function isMyLoan(l){
+  if(!l) return false;
+  // 1. Supabase 익명 세션 UID 비교 (같은 익명 세션일 때)
+  if(l.user_id && session && session.user && l.user_id === session.user.id) return true;
+  // 2. 브라우저 client_id 비교 (로컬 모드)
+  if(l.client_id && l.client_id === getClientId()) return true;
+  // 3. 이 기기/브라우저에서 대여 신청했던 loan_id 목록 대조
+  if(getMyLoanIds().has(String(l.id))) return true;
+  return false;
+}
+
+// 관리자 또는 해당 대여를 등록한 본인(대여한 브라우저)만 반납/수정 가능
 function canManageLoan(l){
   return isAdmin() || isMyLoan(l);
 }
@@ -1386,9 +1419,11 @@ async function saveForm(e){
         borrowed_at: v.borrowed_at || today(),
         due_date: v.due_date || today(),
         memo: (v.memo || '').trim(),
+        client_id: getClientId(),
         created_at: new Date().toISOString()
       };
       loans.unshift(newLoan);
+      recordMyLoanId(newLoan.id);
       saveLocalStorage();
       closeModal();
       toast("'" + fmtName(v.asset_id) + "' 대여가 등록되었습니다.");
@@ -1576,16 +1611,19 @@ async function saveForm(e){
       session = currentSession;
       const uid = (currentSession && currentSession.user) ? currentSession.user.id : null;
 
-      const {error} = await db.from('loans').insert({
+      const insRes = await db.from('loans').insert({
         asset_id: v.asset_id,
         borrower_name: v.borrower_name.trim(),
         borrowed_at: v.borrowed_at,
         due_date: v.due_date,
         memo: (v.memo || '').trim(),
         user_id: uid
-      });
+      }).select('id');
 
-      if(error) throw error;
+      if(insRes.error) throw insRes.error;
+      if(insRes.data && insRes.data.length && insRes.data[0].id){
+        recordMyLoanId(insRes.data[0].id);
+      }
     } else if(modalMode === 'return'){
       const target = loans.find(function(l){
         return String(l.id) === String(modalId);
