@@ -536,13 +536,20 @@ function renderInventory(){
         actionBtn += '<button class="text-btn btn-action-edit" data-edit="' + safe(a.id) + '">수정</button>';
       }
 
-      listHtml += '<tr data-status="' + st + '">' +
-        '<td data-label="비품명"><b>' + safe(a.name) + '</b><div class="asset-id">' + safe(a.id) + '</div></td>' +
-        '<td data-label="분류">' + safe(a.category) + '</td>' +
-        '<td data-label="보관 위치">' + safe(loc) + '</td>' +
-        '<td data-label="상태"><span class="status ' + st + '">' + statusLabel(st) + '</span></td>' +
-        '<td data-label="현재 대여자">' + safe(bName) + '</td>' +
-        '<td data-label="작업">' + actionBtn + '</td></tr>';
+      listHtml += '<tr data-status="' + st + '" class="quick-row">' +
+        '<td class="col-main">' +
+          '<div class="card-meta">' +
+            '<span class="status ' + st + '">' + statusLabel(st) + '</span>' +
+            '<span class="asset-id">' + safe(a.id) + '</span>' +
+          '</div>' +
+          '<b class="asset-name">' + safe(a.name) + '</b>' +
+          '<div class="asset-loc">📍 ' + safe(loc) + ' · ' + safe(a.category) + '</div>' +
+        '</td>' +
+        '<td class="col-meta hide-mobile">' + safe(a.category) + '</td>' +
+        '<td class="col-meta hide-mobile">' + safe(loc) + '</td>' +
+        '<td class="col-meta hide-mobile"><span class="status ' + st + '">' + statusLabel(st) + '</span></td>' +
+        '<td class="col-meta hide-mobile">' + safe(bName) + '</td>' +
+        '<td class="col-action">' + actionBtn + '</td></tr>';
     }
 
     // 본인이 현재 대여 중인 비품이 있는 경우, 최상단에 원클릭 반납 리마인드 배너 노출
@@ -1732,6 +1739,10 @@ function bindEvents(){
       showView(el.dataset.view);
     });
   });
+
+  addEvt('btnToggleLoans', 'click', function(){ showView('loans'); });
+  addEvt('btnMobileLogin', 'click', function(){ openModal('login'); });
+  addEvt('btnBackToInventory', 'click', function(){ showView('inventory'); });
 
   document.addEventListener('click', function(e){
     const target = e.target.closest('button');

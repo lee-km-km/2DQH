@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <title>LabStock — 비품 대여 관리</title>
-  <link rel="stylesheet" href="style.css?v=20261105_06">
+  <title>2DQH 비품 — 비품 대여 관리</title>
+  <link rel="stylesheet" href="style.css?v=20261105_07">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -13,8 +13,8 @@
 
 <header class="topbar">
   <a class="brand" href="#inventory">
-    <span class="logo" aria-hidden="true">L</span>
-    <span>LabStock</span>
+    <span class="logo" aria-hidden="true">2</span>
+    <span>2DQH 비품</span>
   </a>
   <div class="top-actions">
     <span id="connection" class="pill">연결 확인 중</span>
@@ -88,6 +88,7 @@
     <section class="view" id="view-loans">
       <div class="page-head">
         <div class="head-title">
+          <button class="back-link-btn" id="btnBackToInventory" type="button">← 비품 목록</button>
           <h1>대여 현황</h1>
           <span class="count-badge" id="activeLoansCountBadge">0</span>
         </div>
@@ -171,6 +172,13 @@
       </div>
       <div id="consumableRows" class="table-wrap"></div>
     </section>
+
+    <!-- 모바일 전용 보조 링크 (대여 현황 및 관리자 기능 격리) -->
+    <footer class="mobile-sub-footer">
+      <button type="button" class="text-link-sub" id="btnToggleLoans">대여 현황 전체보기</button>
+      <span class="sub-dot">·</span>
+      <button type="button" class="text-link-sub" id="btnMobileLogin">관리자 로그인</button>
+    </footer>
   </main>
 </div>
 
@@ -199,6 +207,6 @@
   <button class="mobile-action" id="mobileReturn" type="button">반납 처리</button>
 </div>
 
-<script src="app.js?v=20261105_06"></script>
+<script src="app.js?v=20261105_07"></script>
 </body>
 </html>
