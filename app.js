@@ -329,6 +329,29 @@ function dateText(d){
   return String(d).replace(/-/g, '.');
 }
 
+// 반납 D-Day 계산 및 시각 상태 배지 생성 (Persona Walkthrough & ERP 스타일)
+function getDDayBadge(dueDate, returnedAt){
+  if(returnedAt) return '';
+  if(!dueDate) return '<span class="dday-badge dday-nodate">반납일 미정</span>';
+
+  const todayStr = today();
+  if(dueDate === todayStr){
+    return '<span class="dday-badge dday-today">오늘 반납</span>';
+  }
+
+  const dToday = new Date(todayStr + 'T00:00:00');
+  const dDue = new Date(dueDate + 'T00:00:00');
+  const diffDays = Math.round((dDue - dToday) / (1000 * 60 * 60 * 24));
+
+  if(diffDays < 0){
+    return '<span class="dday-badge dday-overdue">연체 D+' + Math.abs(diffDays) + '</span>';
+  } else if(diffDays === 1){
+    return '<span class="dday-badge dday-urgent">내일 반납 (D-1)</span>';
+  } else {
+    return '<span class="dday-badge dday-future">D-' + diffDays + '</span>';
+  }
+}
+
 function safe(v){
   if(v === null || v === undefined) return '';
   return String(v).replace(/[&<>"']/g, function(c){
@@ -690,7 +713,7 @@ function renderDashboard(){
       rowsHtml += '<tr><td><b>' + safe(fmtName(l.asset_id)) +
         '</b><div class="asset-id">' + safe(l.asset_id) +
         '</div></td><td>' + safe(l.borrower_name) +
-        '</td><td>' + dateText(l.due_date) +
+        '</td><td><div class="due-date-cell">' + dateText(l.due_date) + ' ' + getDDayBadge(l.due_date, l.returned_at) + '</div>' +
         '</td><td><span class="status ' +
         (isOverdue ? 'borrowed' : 'available') + '">' +
         (isOverdue ? '기한 초과' : '대여 중') +
@@ -981,7 +1004,8 @@ function renderInventory(){
       if(st === 'available'){
         actionBtn += '<button class="text-btn btn-action-borrow" data-borrow="' + safe(a.id) + '">⚡ 대여 신청</button>';
       } else if(st === 'borrowed'){
-        actionBtn += '<span class="status-chip borrowed-chip">대여 중 (' + safe(bName) + ')</span>';
+        const dDayStr = l ? (' ' + getDDayBadge(l.due_date, l.returned_at)) : '';
+        actionBtn += '<span class="status-chip borrowed-chip">대여 중 (' + safe(bName) + ')' + dDayStr + '</span>';
       }
 
       if(isAdmin()){
@@ -1018,12 +1042,13 @@ function renderInventory(){
 
     if(myActiveLoans.length > 0){
       const l = myActiveLoans[0];
+      const dDayBadge = getDDayBadge(l.due_date, l.returned_at);
       personalBannerHtml = '<div class="my-active-loan-banner">' +
         '<div class="banner-info">' +
           '<span class="banner-icon">💡</span>' +
           '<div>' +
-            '<b>' + safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 사용 중입니다</b>' +
-            '<small>사용 완료 후 다음 연구원을 위해 반납해 주세요.</small>' +
+            '<b>' + safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 사용 중입니다 ' + dDayBadge + '</b>' +
+            '<small>반납 예정일: ' + dateText(l.due_date) + ' · 사용 완료 후 다음 연구원을 위해 반납해 주세요.</small>' +
           '</div>' +
         '</div>' +
         '<button class="text-btn btn-banner-return" data-return="' + l.id + '">✓ 반납하기</button>' +
@@ -1203,7 +1228,7 @@ function renderLoans(){
         '<td data-label="비품"><b>' + safe(fmtName(l.asset_id)) + '</b><div class="asset-id">' + safe(l.asset_id) + '</div></td>' +
         '<td data-label="대여자">' + safe(l.borrower_name) + '</td>' +
         '<td data-label="대여 시작일">' + dateText(l.borrowed_at) + '</td>' +
-        '<td data-label="반납 예정일">' + dateText(l.due_date) + '</td>' +
+        '<td data-label="반납 예정일"><div class="due-date-cell">' + dateText(l.due_date) + ' ' + getDDayBadge(l.due_date, l.returned_at) + '</div></td>' +
         '<td data-label="실제 반납일">' + dateText(l.returned_at) + '</td>' +
         '<td data-label="처리">' + action + '</td></tr>';
     }
@@ -2148,7 +2173,14 @@ function openModal(mode, id){
       parts.push('<label class="checkbox-row"><input type="checkbox" name="ventilation_checked" value="true" checked required> <span>국소배기장치(흄후드) 정상 배기 작동 확인</span></label>');
       parts.push('</div>');
 
-      parts.push('<label class="field full">사용 후 잔여량 및 비고 (선택)<input name="note" maxlength="100" placeholder="예: 잔여량 약 3.8L / 밀봉 보관 완료"></label>');
+      parts.push('<label class="field full">사용 후 잔여량 및 비고 (선택)<input name="note" maxlength="100" placeholder="예: 잔여량 약 3.8L / 밀봉 보관 완료">');
+      parts.push('<div class="preset-chips-wrap">');
+      parts.push('<span class="preset-chips-label">⚡ 비고 퀵선택:</span>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="note" data-set-val="잔여량 충분 / 밀봉 보관 완료">밀봉 보관 완료</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="note" data-set-val="잔여량 약 50% 남음">잔여 50%</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="note" data-set-val="잔여량 소량 남음 / 재주문 권장">소량 남음</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="note" data-set-val="전량 소진 (공병 세척 및 분리배출 완료)">전량 소진</button>');
+      parts.push('</div></label>');
       parts.push('</div>');
     }
   } else if(mode === 'movement'){
