@@ -2490,18 +2490,46 @@ function openModal(mode, id){
     });
 
     if(!active.length){
-      parts.push('<p>' + (isAdmin() ? '현재 대여 중인 비품이 없습니다.' : '이 기기에서 대여한 반납 대기 비품이 없습니다.') + '</p>');
+      parts.push('<div class="quick-return-empty">');
+      parts.push('  <div style="font-size:32px;margin-bottom:8px;">🎉</div>');
+      parts.push('  <p style="font-size:15px;font-weight:700;color:var(--text-primary);margin:0 0 4px;">반납 대기 중인 비품이 없습니다</p>');
+      parts.push('  <p style="font-size:13px;color:var(--text-muted);margin:0;">' + (isAdmin() ? '현재 대여 중인 모든 비품이 정상 반납되었습니다.' : '이 기기에서 대여한 비품이 없거나 모두 반납 완료되었습니다.') + '</p>');
+      parts.push('</div>');
     } else {
       const opt = active.map(function(l){
+        const a = assetFor(l.asset_id);
+        const loc = a && a.location ? ' (보관: ' + a.location + ')' : '';
         return '<option value="' + safe(l.id) + '">' +
           safe(l.asset_id) + ' · ' + safe(fmtName(l.asset_id)) +
-          ' · ' + safe(l.borrower_name || '') + '</option>';
+          ' · ' + safe(l.borrower_name || '') + loc + '</option>';
       }).join('');
 
-      parts.push('<div class="form-grid">');
-      parts.push('<label class="field full">반납할 비품 *<select name="loan_id" required>' + opt + '</select></label>');
-      parts.push('<label class="field">실제 반납일 *<input name="returned_at" type="date" required value="' + today() + '"></label>');
-      parts.push('<label class="field full">반납 메모<textarea name="return_memo" rows="2" maxlength="500" placeholder="파손·분실 여부 등"></textarea></label>');
+      parts.push('<div class="return-form-grid">');
+      parts.push('<label class="field full">반납할 비품 선택 *<select name="loan_id" id="quickReturnSelect" required class="quick-return-select">' + opt + '</select></label>');
+
+      parts.push('<div id="quickReturnLocationBox" class="return-location-card">');
+      const firstLoan = active[0];
+      const firstA = firstLoan ? assetFor(firstLoan.asset_id) : null;
+      const firstLoc = firstA && firstA.location ? firstA.location : '연구실 지정 보관함';
+      parts.push('  <div class="return-location-icon" aria-hidden="true">📍</div>');
+      parts.push('  <div class="return-location-body">');
+      parts.push('    <div class="return-location-title">반납 보관 위치 (제자리에 넣어주세요)</div>');
+      parts.push('    <div class="return-location-val" id="quickReturnLocationText">' + safe(firstLoc) + (firstA && firstA.category ? ' <span class="return-loc-sub">(' + safe(firstA.category) + ')</span>' : '') + '</div>');
+      parts.push('  </div>');
+      parts.push('</div>');
+
+      parts.push('<label class="field full">실제 반납일 *<input name="returned_at" type="date" required value="' + today() + '"></label>');
+
+      parts.push('<div class="field full">');
+      parts.push('  <label class="field-label" style="display:block;margin-bottom:6px;font-size:12.5px;font-weight:600;color:var(--text-secondary);">비품 상태 점검 및 메모 (선택)</label>');
+      parts.push('  <div class="preset-chips-wrap" style="margin-bottom:8px;">');
+      parts.push('    <button type="button" class="btn-preset-chip active" data-set-field="return_memo" data-set-val="이상 없음 (정상 반납)">✅ 이상 없음</button>');
+      parts.push('    <button type="button" class="btn-preset-chip" data-set-field="return_memo" data-set-val="소모품/부속품 보충 필요">⚠️ 부속품 보충 필요</button>');
+      parts.push('    <button type="button" class="btn-preset-chip" data-set-field="return_memo" data-set-val="장비 이상 / 수리 점검 요망">🚨 수리 점검 필요</button>');
+      parts.push('  </div>');
+      parts.push('  <input name="return_memo" maxlength="200" placeholder="기타 특이사항 메모 (선택사항, 생략 가능)" value="이상 없음 (정상 반납)">');
+      parts.push('</div>');
+
       parts.push('</div>');
     }
   } else if(mode === 'editLoan'){
@@ -2556,16 +2584,61 @@ function openModal(mode, id){
       parts.push('</div>');
     }
   } else if(mode === 'return'){
+    const targetLoan = loans.find(function(l){ return String(l.id) === String(id); });
+    const a = targetLoan ? assetFor(targetLoan.asset_id) : (id ? assetFor(id) : null);
+    const aLoc = a && a.location ? a.location : '연구실 지정 보관함';
+    const aCat = a && a.category ? a.category : '';
+    const aName = a ? a.name : (assetObjName || '비품');
+    const aId = a ? a.id : (targetLoan ? targetLoan.asset_id : '');
+    const lBorrower = targetLoan ? (targetLoan.borrower_name || lName) : lName;
+    const lStartDate = targetLoan ? (targetLoan.borrowed_at || lStart) : lStart;
+
     if(window.__isPromptingReturnBeforeBorrow){
-      parts.push('<div class="borrow-fast-notice" style="background:var(--bg-subtle); border-left:4px solid var(--brand-red); margin-bottom:14px; padding:10px 14px; font-size:13px; line-height:1.5; border-radius:8px;">');
+      parts.push('<div class="borrow-fast-notice" style="background:#fef2f2; border-left:4px solid var(--brand-red); margin-bottom:14px; padding:12px 14px; font-size:13px; line-height:1.5; border-radius:10px;">');
       parts.push('<b style="color:var(--brand-red);">⏰ 24시간 이상 대여 중인 비품이 2개 이상 있습니다.</b><br>');
       parts.push('먼저 반납하시겠습니까? <b>[취소]</b>를 누르면 신규 비품 대여 화면으로 바로 이동합니다.');
       parts.push('</div>');
     }
-    parts.push('<p><b>' + safe(assetObjName) + '</b> · ' + safe(lName) + '</p>');
-    parts.push('<div class="form-grid">');
-    parts.push('<label class="field full">실제 반납일 *<input name="returned_at" type="date" required value="' + today() + '" min="' + lStart + '"></label>');
-    parts.push('<label class="field full">반납 메모<textarea name="return_memo" rows="2" maxlength="500" placeholder="파손·분실 여부 등"></textarea></label>');
+
+    if(a){
+      parts.push('<div class="selected-asset-box has-modal-thumb return-summary-box">');
+      parts.push('  <div class="modal-asset-thumb-wrap">' + getEquipmentImageHtml(a, 'modal') + '</div>');
+      parts.push('  <div class="modal-asset-info">');
+      parts.push('    <div class="selected-asset-badge">');
+      parts.push('      <span class="status return-pending">대여 반납</span>');
+      parts.push('      <span class="asset-id">' + safe(aId) + '</span>');
+      parts.push('    </div>');
+      parts.push('    <div class="selected-asset-title">' + safe(aName) + '</div>');
+      parts.push('    <div class="selected-asset-sub">대여자: <b>' + safe(lBorrower) + '</b> · 대여일: ' + safe(lStartDate) + '</div>');
+      parts.push('  </div>');
+      parts.push('</div>');
+    } else {
+      parts.push('<div class="return-plain-card"><b>' + safe(assetObjName) + '</b> · ' + safe(lBorrower) + ' (' + safe(lStartDate) + ' 대여)</div>');
+    }
+
+    // 💡 핵심: 반납 보관 위치 명확 안내 카드
+    parts.push('<div class="return-location-card">');
+    parts.push('  <div class="return-location-icon" aria-hidden="true">📍</div>');
+    parts.push('  <div class="return-location-body">');
+    parts.push('    <div class="return-location-title">반납 보관 위치 (제자리에 넣어주세요)</div>');
+    parts.push('    <div class="return-location-val">' + safe(aLoc) + (aCat ? ' <span class="return-loc-sub">(' + safe(aCat) + ')</span>' : '') + '</div>');
+    parts.push('  </div>');
+    parts.push('</div>');
+
+    parts.push('<div class="return-form-grid">');
+    parts.push('<label class="field full">실제 반납일 *<input name="returned_at" type="date" required value="' + today() + '" min="' + lStartDate + '"></label>');
+
+    // 비품 상태 원터치 칩 및 반납 메모
+    parts.push('<div class="field full">');
+    parts.push('  <label class="field-label" style="display:block;margin-bottom:6px;font-size:12.5px;font-weight:600;color:var(--text-secondary);">비품 상태 점검 및 메모 (선택)</label>');
+    parts.push('  <div class="preset-chips-wrap" style="margin-bottom:8px;">');
+    parts.push('    <button type="button" class="btn-preset-chip active" data-set-field="return_memo" data-set-val="이상 없음 (정상 반납)">✅ 이상 없음</button>');
+    parts.push('    <button type="button" class="btn-preset-chip" data-set-field="return_memo" data-set-val="소모품/부속품 보충 필요">⚠️ 부속품 보충 필요</button>');
+    parts.push('    <button type="button" class="btn-preset-chip" data-set-field="return_memo" data-set-val="장비 이상 / 수리 점검 요망">🚨 수리 점검 필요</button>');
+    parts.push('  </div>');
+    parts.push('  <input name="return_memo" maxlength="200" placeholder="기타 특이사항 메모 (선택사항, 생략 가능)" value="이상 없음 (정상 반납)">');
+    parts.push('</div>');
+
     parts.push('</div>');
   } else {
     parts.push('<label class="field">관리자 이메일<input name="email" type="email" required autocomplete="username"></label>');
@@ -2574,6 +2647,21 @@ function openModal(mode, id){
   }
 
   $('modalBody').innerHTML = parts.join('');
+
+  if(mode === 'quickReturn'){
+    const qSel = $('modalBody').querySelector('#quickReturnSelect');
+    const qLocText = $('modalBody').querySelector('#quickReturnLocationText');
+    if(qSel && qLocText){
+      qSel.addEventListener('change', function(){
+        const selLoanId = qSel.value;
+        const targetLoan = loans.find(function(l){ return String(l.id) === String(selLoanId); });
+        const a = targetLoan ? assetFor(targetLoan.asset_id) : null;
+        const loc = a && a.location ? a.location : '연구실 지정 보관함';
+        const cat = a && a.category ? ' (' + a.category + ')' : '';
+        qLocText.innerHTML = safe(loc) + (cat ? ' <span class="return-loc-sub">' + safe(cat) + '</span>' : '');
+      });
+    }
+  }
 
   // 관리자가 기록 유형을 바꾸면 수량 상한(max)도 함께 바꾼다
   if(mode === 'movement'){
@@ -2592,14 +2680,14 @@ function openModal(mode, id){
   let btnText = '저장';
 
   if(mode === 'borrow') btnText = '대여';
-  else if(mode === 'return') btnText = '반납 완료';
+  else if(mode === 'return') btnText = '✅ 반납 완료';
   else if(mode === 'login') btnText = '로그인';
   else if(mode === 'editLoan') btnText = '수정 저장';
   else if(mode === 'extendPeriod') btnText = '✓ 기간 연장 완료';
   else if(mode === 'consumable') btnText = id ? '수정 저장' : '소모품 등록';
   else if(mode === 'reorder') btnText = '재주문 요청';
   else if(mode === 'movement') btnText = '재고 반영';
-  else if(mode === 'quickReturn') btnText = '반납 완료';
+  else if(mode === 'quickReturn') btnText = '✅ 반납 완료';
   else if(mode === 'quickReorder') btnText = '구매요청';
   else if(mode === 'chemicalLog') btnText = '✓ 취급일지 작성 완료';
 
@@ -2609,11 +2697,15 @@ function openModal(mode, id){
     return statusFor(x) === 'available';
   });
 
-  $('saveModal').disabled = mode === 'borrow' &&
+  const activeLoansForQuick = loans.filter(function(l){
+    return !l.returned_at && canManageLoan(l);
+  });
+
+  $('saveModal').disabled = (mode === 'borrow' &&
     (!hasAvail || !assets.some(function(x){
       return statusFor(x) === 'available' &&
         (selectedBorrowCategory === 'all' || topLevelCategory(x) === selectedBorrowCategory);
-    }));
+    }))) || (mode === 'quickReturn' && activeLoansForQuick.length === 0);
 
   setTimeout(function(){
     const focusables = $('modalBackdrop').querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled)');
