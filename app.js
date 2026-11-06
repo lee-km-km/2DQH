@@ -38,6 +38,9 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
 let researchEquipments = [];
 let currentSelectedEquipment = 'EQ-XRD-01';
 
+// [공통 유틸리티] 숫자 2자리 패딩
+function pad(n){ return String(n).padStart(2, '0'); }
+
 // [2DQH-XRD_log 공식 동기화 상수 및 상태]
 const XRD_SCAN_CHIPS = ['θ/2θ','2θ/ω','2θ','ω','χ','φ'];
 const XRD_WORK_START = 10 * 60; // 10:00 (Set min. after use 필수 기준 시작시각)
@@ -2574,7 +2577,33 @@ function renderXrdInUse(){
   }
 }
 
+function renderXrdAdminKpis(){
+  const totalMin = xrdLogs.reduce(function(acc, l){ return acc + (l.duration_min || 0); }, 0);
+  const totalHours = (totalMin / 60).toFixed(1);
+  const activeLogs = xrdLogs.filter(function(l){ return l.status === 'active'; });
+  const issueLogs = xrdLogs.filter(function(l){
+    return (l.memo && l.memo.trim().length > 0) || !l.xray_max_ok || !l.position_ok;
+  });
+  const kpiHours = $('xrdKpiHours');
+  const kpiCount = $('xrdKpiCount');
+  const kpiActive = $('xrdKpiActive');
+  const kpiIssues = $('xrdKpiIssues');
+  if(kpiHours) kpiHours.textContent = totalHours + 'h';
+  if(kpiCount) kpiCount.textContent = xrdLogs.length + '건';
+  if(kpiActive){
+    if(activeLogs.length > 0){
+      kpiActive.textContent = activeLogs.length + '건 진행 중';
+      kpiActive.style.color = '#3b82f6';
+    } else {
+      kpiActive.textContent = '대기 중 (Idle)';
+      kpiActive.style.color = '#10b981';
+    }
+  }
+  if(kpiIssues) kpiIssues.textContent = issueLogs.length + '건';
+}
+
 function renderXrdLogs(){
+  renderXrdAdminKpis();
   const searchInput = $('xrdSearch');
   const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
   const rows = $('xrdRows');
@@ -4976,13 +5005,15 @@ function bindEvents(){
       return;
     }
 
-    if(target.dataset.mainView){
-      showView(target.dataset.mainView, { pushState: true });
+    const mainViewEl = target.dataset.mainView ? target : target.closest('[data-main-view]');
+    if(mainViewEl){
+      showView(mainViewEl.dataset.mainView, { pushState: true });
       return;
     }
 
-    if(target.dataset.goto){
-      showView(target.dataset.goto, { pushState: true });
+    const gotoEl = target.dataset.goto ? target : target.closest('[data-goto]');
+    if(gotoEl){
+      showView(gotoEl.dataset.goto, { pushState: true });
       return;
     }
 
@@ -5803,6 +5834,10 @@ async function initApp(){
 
   // 1. 초기 렌더링
   loadLocalStorage();
+
+  // HR-XRD 로그북 컨트롤 및 오늘 날짜/현재 시각 30분 단위 기본 세팅 즉시 초기화 (2DQH-XRD_log 공식)
+  initXrdControls();
+  resetXrdForm();
 
   // Supabase 클라이언트 확인 및 초기화
   ensureDb();

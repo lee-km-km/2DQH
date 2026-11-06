@@ -55,7 +55,7 @@ button { cursor: pointer; }
 
 /* Top Navigation Bar */
 .topbar {
-  height: 58px;
+  height: 50px;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -66,17 +66,17 @@ button { cursor: pointer; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  padding: 0 16px;
 }
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
   color: var(--ink);
 }
 .brand-img-logo {
-  height: 36px;
+  height: 32px;
   width: auto;
   object-fit: contain;
   display: block;
@@ -84,11 +84,11 @@ button { cursor: pointer; }
 .brand-sep {
   display: inline-block;
   width: 1px;
-  height: 18px;
+  height: 16px;
   background: var(--border-strong);
 }
 .brand-sub {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--brand-grey);
   letter-spacing: -0.02em;
@@ -110,9 +110,9 @@ button { cursor: pointer; }
 .header-tab {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  font-size: 13px;
+  gap: 5px;
+  padding: 5px 11px;
+  font-size: 12.5px;
   font-weight: 600;
   border-radius: 16px;
   border: none;
@@ -3457,12 +3457,87 @@ tr.row-overdue:hover {
   margin-top: 12px;
 }
 
+.xrd-workstation-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .xrd-panel {
   background: #ffffff;
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 16px;
+  margin-bottom: 0;
+}
+
+.xrd-table-panel {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* PC/모바일 관리자 가동 통계 KPI 바 */
+.xrd-admin-kpi-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
   margin-bottom: 16px;
+}
+.xrd-kpi-card {
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.xrd-kpi-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+.xrd-kpi-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: -0.01em;
+}
+.xrd-kpi-val {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--ink, #0f172a);
+  line-height: 1.2;
+}
+
+/* PC 데스크톱 관리자 워크스테이션 특화 레이아웃 (좌측 고정 세션 기록 460px / 우측 데이터 현황 테이블) */
+@media (min-width: 1024px) {
+  .xrd-workstation-grid {
+    display: grid;
+    grid-template-columns: 460px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .xrd-form-col {
+    position: sticky;
+    top: 64px;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .xrd-form-col::-webkit-scrollbar {
+    width: 5px;
+  }
+  .xrd-form-col::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  .xrd-admin-col {
+    min-width: 0;
+  }
 }
 .xrd-modebar {
   display: flex;
@@ -3686,6 +3761,27 @@ tr.row-overdue:hover {
 
 /* 모바일 XRD 로그북 최적화 */
 @media (max-width: 768px) {
+  .xrd-admin-kpi-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .xrd-kpi-card {
+    padding: 10px 12px;
+  }
+  .xrd-kpi-val {
+    font-size: 16px;
+  }
+  .xrd-actions {
+    position: sticky;
+    bottom: 0;
+    background: #ffffff;
+    padding: 10px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+    margin-top: 10px;
+    z-index: 20;
+    border-top: 1px solid var(--border, #e2e8f0);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+  }
   .xrd-c4, .xrd-c3 {
     grid-template-columns: 1fr;
   }
@@ -3978,6 +4074,26 @@ tr.row-overdue:hover {
   background: #064e3b !important;
   border-color: #059669 !important;
   color: #a7f3d0 !important;
+}
+
+[data-theme="dark"] .xrd-kpi-card {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+
+[data-theme="dark"] .xrd-kpi-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .xrd-kpi-val {
+  color: #f8fafc !important;
+}
+
+@media (max-width: 768px) {
+  [data-theme="dark"] .xrd-actions {
+    background: #151c2e !important;
+    border-top-color: #232f46 !important;
+  }
 }
 
 [data-theme="dark"] table th {

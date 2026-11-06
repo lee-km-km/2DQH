@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261106_19">
+  <link rel="stylesheet" href="style.css?v=20261106_20">
   <script>
     (function(){
       try {
@@ -59,9 +59,8 @@
       <span class="search-btn-icon" aria-hidden="true">🔍</span>
       <span class="search-btn-label">검색</span>
     </button>
-    <button id="btnToggleTheme" class="btn btn-theme-toggle" type="button" title="다크 모드 / 라이트 모드 전환" aria-label="테마 전환" style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;">
+    <button id="btnToggleTheme" class="icon-btn btn-theme-toggle" type="button" title="다크 모드 / 라이트 모드 전환" aria-label="테마 전환" style="width:34px;height:34px;padding:0;font-size:15px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:var(--bg);">
       <span id="themeToggleIcon">🌙</span>
-      <span class="desktop-only" id="themeToggleText" style="font-size:12.5px;font-weight:600;">다크모드</span>
     </button>
     <span id="connection" class="pill hidden"></span>
     <button id="loginBtn" class="btn desktop-only">관리자 로그인</button>
@@ -257,7 +256,6 @@
           <span class="count-badge" id="logbookCountBadge">SmartLab · Rigaku</span>
         </div>
         <div class="head-actions">
-          <button class="btn" id="btnLogbookThemeToggle" title="암실 환경 다크모드 전환" style="display:inline-flex;align-items:center;gap:4px;">🌙 암실 모드</button>
           <button class="btn" id="btnShowEquipmentQr" title="장비 본체 부착용 QR 코드 생성 및 라벨 인쇄" style="display:inline-flex;align-items:center;gap:4px;">📷 본체 부착용 QR</button>
           <button class="btn" id="btnExportEquipmentLogs" title="HR-XRD 로그북 CSV 다운로드">📥 XRD 로그 CSV</button>
         </div>
@@ -298,11 +296,15 @@
         <!-- 실시간 사용 중 상태 알림 -->
         <div class="xrd-inuse hidden" id="xrdInUse"></div>
 
-        <!-- 진행 중인 활성 세션 카드 -->
-        <div id="xrdActiveBox" class="hidden"></div>
+        <!-- 🔬 XRD 워크스테이션 그리드 (모바일 1열 직관 터치 / PC 2열 관리자 대시보드 특화) -->
+        <div class="xrd-workstation-grid">
+          <!-- 좌측: 세션 입력 패널 -->
+          <div class="xrd-form-col">
+            <!-- 진행 중인 활성 세션 카드 -->
+            <div id="xrdActiveBox" class="hidden"></div>
 
-        <!-- XRD 세션 기록 패널 -->
-        <section class="panel xrd-panel">
+            <!-- XRD 세션 기록 패널 -->
+            <section class="panel xrd-panel">
           <!-- 모드 전환 탭 (측정 시작 vs 측정 완료 일괄 기록) -->
           <div class="xrd-mode-switcher">
             <button type="button" class="xrd-mode-tab active" id="btnXrdModeStart">⚡ 측정 시작 (Start session)</button>
@@ -347,7 +349,7 @@
                     <option value="08:30">08:30</option>
                     <option value="09:00">09:00</option>
                     <option value="09:30">09:30</option>
-                    <option value="10:00" selected>10:00</option>
+                    <option value="10:00">10:00</option>
                     <option value="10:30">10:30</option>
                     <option value="11:00">11:00</option>
                     <option value="11:30">11:30</option>
@@ -401,7 +403,7 @@
                     <option value="09:30">09:30</option>
                     <option value="10:00">10:00</option>
                     <option value="10:30">10:30</option>
-                    <option value="11:00" selected>11:00</option>
+                    <option value="11:00">11:00</option>
                     <option value="11:30">11:30</option>
                     <option value="12:00">12:00</option>
                     <option value="12:30">12:30</option>
@@ -574,18 +576,43 @@
             </div>
           </form>
         </section>
+      </div>
 
-        <!-- 5. XRD 로그 내역 테이블 -->
-        <section class="panel">
-          <div class="toolbar" style="margin-bottom:12px;">
-            <div class="search-input-box" style="flex:1;">
-              <span class="search-input-icon">🔍</span>
-              <input id="xrdSearch" placeholder="Search sample, user, adviser, affiliation, scan type...">
-              <button id="btnClearXrdSearch" class="btn-clear-search hidden" type="button">✕</button>
+          <!-- 우측: 관리자 가동 대시보드 및 일지 테이블 -->
+          <div class="xrd-admin-col">
+            <!-- PC 관리자 가동 현황 요약 KPI 카드 -->
+            <div class="xrd-admin-kpi-bar" id="xrdAdminKpiBar">
+              <div class="xrd-kpi-card">
+                <span class="xrd-kpi-label">⏱️ 총 누적 가동시간</span>
+                <b class="xrd-kpi-val" id="xrdKpiHours">0.0h</b>
+              </div>
+              <div class="xrd-kpi-card">
+                <span class="xrd-kpi-label">📋 누적 측정 세션</span>
+                <b class="xrd-kpi-val" id="xrdKpiCount">0건</b>
+              </div>
+              <div class="xrd-kpi-card">
+                <span class="xrd-kpi-label">⚡ 현재 장비 상태</span>
+                <b class="xrd-kpi-val" id="xrdKpiActive" style="color:#10b981;">대기 중 (Idle)</b>
+              </div>
+              <div class="xrd-kpi-card">
+                <span class="xrd-kpi-label">⚠️ 이상/점검 필요</span>
+                <b class="xrd-kpi-val" id="xrdKpiIssues" style="color:#f59e0b;">0건</b>
+              </div>
             </div>
+
+            <!-- 5. XRD 로그 내역 테이블 -->
+            <section class="panel xrd-table-panel">
+              <div class="toolbar" style="margin-bottom:12px;">
+                <div class="search-input-box" style="flex:1;">
+                  <span class="search-input-icon">🔍</span>
+                  <input id="xrdSearch" placeholder="Search sample, user, adviser, affiliation, scan type...">
+                  <button id="btnClearXrdSearch" class="btn-clear-search hidden" type="button">✕</button>
+                </div>
+              </div>
+              <div class="table-wrap" id="xrdRows" aria-live="polite"></div>
+            </section>
           </div>
-          <div class="table-wrap" id="xrdRows" aria-live="polite"></div>
-        </section>
+        </div>
       </div>
     </section>
 
@@ -648,7 +675,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261106_16"></script>
-<script src="app.js?v=20261106_19"></script>
+<script src="consumables_catalog.js?v=20261106_20"></script>
+<script src="app.js?v=20261106_20"></script>
 </body>
 </html>
