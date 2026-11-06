@@ -1077,7 +1077,7 @@ function renderInventory(){
         if(info.isOverdue){
           actionBtn += '<span class="status-chip overdue-chip">⚠️ 기간 지남 (' + safe(bName) + ')</span>';
         } else {
-          actionBtn += '<span class="status-chip borrowed-chip">대여 중 (' + safe(bName) + (info.text ? ' · ' + safe(info.text) : '') + ')</span>';
+          actionBtn += '<span class="status-chip borrowed-chip">대여 중 (' + safe(bName) + ')</span>';
         }
 
         if(l && canManageLoan(l)){
@@ -1129,16 +1129,16 @@ function renderInventory(){
       let bannerExtendBtn = '';
 
       if(info.isOverdue){
-        bannerTitle = safe(l.borrower_name || '연구원') + '님, [' + safe(fmtName(l.asset_id)) + '] 반납 기한이 지났습니다 (' + safe(info.text) + ')';
-        bannerSub = '원활한 연구실 공동 사용을 위해 지금 반납하시거나 24시간 연장해 주세요.';
+        bannerTitle = safe(l.borrower_name || '연구원') + '님, [' + safe(fmtName(l.asset_id)) + '] 반납 기한이 지났습니다';
+        bannerSub = '반납 기한이 <b>' + safe(info.text) + '</b> (지금 반납하거나 24시간 연장해 주세요)';
         bannerExtendBtn = '<button class="text-btn btn-banner-extend" data-extend-loan="' + l.id + '" title="대여 기한을 24시간 연장합니다">⏰ 24시간 연장</button>';
       } else if(info.canExtend){
-        bannerTitle = safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 대여 중입니다 (' + safe(info.text) + ')';
-        bannerSub = '반납 기한이 24시간 미만 남았습니다. 계속 사용하시려면 <b>[⏰ 24시간 연장]</b>을 눌러주세요.';
+        bannerTitle = safe(l.borrower_name || '연구원') + '님, [' + safe(fmtName(l.asset_id)) + '] 대여 중입니다';
+        bannerSub = '반납 기한까지 <b>' + safe(info.text) + '</b> (계속 사용하시려면 24시간 연장해 주세요)';
         bannerExtendBtn = '<button class="text-btn btn-banner-extend" data-extend-loan="' + l.id + '" title="대여 기한을 24시간 연장합니다">⏰ 24시간 연장</button>';
       } else {
-        bannerTitle = safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 대여 중입니다';
-        bannerSub = '반납 기한까지 <b>' + safe(info.text) + '</b> 남았습니다 (24시간 미만 남았을 때 연장 버튼이 활성화됩니다).';
+        bannerTitle = safe(l.borrower_name || '연구원') + '님, [' + safe(fmtName(l.asset_id)) + '] 대여 중입니다';
+        bannerSub = '반납 기한까지 <b>' + safe(info.text) + '</b> (24시간 미만 시 연장 버튼 활성화)';
         bannerExtendBtn = '';
       }
 
@@ -1157,9 +1157,18 @@ function renderInventory(){
       '</div>';
     }
 
-    $('inventoryRows').innerHTML = personalBannerHtml + '<table aria-label="비품 목록"><thead><tr><th scope="col">비품명 / 식별번호</th><th scope="col">분류</th><th scope="col">보관 위치</th><th scope="col">상태</th><th scope="col">현재 대여자</th><th scope="col">작업</th></tr></thead><tbody>' +
-      listHtml + '</tbody></table>';
+    const bannerSlot = $('inventoryBannerSlot');
+    if(bannerSlot){
+      bannerSlot.innerHTML = personalBannerHtml;
+      $('inventoryRows').innerHTML = '<table aria-label="비품 목록"><thead><tr><th scope="col">비품명 / 식별번호</th><th scope="col">분류</th><th scope="col">보관 위치</th><th scope="col">상태</th><th scope="col">현재 대여자</th><th scope="col">작업</th></tr></thead><tbody>' +
+        listHtml + '</tbody></table>';
+    } else {
+      $('inventoryRows').innerHTML = personalBannerHtml + '<table aria-label="비품 목록"><thead><tr><th scope="col">비품명 / 식별번호</th><th scope="col">분류</th><th scope="col">보관 위치</th><th scope="col">상태</th><th scope="col">현재 대여자</th><th scope="col">작업</th></tr></thead><tbody>' +
+        listHtml + '</tbody></table>';
+    }
   } else {
+    const bannerSlot = $('inventoryBannerSlot');
+    if(bannerSlot) bannerSlot.innerHTML = '';
     $('inventoryRows').innerHTML = '<div class="empty">검색 결과가 없습니다.</div>';
   }
 }
@@ -1386,9 +1395,9 @@ function renderLoans(){
       if(isReturned){
         statusCell = '<span class="status available">반납 완료</span>';
       } else if(info.isOverdue){
-        statusCell = '<span class="status-chip overdue-chip">⚠️ 기간 지남 (' + safe(info.text) + ')</span>';
+        statusCell = '<span class="status-chip overdue-chip">⚠️ 기간 지남</span>';
       } else {
-        statusCell = '<span class="status borrowed">대여 중' + (info.text ? ' (' + safe(info.text) + ')' : '') + '</span>';
+        statusCell = '<span class="status borrowed">대여 중</span>';
       }
 
       const returnOrDueCell = isReturned
