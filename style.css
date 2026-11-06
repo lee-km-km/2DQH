@@ -681,6 +681,25 @@ td b { font-weight: 600; color: var(--ink); }
 .btn-action-return:hover {
   background: #166534;
 }
+.btn-action-extend {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-action-extend:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+.btn-action-extend:active {
+  transform: scale(0.96);
+}
 
 /* Metrics Bar (Compact Strip) */
 .metrics {
@@ -851,6 +870,34 @@ td b { font-weight: 600; color: var(--ink); }
   color: var(--brand-red);
   font-weight: 500;
   margin-top: 2px;
+}
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.btn-banner-extend {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+}
+.btn-banner-extend:hover {
+  background: #f8fafc !important;
+  border-color: var(--brand-red) !important;
+  color: var(--brand-red) !important;
+}
+.btn-banner-extend:active {
+  transform: scale(0.97);
 }
 .btn-banner-return {
   background: var(--brand-red) !important;
@@ -1386,12 +1433,27 @@ tbody tr:hover .asset-thumb-box {
     padding: 12px 14px;
     gap: 10px;
   }
-  .btn-banner-return {
+  .banner-actions {
     width: 100%;
-    height: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .btn-banner-extend, .btn-banner-return {
+    width: 100% !important;
+    min-height: 44px !important;
+    height: 44px;
     justify-content: center;
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    text-align: center;
+  }
+  .btn-action-extend {
+    min-height: 44px !important;
+    padding: 8px 12px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   @keyframes sheetSlideUp {
     from { transform: translateY(100%); }
@@ -2477,6 +2539,14 @@ tbody tr:hover .asset-thumb-box {
   color: #ffffff !important;
   border-color: #b91c1c !important;
   transform: scale(0.95);
+}
+
+.btn-preset-chip.active {
+  background: var(--brand-red, #c2272d) !important;
+  color: #ffffff !important;
+  border-color: #991b1b !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(194, 39, 45, 0.25);
 }
 
 .btn-preset-chip.preset-recent {
