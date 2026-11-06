@@ -2422,6 +2422,227 @@ tbody tr:hover .asset-thumb-box {
 }
 
 /* 취급일지 작성 모달 전용 헤더 및 알림 */
+.chem-id-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.chem-id-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.chem-id-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: #fee2e2;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.chem-id-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.chem-id-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.35;
+  margin-bottom: 5px;
+  word-break: break-word;
+}
+
+.chem-id-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.chem-badge-controlled {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-weight: 700;
+  padding: 1.5px 6px;
+  border-radius: 5px;
+  font-size: 11px;
+}
+
+.chem-cas {
+  background: #f1f5f9;
+  color: #334155;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
+}
+
+.chem-loc {
+  color: #64748b;
+  font-size: 11.5px;
+}
+
+.chem-law-pill {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* 수량 + 단위 일체형 인풋 그룹 (ERP/Quartzy 스타일) */
+.compound-input-group {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.compound-input-group:focus-within {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+}
+
+.compound-input {
+  flex: 1;
+  min-width: 0;
+  border: none !important;
+  outline: none !important;
+  padding: 9px 12px !important;
+  font-size: 14px !important;
+  font-weight: 600;
+  color: #0f172a;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.compound-select {
+  border: none !important;
+  border-left: 1px solid #e2e8f0 !important;
+  outline: none !important;
+  background: #f8fafc !important;
+  padding: 0 10px !important;
+  font-size: 13px !important;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.compound-select:focus {
+  background: #f1f5f9 !important;
+}
+
+/* 안전 점검 체크리스트 카드 (택타일 피드백) */
+.safety-checklist-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 2px;
+}
+
+.safety-card-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.safety-check-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 540px) {
+  .safety-check-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.safety-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.safety-check-item:hover {
+  border-color: #cbd5e1;
+  background: #fafafa;
+}
+
+.safety-check-item:has(input:checked) {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.safety-check-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: #059669;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.safety-check-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.3;
+}
+
+.safety-check-text b {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.safety-check-item:has(input:checked) .safety-check-text b {
+  color: #065f46;
+}
+
+.safety-check-text small {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* 하위 호환 폴백 */
 .controlled-chem-modal-head {
   background: #fef2f2;
   border: 1px solid #fee2e2;
