@@ -462,6 +462,15 @@ body.modal-open {
   overflow: hidden !important;
 }
 
+/* 새로고침 시 탭 깜빡임 방지 (Initial View Anti-flicker) */
+html[data-initial-view="consumables"] #view-inventory { display: none !important; }
+html[data-initial-view="consumables"] #view-consumables { display: block !important; }
+html[data-initial-view="consumables"] .header-tab[data-main-view="inventory"] { border-bottom-color: transparent !important; color: var(--muted) !important; font-weight: normal !important; }
+html[data-initial-view="consumables"] .header-tab[data-main-view="consumables"] { border-bottom-color: var(--brand-red) !important; color: var(--brand-red) !important; font-weight: 700 !important; }
+
+html[data-initial-view="loans"] #view-inventory { display: none !important; }
+html[data-initial-view="loans"] #view-loans { display: block !important; }
+
 /* High-Density Panels & Tables */
 .panel {
   background: #ffffff;

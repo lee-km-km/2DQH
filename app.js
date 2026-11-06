@@ -2791,10 +2791,77 @@ function nextAssetId(){
   return 'EQ-' + String(max + 1).padStart(3, '0');
 }
 
-function showView(name){
+const VALID_VIEWS = ['inventory', 'consumables', 'loans', 'dashboard', 'history'];
+
+function isValidView(name){
+  return VALID_VIEWS.includes(name);
+}
+
+// URL Hash, Query Parameter 및 세션 저장소 기반 활성 뷰 해석
+function getViewFromUrl(){
+  try {
+    // 1. URL 쿼리 파라미터 우선 (?tab=consumables or ?view=consumables)
+    const params = new URLSearchParams(window.location.search);
+    const queryTab = params.get('tab') || params.get('view');
+    if(queryTab){
+      const norm = (queryTab === 'equipment') ? 'inventory' : queryTab.toLowerCase();
+      if(isValidView(norm)) return norm;
+    }
+
+    // 2. URL Hash (#consumables, #inventory, #loans, #dashboard, #history)
+    const rawHash = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0].split('/')[0].trim().toLowerCase();
+    if(rawHash){
+      if(rawHash === 'reorder') return 'consumables';
+      const norm = (rawHash === 'equipment') ? 'inventory' : rawHash;
+      if(isValidView(norm)) return norm;
+    }
+
+    // 3. 직전 세션 저장소 복원 (새로고침 시 해당 탭 완벽 유지)
+    const saved = sessionStorage.getItem('labstock_active_view');
+    if(saved && isValidView(saved)){
+      return saved;
+    }
+  } catch(e){
+    console.warn('URL 뷰 라우팅 파싱 에러:', e);
+  }
+  return 'inventory';
+}
+
+function showView(name, options){
+  options = options || {};
+  const updateUrl = options.updateUrl !== false;
+  const pushState = options.pushState === true;
+
+  if(name === 'equipment') name = 'inventory';
+
   if((name === 'dashboard' || name === 'history') && !isAdmin()){
     name = 'inventory';
   }
+
+  if(!isValidView(name)){
+    name = 'inventory';
+  }
+
+  // 1. URL Hash 및 History 동기화 (세부 페이지 고유 링크 부여 및 새로고침 대응)
+  if(updateUrl){
+    const targetHash = '#' + name;
+    if(window.location.hash !== targetHash){
+      try {
+        if(pushState){
+          history.pushState({ view: name }, '', targetHash);
+        } else {
+          history.replaceState({ view: name }, '', targetHash);
+        }
+      } catch(e){
+        window.location.hash = targetHash;
+      }
+    }
+  }
+
+  // 2. 직전 활성 탭 세션 저장소에 보존 (새로고침 시 직전 탭 복원 보장)
+  try {
+    sessionStorage.setItem('labstock_active_view', name);
+  } catch(e){}
 
   document.body.classList.toggle('home-active', name === 'home');
 
@@ -2833,11 +2900,19 @@ function showView(name){
   if(name === 'consumables'){
     displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
     renderConsumables();
+  } else if(name === 'loans'){
+    renderLoans();
+  } else if(name === 'dashboard'){
+    renderDashboard();
+  } else if(name === 'history'){
+    renderHistory();
+  } else if(name === 'inventory'){
+    renderInventory();
   }
 }
 
 function scrollToReorderPanel(){
-  showView('consumables');
+  showView('consumables', { pushState: true });
 
   const el = document.getElementById('reorderPanel');
   if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
@@ -2858,7 +2933,7 @@ function firstOutOfStockConsumable(){
 }
 
 function openBestReorder(){
-  showView('consumables');
+  showView('consumables', { pushState: true });
 
   const c = firstOutOfStockConsumable();
   if(c) openModal('reorder', c.id);
@@ -3426,7 +3501,7 @@ function bindEvents(){
 
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
     el.addEventListener('click', function(){
-      showView(el.dataset.view);
+      showView(el.dataset.view, { pushState: true });
     });
   });
 
@@ -3435,7 +3510,7 @@ function bindEvents(){
   if(brandLink){
     brandLink.addEventListener('click', function(e){
       e.preventDefault();
-      showView('inventory');
+      showView('inventory', { pushState: true });
       const searchInput = $('assetSearch');
       if(searchInput) searchInput.value = '';
       const clearBtn = $('btnClearSearch');
@@ -3453,9 +3528,20 @@ function bindEvents(){
     });
   }
 
-  addEvt('btnToggleLoans', 'click', function(){ showView('loans'); });
+  addEvt('btnToggleLoans', 'click', function(){ showView('loans', { pushState: true }); });
   addEvt('btnMobileLogin', 'click', function(){ openModal('login'); });
-  addEvt('btnBackToInventory', 'click', function(){ showView('inventory'); });
+  addEvt('btnBackToInventory', 'click', function(){ showView('inventory', { pushState: true }); });
+
+  // 브라우저 뒤로가기 / 앞으로가기 및 URL 해시 변경 실시간 동기화
+  window.addEventListener('popstate', function(){
+    const targetView = getViewFromUrl();
+    showView(targetView, { updateUrl: false });
+  });
+
+  window.addEventListener('hashchange', function(){
+    const targetView = getViewFromUrl();
+    showView(targetView, { updateUrl: false });
+  });
 
   // 소모품 검색창 입력 시 ✕ 클리어 버튼 토글
   const consumableSearchInput = $('consumableSearch');
@@ -3521,12 +3607,12 @@ function bindEvents(){
     }
 
     if(target.dataset.mainView){
-      showView(target.dataset.mainView);
+      showView(target.dataset.mainView, { pushState: true });
       return;
     }
 
     if(target.dataset.goto){
-      showView(target.dataset.goto);
+      showView(target.dataset.goto, { pushState: true });
       return;
     }
 
@@ -3732,7 +3818,7 @@ function bindEvents(){
         break;
 
       case 'mobileReturn':
-        showView('loans');
+        showView('loans', { pushState: true });
         openModal('quickReturn');
         break;
 
@@ -4135,11 +4221,19 @@ function subscribeRealtime(){
 function handleUrlFastTrack(){
   try {
     const params = new URLSearchParams(window.location.search);
+    const hash = (window.location.hash || '').replace(/^#\/?/, '').trim();
 
-    // 1. 특별관리물질 취급일지 다이렉트 진입 (?log=CS-041 or ?action=chemicalLog&id=CS-041)
-    const logId = params.get('log') || (params.get('action') === 'chemicalLog' ? params.get('id') : null);
+    // 0. 재발주 패널 스크롤 (#reorder or #consumables/reorder)
+    if(hash === 'reorder' || hash === 'consumables/reorder'){
+      scrollToReorderPanel();
+      return;
+    }
+
+    // 1. 특별관리물질 취급일지 다이렉트 진입 (?log=CS-041 or ?action=chemicalLog&id=CS-041 or #chemicalLog/CS-041)
+    const hashLogMatch = hash.match(/^(?:log|chemicallog)[\/\-](.+)$/i);
+    const logId = params.get('log') || (params.get('action') === 'chemicalLog' ? params.get('id') : null) || (hashLogMatch ? hashLogMatch[1] : null);
     if(logId){
-      showView('consumables');
+      showView('consumables', { updateUrl: false });
       selectedConsumableCategory = '시약·화학';
       displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
       renderConsumables();
@@ -4149,20 +4243,22 @@ function handleUrlFastTrack(){
       return;
     }
 
-    // 2. 비품 대여 다이렉트 진입 (?loan=A-001 or ?action=borrow&id=A-001)
-    const loanId = params.get('loan') || (params.get('action') === 'borrow' ? params.get('id') : null);
+    // 2. 비품 대여 다이렉트 진입 (?loan=A-001 or ?action=borrow&id=A-001 or #borrow/A-001)
+    const hashLoanMatch = hash.match(/^(?:loan|borrow)[\/\-](.+)$/i);
+    const loanId = params.get('loan') || (params.get('action') === 'borrow' ? params.get('id') : null) || (hashLoanMatch ? hashLoanMatch[1] : null);
     if(loanId){
-      showView('inventory');
+      showView('inventory', { updateUrl: false });
       setTimeout(function(){
         openModal('borrow', loanId);
       }, 150);
       return;
     }
 
-    // 3. 비품 반납 다이렉트 진입 (?return=EQ-001 or ?action=return&id=EQ-001)
-    const returnAssetId = params.get('return') || (params.get('action') === 'return' ? params.get('id') : null);
+    // 3. 비품 반납 다이렉트 진입 (?return=EQ-001 or ?action=return&id=EQ-001 or #return/EQ-001)
+    const hashReturnMatch = hash.match(/^(?:return)[\/\-](.+)$/i);
+    const returnAssetId = params.get('return') || (params.get('action') === 'return' ? params.get('id') : null) || (hashReturnMatch ? hashReturnMatch[1] : null);
     if(returnAssetId){
-      showView('inventory');
+      showView('inventory', { updateUrl: false });
       const act = activeLoanFor(returnAssetId) || loans.find(function(l){ return String(l.id) === String(returnAssetId); });
       setTimeout(function(){
         openModal('return', act ? act.id : returnAssetId);
@@ -4177,7 +4273,10 @@ function handleUrlFastTrack(){
 async function initApp(){
   bindEvents();
 
-  showView('inventory');
+  // URL Hash, 파라미터 및 세션 기반 활성 뷰 해석 (새로고침 시 소모품 등 현재 탭 유지)
+  const initialView = getViewFromUrl();
+  showView(initialView, { updateUrl: true, pushState: false });
+  if(document.documentElement) document.documentElement.removeAttribute('data-initial-view');
 
   // 이전 로컬 테스트 잔여 목 데이터 캐시 제거 (Supabase DB 전용)
   localStorage.removeItem('labstock_local_assets');
