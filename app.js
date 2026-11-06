@@ -27,6 +27,8 @@ function addEvt(id, evt, handler){
 // ==========================================
 // 소모품 위치 안내 도감 기능 활성화
 const ENABLE_CONSUMABLES = true;
+// 연구장비 전자 로그북(사용일지) 기능 활성화 (독립 모듈 스위치 / 백도어 플래그)
+const ENABLE_EQUIPMENT_LOGBOOK = true;
 let isLocalMode = false;
 
 // 2DQH 이차원양자헤테로구조체연구단 대표 연구장비 및 공구 표준 카탈로그
@@ -221,6 +223,12 @@ function loadLocalStorage(forceReset){
     consumables = [...DEFAULT_2DQH_CONSUMABLES];
   }
 
+  try {
+    equipmentLogs = JSON.parse(localStorage.getItem('labstock_equipment_logs') || '[]');
+  } catch(e){
+    equipmentLogs = [];
+  }
+
   borrowedAssetIds = new Set();
   activeLoanMap = new Map();
   for(let i=0; i<loans.length; i++){
@@ -237,6 +245,7 @@ function saveLocalStorage(){
   localStorage.setItem('labstock_local_assets', JSON.stringify(assets));
   localStorage.setItem('labstock_local_loans', JSON.stringify(loans));
   localStorage.setItem('labstock_local_consumables', JSON.stringify(consumables));
+  localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
   
   borrowedAssetIds = new Set();
   activeLoanMap = new Map();
@@ -255,6 +264,7 @@ function saveLocalStorage(){
 let assets = [];
 let loans = [];
 let consumables = [];
+let equipmentLogs = [];
 let reorderRequests = [];
 let stockMovements = [];
 let consumablesAvailable = true;
@@ -605,6 +615,18 @@ async function loadData(){
       }
     }
 
+    if(ENABLE_EQUIPMENT_LOGBOOK){
+      try {
+        const { data: remoteLogs, error: logErr } = await db.from('equipment_logs').select('*').order('created_at', { ascending: false });
+        if(!logErr && Array.isArray(remoteLogs)){
+          equipmentLogs = remoteLogs;
+          localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
+        }
+      } catch(e){
+        console.warn('Supabase equipment_logs 로드 건너뜀 (로컬 스토리지 유지):', e);
+      }
+    }
+
     if(!hasRemoteSuccess){
       console.warn('Supabase DB 연결 실패, 캐시된 실제 데이터를 로드합니다.');
       const cachedAssets = localStorage.getItem('labstock_real_cache_assets');
@@ -848,6 +870,14 @@ function topLevelCategory(asset){
   return '기타';
 }
 
+function isEquipmentForLogbook(asset){
+  if(!asset) return false;
+  const cat = topLevelCategory(asset);
+  if(cat === '실험장비' || cat === '측정공구') return true;
+  const text = (String(asset.name || '') + ' ' + String(asset.category || '')).toLowerCase();
+  return /장비|현미경|측정|스코프|스테이션|chamber|glovebox|chiller|oven|balance|analyzer|tester|펌프|laser|레이저|오실로스코프|전원|source|meter/i.test(text);
+}
+
 function categoryTabsHtml(selected, actionAttr){
   const cats = ['all'].concat(TOP_LEVEL_CATEGORIES);
 
@@ -1078,6 +1108,10 @@ function renderInventory(){
       const loc = a.location ? a.location : '—';
 
       let actionBtn = '';
+
+      if(ENABLE_EQUIPMENT_LOGBOOK && isEquipmentForLogbook(a)){
+        actionBtn += '<button type="button" class="text-btn btn-action-logbook" data-equipment-log="' + safe(a.id) + '" title="장비 가동 일지 작성 및 열람">📖 로그북</button> ';
+      }
 
       if(st === 'available'){
         actionBtn += '<button class="text-btn btn-action-borrow" data-borrow="' + safe(a.id) + '">⚡ 대여 신청</button>';
@@ -2082,6 +2116,149 @@ function exportChemicalLogsCsv(){
   toast('✓ 특별관리물질 취급일지(' + logs.length + '건)가 법정 서식 CSV로 다운로드되었습니다.');
 }
 
+function renderLogbook(){
+  if(!ENABLE_EQUIPMENT_LOGBOOK) return;
+
+  const countBadge = $('logbookCountBadge');
+  const searchInput = $('logbookSearch');
+  const eqFilter = $('logbookEquipmentFilter');
+  const stFilter = $('logbookStatusFilter');
+  const rowsHost = $('logbookRows');
+  const standaloneBanner = $('logbookStandaloneBanner');
+
+  if(standaloneBanner){
+    const isStandalone = (window.location.hash || '').includes('standalone') ||
+      new URLSearchParams(window.location.search).get('standalone') === 'true' ||
+      new URLSearchParams(window.location.search).get('mode') === 'logbook';
+    standaloneBanner.classList.toggle('hidden', !isStandalone);
+  }
+
+  // 장비 필터 옵션 채우기 (초기 1회)
+  if(eqFilter && eqFilter.options.length <= 1){
+    assets.forEach(function(ast){
+      const opt = document.createElement('option');
+      opt.value = ast.id;
+      opt.textContent = ast.id + ' - ' + ast.name;
+      eqFilter.appendChild(opt);
+    });
+  }
+
+  const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+  const selectedEq = eqFilter ? eqFilter.value : 'all';
+  const selectedSt = stFilter ? stFilter.value : 'all';
+
+  const filtered = equipmentLogs.filter(function(log){
+    if(selectedEq !== 'all' && String(log.asset_id) !== String(selectedEq)) return false;
+    if(selectedSt !== 'all' && String(log.status_check) !== String(selectedSt)) return false;
+
+    if(query){
+      const searchTarget = (
+        (log.asset_id || '') + ' ' +
+        (log.asset_name || '') + ' ' +
+        (log.operator_name || '') + ' ' +
+        (log.project_name || '') + ' ' +
+        (log.sample_info || '') + ' ' +
+        (log.notes || '')
+      ).toLowerCase();
+      if(!searchTarget.includes(query)) return false;
+    }
+    return true;
+  });
+
+  if(countBadge) countBadge.textContent = filtered.length;
+
+  if(!rowsHost) return;
+
+  if(filtered.length === 0){
+    rowsHost.innerHTML =
+      '<div class="quick-return-empty" style="text-align:center;padding:48px 16px;background:#f8fafc;border-radius:14px;border:1.5px dashed #cbd5e1;">' +
+        '<div style="font-size:36px;margin-bottom:8px;">📖</div>' +
+        '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:4px;">등록된 장비 사용일지가 없습니다</div>' +
+        '<p style="font-size:13px;color:#64748b;margin:0 0 16px;">연구장비 가동 후 사용일지를 등록하여 이력을 투명하게 관리하세요.</p>' +
+        '<button type="button" class="btn primary" id="btnEmptyCreateLog" style="height:42px;padding:0 20px;font-weight:700;">＋ 첫 로그북 작성하기</button>' +
+      '</div>';
+    const btnEmpty = $('btnEmptyCreateLog');
+    if(btnEmpty){
+      btnEmpty.addEventListener('click', function(){ openModal('equipmentLog'); });
+    }
+    return;
+  }
+
+  let html = '<div class="logbook-cards-grid" style="display:flex;flex-direction:column;gap:10px;">';
+
+  filtered.forEach(function(rec){
+    const ast = assetFor(rec.asset_id);
+    const astName = rec.asset_name || (ast ? ast.name : rec.asset_id);
+    const dt = String(rec.start_time || '').replace('T', ' ').slice(0, 16);
+    const isIssue = rec.status_check === 'issue';
+    const statusBadgeHtml = isIssue
+      ? '<span class="status-badge is-issue">⚠️ 점검 필요</span>'
+      : '<span class="status-badge is-normal">✓ 정상 작동</span>';
+
+    html +=
+      '<div class="logbook-card">' +
+        '<div class="logbook-card-header">' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<span class="logbook-asset-name">' + safe(astName) + '</span>' +
+            '<span class="asset-id hide-mobile" style="font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">' + safe(rec.asset_id) + '</span>' +
+          '</div>' +
+          '<div>' + statusBadgeHtml + '</div>' +
+        '</div>' +
+        '<div class="logbook-meta-row">' +
+          '<span>📅 ' + safe(dt) + '</span>' +
+          '<span>⏱️ <b>' + safe(rec.run_hours || '—') + '시간</b> 가동</span>' +
+          '<span>👤 <b>' + safe(rec.operator_name) + '</b></span>' +
+          (rec.project_name ? '<span>🎯 ' + safe(rec.project_name) + '</span>' : '') +
+        '</div>' +
+        (rec.sample_info ? '<div class="logbook-sample-box"><b>시료/샘플:</b> ' + safe(rec.sample_info) + '</div>' : '') +
+        (rec.notes ? '<div style="font-size:12px;color:#64748b;margin-top:6px;line-height:1.4;">📝 <b>메모:</b> ' + safe(rec.notes) + '</div>' : '') +
+      '</div>';
+  });
+
+  html += '</div>';
+  rowsHost.innerHTML = html;
+}
+
+function exportEquipmentLogsCsv(){
+  if(equipmentLogs.length === 0){
+    toast('내보낼 장비 로그북 데이터가 없습니다.');
+    return;
+  }
+
+  const headers = ['연번', '로그ID', '관리번호', '장비명', '사용자', '시작일시', '가동시간(h)', '연구과제명', '측정시료', '장비상태', '특이사항', '등록일시'];
+  const rows = equipmentLogs.map(function(lg, idx){
+    return [
+      idx + 1,
+      lg.id || '',
+      lg.asset_id || '',
+      lg.asset_name || '',
+      lg.operator_name || '',
+      lg.start_time ? lg.start_time.replace('T', ' ') : '',
+      lg.run_hours || '',
+      lg.project_name || '',
+      lg.sample_info || '',
+      lg.status_check === 'issue' ? '점검필요' : '정상작동',
+      (lg.notes || '').replace(/[\r\n]+/g, ' '),
+      lg.created_at ? lg.created_at.replace('T', ' ') : ''
+    ].map(function(cell){
+      const s = String(cell || '').replace(/"/g, '""');
+      return '"' + s + '"';
+    }).join(',');
+  });
+
+  const csvContent = '\uFEFF' + headers.join(',') + '\r\n' + rows.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '2DQH_연구장비_전자로그북_' + today() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✓ 전체 장비 로그북(' + equipmentLogs.length + '건)이 CSV로 다운로드되었습니다.');
+}
+
 function fallbackCopyText(text, name){
   const ta = document.createElement('textarea');
   ta.value = text;
@@ -2174,6 +2351,8 @@ function openModal(mode, id){
     titleText = '빠른 구매요청';
   } else if(mode === 'chemicalLog'){
     titleText = '📝 특별관리물질 취급일지 작성';
+  } else if(mode === 'equipmentLog'){
+    titleText = '📖 연구장비 전자 로그북 작성';
   }
 
   $('modalTitle').textContent = titleText;
@@ -2430,6 +2609,115 @@ function openModal(mode, id){
       parts.push('</div></label>');
       parts.push('</div>');
     }
+  } else if(mode === 'equipmentLog'){
+    const targetAsset = id ? assetFor(id) : null;
+    const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
+    const lastProject = localStorage.getItem('labstock_last_project_name') || '2DQH 연구단 기본과제';
+    const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+    parts.push('<div class="logbook-modal-form-wrap">');
+
+    // 1. 대상 연구장비 카드 / 셀렉터
+    if(targetAsset){
+      parts.push('<div class="selected-asset-box has-modal-thumb">');
+      parts.push('  <div class="modal-thumb-box" aria-hidden="true">' + getEquipmentImageHtml(targetAsset, 'thumb') + '</div>');
+      parts.push('  <div class="modal-thumb-info">');
+      parts.push('    <div class="modal-thumb-title">' + safe(targetAsset.name) + '</div>');
+      parts.push('    <div class="modal-thumb-sub"><span>' + safe(targetAsset.id) + '</span> · <span>📍 ' + safe(targetAsset.location || '연구실') + '</span> · <span class="badge-status">' + safe(topLevelCategory(targetAsset)) + '</span></div>');
+      parts.push('  </div>');
+      parts.push('  <input type="hidden" name="asset_id" value="' + safe(targetAsset.id) + '">');
+      parts.push('  <input type="hidden" name="asset_name" value="' + safe(targetAsset.name) + '">');
+      parts.push('</div>');
+    } else {
+      parts.push('<label class="field full">대상 연구장비 *');
+      parts.push('  <select name="asset_id" required class="quick-return-select" id="logbookAssetSelect">');
+      parts.push('    <option value="">-- 연구장비를 선택하세요 --</option>');
+      assets.forEach(function(ast){
+        parts.push('    <option value="' + safe(ast.id) + '">' + safe(ast.id) + ' - ' + safe(ast.name) + ' (' + safe(ast.location || '미지정') + ')</option>');
+      });
+      parts.push('  </select>');
+      parts.push('</label>');
+    }
+
+    // 2. 사용자 성명
+    parts.push('<label class="field full">사용자 성명 (Operator) *');
+    parts.push('  <input name="operator_name" required placeholder="예: 김연구" value="' + safe(lastBorrower) + '">');
+    parts.push('</label>');
+
+    // 3. 시작 일시 & 가동 시간
+    parts.push('<div class="form-grid-2">');
+    parts.push('  <label class="field">시작 일시 *');
+    parts.push('    <input name="start_time" type="datetime-local" required value="' + nowLocal + '">');
+    parts.push('  </label>');
+    parts.push('  <label class="field">가동 시간 (시간 단위) *');
+    parts.push('    <input name="run_hours" type="number" step="0.1" min="0.1" max="100" required value="2.0" placeholder="예: 2.5">');
+    parts.push('  </label>');
+    parts.push('</div>');
+    parts.push('<div class="preset-chips-wrap" style="margin-top:-6px;margin-bottom:12px;">');
+    parts.push('  <span class="preset-chips-label">빠른 시간:</span>');
+    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="run_hours" data-set-val="1.0">1시간</button>');
+    parts.push('  <button type="button" class="btn-preset-chip active" data-set-field="run_hours" data-set-val="2.0">2시간</button>');
+    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="run_hours" data-set-val="3.0">3시간</button>');
+    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="run_hours" data-set-val="4.0">4시간</button>');
+    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="run_hours" data-set-val="8.0">전일(8h)</button>');
+    parts.push('</div>');
+
+    // 4. 연구과제명
+    parts.push('<label class="field full">연구과제명 / 사용 목적 *');
+    parts.push('  <input name="project_name" required placeholder="예: 2DQH 연구단 기본과제" value="' + safe(lastProject) + '">');
+    parts.push('</label>');
+    parts.push('<div class="preset-chips-wrap" style="margin-top:-6px;margin-bottom:12px;">');
+    parts.push('  <span class="preset-chips-label">추천 과제:</span>');
+    parts.push('  <button type="button" class="btn-preset-chip active" data-set-field="project_name" data-set-val="2DQH 연구단 기본과제">2DQH 기본과제</button>');
+    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="project_name" data-set-val="IBS 연구단 시설 공동활용">시설 공동활용</button>');
+    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="project_name" data-set-val="위탁/외부 연구과제">위탁과제</button>');
+    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="project_name" data-set-val="장비 점검 및 시운전">점검·시운전</button>');
+    parts.push('</div>');
+
+    // 5. 시료 / 샘플 정보
+    parts.push('<label class="field full">측정 시료 / 샘플 정보 (선택)');
+    parts.push('  <input name="sample_info" placeholder="예: Graphene/h-BN heterostructure, 3개 샘플">');
+    parts.push('</label>');
+
+    // 6. 장비 상태 점검
+    parts.push('<div class="field full">');
+    parts.push('  <label class="field-title" style="display:block;margin-bottom:6px;font-size:13px;font-weight:700;">장비 상태 점검 (Status Inspection) *</label>');
+    parts.push('  <div class="status-check-group" style="display:flex;gap:10px;">');
+    parts.push('    <label class="status-radio-label is-normal" style="flex:1;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px solid #86efac;background:#f0fdf4;border-radius:10px;font-weight:700;color:#166534;">');
+    parts.push('      <input type="radio" name="status_check" value="normal" checked style="accent-color:#16a34a;">');
+    parts.push('      <span>✓ 정상 작동</span>');
+    parts.push('    </label>');
+    parts.push('    <label class="status-radio-label is-issue" style="flex:1;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px solid #fca5a5;background:#fef2f2;border-radius:10px;font-weight:700;color:#991b1b;">');
+    parts.push('      <input type="radio" name="status_check" value="issue" style="accent-color:#dc2626;">');
+    parts.push('      <span>⚠️ 이상 발견 / 점검 필요</span>');
+    parts.push('    </label>');
+    parts.push('  </div>');
+    parts.push('</div>');
+
+    // 7. 비고 및 메모
+    parts.push('<label class="field full">특이사항 / 전달 메모 (선택)');
+    parts.push('  <textarea name="notes" rows="2" placeholder="측정 파라미터(진공도, 가스 잔량 등)나 다음 사용자를 위한 인수인계 메모를 입력하세요..."></textarea>');
+    parts.push('</label>');
+
+    // 8. 최근 3회 기록
+    if(targetAsset){
+      const assetHistory = equipmentLogs.filter(function(lg){ return lg.asset_id === targetAsset.id; }).slice(0, 3);
+      if(assetHistory.length > 0){
+        parts.push('<div class="logbook-recent-card" style="margin-top:10px;padding:10px 12px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;">');
+        parts.push('  <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px;">📋 최근 사용 기록 (' + assetHistory.length + '건)</div>');
+        assetHistory.forEach(function(rec){
+          const stIcon = rec.status_check === 'issue' ? '⚠️ 이상' : '✓ 정상';
+          const dt = String(rec.start_time || '').replace('T', ' ').slice(0, 16);
+          parts.push('  <div style="font-size:11.5px;color:#64748b;margin-bottom:3px;display:flex;justify-content:space-between;">');
+          parts.push('    <span>' + dt + ' · ' + safe(rec.operator_name) + ' (' + safe(rec.run_hours || '—') + 'h)</span>');
+          parts.push('    <span style="font-weight:600;' + (rec.status_check === 'issue' ? 'color:#dc2626;' : 'color:#16a34a;') + '">' + stIcon + '</span>');
+          parts.push('  </div>');
+        });
+        parts.push('</div>');
+      }
+    }
+
+    parts.push('</div>');
   } else if(mode === 'movement'){
     const c = consumableFor(id);
     const moveType = window.__labstockMovementType === 'in' ? 'in' : 'use';
@@ -2747,6 +3035,7 @@ function openModal(mode, id){
   else if(mode === 'quickReturn') btnText = '✅ 반납 완료';
   else if(mode === 'quickReorder') btnText = '구매요청';
   else if(mode === 'chemicalLog') btnText = '✓ 취급일지 작성 완료';
+  else if(mode === 'equipmentLog') btnText = '✓ 로그북 등록';
 
   $('saveModal').textContent = btnText;
 
@@ -2791,7 +3080,7 @@ function nextAssetId(){
   return 'EQ-' + String(max + 1).padStart(3, '0');
 }
 
-const VALID_VIEWS = ['inventory', 'consumables', 'loans', 'dashboard', 'history'];
+const VALID_VIEWS = ['inventory', 'consumables', 'loans', 'dashboard', 'history', 'logbook'];
 
 function isValidView(name){
   return VALID_VIEWS.includes(name);
@@ -2800,18 +3089,19 @@ function isValidView(name){
 // URL Hash, Query Parameter 및 세션 저장소 기반 활성 뷰 해석
 function getViewFromUrl(){
   try {
-    // 1. URL 쿼리 파라미터 우선 (?tab=consumables or ?view=consumables)
+    // 1. URL 쿼리 파라미터 우선 (?tab=consumables or ?view=consumables or ?mode=logbook)
     const params = new URLSearchParams(window.location.search);
-    const queryTab = params.get('tab') || params.get('view');
+    const queryTab = params.get('tab') || params.get('view') || params.get('mode');
     if(queryTab){
       const norm = (queryTab === 'equipment') ? 'inventory' : queryTab.toLowerCase();
       if(isValidView(norm)) return norm;
     }
 
-    // 2. URL Hash (#consumables, #inventory, #loans, #dashboard, #history)
+    // 2. URL Hash (#consumables, #inventory, #loans, #dashboard, #history, #logbook, #standalone-logbook)
     const rawHash = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0].split('/')[0].trim().toLowerCase();
     if(rawHash){
       if(rawHash === 'reorder') return 'consumables';
+      if(rawHash === 'standalone-logbook') return 'logbook';
       const norm = (rawHash === 'equipment') ? 'inventory' : rawHash;
       if(isValidView(norm)) return norm;
     }
@@ -2908,6 +3198,8 @@ function showView(name, options){
     renderHistory();
   } else if(name === 'inventory'){
     renderInventory();
+  } else if(name === 'logbook'){
+    renderLogbook();
   }
 }
 
@@ -3084,6 +3376,69 @@ async function saveForm(e){
     } catch(logErr){
       console.error('취급일지 등록 실패:', logErr);
       toast('취급일지 저장 중 오류가 발생했습니다.');
+    } finally {
+      btn.disabled = false;
+    }
+    return;
+  }
+
+  // [연구장비 전자 로그북 등록 처리]
+  if(modalMode === 'equipmentLog'){
+    try {
+      const targetAstId = v.asset_id || modalId;
+      const targetAst = assetFor(targetAstId);
+      const logEntry = {
+        id: 'eqlog-' + Date.now(),
+        asset_id: targetAstId,
+        asset_name: (v.asset_name || (targetAst ? targetAst.name : targetAstId) || '').trim(),
+        operator_name: (v.operator_name || '').trim(),
+        start_time: v.start_time || new Date().toISOString(),
+        run_hours: Number(v.run_hours) || 1.0,
+        project_name: (v.project_name || '').trim(),
+        sample_info: (v.sample_info || '').trim(),
+        status_check: v.status_check || 'normal',
+        notes: (v.notes || '').trim(),
+        created_at: new Date().toISOString()
+      };
+
+      if(v.operator_name){
+        localStorage.setItem('labstock_last_borrower_name', v.operator_name.trim());
+      }
+      if(v.project_name){
+        localStorage.setItem('labstock_last_project_name', v.project_name.trim());
+      }
+
+      // 1. 브라우저 로컬 저장
+      equipmentLogs.unshift(logEntry);
+      localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
+
+      // 2. Supabase 연동 시 DB 저장 시도
+      if(db && !isLocalMode){
+        try {
+          const { error: dbErr } = await db.from('equipment_logs').insert({
+            asset_id: logEntry.asset_id,
+            asset_name: logEntry.asset_name,
+            operator_name: logEntry.operator_name,
+            start_time: logEntry.start_time,
+            run_hours: logEntry.run_hours,
+            project_name: logEntry.project_name,
+            sample_info: logEntry.sample_info,
+            status_check: logEntry.status_check,
+            notes: logEntry.notes
+          });
+          if(dbErr) console.warn('Supabase equipment_logs 저장 건너뜀 (로컬 스토리지에 보존됨):', dbErr);
+        } catch(netErr) {
+          console.warn('Supabase 동기화 건너뜀 (로컬 스토리지에 보존됨):', netErr);
+        }
+      }
+
+      closeModal();
+      toast('✓ 연구장비 사용 로그북이 성공적으로 등록되었습니다.');
+      renderLogbook();
+      renderInventory();
+    } catch(eqErr){
+      console.error('로그북 등록 실패:', eqErr);
+      toast('로그북 저장 중 오류가 발생했습니다.');
     } finally {
       btn.disabled = false;
     }
@@ -3563,6 +3918,24 @@ function bindEvents(){
     });
   }
 
+  // 장비 로그북 검색창 및 필터 실시간 바인딩
+  const logbookSearch = $('logbookSearch');
+  const btnClearLogbookSearch = $('btnClearLogbookSearch');
+  if(logbookSearch && btnClearLogbookSearch){
+    logbookSearch.addEventListener('input', function(){
+      btnClearLogbookSearch.classList.toggle('hidden', logbookSearch.value.trim().length === 0);
+      renderLogbook();
+    });
+    btnClearLogbookSearch.addEventListener('click', function(){
+      logbookSearch.value = '';
+      btnClearLogbookSearch.classList.add('hidden');
+      logbookSearch.focus();
+      renderLogbook();
+    });
+  }
+  addEvt('logbookEquipmentFilter', 'change', renderLogbook);
+  addEvt('logbookStatusFilter', 'change', renderLogbook);
+
   document.addEventListener('click', function(e){
     const target = e.target.closest('button');
     if(!target) return;
@@ -3761,6 +4134,22 @@ function bindEvents(){
 
     if(target.id === 'btnExportChemicalLogs' || target.closest('#btnExportChemicalLogs')){
       exportChemicalLogsCsv();
+      return;
+    }
+
+    if(target.dataset.equipmentLog || target.closest('[data-equipment-log]')){
+      const btn = target.dataset.equipmentLog ? target : target.closest('[data-equipment-log]');
+      openModal('equipmentLog', btn.dataset.equipmentLog);
+      return;
+    }
+
+    if(target.id === 'btnAddLogbookEntry' || target.closest('#btnAddLogbookEntry')){
+      openModal('equipmentLog');
+      return;
+    }
+
+    if(target.id === 'btnExportEquipmentLogs' || target.closest('#btnExportEquipmentLogs')){
+      exportEquipmentLogsCsv();
       return;
     }
 
@@ -4263,6 +4652,23 @@ function handleUrlFastTrack(){
       setTimeout(function(){
         openModal('return', act ? act.id : returnAssetId);
       }, 150);
+      return;
+    }
+
+    // 4. 연구장비 전자 로그북 다이렉트 진입 (?logbook=EQ-001 or ?action=equipmentLog&id=EQ-001 or #logbook/EQ-001)
+    const hashEqLogMatch = hash.match(/^(?:logbook|equipmentlog)[\/\-](.+)$/i);
+    const logbookAssetId = params.get('logbook') || (params.get('action') === 'equipmentLog' ? params.get('id') : null) || (hashEqLogMatch ? hashEqLogMatch[1] : null);
+    if(logbookAssetId){
+      showView('logbook', { updateUrl: false });
+      setTimeout(function(){
+        openModal('equipmentLog', logbookAssetId);
+      }, 150);
+      return;
+    }
+
+    // 5. 단독 로그북 키오스크 모드 (#standalone-logbook or ?mode=logbook or ?standalone=true)
+    if(hash === 'standalone-logbook' || hash === 'logbook' || params.get('mode') === 'logbook' || params.get('standalone') === 'true'){
+      showView('logbook', { updateUrl: false });
       return;
     }
   } catch(e) {

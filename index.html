@@ -11,13 +11,13 @@
         var h = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0].split('/')[0].trim().toLowerCase();
         var q = new URLSearchParams(window.location.search);
         var v = q.get('tab') || q.get('view') || (h === 'equipment' ? 'inventory' : h) || sessionStorage.getItem('labstock_active_view');
-        if(v === 'consumables' || v === 'loans' || v === 'dashboard' || v === 'history'){
+        if(v === 'consumables' || v === 'loans' || v === 'dashboard' || v === 'history' || v === 'logbook'){
           document.documentElement.setAttribute('data-initial-view', v);
         }
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261106_14">
+  <link rel="stylesheet" href="style.css?v=20261106_15">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -63,6 +63,10 @@
     <button class="nav" data-view="loans">
       <span class="nav-icon" aria-hidden="true">📋</span>
       <span>대여 현황</span>
+    </button>
+    <button class="nav" data-view="logbook" id="navLogbook">
+      <span class="nav-icon" aria-hidden="true">📖</span>
+      <span>장비 로그북</span>
     </button>
     <button class="nav admin-only hidden" data-view="dashboard">
       <span class="nav-icon" aria-hidden="true">📊</span>
@@ -226,9 +230,47 @@
       </section>
     </section>
 
+    <!-- 연구장비 전자 로그북 뷰 -->
+    <section class="view" id="view-logbook">
+      <div class="page-head hide-mobile">
+        <div class="head-title">
+          <h1>🔬 연구장비 전자 로그북</h1>
+          <span class="count-badge" id="logbookCountBadge">0</span>
+        </div>
+        <div class="head-actions">
+          <button class="btn" id="btnExportEquipmentLogs" title="연구과제 감사 및 장비 가동률 증빙용 CSV 다운로드">📥 로그북 엑셀 다운로드</button>
+          <button class="btn primary" id="btnAddLogbookEntry">＋ 로그북 작성</button>
+        </div>
+      </div>
+      <section class="panel">
+        <div class="toolbar">
+          <div class="search-input-box">
+            <span class="search-input-icon" aria-hidden="true">🔍</span>
+            <input id="logbookSearch" aria-label="로그북 검색" placeholder="장비명, 관리번호, 사용자, 샘플명, 과제명 검색...">
+            <button id="btnClearLogbookSearch" class="btn-clear-search hidden" type="button" aria-label="검색어 지우기">✕</button>
+          </div>
+          <select id="logbookEquipmentFilter" aria-label="장비 필터">
+            <option value="all">모든 연구장비</option>
+          </select>
+          <select id="logbookStatusFilter" aria-label="장비 상태 필터">
+            <option value="all">모든 상태</option>
+            <option value="normal">✓ 정상 작동</option>
+            <option value="issue">⚠️ 점검/이상</option>
+          </select>
+        </div>
+        <div class="logbook-standalone-banner hidden" id="logbookStandaloneBanner">
+          <div class="standalone-badge">⚡ 단독 Kiosk 모드</div>
+          <span>IBS 2DQH 연구장비 전자 사용일지 단독 운영 모드입니다. <a href="#inventory" class="text-link">← 비품 대여 시스템으로 돌아가기</a></span>
+        </div>
+        <div id="logbookRows" class="table-wrap" aria-live="polite"></div>
+      </section>
+    </section>
+
     <!-- 모바일 전용 보조 링크 (대여 현황 및 관리자 기능 격리) -->
     <footer class="mobile-sub-footer">
-      <button type="button" class="text-link-sub" id="btnToggleLoans">대여 현황 전체보기</button>
+      <button type="button" class="text-link-sub" id="btnToggleLoans">대여 현황</button>
+      <span class="sub-dot">·</span>
+      <button type="button" class="text-link-sub" id="btnMobileLogbook" data-goto="logbook">📖 장비 로그북</button>
       <span class="sub-dot">·</span>
       <button type="button" class="text-link-sub" id="btnMobileLogin">관리자 로그인</button>
     </footer>
@@ -254,7 +296,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261106_14"></script>
-<script src="app.js?v=20261106_14"></script>
+<script src="consumables_catalog.js?v=20261106_15"></script>
+<script src="app.js?v=20261106_15"></script>
 </body>
 </html>
