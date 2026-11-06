@@ -354,6 +354,77 @@ function getDDayBadge(){
   return '';
 }
 
+// 대여 기한 및 24시간 미만 잔여 여부 판정 함수
+function getLoanDeadlineInfo(l){
+  if(!l) return { isOverdue: false, canExtend: false, hoursLeft: 0, text: '' };
+  if(l.returned_at) return { isOverdue: false, canExtend: false, hoursLeft: 0, text: '반납 완료' };
+
+  const now = Date.now();
+  let deadlineMs = 0;
+
+  if(l.due_date){
+    if(/^\d{4}-\d{2}-\d{2}$/.test(l.due_date)){
+      let timePart = '18:00:00';
+      if(l.created_at && l.created_at.includes('T')){
+        try {
+          const cDate = new Date(l.created_at);
+          if(!isNaN(cDate.getTime())){
+            const hh = String(cDate.getHours()).padStart(2, '0');
+            const mm = String(cDate.getMinutes()).padStart(2, '0');
+            const ss = String(cDate.getSeconds()).padStart(2, '0');
+            timePart = hh + ':' + mm + ':' + ss;
+          }
+        } catch(e){}
+      }
+      deadlineMs = new Date(l.due_date + 'T' + timePart).getTime();
+    } else {
+      deadlineMs = new Date(l.due_date).getTime();
+    }
+  } else if(l.created_at || l.borrowed_at){
+    const startMs = new Date(l.created_at || (l.borrowed_at + 'T09:00:00')).getTime();
+    deadlineMs = startMs + 24 * 60 * 60 * 1000;
+  }
+
+  if(!deadlineMs || isNaN(deadlineMs)){
+    return { isOverdue: false, canExtend: true, hoursLeft: 24, text: '24시간' };
+  }
+
+  const diffMs = deadlineMs - now;
+  const hoursLeft = diffMs / (1000 * 60 * 60);
+
+  if(diffMs < 0){
+    const overdueHours = Math.abs(Math.floor(hoursLeft));
+    const overdueText = overdueHours >= 24
+      ? Math.floor(overdueHours / 24) + '일 지남'
+      : (overdueHours || 1) + '시간 지남';
+    return {
+      isOverdue: true,
+      canExtend: true,
+      hoursLeft: hoursLeft,
+      text: overdueText
+    };
+  }
+
+  const canExtend = hoursLeft < 24;
+  let text = '';
+  if(hoursLeft < 1){
+    const minsLeft = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+    text = minsLeft + '분 남음';
+  } else if(hoursLeft < 24){
+    text = Math.floor(hoursLeft) + '시간 남음';
+  } else {
+    const daysLeft = Math.floor(hoursLeft / 24);
+    text = daysLeft + '일 남음';
+  }
+
+  return {
+    isOverdue: false,
+    canExtend: canExtend,
+    hoursLeft: hoursLeft,
+    text: text
+  };
+}
+
 function safe(v){
   if(v === null || v === undefined) return '';
   return String(v).replace(/[&<>"']/g, function(c){
@@ -629,8 +700,7 @@ function renderMetrics(){
   });
 
   const overdue = active.filter(function(l){
-    if(!l.due_date) return false;
-    return l.due_date < today();
+    return getLoanDeadlineInfo(l).isOverdue;
   });
 
   const items = [
@@ -1003,9 +1073,18 @@ function renderInventory(){
       if(st === 'available'){
         actionBtn += '<button class="text-btn btn-action-borrow" data-borrow="' + safe(a.id) + '">⚡ 대여 신청</button>';
       } else if(st === 'borrowed'){
-        actionBtn += '<span class="status-chip borrowed-chip">대여 중 (' + safe(bName) + ')</span>';
+        const info = getLoanDeadlineInfo(l);
+        if(info.isOverdue){
+          actionBtn += '<span class="status-chip overdue-chip">⚠️ 기간 지남 (' + safe(bName) + ')</span>';
+        } else {
+          actionBtn += '<span class="status-chip borrowed-chip">대여 중 (' + safe(bName) + (info.text ? ' · ' + safe(info.text) : '') + ')</span>';
+        }
+
         if(l && canManageLoan(l)){
-          actionBtn += ' <button class="text-btn btn-action-extend" data-extend-loan="' + l.id + '" title="대여를 24시간 연장합니다">⏰ 24시간 연장</button>';
+          // 24시간 미만 남았거나 기한 지난 경우에만 24시간 연장 버튼 노출
+          if(info.canExtend){
+            actionBtn += ' <button class="text-btn btn-action-extend" data-extend-loan="' + l.id + '" title="대여 기한을 24시간 연장합니다">⏰ 24시간 연장</button>';
+          }
           actionBtn += ' <button class="text-btn btn-action-return" data-return="' + l.id + '">✓ 반납</button>';
         }
       }
@@ -1044,16 +1123,35 @@ function renderInventory(){
 
     if(myActiveLoans.length > 0){
       const l = myActiveLoans[0];
-      personalBannerHtml = '<div class="my-active-loan-banner">' +
+      const info = getLoanDeadlineInfo(l);
+      let bannerTitle = '';
+      let bannerSub = '';
+      let bannerExtendBtn = '';
+
+      if(info.isOverdue){
+        bannerTitle = safe(l.borrower_name || '연구원') + '님, [' + safe(fmtName(l.asset_id)) + '] 반납 기한이 지났습니다 (' + safe(info.text) + ')';
+        bannerSub = '원활한 연구실 공동 사용을 위해 지금 반납하시거나 24시간 연장해 주세요.';
+        bannerExtendBtn = '<button class="text-btn btn-banner-extend" data-extend-loan="' + l.id + '" title="대여 기한을 24시간 연장합니다">⏰ 24시간 연장</button>';
+      } else if(info.canExtend){
+        bannerTitle = safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 대여 중입니다 (' + safe(info.text) + ')';
+        bannerSub = '반납 기한이 24시간 미만 남았습니다. 계속 사용하시려면 <b>[⏰ 24시간 연장]</b>을 눌러주세요.';
+        bannerExtendBtn = '<button class="text-btn btn-banner-extend" data-extend-loan="' + l.id + '" title="대여 기한을 24시간 연장합니다">⏰ 24시간 연장</button>';
+      } else {
+        bannerTitle = safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 대여 중입니다';
+        bannerSub = '반납 기한까지 <b>' + safe(info.text) + '</b> 남았습니다 (24시간 미만 남았을 때 연장 버튼이 활성화됩니다).';
+        bannerExtendBtn = '';
+      }
+
+      personalBannerHtml = '<div class="my-active-loan-banner' + (info.isOverdue ? ' is-overdue-banner' : '') + '">' +
         '<div class="banner-info">' +
-          '<span class="banner-icon">💡</span>' +
+          '<span class="banner-icon">' + (info.isOverdue ? '⚠️' : '💡') + '</span>' +
           '<div>' +
-            '<b>' + safe(l.borrower_name || '연구원') + '님, 현재 [' + safe(fmtName(l.asset_id)) + '] 대여 중입니다</b>' +
-            '<small>기본 24시간 대여 · 계속 사용하시려면 <b>[⏰ 24시간 연장]</b>을 눌러주세요.</small>' +
+            '<b>' + bannerTitle + '</b>' +
+            '<small>' + bannerSub + '</small>' +
           '</div>' +
         '</div>' +
         '<div class="banner-actions">' +
-          '<button class="text-btn btn-banner-extend" data-extend-loan="' + l.id + '" title="대여 기한을 24시간 연장합니다">⏰ 24시간 연장</button>' +
+          bannerExtendBtn +
           '<button class="text-btn btn-banner-return" data-return="' + l.id + '">✓ 반납하기</button>' +
         '</div>' +
       '</div>';
@@ -1258,11 +1356,15 @@ function renderLoans(){
 
     for(let i=0; i<list.length; i++){
       const l = list[i];
+      const info = getLoanDeadlineInfo(l);
       let action = '';
 
       if(canManageLoan(l)){
         if(!l.returned_at){
-          action += '<button class="text-btn btn-action-extend" data-extend-loan="' + l.id + '" title="대여를 24시간 연장합니다">⏰ 24시간 연장</button> ';
+          // 24시간 미만 남았거나 기한 지난 경우에만 기간 연장 버튼 표시
+          if(info.canExtend){
+            action += '<button class="text-btn btn-action-extend-custom" data-extend-custom="' + l.id + '" title="원하는 기간을 정해서 연장합니다">📅 기간 연장</button> ';
+          }
           action += '<button class="text-btn btn-action-return" data-return="' + l.id + '">✓ 반납</button>';
         } else {
           action += '<span class="status available">반납 완료</span>';
@@ -1280,20 +1382,31 @@ function renderLoans(){
       }
 
       const isReturned = !!l.returned_at;
-      const statusCell = isReturned
-        ? '<span class="status available">반납 완료</span>'
-        : '<span class="status borrowed">대여 중</span>';
+      let statusCell = '';
+      if(isReturned){
+        statusCell = '<span class="status available">반납 완료</span>';
+      } else if(info.isOverdue){
+        statusCell = '<span class="status-chip overdue-chip">⚠️ 기간 지남 (' + safe(info.text) + ')</span>';
+      } else {
+        statusCell = '<span class="status borrowed">대여 중' + (info.text ? ' (' + safe(info.text) + ')' : '') + '</span>';
+      }
 
-      loanHtml += '<tr data-status="' + (isReturned ? 'returned' : 'active') + '">' +
+      const returnOrDueCell = isReturned
+        ? dateText(l.returned_at)
+        : (info.isOverdue
+            ? '<span style="color:#b91c1c;font-weight:700;">' + dateText(l.due_date) + ' (지남)</span>'
+            : dateText(l.due_date));
+
+      loanHtml += '<tr data-status="' + (isReturned ? 'returned' : (info.isOverdue ? 'overdue' : 'active')) + '"' + (info.isOverdue && !isReturned ? ' class="row-overdue"' : '') + '>' +
         '<td data-label="비품"><b>' + safe(fmtName(l.asset_id)) + '</b><div class="asset-id">' + safe(l.asset_id) + '</div></td>' +
         '<td data-label="대여자">' + safe(l.borrower_name) + '</td>' +
         '<td data-label="대여일">' + dateText(l.borrowed_at) + '</td>' +
         '<td data-label="상태">' + statusCell + '</td>' +
-        '<td data-label="반납일">' + dateText(l.returned_at) + '</td>' +
+        '<td data-label="반납(예정)일">' + returnOrDueCell + '</td>' +
         '<td data-label="처리">' + action + '</td></tr>';
     }
 
-    $('loanRows').innerHTML = '<table aria-label="대여 현황"><thead><tr><th scope="col">비품</th><th scope="col">대여자</th><th scope="col">대여일</th><th scope="col">상태</th><th scope="col">반납일</th><th scope="col">처리</th></tr></thead><tbody>' +
+    $('loanRows').innerHTML = '<table aria-label="대여 현황"><thead><tr><th scope="col">비품</th><th scope="col">대여자</th><th scope="col">대여일</th><th scope="col">상태</th><th scope="col">반납(예정)일</th><th scope="col">처리</th></tr></thead><tbody>' +
       loanHtml + '</tbody></table>';
   } else {
     $('loanRows').innerHTML = '<div class="empty">표시할 기록이 없습니다.</div>';
@@ -2028,6 +2141,8 @@ function openModal(mode, id){
     titleText = '비품 반납';
   } else if(mode === 'editLoan'){
     titleText = '대여 기록 수정';
+  } else if(mode === 'extendPeriod'){
+    titleText = '📅 대여 기간 연장';
   } else if(mode === 'consumable'){
     titleText = id ? '소모품 정보 수정' : '소모품 등록';
   } else if(mode === 'reorder'){
@@ -2143,7 +2258,6 @@ function openModal(mode, id){
     parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(lastBorrower) + '"></label>');
     parts.push('<label class="field full">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)"></label>');
     parts.push('</div>');
-    parts.push('<p class="form-hint" style="margin-top:8px;">💡 기본 24시간 대여됩니다. 일정이 더 필요하시면 대여 목록에서 언제든 <b>[⏰ 24시간 연장]</b>할 수 있습니다.</p>');
   } else if(mode === 'consumable'){
     if(!isAdmin()){
       parts.push('<p>소모품 등록 및 수정은 관리자 로그인이 필요합니다.</p>');
@@ -2374,6 +2488,42 @@ function openModal(mode, id){
     '</label>');
     parts.push('<label class="field full">메모<textarea name="memo" rows="2" maxlength="500">' + safe(lMemo) + '</textarea></label>');
     parts.push('</div>');
+  } else if(mode === 'extendPeriod'){
+    const target = loans.find(function(l){ return String(l.id) === String(id); });
+    if(!target){
+      parts.push('<p>대여 기록을 찾을 수 없습니다.</p>');
+    } else {
+      const info = getLoanDeadlineInfo(target);
+      const todayStr = today();
+      const baseDate = (!target.due_date || target.due_date < todayStr) ? todayStr : target.due_date;
+      const d1 = calcSmartDueDateFor(baseDate, 1);
+      const d2 = calcSmartDueDateFor(baseDate, 2);
+      const d3 = calcSmartDueDateFor(baseDate, 3);
+      const d7 = calcSmartDueDateFor(baseDate, 7);
+
+      parts.push('<div class="extend-period-modal">');
+      parts.push('<div class="extend-asset-header">');
+      parts.push('  <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">' + safe(fmtName(target.asset_id)) + ' <span class="asset-id">' + safe(target.asset_id) + '</span></div>');
+      parts.push('  <div class="extend-current-status">대여자: <b>' + safe(target.borrower_name) + '</b> · ' + (info.isOverdue ? '<span style="color:#dc2626;font-weight:700;">⚠️ 현재 대여 기간 지남 (' + safe(info.text) + ')</span>' : '현재 예정일: <b>' + dateText(target.due_date) + '</b> (' + safe(info.text) + ')') + '</div>');
+      parts.push('</div>');
+
+      parts.push('<div class="form-grid" style="margin-top:12px;">');
+      parts.push('<input type="hidden" name="loan_id" value="' + safe(target.id) + '">');
+      parts.push('<label class="field full">새 반납 예정일 지정 *');
+      parts.push('<input name="due_date" type="date" required min="' + todayStr + '" value="' + d1 + '" class="extend-date-input">');
+      parts.push('<div class="preset-chips-wrap" style="margin-top:8px;">');
+      parts.push('  <span class="preset-chips-label">⚡ 빠른 기간 선택:</span>');
+      parts.push('  <button type="button" class="btn-preset-chip active" data-set-field="due_date" data-set-val="' + d1 + '">+24시간 (내일)</button>');
+      parts.push('  <button type="button" class="btn-preset-chip" data-set-field="due_date" data-set-val="' + d2 + '">+2일</button>');
+      parts.push('  <button type="button" class="btn-preset-chip" data-set-field="due_date" data-set-val="' + d3 + '">+3일</button>');
+      parts.push('  <button type="button" class="btn-preset-chip" data-set-field="due_date" data-set-val="' + d7 + '">+7일 (1주)</button>');
+      parts.push('</div>');
+      parts.push('</label>');
+
+      parts.push('<label class="field full">연장 사유 / 메모 (선택)<input name="extend_memo" maxlength="200" placeholder="예: 추가 실험 진행 (생략 가능)"></label>');
+      parts.push('</div>');
+      parts.push('</div>');
+    }
   } else if(mode === 'return'){
     if(window.__isPromptingReturnBeforeBorrow){
       parts.push('<div class="borrow-fast-notice" style="background:var(--bg-subtle); border-left:4px solid var(--brand-red); margin-bottom:14px; padding:10px 14px; font-size:13px; line-height:1.5; border-radius:8px;">');
@@ -2414,6 +2564,7 @@ function openModal(mode, id){
   else if(mode === 'return') btnText = '반납 완료';
   else if(mode === 'login') btnText = '로그인';
   else if(mode === 'editLoan') btnText = '수정 저장';
+  else if(mode === 'extendPeriod') btnText = '✓ 기간 연장 완료';
   else if(mode === 'consumable') btnText = id ? '수정 저장' : '소모품 등록';
   else if(mode === 'reorder') btnText = '재주문 요청';
   else if(mode === 'movement') btnText = '재고 반영';
@@ -2715,6 +2866,24 @@ async function saveForm(e){
       }
       btn.disabled = false;
       return;
+    } else if(modalMode === 'extendPeriod'){
+      const target = loans.find(function(l){ return String(l.id) === String(modalId); });
+      if(target){
+        const newDueDate = v.due_date || calcSmartDueDate(1);
+        const todayStr = today();
+        const allMatches = Array.from((target.memo || '').matchAll(/(\d+)회/g));
+        const extCount = allMatches.length > 0 ? (Number(allMatches[allMatches.length - 1][1]) + 1) : 1;
+        const reason = v.extend_memo ? ' (' + v.extend_memo.trim() + ')' : '';
+        const extMemoTag = '[' + todayStr + ' ' + extCount + '회 기간연장: ~' + newDueDate + reason + ']';
+        target.due_date = newDueDate;
+        target.memo = target.memo ? (target.memo + ' ' + extMemoTag) : extMemoTag;
+        saveLocalStorage();
+        closeModal();
+        toast("✓ '" + fmtName(target.asset_id) + "' 대여가 " + dateText(newDueDate) + "까지 연장되었습니다.");
+      }
+      btn.disabled = false;
+      render();
+      return;
     } else if(modalMode === 'return' || modalMode === 'quickReturn'){
       const targetId = modalMode === 'return' ? modalId : v.loan_id;
       const target = loans.find(function(l){ return String(l.id) === String(targetId); });
@@ -2980,6 +3149,32 @@ async function saveForm(e){
       }).eq('id', modalId).select('id');
 
       requireRows(result, '수정되지 않았습니다. 대여한 기기/브라우저인지 확인하거나 관리자에게 요청하세요.');
+    } else if(modalMode === 'extendPeriod'){
+      const target = loans.find(function(l){ return String(l.id) === String(modalId); });
+      if(!target) throw new Error('대여 기록을 찾을 수 없습니다.');
+      if(!canManageLoan(target)) throw new Error('본인이 대여한 기록만 연장할 수 있습니다.');
+
+      const newDueDate = v.due_date;
+      if(!newDueDate) throw new Error('새 반납 예정일을 선택해 주세요.');
+
+      const todayStr = today();
+      const allMatches = Array.from((target.memo || '').matchAll(/(\d+)회/g));
+      const extCount = allMatches.length > 0 ? (Number(allMatches[allMatches.length - 1][1]) + 1) : 1;
+      const reason = v.extend_memo ? ' (' + v.extend_memo.trim() + ')' : '';
+      const extMemoTag = '[' + todayStr + ' ' + extCount + '회 기간연장: ~' + newDueDate + reason + ']';
+      const updatedMemo = target.memo ? (target.memo + ' ' + extMemoTag) : extMemoTag;
+
+      target.due_date = newDueDate;
+      target.memo = updatedMemo;
+      saveLocalStorage();
+
+      const result = await db.from('loans').update({
+        due_date: newDueDate,
+        memo: updatedMemo,
+        updated_at: new Date().toISOString()
+      }).eq('id', target.id).select('id');
+
+      requireRows(result, '연장 처리가 반영되지 않았습니다. 대여한 기기/브라우저인지 확인하거나 관리자에게 요청하세요.');
     } else {
       throw new Error('알 수 없는 작업입니다.');
     }
@@ -3196,8 +3391,20 @@ function bindEvents(){
     if(target.dataset.extendLoan || target.closest('[data-extend-loan]')){
       const btn = target.dataset.extendLoan ? target : target.closest('[data-extend-loan]');
       const loanId = btn.dataset.extendLoan;
-      const days = Number(btn.dataset.extendDays) || 3;
+      const days = Number(btn.dataset.extendDays) || 1;
       extendLoan(loanId, days);
+      return;
+    }
+
+    if(target.dataset.extendCustom || target.closest('[data-extend-custom]')){
+      const btn = target.dataset.extendCustom ? target : target.closest('[data-extend-custom]');
+      const loanId = btn.dataset.extendCustom;
+      const ln = loans.find(function(x){ return String(x.id) === String(loanId); });
+      if(!canManageLoan(ln)){
+        toast('본인이 대여한 기록만 연장할 수 있습니다.');
+        return;
+      }
+      openModal('extendPeriod', loanId);
       return;
     }
 
