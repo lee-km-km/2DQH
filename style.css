@@ -1386,7 +1386,7 @@ tbody tr:hover .asset-thumb-box {
     -webkit-overflow-scrolling: touch;
     padding: 16px 18px;
   }
-  .modal-body input:not([type="checkbox"]):not([type="radio"]):not(.compound-input) {
+  .modal-body input:not([type="checkbox"]):not([type="radio"]):not(.compound-input):not(.compound-unit-input) {
     height: 46px !important;
     font-size: 16px !important;
     border-radius: 10px !important;
@@ -2273,6 +2273,8 @@ tbody tr:hover .asset-thumb-box {
   gap: 6px;
   flex: 1;
   min-width: 220px;
+  word-break: keep-all;
+  line-height: 1.4;
 }
 
 .controlled-summary-actions {
@@ -2516,9 +2518,9 @@ tbody tr:hover .asset-thumb-box {
 .chem-id-spec {
   font-size: 12px;
   color: #64748b;
-  line-height: 1.4;
-  word-break: break-all;
-  overflow-wrap: anywhere;
+  line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: break-word;
   background: #ffffff;
   padding: 6px 10px;
   border-radius: 6px;
@@ -2545,6 +2547,7 @@ tbody tr:hover .asset-thumb-box {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  word-break: keep-all;
 }
 
 .chem-meta-item b {
@@ -2552,16 +2555,51 @@ tbody tr:hover .asset-thumb-box {
   font-weight: 700;
 }
 
-.chem-law-pill {
+/* 법정 안내 카드 (줄바꿈 및 가독성 최적화) */
+.chem-notice-card {
   margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px dashed #e2e8f0;
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #64748b;
-  line-height: 1.4;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.chem-notice-icon {
+  font-size: 16px;
+  line-height: 1.2;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.chem-notice-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.chem-notice-head {
+  font-size: 12px;
+  font-weight: 700;
+  color: #166534;
+  line-height: 1.35;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.chem-notice-desc {
+  font-size: 11.5px;
+  color: #15803d;
+  line-height: 1.45;
+  margin-top: 2px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.chem-notice-desc b {
+  color: #052e16;
+  font-weight: 700;
 }
 
 /* 취급일지 폼 레이아웃 (모바일 완전 최적화) */
@@ -2632,6 +2670,31 @@ tbody tr:hover .asset-thumb-box {
   box-shadow: none !important;
   border-radius: 0 !important;
   margin: 0 !important;
+}
+
+.compound-unit-input {
+  width: 95px !important;
+  min-width: 85px !important;
+  max-width: 120px !important;
+  height: 100% !important;
+  border: none !important;
+  border-left: 1.5px solid #e2e8f0 !important;
+  outline: none !important;
+  background: #f8fafc !important;
+  padding: 0 10px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  text-align: center;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.compound-unit-input:focus {
+  background: #ffffff !important;
+  color: #0284c7 !important;
 }
 
 .compound-select {

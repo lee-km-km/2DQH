@@ -1786,7 +1786,7 @@ function renderConsumables(){
         summaryHtml = '<div class="controlled-summary-bar reagent-bar is-filtered-controlled">' +
           '<div class="controlled-summary-text">' +
             '<span class="summary-icon">⚠️</span> ' +
-            '<span><strong style="color:#b91c1c;">특별관리물질 ' + controlledCount + '종 목록</strong> (산업안전보건법 시행규칙 [별표 12] 해당 시약 · 30년 보존 의무)</span>' +
+            '<span><strong style="color:#b91c1c;">특별관리물질 ' + controlledCount + '종</strong> (산안법 [별표 12] · 30년 보존 의무)</span>' +
           '</div>' +
           '<div class="controlled-summary-actions">' +
             '<button type="button" class="btn-filter-controlled active" id="btnToggleControlledFilter">🧪 전체 시약 보기 (' + totalReagents + '종)</button>' +
@@ -2333,8 +2333,12 @@ function openModal(mode, id){
         parts.push('    <span class="chem-meta-item"><b>관리기준</b> ' + safe(statutoryThreshold) + '</span>');
       }
       parts.push('  </div>');
-      parts.push('  <div class="chem-law-pill">');
-      parts.push('    <span>🛡️ 산업안전보건법 제420조 특별관리물질 취급일지 (기록 30년 보존 법정 서식)</span>');
+      parts.push('  <div class="chem-notice-card">');
+      parts.push('    <div class="chem-notice-icon" aria-hidden="true">🛡️</div>');
+      parts.push('    <div class="chem-notice-body">');
+      parts.push('      <div class="chem-notice-head">산업안전보건법 제420조 특별관리물질 취급일지</div>');
+      parts.push('      <div class="chem-notice-desc">특별관리물질 사용 내역은 <b>30년간 보존</b>되며 정기 근로감독 시 제출 대상입니다.</div>');
+      parts.push('    </div>');
       parts.push('  </div>');
       parts.push('</div>');
 
@@ -2350,20 +2354,33 @@ function openModal(mode, id){
       parts.push('<label class="field-label" style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:var(--text-secondary);">사용량 (취급량) *</label>');
       parts.push('<div class="compound-input-group">');
       parts.push('<input name="quantity" type="number" min="0.001" step="any" required placeholder="수량 입력 (예: 25)" class="compound-input" inputmode="decimal">');
-      parts.push('<select name="unit" class="compound-select">');
-      parts.push('<option value="mL"' + (lastUnit === 'mL' ? ' selected' : '') + '>mL</option>');
-      parts.push('<option value="mg"' + (lastUnit === 'mg' ? ' selected' : '') + '>mg</option>');
-      parts.push('<option value="g"' + (lastUnit === 'g' ? ' selected' : '') + '>g</option>');
-      parts.push('<option value="L"' + (lastUnit === 'L' ? ' selected' : '') + '>L</option>');
-      parts.push('</select>');
+      parts.push('<input name="unit" class="compound-unit-input" list="unitPresets" value="' + safe(lastUnit || 'mL') + '" placeholder="단위 입력" required maxlength="15" autocomplete="off">');
+      parts.push('<datalist id="unitPresets">');
+      parts.push('<option value="mL">');
+      parts.push('<option value="µL">');
+      parts.push('<option value="g">');
+      parts.push('<option value="mg">');
+      parts.push('<option value="L">');
+      parts.push('<option value="ea">');
+      parts.push('<option value="방울">');
+      parts.push('</datalist>');
       parts.push('</div>');
       parts.push('<div class="preset-chips-wrap" style="margin-top:8px;">');
-      parts.push('<span class="preset-chips-label">자주 쓰는 수량:</span>');
+      parts.push('<span class="preset-chips-label">수량:</span>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="5">5</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="10">10</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="25">25</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="50">50</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="100">100</button>');
+      parts.push('</div>');
+      parts.push('<div class="preset-chips-wrap" style="margin-top:6px;">');
+      parts.push('<span class="preset-chips-label">단위:</span>');
+      const curUnit = lastUnit || 'mL';
+      parts.push('<button type="button" class="btn-preset-chip' + (curUnit === 'mL' ? ' active' : '') + '" data-set-field="unit" data-set-val="mL">mL</button>');
+      parts.push('<button type="button" class="btn-preset-chip' + (curUnit === 'µL' ? ' active' : '') + '" data-set-field="unit" data-set-val="µL">µL</button>');
+      parts.push('<button type="button" class="btn-preset-chip' + (curUnit === 'g' ? ' active' : '') + '" data-set-field="unit" data-set-val="g">g</button>');
+      parts.push('<button type="button" class="btn-preset-chip' + (curUnit === 'mg' ? ' active' : '') + '" data-set-field="unit" data-set-val="mg">mg</button>');
+      parts.push('<button type="button" class="btn-preset-chip' + (curUnit === 'L' ? ' active' : '') + '" data-set-field="unit" data-set-val="L">L</button>');
       parts.push('</div></div>');
 
       parts.push('<label class="field full">작업 장소 *<input name="work_location" required maxlength="100" value="' + safe(lastWorkLoc) + '" placeholder="예: 3층 화학실 흄후드 1번">');
