@@ -1577,7 +1577,7 @@ tbody tr:hover .asset-thumb-box {
     border-bottom: 1px solid var(--border);
     font-size: 15px;
   }
-  .table-wrap td:last-child {
+  .table-wrap tr:not(.quick-row) td:last-child {
     border-bottom: 0;
     padding-top: 10px;
     display: flex !important;
@@ -1586,8 +1586,8 @@ tbody tr:hover .asset-thumb-box {
     width: 100% !important;
     justify-content: stretch;
   }
-  .table-wrap td:last-child .text-btn,
-  .table-wrap td:last-child .status-chip {
+  .table-wrap tr:not(.quick-row) td:last-child .text-btn,
+  .table-wrap tr:not(.quick-row) td:last-child .status-chip {
     flex: 1 1 0 !important;
     width: auto !important;
     min-width: 0 !important;
@@ -1602,6 +1602,54 @@ tbody tr:hover .asset-thumb-box {
     box-sizing: border-box;
     white-space: nowrap;
     padding: 0 8px;
+  }
+
+  /* Quick Row (.col-action & .btn-action-borrow) 모바일 가림/넘침 원천 차단 */
+  .table-wrap tr.quick-row td.col-action {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    margin-left: 8px !important;
+    padding: 0 !important;
+    border-bottom: 0 !important;
+  }
+  .table-wrap tr.quick-row td.col-action .btn-action-borrow {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    min-width: 84px !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 14px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    background: var(--brand-red) !important;
+    color: #ffffff !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    box-shadow: 0 2px 8px rgba(194, 39, 45, 0.25) !important;
+  }
+  .table-wrap tr.quick-row td.col-action .borrowed-chip,
+  .table-wrap tr.quick-row td.col-action .status-chip {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    min-height: 38px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
   }
 
   /* Horizontal Category Scroll */
