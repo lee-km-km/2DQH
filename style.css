@@ -1386,9 +1386,21 @@ tbody tr:hover .asset-thumb-box {
     -webkit-overflow-scrolling: touch;
     padding: 16px 18px;
   }
-  .modal-body input {
+  .modal-body input:not([type="checkbox"]):not([type="radio"]):not(.compound-input) {
     height: 46px !important;
     font-size: 16px !important;
+    border-radius: 10px !important;
+  }
+  .modal-body input[type="checkbox"] {
+    width: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    border-radius: 4px !important;
+    flex-shrink: 0 !important;
+  }
+  .modal-body select:not(.compound-select) {
+    height: 46px !important;
+    font-size: 15px !important;
     border-radius: 10px !important;
   }
   .modal-foot {
@@ -2438,51 +2450,24 @@ tbody tr:hover .asset-thumb-box {
 .chem-id-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
+  border-left: 4px solid #dc2626;
   border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
 }
 
 .chem-id-top {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.chem-id-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  background: #fee2e2;
-  color: #dc2626;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-}
-
-.chem-id-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.chem-id-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.35;
-  margin-bottom: 5px;
-  word-break: break-word;
-}
-
-.chem-id-sub {
+.chem-id-badge-row {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  font-size: 12px;
 }
 
 .chem-badge-controlled {
@@ -2490,29 +2475,85 @@ tbody tr:hover .asset-thumb-box {
   color: #dc2626;
   border: 1px solid #fecaca;
   font-weight: 700;
-  padding: 1.5px 6px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.chem-badge-num {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
+  padding: 2px 6px;
   border-radius: 5px;
   font-size: 11px;
 }
 
-.chem-cas {
-  background: #f1f5f9;
-  color: #334155;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
-  padding: 1.5px 6px;
-  border-radius: 4px;
-  border: 1px solid #e2e8f0;
-  font-weight: 600;
+.chem-id-title-main {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.4;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
-.chem-loc {
+.chem-name-ko {
+  color: #0f172a;
+}
+
+.chem-name-en {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-left: 4px;
+}
+
+.chem-id-spec {
+  font-size: 12px;
   color: #64748b;
+  line-height: 1.4;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  background: #ffffff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+.chem-id-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.chem-meta-item {
   font-size: 11.5px;
+  color: #475569;
+  background: #ffffff;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chem-meta-item b {
+  color: #0f172a;
+  font-weight: 700;
 }
 
 .chem-law-pill {
-  margin-top: 8px;
+  margin-top: 10px;
   padding-top: 8px;
   border-top: 1px dashed #e2e8f0;
   display: flex;
@@ -2523,12 +2564,50 @@ tbody tr:hover .asset-thumb-box {
   line-height: 1.4;
 }
 
+/* 취급일지 폼 레이아웃 (모바일 완전 최적화) */
+.chem-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chem-form-grid .field {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.chem-form-grid input[type="datetime-local"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  height: 46px !important;
+  font-size: 15px !important;
+  font-family: inherit;
+  padding: 10px 12px !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #cbd5e1 !important;
+  background: #ffffff;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.chem-form-grid input[type="datetime-local"]:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12) !important;
+}
+
 /* 수량 + 단위 일체형 인풋 그룹 (ERP/Quartzy 스타일) */
 .compound-input-group {
   display: flex;
   align-items: stretch;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  height: 46px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
   overflow: hidden;
   background: #ffffff;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -2540,30 +2619,37 @@ tbody tr:hover .asset-thumb-box {
 }
 
 .compound-input {
-  flex: 1;
-  min-width: 0;
+  flex: 1 !important;
+  min-width: 0 !important;
+  height: 100% !important;
   border: none !important;
   outline: none !important;
-  padding: 9px 12px !important;
-  font-size: 14px !important;
-  font-weight: 600;
-  color: #0f172a;
+  padding: 0 14px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #0f172a !important;
   background: transparent !important;
   box-shadow: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
 }
 
 .compound-select {
+  height: 100% !important;
+  min-height: 100% !important;
   border: none !important;
-  border-left: 1px solid #e2e8f0 !important;
+  border-left: 1.5px solid #e2e8f0 !important;
   outline: none !important;
   background: #f8fafc !important;
-  padding: 0 10px !important;
-  font-size: 13px !important;
-  font-weight: 600;
-  color: #334155;
+  padding: 0 14px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
   cursor: pointer;
   border-radius: 0 !important;
   box-shadow: none !important;
+  min-width: 75px !important;
+  margin: 0 !important;
 }
 
 .compound-select:focus {

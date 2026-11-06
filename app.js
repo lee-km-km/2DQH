@@ -2299,38 +2299,57 @@ function openModal(mode, id){
       const nowStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
       const ci = getControlledSubstanceInfo(c);
-      const statutoryDesc = ci
-        ? ('<b>' + safe(ci.nameKo) + '</b>' + (ci.nameEn ? ' (' + safe(ci.nameEn) + ')' : '') + ' · 관리범위: <b>' + safe(ci.threshold || '0.1% 이상') + '</b>')
-        : '법정 특별관리물질';
+      const statutoryKo = ci && ci.nameKo ? ci.nameKo : '';
+      const statutoryEn = ci && ci.nameEn ? ci.nameEn : '';
+      const statutoryThreshold = ci && ci.threshold ? ci.threshold : '0.1% 이상';
+      const lawNo = ci && ci.no ? ci.no : null;
 
       parts.push('<div class="chem-id-card">');
-      parts.push('<div class="chem-id-top">');
-      parts.push('<div class="chem-id-icon" aria-hidden="true">🧪</div>');
-      parts.push('<div class="chem-id-details">');
-      parts.push('<div class="chem-id-name">' + safe(c.name) + '</div>');
-      parts.push('<div class="chem-id-sub">');
-      parts.push('<span class="chem-badge-controlled">특별관리물질</span>');
-      parts.push('<span class="chem-cas">CAS ' + safe(meta.cas || '확인 필요') + '</span>');
-      parts.push('<span class="chem-loc">📍 ' + safe(c.location || '화학실') + (c.sub_location ? ' · ' + safe(c.sub_location) : '') + '</span>');
-      parts.push('</div>');
-      parts.push('</div>');
-      parts.push('<div class="chem-law-pill">');
-      parts.push('<span>🛡️ 산업안전보건법 제420조 [별표 12] 법정 취급일지 (30년 보존 의무)</span>');
-      parts.push('</div>');
+      parts.push('  <div class="chem-id-top">');
+      parts.push('    <div class="chem-id-badge-row">');
+      parts.push('      <span class="chem-badge-controlled">🚨 특별관리물질</span>');
+      if(lawNo){
+        parts.push('      <span class="chem-badge-num">별표 12 제' + safe(lawNo) + '호</span>');
+      }
+      parts.push('    </div>');
+      parts.push('    <div class="chem-id-title-main">');
+      if(statutoryKo){
+        parts.push('      <span class="chem-name-ko">' + safe(statutoryKo) + '</span>');
+        if(statutoryEn){
+          parts.push('      <span class="chem-name-en">(' + safe(statutoryEn) + ')</span>');
+        }
+      } else {
+        parts.push('      <span class="chem-name-ko">' + safe(c.name) + '</span>');
+      }
+      parts.push('    </div>');
+      parts.push('    <div class="chem-id-spec">');
+      parts.push('      <strong style="color:#334155;">시약 규격:</strong> ' + safe(c.name));
+      parts.push('    </div>');
+      parts.push('  </div>');
+      parts.push('  <div class="chem-id-meta-bar">');
+      parts.push('    <span class="chem-meta-item"><b>CAS</b> ' + safe(meta.cas || '확인 필요') + '</span>');
+      parts.push('    <span class="chem-meta-item"><b>보관</b> 📍 ' + safe(c.location || '화학실') + (c.sub_location ? ' · ' + safe(c.sub_location) : '') + '</span>');
+      if(statutoryThreshold){
+        parts.push('    <span class="chem-meta-item"><b>관리기준</b> ' + safe(statutoryThreshold) + '</span>');
+      }
+      parts.push('  </div>');
+      parts.push('  <div class="chem-law-pill">');
+      parts.push('    <span>🛡️ 산업안전보건법 제420조 특별관리물질 취급일지 (기록 30년 보존 법정 서식)</span>');
+      parts.push('  </div>');
       parts.push('</div>');
 
-      parts.push('<div class="form-grid chem-form-grid" style="margin-top:12px">');
+      parts.push('<div class="chem-form-grid">');
       parts.push('<input type="hidden" name="consumable_id" value="' + safe(c.id) + '">');
       parts.push('<input type="hidden" name="chemical_name" value="' + safe(c.name) + '">');
       parts.push('<input type="hidden" name="cas_number" value="' + safe(meta.cas || '') + '">');
 
-      parts.push('<label class="field">취급자 성명 *<input name="handler_name" required maxlength="50" value="' + safe(lastBorrower) + '" placeholder="홍길동"></label>');
-      parts.push('<label class="field">취급 일시 *<input name="used_at" type="datetime-local" required value="' + nowStr + '"></label>');
+      parts.push('<label class="field full">취급자 성명 *<input name="handler_name" required maxlength="50" value="' + safe(lastBorrower) + '" placeholder="취급자 성명 (예: 홍길동)"></label>');
+      parts.push('<label class="field full">취급 일시 *<input name="used_at" type="datetime-local" required value="' + nowStr + '"></label>');
 
       parts.push('<div class="field full">');
-      parts.push('<label class="field-label" style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--text-secondary);">사용량 (취급량) *</label>');
+      parts.push('<label class="field-label" style="display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:var(--text-secondary);">사용량 (취급량) *</label>');
       parts.push('<div class="compound-input-group">');
-      parts.push('<input name="quantity" type="number" min="0.001" step="any" required placeholder="수량 입력 (예: 25)" class="compound-input">');
+      parts.push('<input name="quantity" type="number" min="0.001" step="any" required placeholder="수량 입력 (예: 25)" class="compound-input" inputmode="decimal">');
       parts.push('<select name="unit" class="compound-select">');
       parts.push('<option value="mL"' + (lastUnit === 'mL' ? ' selected' : '') + '>mL</option>');
       parts.push('<option value="mg"' + (lastUnit === 'mg' ? ' selected' : '') + '>mg</option>');
@@ -2338,7 +2357,8 @@ function openModal(mode, id){
       parts.push('<option value="L"' + (lastUnit === 'L' ? ' selected' : '') + '>L</option>');
       parts.push('</select>');
       parts.push('</div>');
-      parts.push('<div class="preset-chips-wrap" style="margin-top:6px;">');
+      parts.push('<div class="preset-chips-wrap" style="margin-top:8px;">');
+      parts.push('<span class="preset-chips-label">자주 쓰는 수량:</span>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="5">5</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="10">10</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="25">25</button>');
@@ -2347,7 +2367,8 @@ function openModal(mode, id){
       parts.push('</div></div>');
 
       parts.push('<label class="field full">작업 장소 *<input name="work_location" required maxlength="100" value="' + safe(lastWorkLoc) + '" placeholder="예: 3층 화학실 흄후드 1번">');
-      parts.push('<div class="preset-chips-wrap" style="margin-top:6px;">');
+      parts.push('<div class="preset-chips-wrap" style="margin-top:8px;">');
+      parts.push('<span class="preset-chips-label">빠른 선택:</span>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_location" data-set-val="3층 화학실 흄후드 1번">흄후드 1번</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_location" data-set-val="3층 화학실 흄후드 2번">흄후드 2번</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_location" data-set-val="클린룸 배기벤치">클린룸 벤치</button>');
@@ -2355,7 +2376,8 @@ function openModal(mode, id){
       parts.push('</div></label>');
 
       parts.push('<label class="field full">취급 작업 내용 *<input name="work_description" required maxlength="200" value="' + safe(lastWorkDesc) + '" placeholder="예: 2D Flake 박리 기판 세척 및 린스">');
-      parts.push('<div class="preset-chips-wrap" style="margin-top:6px;">');
+      parts.push('<div class="preset-chips-wrap" style="margin-top:8px;">');
+      parts.push('<span class="preset-chips-label">빠른 선택:</span>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_description" data-set-val="2D Flake 박리 기판 세척 및 린스">기판 세척/린스</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_description" data-set-val="화학재료 합성 전처리">합성 전처리</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_description" data-set-val="단결정 성장 후처리 세정">결정 세정</button>');
@@ -2373,7 +2395,7 @@ function openModal(mode, id){
       parts.push('</div></div>');
 
       parts.push('<label class="field full">사용 후 잔여량 및 비고 (선택)<input name="note" maxlength="100" placeholder="예: 잔여량 약 3.8L / 밀봉 보관 완료">');
-      parts.push('<div class="preset-chips-wrap" style="margin-top:6px;">');
+      parts.push('<div class="preset-chips-wrap" style="margin-top:8px;">');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="note" data-set-val="잔여량 충분 / 밀봉 보관 완료">밀봉 보관 완료</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="note" data-set-val="잔여량 약 50% 남음">잔여 50%</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="note" data-set-val="잔여량 소량 남음 / 재주문 권장">소량 남음</button>');
