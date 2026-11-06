@@ -17,9 +17,20 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261106_18">
+  <link rel="stylesheet" href="style.css?v=20261106_19">
+  <script>
+    (function(){
+      try {
+        var savedTheme = localStorage.getItem('labstock_theme');
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch(e){}
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -47,6 +58,10 @@
     <button id="btnToggleSearch" class="btn-toggle-search" aria-label="검색 및 카테고리 필터 열기/닫기" type="button" title="검색">
       <span class="search-btn-icon" aria-hidden="true">🔍</span>
       <span class="search-btn-label">검색</span>
+    </button>
+    <button id="btnToggleTheme" class="btn btn-theme-toggle" type="button" title="다크 모드 / 라이트 모드 전환" aria-label="테마 전환" style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;">
+      <span id="themeToggleIcon">🌙</span>
+      <span class="desktop-only" id="themeToggleText" style="font-size:12.5px;font-weight:600;">다크모드</span>
     </button>
     <span id="connection" class="pill hidden"></span>
     <button id="loginBtn" class="btn desktop-only">관리자 로그인</button>
@@ -242,6 +257,8 @@
           <span class="count-badge" id="logbookCountBadge">SmartLab · Rigaku</span>
         </div>
         <div class="head-actions">
+          <button class="btn" id="btnLogbookThemeToggle" title="암실 환경 다크모드 전환" style="display:inline-flex;align-items:center;gap:4px;">🌙 암실 모드</button>
+          <button class="btn" id="btnShowEquipmentQr" title="장비 본체 부착용 QR 코드 생성 및 라벨 인쇄" style="display:inline-flex;align-items:center;gap:4px;">📷 본체 부착용 QR</button>
           <button class="btn" id="btnExportEquipmentLogs" title="HR-XRD 로그북 CSV 다운로드">📥 XRD 로그 CSV</button>
         </div>
       </div>
@@ -600,9 +617,38 @@
   </section>
 </div>
 
+<!-- 장비 본체 부착용 QR 라벨 생성 및 인쇄 모달 -->
+<div id="modalEquipmentQrBackdrop" class="backdrop">
+  <section class="modal equipment-qr-modal" role="dialog" aria-modal="true" aria-labelledby="equipmentQrTitle" style="max-width:440px;border-radius:14px;overflow:hidden;">
+    <div class="modal-head" style="border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+      <h2 id="equipmentQrTitle" style="font-size:16px;margin:0;display:flex;align-items:center;gap:6px;">📷 본체 부착용 QR 라벨</h2>
+      <button class="icon-btn" id="btnCloseEquipmentQr" aria-label="닫기" type="button"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="modal-body" style="padding:20px;text-align:center;">
+      <!-- 인쇄 대상 라벨 카드 (스티커 규격 최적화) -->
+      <div id="equipmentQrPrintArea" class="equipment-qr-label-card">
+        <div class="qr-label-badge">IBS 2DQH 초정밀 연구장비</div>
+        <h3 class="qr-label-title" id="qrLabelEquipName">HR-XRD (고분해능 X선 회절분석기)</h3>
+        <p class="qr-label-sub" id="qrLabelEquipModel">SmartLab · Rigaku (IBS XRD실)</p>
+        <div class="qr-label-canvas-box">
+          <div id="equipmentQrCanvasContainer"></div>
+        </div>
+        <p class="qr-label-desc">⚡ 스마트폰 카메라로 스캔 시 즉시 세션 시작으로 직행</p>
+        <div class="qr-label-url" id="qrLabelUrlText"></div>
+      </div>
+
+      <div class="qr-modal-actions" style="margin-top:20px;display:flex;gap:8px;justify-content:center;">
+        <button class="btn primary" id="btnPrintEquipmentQr" type="button" style="background:#2457d6;border-color:#2457d6;font-weight:700;flex:1;">🖨️ QR 라벨 인쇄</button>
+        <button class="btn" id="btnDownloadEquipmentQr" type="button" style="flex:1;">📥 이미지 저장</button>
+        <button class="btn" id="btnCloseEquipmentQrBottom" type="button" style="padding:0 14px;">닫기</button>
+      </div>
+    </div>
+  </section>
+</div>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script src="consumables_catalog.js?v=20261106_16"></script>
-<script src="app.js?v=20261106_18"></script>
+<script src="app.js?v=20261106_19"></script>
 </body>
 </html>

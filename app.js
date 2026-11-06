@@ -2887,6 +2887,130 @@ function exportXrdLogsCsv(){
   toast('✓ HR-XRD 전체 로그(' + xrdLogs.length + '건)가 CSV로 다운로드되었습니다.');
 }
 
+// ========================================================
+// [다크모드 / 암실 모드 제어 엔진 (IBS 2DQH 고도화)]
+// ========================================================
+function initTheme(){
+  let saved = null;
+  try { saved = localStorage.getItem('labstock_theme'); } catch(_) {}
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initial = saved || (prefersDark ? 'dark' : 'light');
+  applyTheme(initial);
+
+  if(window.matchMedia){
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e){
+      try {
+        if(!localStorage.getItem('labstock_theme')){
+          applyTheme(e.matches ? 'dark' : 'light');
+        }
+      } catch(_) {}
+    });
+  }
+}
+
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  const isDark = (theme === 'dark');
+  const icon = $('themeToggleIcon');
+  const text = $('themeToggleText');
+  const logbookBtn = $('btnLogbookThemeToggle');
+
+  if(icon) icon.textContent = isDark ? '☀️' : '🌙';
+  if(text) text.textContent = isDark ? '라이트' : '다크';
+  if(logbookBtn) logbookBtn.textContent = isDark ? '☀️ 일반 모드' : '🌙 암실 모드';
+}
+
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = (current === 'dark') ? 'light' : 'dark';
+  try { localStorage.setItem('labstock_theme', next); } catch(_) {}
+  applyTheme(next);
+  toast(next === 'dark' ? '🌙 암실 전용 다크모드가 적용되었습니다.' : '☀️ 일반 라이트모드가 적용되었습니다.');
+}
+
+// ========================================================
+// [장비 본체 부착용 QR 라벨 생성 및 인쇄 모달]
+// ========================================================
+function openEquipmentQrModal(eqId){
+  eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
+  const eq = researchEquipments.find(function(e){ return e.id === eqId; }) || {
+    id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', model: 'SmartLab / Rigaku', location: 'IBS 2DQH XRD실'
+  };
+
+  const modal = $('modalEquipmentQrBackdrop');
+  if(!modal) return;
+
+  const titleEl = $('qrLabelEquipName');
+  const modelEl = $('qrLabelEquipModel');
+  const urlEl = $('qrLabelUrlText');
+  const container = $('equipmentQrCanvasContainer');
+
+  if(titleEl) titleEl.textContent = eq.name;
+  if(modelEl) modelEl.textContent = (eq.model || '') + ' · ' + (eq.location || '');
+
+  // 생성될 직행 URL (HTTPS origin + 경로 + 해시 쿼리)
+  const targetUrl = window.location.origin + window.location.pathname + '#logbook?eq=' + encodeURIComponent(eq.id) + '&action=quick_start';
+  if(urlEl) urlEl.textContent = targetUrl;
+
+  if(container){
+    container.innerHTML = '';
+    if(window.QRCode){
+      new QRCode(container, {
+        text: targetUrl,
+        width: 180,
+        height: 180,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      const img = document.createElement('img');
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(targetUrl);
+      img.alt = 'QR Code';
+      img.style.width = '180px';
+      img.style.height = '180px';
+      img.style.display = 'block';
+      img.style.margin = '0 auto';
+      container.appendChild(img);
+    }
+  }
+
+  modal.classList.add('open');
+}
+
+function closeEquipmentQrModal(){
+  const modal = $('modalEquipmentQrBackdrop');
+  if(modal) modal.classList.remove('open');
+}
+
+function downloadEquipmentQrImage(){
+  const container = $('equipmentQrCanvasContainer');
+  if(!container) return;
+  const canvas = container.querySelector('canvas');
+  const img = container.querySelector('img');
+
+  if(canvas){
+    const a = document.createElement('a');
+    a.download = 'HR-XRD_QR_Label.png';
+    a.href = canvas.toDataURL('image/png');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast('✓ HR-XRD QR 라벨 이미지가 다운로드되었습니다.');
+  } else if(img){
+    const a = document.createElement('a');
+    a.download = 'HR-XRD_QR_Label.png';
+    a.href = img.src;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast('✓ HR-XRD QR 라벨 이미지를 저장합니다.');
+  } else {
+    toast('QR 코드 이미지를 찾을 수 없습니다.');
+  }
+}
+
 function renderResearchEquipmentTabs(){
   const host = $('researchEquipmentTabs');
   if(!host) return;
@@ -5085,6 +5209,33 @@ function bindEvents(){
       return;
     }
 
+    // 테마 토글 (다크모드 / 라이트모드 / 암실 모드)
+    if(target.id === 'btnToggleTheme' || target.closest('#btnToggleTheme') || target.id === 'btnLogbookThemeToggle' || target.closest('#btnLogbookThemeToggle')){
+      toggleTheme();
+      return;
+    }
+
+    // 장비 본체 부착용 QR 모달 제어
+    if(target.id === 'btnShowEquipmentQr' || target.closest('#btnShowEquipmentQr')){
+      openEquipmentQrModal();
+      return;
+    }
+
+    if(target.id === 'btnCloseEquipmentQr' || target.id === 'btnCloseEquipmentQrBottom' || target.closest('#btnCloseEquipmentQr')){
+      closeEquipmentQrModal();
+      return;
+    }
+
+    if(target.id === 'btnPrintEquipmentQr' || target.closest('#btnPrintEquipmentQr')){
+      window.print();
+      return;
+    }
+
+    if(target.id === 'btnDownloadEquipmentQr' || target.closest('#btnDownloadEquipmentQr')){
+      downloadEquipmentQrImage();
+      return;
+    }
+
     switch(target.id){
       case 'loginBtn':
         openModal('login');
@@ -5221,6 +5372,13 @@ function bindEvents(){
     });
   }
 
+  const eqQrBackdrop = $('modalEquipmentQrBackdrop');
+  if(eqQrBackdrop){
+    eqQrBackdrop.addEventListener('click', function(e){
+      if(e.target === eqQrBackdrop) closeEquipmentQrModal();
+    });
+  }
+
   // 모바일 헤더 돋보기 검색 토글 (현재 활성 뷰에 맞게 패널 토글)
   const btnToggleSearch = $('btnToggleSearch');
   if(btnToggleSearch){
@@ -5274,6 +5432,12 @@ function bindEvents(){
   // 접근성 키보드 제어: ESC로 닫기 및 포커스 트랩(Focus Trap)
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape'){
+      const eqQrB = $('modalEquipmentQrBackdrop');
+      if(eqQrB && eqQrB.classList.contains('open')){
+        e.preventDefault();
+        closeEquipmentQrModal();
+        return;
+      }
       const qrB = $('qrModalBackdrop');
       if(qrB && qrB.classList.contains('open')){
         e.preventDefault();
@@ -5366,6 +5530,15 @@ function onQrCodeSuccess(decodedText){
   if(navigator.vibrate) navigator.vibrate(100);
 
   closeQrScanner();
+
+  const lower = decodedText.toLowerCase();
+  if(lower.includes('eq-xrd') || lower.includes('xrd') || lower.includes('logbook')){
+    showView('logbook', { pushState: true });
+    selectResearchEquipment('EQ-XRD-01');
+    showXrdMode('start');
+    toast('🔬 HR-XRD 본체 QR이 인식되어 세션 시작 화면으로 직행했습니다.');
+    return;
+  }
 
   let assetId = decodedText.trim();
   if(assetId.includes('=')) assetId = assetId.split('=').pop();
@@ -5587,16 +5760,20 @@ function handleUrlFastTrack(){
       return;
     }
 
-    // 4. 연구장비 전자 로그북 다이렉트 진입 (?logbook=XRD or #logbook/XRD or ?logbook=EQ-XRD-01)
+    // 4. 연구장비 전자 로그북 다이렉트 진입 (?logbook=XRD or #logbook/XRD or ?eq=EQ-XRD-01 or #logbook or #xrd)
     const hashEqLogMatch = hash.match(/^(?:logbook|equipmentlog)[\/\-](.+)$/i);
-    const logbookCode = params.get('logbook') || (params.get('action') === 'logbook' ? params.get('id') : null) || (hashEqLogMatch ? hashEqLogMatch[1] : null);
-    if(logbookCode){
+    const logbookCode = params.get('logbook') || params.get('eq') || (params.get('action') === 'logbook' ? params.get('id') : null) || (hashEqLogMatch ? hashEqLogMatch[1] : null);
+    if(logbookCode || hash.startsWith('logbook') || hash.startsWith('xrd')){
       showView('logbook', { updateUrl: false });
       const found = researchEquipments.find(function(e){
-        return e.id.toLowerCase() === logbookCode.toLowerCase() || e.code.toLowerCase() === logbookCode.toLowerCase();
+        return logbookCode && (e.id.toLowerCase() === logbookCode.toLowerCase() || e.code.toLowerCase() === logbookCode.toLowerCase());
       });
       if(found){
         selectResearchEquipment(found.id);
+      }
+      if(params.get('action') === 'quick_start' || window.location.href.includes('quick_start')){
+        showXrdMode('start');
+        toast('⚡ HR-XRD 세션 시작 화면으로 직행했습니다.');
       }
       return;
     }
@@ -5612,6 +5789,7 @@ function handleUrlFastTrack(){
 }
 
 async function initApp(){
+  initTheme();
   bindEvents();
 
   // URL Hash, 파라미터 및 세션 기반 활성 뷰 해석 (새로고침 시 소모품 등 현재 탭 유지)
