@@ -324,6 +324,15 @@ function today(){
   return y + '-' + m + '-' + day;
 }
 
+function calcPastDate(days = 1){
+  const d = new Date();
+  d.setDate(d.getDate() - Number(days));
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return y + '-' + m + '-' + day;
+}
+
 function dateText(d){
   if(!d) return '—';
   return String(d).replace(/-/g, '.');
@@ -2137,6 +2146,7 @@ function openModal(mode, id){
   modalId = id;
 
   $('modalBackdrop').classList.add('open');
+  if(document.body) document.body.classList.add('modal-open');
 
   const a = id ? assetFor(id) : null;
 
@@ -2535,7 +2545,22 @@ function openModal(mode, id){
       parts.push('  </div>');
       parts.push('</div>');
 
-      parts.push('<label class="field full">실제 반납일 *<input name="returned_at" type="date" required value="' + today() + '"></label>');
+      parts.push('<div class="field full return-date-card">');
+      parts.push('  <div class="return-date-header-row">');
+      parts.push('    <div class="return-date-title-wrap">');
+      parts.push('      <span class="field-title" style="margin:0;font-size:13px;font-weight:700;color:var(--text-primary);">실제 반납일</span>');
+      parts.push('      <span class="return-date-badge" id="quickReturnDateBadge">오늘 반납</span>');
+      parts.push('    </div>');
+      parts.push('    <div class="return-date-picker-wrap">');
+      parts.push('      <input name="returned_at" type="date" required value="' + today() + '" class="return-date-input" id="quickReturnedAtInput">');
+      parts.push('    </div>');
+      parts.push('  </div>');
+      parts.push('  <div class="preset-chips-wrap return-date-chips">');
+      parts.push('    <span class="preset-chips-label">빠른 선택:</span>');
+      parts.push('    <button type="button" class="btn-preset-chip active" data-set-field="returned_at" data-set-val="' + today() + '">오늘 반납</button>');
+      parts.push('    <button type="button" class="btn-preset-chip" data-set-field="returned_at" data-set-val="' + calcPastDate(1) + '">어제 반납</button>');
+      parts.push('  </div>');
+      parts.push('</div>');
 
       parts.push('<div class="field full">');
       parts.push('  <label class="field-label" style="display:block;margin-bottom:6px;font-size:12.5px;font-weight:600;color:var(--text-secondary);">비품 상태 점검 및 메모 (선택)</label>');
@@ -2643,7 +2668,22 @@ function openModal(mode, id){
     parts.push('</div>');
 
     parts.push('<div class="return-form-grid">');
-    parts.push('<label class="field full">실제 반납일 *<input name="returned_at" type="date" required value="' + today() + '" min="' + lStartDate + '"></label>');
+    parts.push('<div class="field full return-date-card">');
+    parts.push('  <div class="return-date-header-row">');
+    parts.push('    <div class="return-date-title-wrap">');
+    parts.push('      <span class="field-title" style="margin:0;font-size:13px;font-weight:700;color:var(--text-primary);">실제 반납일</span>');
+    parts.push('      <span class="return-date-badge" id="returnDateBadge">오늘 반납</span>');
+    parts.push('    </div>');
+    parts.push('    <div class="return-date-picker-wrap">');
+    parts.push('      <input name="returned_at" type="date" required value="' + today() + '" min="' + lStartDate + '" class="return-date-input" id="returnedAtInput">');
+    parts.push('    </div>');
+    parts.push('  </div>');
+    parts.push('  <div class="preset-chips-wrap return-date-chips">');
+    parts.push('    <span class="preset-chips-label">빠른 선택:</span>');
+    parts.push('    <button type="button" class="btn-preset-chip active" data-set-field="returned_at" data-set-val="' + today() + '">오늘 반납</button>');
+    parts.push('    <button type="button" class="btn-preset-chip" data-set-field="returned_at" data-set-val="' + calcPastDate(1) + '">어제 반납</button>');
+    parts.push('  </div>');
+    parts.push('</div>');
 
     // 비품 상태 원터치 칩 및 반납 메모
     parts.push('<div class="field full">');
@@ -2827,6 +2867,7 @@ function openBestReorder(){
 
 function closeModal(){
   $('modalBackdrop').classList.remove('open');
+  if(document.body) document.body.classList.remove('modal-open');
   $('modalForm').reset();
 
   if(window.__isPromptingReturnBeforeBorrow){
@@ -3451,6 +3492,21 @@ function bindEvents(){
           if(input){
             input.value = fieldVal;
             input.focus();
+            if(fieldName === 'returned_at'){
+              const badge = $('returnDateBadge') || $('quickReturnDateBadge');
+              if(badge){
+                if(fieldVal === today()){
+                  badge.textContent = '오늘 반납';
+                  badge.className = 'return-date-badge is-today';
+                } else if(fieldVal === calcPastDate(1)){
+                  badge.textContent = '어제 반납';
+                  badge.className = 'return-date-badge is-yesterday';
+                } else {
+                  badge.textContent = '날짜 지정 (' + fieldVal.slice(5) + ')';
+                  badge.className = 'return-date-badge is-custom';
+                }
+              }
+            }
             const parentWrap = target.closest('.preset-chips-wrap');
             if(parentWrap){
               parentWrap.querySelectorAll('.btn-preset-chip').forEach(function(c){ c.classList.remove('active'); });
@@ -3716,6 +3772,27 @@ function bindEvents(){
         const wrap = e.target.parentNode ? e.target.parentNode.querySelector('.preset-chips-wrap') : null;
         if(wrap){
           wrap.querySelectorAll('.btn-preset-chip').forEach(function(c){
+            c.classList.toggle('active', c.dataset.setVal === e.target.value);
+          });
+        }
+      }
+      if(e.target && e.target.name === 'returned_at'){
+        const card = e.target.closest('.return-date-card');
+        const badge = $('returnDateBadge') || $('quickReturnDateBadge');
+        if(badge){
+          if(e.target.value === today()){
+            badge.textContent = '오늘 반납';
+            badge.className = 'return-date-badge is-today';
+          } else if(e.target.value === calcPastDate(1)){
+            badge.textContent = '어제 반납';
+            badge.className = 'return-date-badge is-yesterday';
+          } else {
+            badge.textContent = '날짜 지정 (' + e.target.value.slice(5) + ')';
+            badge.className = 'return-date-badge is-custom';
+          }
+        }
+        if(card){
+          card.querySelectorAll('.btn-preset-chip').forEach(function(c){
             c.classList.toggle('active', c.dataset.setVal === e.target.value);
           });
         }
@@ -4078,6 +4155,17 @@ function handleUrlFastTrack(){
       showView('inventory');
       setTimeout(function(){
         openModal('borrow', loanId);
+      }, 150);
+      return;
+    }
+
+    // 3. 비품 반납 다이렉트 진입 (?return=EQ-001 or ?action=return&id=EQ-001)
+    const returnAssetId = params.get('return') || (params.get('action') === 'return' ? params.get('id') : null);
+    if(returnAssetId){
+      showView('inventory');
+      const act = activeLoanFor(returnAssetId) || loans.find(function(l){ return String(l.id) === String(returnAssetId); });
+      setTimeout(function(){
+        openModal('return', act ? act.id : returnAssetId);
       }, 150);
       return;
     }
