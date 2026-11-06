@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261106_20">
+  <link rel="stylesheet" href="style.css?v=20261106_21">
   <script>
     (function(){
       try {
@@ -311,9 +311,9 @@
             <button type="button" class="xrd-mode-tab" id="btnXrdModeFull">📝 측정 완료 일괄 기록 (Log finished session)</button>
           </div>
 
-          <div class="xrd-modebar" id="xrdModeBar">
+          <div class="xrd-modebar hidden" id="xrdModeBar">
             <b id="xrdModeTitle">Start session (세션 시작)</b>
-            <button type="button" class="text-btn" id="xrdModeLink">Log a finished session instead →</button>
+            <button type="button" class="text-btn hidden" id="xrdModeLink">Log a finished session instead →</button>
           </div>
 
           <form id="xrdForm" class="mode-start">
@@ -474,15 +474,35 @@
                 <div class="xrd-field">
                   <span class="xrd-gl">Chiller temp. [°C] *</span>
                   <div class="xrd-pair">
-                    <label class="xrd-mini">Start<input name="chiller_start" type="number" inputmode="decimal" step="0.1" min="0" max="60" required placeholder="22.0"></label>
-                    <label class="xrd-mini xrd-fin">End<input name="chiller_end" type="number" inputmode="decimal" step="0.1" min="0" max="60" placeholder="22.0"></label>
+                    <label class="xrd-mini">Start
+                      <div class="xrd-input-wrap">
+                        <input name="chiller_start" type="number" inputmode="decimal" step="0.1" min="0" max="60" required placeholder="22">
+                        <span class="xrd-unit">°C</span>
+                      </div>
+                    </label>
+                    <label class="xrd-mini xrd-fin">End
+                      <div class="xrd-input-wrap">
+                        <input name="chiller_end" type="number" inputmode="decimal" step="0.1" min="0" max="60" placeholder="22">
+                        <span class="xrd-unit">°C</span>
+                      </div>
+                    </label>
                   </div>
                 </div>
                 <div class="xrd-field">
                   <span class="xrd-gl">Vacuum level [mV] *</span>
                   <div class="xrd-pair">
-                    <label class="xrd-mini">Start<input name="vacuum_start" type="number" inputmode="numeric" step="1" min="0" required placeholder="90"></label>
-                    <label class="xrd-mini xrd-fin">End<input name="vacuum_end" type="number" inputmode="numeric" step="1" min="0" placeholder="180"></label>
+                    <label class="xrd-mini">Start
+                      <div class="xrd-input-wrap">
+                        <input name="vacuum_start" type="number" inputmode="numeric" step="1" min="0" required placeholder="90">
+                        <span class="xrd-unit">mV</span>
+                      </div>
+                    </label>
+                    <label class="xrd-mini xrd-fin">End
+                      <div class="xrd-input-wrap">
+                        <input name="vacuum_end" type="number" inputmode="numeric" step="1" min="0" placeholder="180">
+                        <span class="xrd-unit">mV</span>
+                      </div>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -675,7 +695,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261106_20"></script>
-<script src="app.js?v=20261106_20"></script>
+<script src="consumables_catalog.js?v=20261106_21"></script>
+<script src="app.js?v=20261106_21"></script>
 </body>
 </html>

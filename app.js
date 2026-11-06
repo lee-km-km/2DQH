@@ -2241,7 +2241,7 @@ function initXrdControls(){
 
   // 칩 & 토글 클릭 이벤트 위임 (가동시간 퀵 모드, 얼라인 PB/BB, 스캔타입, 점검체크)
   f.addEventListener('click', function(e){
-    const c = e.target.closest('.xrd-chip');
+    const c = e.target.closest('.xrd-chip') || e.target.closest('[data-chk]') || e.target.closest('[data-align]') || e.target.closest('[data-scan]') || e.target.closest('[data-xrd-add]');
     if(!c) return;
     const addVal = c.dataset.xrdAdd || c.dataset.add;
     if(addVal){
@@ -2377,7 +2377,15 @@ function updateXrdChecks(clear){
 
 function paintXrdToggles(){
   document.querySelectorAll('[data-chk]').forEach(function(b){
-    b.classList.toggle('on', !!xrdChk[b.dataset.chk]);
+    const isOn = !!xrdChk[b.dataset.chk];
+    b.classList.toggle('on', isOn);
+    let ind = b.querySelector('.xrd-check-indicator');
+    if(!ind){
+      ind = document.createElement('span');
+      ind.className = 'xrd-check-indicator';
+      b.prepend(ind);
+    }
+    ind.textContent = isOn ? '✓ ' : '';
   });
   document.querySelectorAll('[data-align]').forEach(function(b){
     b.classList.toggle('on', b.dataset.align === xrdAlign);
@@ -2433,8 +2441,10 @@ function showXrdMode(m){
   const modeBar = $('xrdModeBar');
   if(modeBar) modeBar.classList.toggle('hidden', m === 'active');
 
+  if(f.end_time) f.end_time.required = (m === 'full');
   if(f.chiller_end) f.chiller_end.required = (m === 'full');
   if(f.vacuum_end) f.vacuum_end.required = (m === 'full');
+  if(f.sample_count) f.sample_count.required = (m === 'full');
 
   const modeTitle = $('xrdModeTitle');
   if(modeTitle){
@@ -5162,40 +5172,6 @@ function bindEvents(){
 
     if(target.id === 'btnExportChemicalLogs' || target.closest('#btnExportChemicalLogs')){
       exportChemicalLogsCsv();
-      return;
-    }
-
-    if(target.dataset.chk){
-      xrdChk[target.dataset.chk] = !xrdChk[target.dataset.chk];
-      paintXrdToggles();
-      return;
-    }
-
-    if(target.dataset.align){
-      xrdAlign = target.dataset.align;
-      paintXrdToggles();
-      return;
-    }
-
-    if(target.dataset.scan){
-      const s = target.dataset.scan;
-      if(xrdScanSel.has(s)) xrdScanSel.delete(s);
-      else xrdScanSel.add(s);
-      paintXrdToggles();
-      return;
-    }
-
-    if(target.dataset.xrdAdd){
-      const addMin = parseInt(target.dataset.xrdAdd, 10);
-      const f = $('xrdForm');
-      if(f && f.start_time && f.end_time){
-        const a = f.start_time.value.split(':');
-        const startMin = (+a[0]) * 60 + (+a[1]);
-        const endMin = (startMin + addMin) % 1440;
-        f.end_time.value = pad(Math.floor(endMin / 60)) + ':' + pad(endMin % 60);
-        updXrdDur();
-        updateXrdChecks(true);
-      }
       return;
     }
 
