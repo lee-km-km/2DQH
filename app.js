@@ -2322,6 +2322,27 @@ function initXrdControls(){
     btnExportXrd.addEventListener('click', exportXrdLogsCsv);
   }
 
+  // 2DQH-XRD_log 공식 상단 주의사항 바로가기 스크롤
+  const openNotice = $('xrdOpenNotice');
+  if(openNotice){
+    openNotice.addEventListener('click', function(){
+      const n = $('xrdNotice');
+      if(n){
+        n.open = true;
+        n.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+
+  // 긴급 공지 팝업 닫기
+  const alertClose = $('btnXrdAlertClose');
+  const alertDlg = $('xrdAlertDlg');
+  if(alertClose && alertDlg){
+    alertClose.addEventListener('click', function(){
+      alertDlg.close();
+    });
+  }
+
   f.addEventListener('submit', handleXrdFormSubmit);
 
   xrdControlsInitialized = true;
@@ -2431,6 +2452,23 @@ function updateXrdSaveLabel(){
   btn.textContent = xrdMode === 'start' ? 'Start session (세션 시작)' : (xrdFinishing ? 'Finish & save log (측정 종료 및 저장)' : (xrdEditId ? 'Save changes (수정 저장)' : 'Save log (로그북 등록)'));
 }
 
+function applyLastXrdSettings(){
+  const f = $('xrdForm');
+  if(!f) return;
+  const uid = (session && session.user && !session.user.is_anonymous) ? session.user.id : 'default';
+  try {
+    const L = JSON.parse(localStorage.getItem('xrd_last_' + uid) || 'null');
+    if(L){
+      if(Array.isArray(L.scan)){
+        xrdScanSel = new Set(L.scan.filter(function(x){ return XRD_SCAN_CHIPS.includes(x); }));
+      }
+      if(f.scan_other && L.etc) f.scan_other.value = L.etc;
+      if(L.align) xrdAlign = L.align;
+      if(f.sample_count && L.count) f.sample_count.value = String(L.count);
+    }
+  } catch(e){}
+}
+
 function resetXrdForm(){
   xrdEditId = null;
   xrdFinishing = false;
@@ -2449,13 +2487,22 @@ function resetXrdForm(){
   xrdScanSel = new Set();
   if(f.sample_count) f.sample_count.value = '1';
 
-  // 회원 프로필 정보 자동완성
-  if(session && session.user){
+  // 회원 프로필 정보 자동완성 (로그인 회원 메타데이터 or 게스트 localStorage 기억)
+  if(session && session.user && !session.user.is_anonymous){
     const meta = session.user.user_metadata || {};
     if(f.user_name && meta.name) f.user_name.value = meta.name;
     if(f.professor && meta.professor) f.professor.value = meta.professor;
     if(f.affiliation && meta.affiliation) f.affiliation.value = meta.affiliation;
+  } else {
+    for(const k of ['user_name', 'affiliation', 'professor']){
+      try {
+        if(f[k] && !f[k].value) f[k].value = localStorage.getItem('xrd_' + k) || '';
+      } catch(e){}
+    }
   }
+
+  // 직전 스캔 타입 / 얼라인 / 시료 수 자동 복원 (2DQH-XRD_log 공식)
+  applyLastXrdSettings();
 
   const cancelBtn = $('xrdCancelEditBtn');
   if(cancelBtn) cancelBtn.classList.add('hidden');
@@ -2652,6 +2699,11 @@ async function handleXrdFormSubmit(e){
     const memoVal = (f.memo ? f.memo.value : '').trim();
 
     if(!isStartMode){
+      if(f.start_time && f.end_time && f.start_time.value === f.end_time.value){
+        alert('종료 시각(End time)은 시작 시각(Start time)과 달라야 합니다.');
+        if(btn) btn.disabled = false;
+        return;
+      }
       const needMin = xrdAfterHours();
       if(!xrdChk.xray_max_ok && !memoVal){
         alert('Set max. while using 체크를 확인하거나, 메모(Memo / Issue)에 사유를 기록해주세요.');
@@ -2673,6 +2725,12 @@ async function handleXrdFormSubmit(e){
     const scanList = Array.from(xrdScanSel);
     if(f.scan_other && f.scan_other.value.trim()){
       scanList.push(f.scan_other.value.trim());
+    }
+
+    if(!isStartMode && scanList.length === 0){
+      alert('스캔 타입(Scan type)을 최소 1개 이상 선택하거나 etc.에 직접 입력해주세요.');
+      if(btn) btn.disabled = false;
+      return;
     }
 
     const dur = (isStartMode || !f.start_time.value || !f.end_time.value) ? null : minutesBetween(f.start_time.value, f.end_time.value);
@@ -2736,6 +2794,20 @@ async function handleXrdFormSubmit(e){
       }
       toast(isStartMode ? '✓ HR-XRD 측정이 시작되었습니다 (진행 중 등록).' : '✓ HR-XRD 사용일지가 등록되었습니다.');
     }
+
+    // 2DQH-XRD_log 공식 사용자 정보 및 직전 세팅 기억
+    try {
+      for(const k of ['user_name', 'affiliation', 'professor']){
+        if(f[k] && f[k].value.trim()) localStorage.setItem('xrd_' + k, f[k].value.trim());
+      }
+      const uid = (session && session.user && !session.user.is_anonymous) ? session.user.id : 'default';
+      localStorage.setItem('xrd_last_' + uid, JSON.stringify({
+        scan: Array.from(xrdScanSel),
+        etc: f.scan_other ? f.scan_other.value.trim() : '',
+        align: xrdAlign,
+        count: f.sample_count ? f.sample_count.value : '1'
+      }));
+    } catch(_) {}
 
     try { localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs)); } catch(_) {}
     resetXrdForm();
