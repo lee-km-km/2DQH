@@ -1654,31 +1654,7 @@ tbody tr:hover .asset-thumb-box {
     font-size: 12px !important;
     white-space: nowrap !important;
   }
-  .table-wrap tr.quick-row td.col-action .btn-action-logbook {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: auto !important;
-    height: 42px !important;
-    min-height: 42px !important;
-    padding: 0 10px !important;
-    font-size: 12.5px !important;
-    font-weight: 700 !important;
-    border-radius: 10px !important;
-    background: #f0f9ff !important;
-    color: #0284c7 !important;
-    border: 1px solid #bae6fd !important;
-    white-space: nowrap !important;
-    flex: 0 0 auto !important;
-    flex-shrink: 0 !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    margin-right: 6px !important;
-  }
-  .table-wrap tr.quick-row td.col-action .btn-action-logbook:active {
-    background: #e0f2fe !important;
-    transform: scale(0.96) !important;
-  }
+
 
   /* Horizontal Category Scroll */
   .category-tabs {
@@ -3355,25 +3331,318 @@ tr.row-overdue:hover {
   }
 }
 
-/* 연구장비 전자 로그북 전용 스타일 */
-.btn-action-logbook {
-  background: #f0f9ff !important;
-  color: #0284c7 !important;
-  border: 1px solid #bae6fd !important;
-  font-weight: 600 !important;
-  border-radius: 8px !important;
-  padding: 6px 10px !important;
-  font-size: 12.5px !important;
-  white-space: nowrap !important;
+/* 연구장비 & 전자 로그북 전용 스타일 (2DQH-XRD_log 기반) */
+.equipment-guide-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f0f7ff;
+  border: 1px solid #c7ddfd;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+.equipment-guide-banner .guide-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+.equipment-guide-banner .guide-text strong {
+  display: block;
+  font-size: 14px;
+  color: #1e3a8a;
+  margin-bottom: 2px;
+}
+.equipment-guide-banner .guide-text p {
+  margin: 0;
+  font-size: 12.5px;
+  color: #3b82f6;
+  line-height: 1.4;
+}
+
+.research-equipment-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+.research-equipment-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.research-equipment-tab:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: var(--ink);
+}
+.research-equipment-tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+.research-equipment-tab .tab-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.08);
+}
+.research-equipment-tab.active .tab-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* 2DQH-XRD_log 특화 스타일 */
+.xrd-notice {
+  margin-bottom: 14px;
+  background: #fffbe6;
+  border: 1px solid #f1e3a0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #713f12;
+}
+.xrd-notice summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #854d0e;
+}
+.xrd-notice ul {
+  margin: 8px 0 2px;
+  padding-left: 20px;
+  line-height: 1.5;
+}
+
+.xrd-inuse {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xrd-activecard {
+  border: 1.5px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 12px;
+  padding: 16px;
+  color: #1e40af;
+  margin-bottom: 14px;
+}
+.xrd-activecard b {
+  font-size: 15px;
+}
+.xrd-activecard .actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.xrd-panel {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.xrd-modebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.xrd-modebar b {
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.xrd-sec {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: #fafafa;
+}
+.xrd-sec > h2 {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 12px;
+  font-weight: 700;
+}
+.xrd-grid {
+  display: grid;
+  gap: 12px;
+}
+.xrd-c2 { grid-template-columns: repeat(2, 1fr); }
+.xrd-c3 { grid-template-columns: repeat(3, 1fr); }
+.xrd-c4 { grid-template-columns: repeat(4, 1fr); }
+.xrd-full { grid-column: 1 / -1; }
+
+.xrd-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.xrd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.xrd-gl {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+.xrd-mini {
+  font-size: 12px;
+  color: #64748b;
+}
+.xrd-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  flex-wrap: wrap;
+}
+.xrd-rl {
+  width: 96px;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.xrd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.xrd-chip {
+  font: inherit;
+  padding: 7px 14px;
+  min-height: 38px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
   cursor: pointer;
   transition: all 0.15s ease;
-  margin-right: 6px;
+  font-size: 13px;
 }
-.btn-action-logbook:hover {
-  background: #e0f2fe !important;
-  color: #0369a1 !important;
-  border-color: #7dd3fc !important;
+.xrd-chip:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: #f8fafc;
 }
+.xrd-chip.on {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+.xrd-chip.req {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px #fecaca;
+}
+.xrd-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.xrd-durbox {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+.xrd-durhead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.xrd-dur {
+  color: var(--primary);
+  font-weight: 700;
+}
+.xrd-durgrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  max-width: 480px;
+}
+.xrd-durgrid .xrd-chip {
+  padding: 0 4px;
+  min-height: 36px;
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.xrd-hint {
+  font-size: 12px;
+  color: #64748b;
+  margin: 6px 0 0;
+}
+.xrd-hint.warn {
+  color: #b45309;
+  font-weight: 600;
+}
+.xrd-more summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.xrd-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+/* 폼 모드별 표시 제어 */
+#xrdForm.mode-start .xrd-fin {
+  display: none !important;
+}
+#xrdForm.mode-start .xrd-pair {
+  grid-template-columns: 1fr;
+}
+
+/* 모바일 XRD 로그북 최적화 */
+@media (max-width: 768px) {
+  .xrd-c4, .xrd-c3 {
+    grid-template-columns: 1fr;
+  }
+  .xrd-durgrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .xrd-rl {
+    width: 100%;
+  }
+}
+
+.ok-badge { color: #16a34a; font-size: 12px; font-weight: 700; }
+.bad-badge { color: #dc2626; font-size: 12px; font-weight: 700; }
 
 .logbook-standalone-banner {
   display: flex;

@@ -31,6 +31,29 @@ const ENABLE_CONSUMABLES = true;
 const ENABLE_EQUIPMENT_LOGBOOK = true;
 let isLocalMode = false;
 
+// [연구장비 독립 관리] 비품(일반 공구/소모성 도구)과 완전히 분리된 전용 연구장비 목록
+const DEFAULT_RESEARCH_EQUIPMENTS = [
+  { id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', model: 'SmartLab / Rigaku', location: 'IBS 2DQH XRD실', manager: '이강민 / 신현석 교수님', type: 'xrd' },
+  { id: 'EQ-SEM-01', code: 'FE-SEM', name: 'FE-SEM (전계방사형 주사전자현미경)', model: 'JSM-7610F', location: '전자현미경실', manager: '장비담당자', type: 'standard' },
+  { id: 'EQ-GLV-01', code: 'GLOVEBOX', name: 'Inert Atmosphere Glovebox', model: 'UNIlab', location: '2DQH 합성실', manager: '장비담당자', type: 'standard' }
+];
+let researchEquipments = [];
+let currentSelectedEquipment = 'EQ-XRD-01';
+
+// [2DQH-XRD_log 공식 동기화 상수 및 상태]
+const XRD_SCAN_CHIPS = ['θ/2θ','2θ/ω','2θ','ω','χ','φ'];
+const XRD_WORK_START = 10 * 60; // 10:00 (Set min. after use 필수 기준 시작시각)
+const XRD_WORK_END = 17 * 60;   // 17:00 (Set min. after use 필수 기준 종료시각)
+const XRD_COUNTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+let xrdLogs = [];
+let xrdMode = 'start'; // 'start', 'full', 'active'
+let xrdFinishing = false;
+let xrdEditId = null;
+let xrdChk = { xray_max_ok: false, xray_min_ok: false, position_ok: false };
+let xrdAlign = 'PB';
+let xrdScanSel = new Set();
+let xrdControlsInitialized = false;
+
 // 2DQH 이차원양자헤테로구조체연구단 대표 연구장비 및 공구 표준 카탈로그
 const DEFAULT_2DQH_ASSETS = [
   {
@@ -224,6 +247,51 @@ function loadLocalStorage(forceReset){
   }
 
   try {
+    researchEquipments = JSON.parse(localStorage.getItem('labstock_research_equipments') || 'null');
+    if(!Array.isArray(researchEquipments) || researchEquipments.length === 0){
+      researchEquipments = [...DEFAULT_RESEARCH_EQUIPMENTS];
+    }
+  } catch(e){
+    researchEquipments = [...DEFAULT_RESEARCH_EQUIPMENTS];
+  }
+
+  try {
+    xrdLogs = JSON.parse(localStorage.getItem('labstock_xrd_logs') || 'null');
+    if(!Array.isArray(xrdLogs) || xrdLogs.length === 0){
+      xrdLogs = [
+        {
+          id: 1,
+          reservation_no: '255236',
+          used_on: today(),
+          start_time: '10:00',
+          end_time: '11:30',
+          duration_min: 90,
+          status: 'done',
+          chiller_start: 22.1,
+          chiller_end: 22.3,
+          vacuum_start: 92,
+          vacuum_end: 185,
+          xray_max_ok: true,
+          xray_min_ok: false,
+          position_ok: true,
+          align: 'PB',
+          scan_type: '2θ/ω, φ',
+          sample_name: 'MoS2 monolayer on sapphire',
+          meas_info: 'Rocking curve & in-plane scan',
+          sample_count: 2,
+          affiliation: '2DQH',
+          user_name: '이강민',
+          professor: '신현석 교수님',
+          memo: '정상 측정 완료',
+          created_at: new Date(Date.now() - 3600000 * 3).toISOString()
+        }
+      ];
+    }
+  } catch(e){
+    xrdLogs = [];
+  }
+
+  try {
     equipmentLogs = JSON.parse(localStorage.getItem('labstock_equipment_logs') || '[]');
   } catch(e){
     equipmentLogs = [];
@@ -246,6 +314,8 @@ function saveLocalStorage(){
   localStorage.setItem('labstock_local_loans', JSON.stringify(loans));
   localStorage.setItem('labstock_local_consumables', JSON.stringify(consumables));
   localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
+  localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
+  localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs));
   
   borrowedAssetIds = new Set();
   activeLoanMap = new Map();
@@ -621,6 +691,8 @@ async function loadData(){
         if(!logErr && Array.isArray(remoteLogs)){
           equipmentLogs = remoteLogs;
           localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
+  localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
+  localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs));
         }
       } catch(e){
         console.warn('Supabase equipment_logs 로드 건너뜀 (로컬 스토리지 유지):', e);
@@ -1108,10 +1180,6 @@ function renderInventory(){
       const loc = a.location ? a.location : '—';
 
       let actionBtn = '';
-
-      if(ENABLE_EQUIPMENT_LOGBOOK && isEquipmentForLogbook(a)){
-        actionBtn += '<button type="button" class="text-btn btn-action-logbook" data-equipment-log="' + safe(a.id) + '" title="장비 가동 일지 작성 및 열람">📖 로그북</button> ';
-      }
 
       if(st === 'available'){
         actionBtn += '<button class="text-btn btn-action-borrow" data-borrow="' + safe(a.id) + '">⚡ 대여 신청</button>';
@@ -2116,16 +2184,686 @@ function exportChemicalLogsCsv(){
   toast('✓ 특별관리물질 취급일지(' + logs.length + '건)가 법정 서식 CSV로 다운로드되었습니다.');
 }
 
+// ========================================================
+// [연구장비 & 전자 로그북 모듈 - 2DQH-XRD_log 공식 기반]
+// ========================================================
+
+function initXrdControls(){
+  if(xrdControlsInitialized) return;
+  const f = $('xrdForm');
+  if(!f) return;
+
+  const slots = [];
+  for(let h=0; h<24; h++){
+    for(const m of [0, 30]){
+      slots.push(pad(h) + ':' + pad(m));
+    }
+  }
+  const opt = function(o){ return '<option value="' + o + '">' + o + '</option>'; };
+  if(f.start_time) f.start_time.innerHTML = slots.map(opt).join('');
+  if(f.end_time) f.end_time.innerHTML = slots.map(opt).join('');
+  if(f.sample_count) f.sample_count.innerHTML = XRD_COUNTS.map(function(n){
+    return '<option value="' + n + '">' + (n >= 10 ? '10 or more' : n) + '</option>';
+  }).join('');
+
+  const scanChipsHost = $('xrdScanChips');
+  if(scanChipsHost){
+    scanChipsHost.innerHTML = XRD_SCAN_CHIPS.map(function(c){
+      return '<button type="button" class="xrd-chip" data-scan="' + c + '">' + c + '</button>';
+    }).join('');
+  }
+
+  const durChipsHost = $('xrdDurChips');
+  if(durChipsHost){
+    durChipsHost.innerHTML = [[30,'0.5 h'],[60,'1 h'],[90,'1.5 h'],[120,'2 h'],[180,'3 h'],[240,'4 h']].map(function(x){
+      return '<button type="button" class="xrd-chip" data-xrd-add="' + x[0] + '">' + x[1] + '</button>';
+    }).join('');
+  }
+
+  f.addEventListener('change', function(e){
+    if(e.target.name === 'start_time' || e.target.name === 'end_time'){
+      updXrdDur();
+      updateXrdChecks(false);
+    }
+    if(e.target.name === 'chiller_start' || e.target.name === 'chiller_end'){
+      checkXrdChiller();
+    }
+  });
+
+  const modeLink = $('xrdModeLink');
+  if(modeLink){
+    modeLink.addEventListener('click', function(){
+      if(xrdMode === 'start'){
+        showXrdMode('full');
+      } else {
+        showXrdMode('start');
+      }
+    });
+  }
+
+  const cancelEditBtn = $('xrdCancelEditBtn');
+  if(cancelEditBtn){
+    cancelEditBtn.addEventListener('click', function(){
+      resetXrdForm();
+    });
+  }
+
+  const searchInput = $('xrdSearch');
+  const btnClearSearch = $('btnClearXrdSearch');
+  if(searchInput){
+    searchInput.addEventListener('input', function(){
+      if(btnClearSearch) btnClearSearch.classList.toggle('hidden', searchInput.value.trim().length === 0);
+      renderXrdLogs();
+    });
+  }
+  if(btnClearSearch){
+    btnClearSearch.addEventListener('click', function(){
+      searchInput.value = '';
+      btnClearSearch.classList.add('hidden');
+      searchInput.focus();
+      renderXrdLogs();
+    });
+  }
+
+  const btnExportXrd = $('btnExportXrdCsv');
+  if(btnExportXrd){
+    btnExportXrd.addEventListener('click', exportXrdLogsCsv);
+  }
+
+  f.addEventListener('submit', handleXrdFormSubmit);
+
+  xrdControlsInitialized = true;
+}
+
+function xrdAfterHours(){
+  const f = $('xrdForm');
+  if(!f || !f.start_time || !f.end_time) return false;
+  const s = f.start_time.value, e = f.end_time.value;
+  if(!s || !e) return false;
+  const a = s.split(':'), b = e.split(':'), sm = (+a[0]) * 60 + (+a[1]), em = (+b[0]) * 60 + (+b[1]);
+  return em <= sm || em > XRD_WORK_END || em < XRD_WORK_START;
+}
+
+function updateXrdChecks(clear){
+  const need = xrdAfterHours();
+  const btn = $('xrdMinBtn');
+  if(btn){
+    btn.disabled = !need;
+    if(!need && clear) xrdChk.xray_min_ok = false;
+    btn.classList.toggle('req', need && !xrdChk.xray_min_ok);
+  }
+  const hint = $('xrdMinHint');
+  if(hint){
+    hint.textContent = need ? 'Required: session ends outside 10:00–17:00.' : 'Only if you finish outside 10:00–17:00.';
+  }
+  paintXrdToggles();
+}
+
+function paintXrdToggles(){
+  document.querySelectorAll('[data-chk]').forEach(function(b){
+    b.classList.toggle('on', !!xrdChk[b.dataset.chk]);
+  });
+  document.querySelectorAll('[data-align]').forEach(function(b){
+    b.classList.toggle('on', b.dataset.align === xrdAlign);
+  });
+  document.querySelectorAll('[data-scan]').forEach(function(b){
+    b.classList.toggle('on', xrdScanSel.has(b.dataset.scan));
+  });
+}
+
+function updXrdDur(){
+  const f = $('xrdForm');
+  if(!f || !f.start_time || !f.end_time) return;
+  const m = minutesBetween(f.start_time.value, f.end_time.value);
+  const durEl = $('xrdDur');
+  if(durEl) durEl.textContent = formatDurationHoursMinutes(m);
+}
+
+function minutesBetween(s, e){
+  if(!s || !e) return 0;
+  const a = s.split(':'), b = e.split(':');
+  let m = ((+b[0]) * 60 + (+b[1])) - ((+a[0]) * 60 + (+a[1]));
+  if(m <= 0) m += 1440;
+  return m;
+}
+
+function formatDurationHoursMinutes(m){
+  return Math.floor(m / 60) + 'h ' + pad(m % 60) + 'm';
+}
+
+function checkXrdChiller(){
+  const f = $('xrdForm');
+  if(!f) return;
+  const s = parseFloat(f.chiller_start ? f.chiller_start.value : ''), e = parseFloat(f.chiller_end ? f.chiller_end.value : '');
+  const out = (s && (s < 20 || s > 24)) || (e && (e < 20 || e > 24));
+  const hint = $('xrdChillerHint');
+  if(hint) hint.classList.toggle('hidden', !out);
+}
+
+function showXrdMode(m){
+  xrdMode = m;
+  const f = $('xrdForm');
+  if(!f) return;
+  f.classList.toggle('mode-start', m === 'start');
+  f.classList.toggle('hidden', m === 'active');
+  const activeBox = $('xrdActiveBox');
+  if(activeBox) activeBox.classList.toggle('hidden', m !== 'active');
+  const modeBar = $('xrdModeBar');
+  if(modeBar) modeBar.classList.toggle('hidden', m === 'active');
+
+  if(f.chiller_end) f.chiller_end.required = (m === 'full');
+  if(f.vacuum_end) f.vacuum_end.required = (m === 'full');
+
+  const modeTitle = $('xrdModeTitle');
+  if(modeTitle){
+    modeTitle.textContent = m === 'start' ? 'Start session (세션 시작)' : (xrdFinishing ? 'Finish session (세션 종료)' : (xrdEditId ? 'Edit log (수정)' : 'Log a finished session (사후 일괄 기록)'));
+  }
+  const modeLink = $('xrdModeLink');
+  if(modeLink){
+    modeLink.textContent = m === 'start' ? 'Log a finished session instead →' : '← Back';
+    modeLink.classList.toggle('hidden', !!xrdEditId);
+  }
+  if(m === 'active') renderXrdActive();
+  updateXrdSaveLabel();
+}
+
+function updateXrdSaveLabel(){
+  const btn = $('xrdSaveBtn');
+  if(!btn) return;
+  btn.textContent = xrdMode === 'start' ? 'Start session (세션 시작)' : (xrdFinishing ? 'Finish & save log (측정 종료 및 저장)' : (xrdEditId ? 'Save changes (수정 저장)' : 'Save log (로그북 등록)'));
+}
+
+function resetXrdForm(){
+  xrdEditId = null;
+  xrdFinishing = false;
+  const f = $('xrdForm');
+  if(!f) return;
+  f.reset();
+  if(f.used_on) f.used_on.value = today();
+
+  const d = new Date(), t = d.getHours() * 60 + (d.getMinutes() < 30 ? 0 : 30);
+  if(f.start_time) f.start_time.value = pad(Math.floor(t / 60)) + ':' + pad(t % 60);
+  const e = (t + 60) % 1440;
+  if(f.end_time) f.end_time.value = pad(Math.floor(e / 60)) + ':' + pad(e % 60);
+
+  xrdChk = { xray_max_ok: false, xray_min_ok: false, position_ok: false };
+  xrdAlign = 'PB';
+  xrdScanSel = new Set();
+  if(f.sample_count) f.sample_count.value = '1';
+
+  // 회원 프로필 정보 자동완성
+  if(session && session.user){
+    const meta = session.user.user_metadata || {};
+    if(f.user_name && meta.name) f.user_name.value = meta.name;
+    if(f.professor && meta.professor) f.professor.value = meta.professor;
+    if(f.affiliation && meta.affiliation) f.affiliation.value = meta.affiliation;
+  }
+
+  const cancelBtn = $('xrdCancelEditBtn');
+  if(cancelBtn) cancelBtn.classList.add('hidden');
+  const moreBox = $('xrdMoreBox');
+  if(moreBox) moreBox.open = false;
+
+  updXrdDur();
+  updateXrdChecks(false);
+  checkXrdChiller();
+  updateXrdSaveLabel();
+  showXrdMode(myActiveXrdSession() ? 'active' : 'start');
+}
+
+function myActiveXrdSession(){
+  return xrdLogs.find(function(l){ return l.status === 'active'; });
+}
+
+function renderXrdActive(){
+  const l = myActiveXrdSession();
+  const box = $('xrdActiveBox');
+  if(!box) return;
+  if(!l){
+    showXrdMode('start');
+    return;
+  }
+  const dt = l.used_on ? String(l.used_on).replace(/-/g, '.') : '';
+  const tm = l.start_time ? String(l.start_time).slice(0, 5) : '';
+  box.innerHTML =
+    '<div class="xrd-activecard">' +
+      '<b>● Session in progress (측정 진행 중)</b>' +
+      '<div style="margin-top:6px;font-size:14px;color:#1e3a8a;">' +
+        '사용자: <b>' + safe(l.user_name) + '</b> (' + safe(l.affiliation || '') + ') · 시작: <b>' + safe(dt) + ' ' + safe(tm) + '</b><br>' +
+        'Chiller <b>' + safe(l.chiller_start) + ' °C</b> · Vacuum <b>' + safe(l.vacuum_start) + ' mV</b>' +
+      '</div>' +
+      '<div class="actions" style="margin-top:12px;display:flex;gap:10px;">' +
+        '<button class="btn primary" type="button" id="btnFinishXrdActive" style="height:40px;padding:0 18px;font-weight:700;">Finish &amp; log (측정 종료 및 기록)</button>' +
+        '<button class="btn" type="button" id="btnCancelXrdActive" style="height:40px;padding:0 14px;">Cancel session (취소)</button>' +
+      '</div>' +
+    '</div>';
+
+  const finishBtn = $('btnFinishXrdActive');
+  if(finishBtn){
+    finishBtn.addEventListener('click', function(){
+      finishXrdSession(l.id);
+    });
+  }
+  const cancelBtn = $('btnCancelXrdActive');
+  if(cancelBtn){
+    cancelBtn.addEventListener('click', function(){
+      if(confirm('진행 중인 세션을 취소(삭제)하시겠습니까?')){
+        deleteXrdLog(l.id);
+      }
+    });
+  }
+}
+
+function renderXrdInUse(){
+  const inuse = $('xrdInUse');
+  if(!inuse) return;
+  const act = xrdLogs.filter(function(l){ return l.status === 'active'; });
+  inuse.classList.toggle('hidden', act.length === 0);
+  if(act.length > 0){
+    const listText = act.slice(0, 3).map(function(l){
+      const tm = l.start_time ? String(l.start_time).slice(0, 5) : '';
+      return '<b>' + safe(l.user_name) + '</b> (since ' + safe(tm) + ')';
+    }).join(', ');
+    inuse.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.3);margin-right:4px;"></span> ● In use now: ' + listText;
+  }
+}
+
+function renderXrdLogs(){
+  const searchInput = $('xrdSearch');
+  const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  const rows = $('xrdRows');
+  if(!rows) return;
+
+  renderXrdInUse();
+
+  const filtered = xrdLogs.filter(function(l){
+    if(!q) return true;
+    const hay = [l.sample_name, l.meas_info, l.user_name, l.affiliation, l.professor, l.scan_type, l.reservation_no, l.memo].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+
+  if(filtered.length === 0){
+    rows.innerHTML = '<div style="text-align:center;padding:36px;color:#64748b;font-size:14px;">등록된 HR-XRD 사용일지가 없습니다.</div>';
+    return;
+  }
+
+  const arrow = function(a, b){
+    return safe(a ?? '—') + ' → ' + (b == null || b === '' ? '…' : safe(b));
+  };
+  const checksHtml = function(l){
+    const m = function(ok, t){
+      return '<span class="' + (ok ? 'ok-badge' : 'bad-badge') + '">' + t + (ok ? ' ✓' : ' ✕') + '</span>';
+    };
+    return m(l.xray_max_ok, 'Max') + ' ' + m(l.xray_min_ok, 'Min') + ' ' + m(l.position_ok, 'Pos');
+  };
+
+  let html = '<table><thead><tr>' +
+    '<th>Date / Time</th>' +
+    '<th>User / Adviser</th>' +
+    '<th>Chiller [°C]</th>' +
+    '<th>Vacuum [mV]</th>' +
+    '<th>Checks</th>' +
+    '<th>Align.</th>' +
+    '<th>Scan type</th>' +
+    '<th>Sample</th>' +
+    '<th>Action</th>' +
+    '</tr></thead><tbody>';
+
+  filtered.forEach(function(l){
+    const dt = l.used_on ? String(l.used_on).replace(/-/g, '.') : '';
+    const st = l.start_time ? String(l.start_time).slice(0, 5) : '';
+    const et = l.end_time ? String(l.end_time).slice(0, 5) : '';
+    const isActive = l.status === 'active';
+    const durStr = l.duration_min ? formatDurationHoursMinutes(l.duration_min) : '';
+
+    html += '<tr>' +
+      '<td data-l="Time"><b>' + safe(dt) + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + safe(st) + ' ~ ' + (isActive ? '<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-weight:700;font-size:11px;">In progress</span>' : safe(et) + ' (' + durStr + ')') + (l.reservation_no ? ' · #' + safe(l.reservation_no) : '') + '</span></td>' +
+      '<td data-l="User"><b>' + safe(l.user_name) + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + safe(l.professor || '') + ' · ' + safe(l.affiliation || '') + '</span></td>' +
+      '<td data-l="Chiller">' + arrow(l.chiller_start, l.chiller_end) + '</td>' +
+      '<td data-l="Vacuum">' + arrow(l.vacuum_start, l.vacuum_end) + '</td>' +
+      '<td data-l="Checks">' + (isActive ? '—' : checksHtml(l)) + '</td>' +
+      '<td data-l="Align.">' + (isActive ? '—' : safe(l.align || 'PB')) + '</td>' +
+      '<td data-l="Scan">' + (safe(l.scan_type) || '—') + '</td>' +
+      '<td data-l="Sample"><b>' + (safe(l.sample_name) || '—') + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + (isActive ? '' : '×' + safe(l.sample_count || 1)) + (l.meas_info ? ' · ' + safe(l.meas_info) : '') + (l.memo ? ' · 📝 ' + safe(l.memo) : '') + '</span></td>' +
+      '<td data-l="Action">' +
+        (isActive ? '<button type="button" class="text-btn" data-xrd-finish="' + l.id + '" style="font-weight:700;color:var(--primary);">Finish</button> ' : '<button type="button" class="text-btn" data-xrd-edit="' + l.id + '">Edit</button> ') +
+        '<button type="button" class="text-btn del" data-xrd-del="' + l.id + '">Delete</button>' +
+      '</td>' +
+      '</tr>';
+  });
+
+  html += '</tbody></table>';
+  rows.innerHTML = html;
+}
+
+function finishXrdSession(id){
+  const l = xrdLogs.find(function(x){ return String(x.id) === String(id); });
+  if(!l) return;
+  const f = $('xrdForm');
+  if(!f) return;
+
+  xrdEditId = l.id;
+  xrdFinishing = (l.status === 'active');
+
+  for(const k of ['reservation_no','used_on','chiller_start','chiller_end','vacuum_start','vacuum_end','sample_name','meas_info','affiliation','user_name','professor','memo']){
+    if(f[k]) f[k].value = l[k] ?? '';
+  }
+  if(f.start_time && l.start_time) f.start_time.value = String(l.start_time).slice(0, 5);
+
+  const d = new Date();
+  let t = Math.ceil((d.getHours() * 60 + d.getMinutes()) / 30) * 30 % 1440;
+  const sm = f.start_time ? (+f.start_time.value.split(':')[0] * 60 + +f.start_time.value.split(':')[1]) : 0;
+  if(t === sm) t = (t + 30) % 1440;
+  if(f.end_time) f.end_time.value = l.end_time ? String(l.end_time).slice(0, 5) : (pad(Math.floor(t / 60)) + ':' + pad(t % 60));
+
+  xrdChk = {
+    xray_max_ok: !!l.xray_max_ok,
+    xray_min_ok: !!l.xray_min_ok,
+    position_ok: !!l.position_ok
+  };
+  xrdAlign = l.align || 'PB';
+
+  const parts = String(l.scan_type || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+  xrdScanSel = new Set(parts.filter(function(x){ return XRD_SCAN_CHIPS.includes(x); }));
+  if(f.scan_other) f.scan_other.value = parts.filter(function(x){ return !XRD_SCAN_CHIPS.includes(x); }).join(', ');
+  if(f.sample_count) f.sample_count.value = String(l.sample_count || 1);
+
+  showXrdMode('full');
+  updXrdDur();
+  updateXrdChecks(true);
+  checkXrdChiller();
+
+  const cancelBtn = $('xrdCancelEditBtn');
+  if(cancelBtn) cancelBtn.classList.remove('hidden');
+
+  f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function handleXrdFormSubmit(e){
+  e.preventDefault();
+  const f = $('xrdForm');
+  if(!f) return;
+
+  const btn = $('xrdSaveBtn');
+  if(btn) btn.disabled = true;
+
+  try {
+    const isStartMode = (xrdMode === 'start');
+    const memoVal = (f.memo ? f.memo.value : '').trim();
+
+    if(!isStartMode){
+      const needMin = xrdAfterHours();
+      if(!xrdChk.xray_max_ok && !memoVal){
+        alert('Set max. while using 체크를 확인하거나, 메모(Memo / Issue)에 사유를 기록해주세요.');
+        if(btn) btn.disabled = false;
+        return;
+      }
+      if(needMin && !xrdChk.xray_min_ok && !memoVal){
+        alert('10:00–17:00 외 종료 시 "Set min. after use" 체크가 필수입니다. 체크하거나 메모에 사유를 기록해주세요.');
+        if(btn) btn.disabled = false;
+        return;
+      }
+      if(!xrdChk.position_ok && !memoVal){
+        alert('Set initial after use 체크를 확인하거나, 메모(Memo / Issue)에 사유를 기록해주세요.');
+        if(btn) btn.disabled = false;
+        return;
+      }
+    }
+
+    const scanList = Array.from(xrdScanSel);
+    if(f.scan_other && f.scan_other.value.trim()){
+      scanList.push(f.scan_other.value.trim());
+    }
+
+    const dur = (isStartMode || !f.start_time.value || !f.end_time.value) ? null : minutesBetween(f.start_time.value, f.end_time.value);
+
+    const logEntry = {
+      reservation_no: f.reservation_no ? f.reservation_no.value.trim() : '',
+      used_on: f.used_on ? f.used_on.value : today(),
+      start_time: f.start_time ? f.start_time.value : '10:00',
+      end_time: isStartMode ? null : (f.end_time ? f.end_time.value : null),
+      duration_min: isStartMode ? null : dur,
+      status: isStartMode ? 'active' : 'done',
+      chiller_start: f.chiller_start && f.chiller_start.value ? parseFloat(f.chiller_start.value) : null,
+      chiller_end: !isStartMode && f.chiller_end && f.chiller_end.value ? parseFloat(f.chiller_end.value) : null,
+      vacuum_start: f.vacuum_start && f.vacuum_start.value ? parseInt(f.vacuum_start.value, 10) : null,
+      vacuum_end: !isStartMode && f.vacuum_end && f.vacuum_end.value ? parseInt(f.vacuum_end.value, 10) : null,
+      xray_max_ok: !!xrdChk.xray_max_ok,
+      xray_min_ok: !!xrdChk.xray_min_ok,
+      position_ok: !!xrdChk.position_ok,
+      align: xrdAlign,
+      scan_type: scanList.join(', '),
+      sample_name: f.sample_name ? f.sample_name.value.trim() : '',
+      meas_info: f.meas_info ? f.meas_info.value.trim() : '',
+      sample_count: f.sample_count ? parseInt(f.sample_count.value, 10) : 1,
+      affiliation: f.affiliation ? f.affiliation.value.trim() : '2DQH',
+      user_name: f.user_name ? f.user_name.value.trim() : '',
+      professor: f.professor ? f.professor.value.trim() : '',
+      memo: memoVal,
+      user_id: session && session.user ? session.user.id : null,
+      updated_at: new Date().toISOString()
+    };
+
+    if(xrdEditId){
+      const idx = xrdLogs.findIndex(function(x){ return String(x.id) === String(xrdEditId); });
+      if(idx !== -1){
+        logEntry.id = xrdEditId;
+        logEntry.created_at = xrdLogs[idx].created_at || new Date().toISOString();
+        xrdLogs[idx] = Object.assign({}, xrdLogs[idx], logEntry);
+      }
+      if(db && !isLocalMode){
+        try {
+          await db.from('xrd_logs').update(logEntry).eq('id', xrdEditId);
+        } catch(err){
+          console.warn('Supabase xrd_logs update 실패 (로컬 유지):', err);
+        }
+      }
+      toast('✓ HR-XRD 로그가 저장되었습니다.');
+    } else {
+      logEntry.id = Date.now();
+      logEntry.created_at = new Date().toISOString();
+      xrdLogs.unshift(logEntry);
+
+      if(db && !isLocalMode){
+        try {
+          const { data: inserted, error: insertErr } = await db.from('xrd_logs').insert(logEntry).select();
+          if(!insertErr && inserted && inserted[0]){
+            logEntry.id = inserted[0].id;
+          }
+        } catch(err){
+          console.warn('Supabase xrd_logs insert 실패 (로컬 유지):', err);
+        }
+      }
+      toast(isStartMode ? '✓ HR-XRD 측정이 시작되었습니다 (진행 중 등록).' : '✓ HR-XRD 사용일지가 등록되었습니다.');
+    }
+
+    try { localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs)); } catch(_) {}
+    resetXrdForm();
+    renderXrdLogs();
+  } catch(e){
+    console.error('HR-XRD 저장 실패:', e);
+    toast('저장 중 오류가 발생했습니다.');
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+async function deleteXrdLog(id){
+  if(!confirm('이 HR-XRD 로그 기록을 삭제하시겠습니까?')) return;
+  xrdLogs = xrdLogs.filter(function(l){ return String(l.id) !== String(id); });
+  try { localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs)); } catch(_) {}
+
+  if(db && !isLocalMode){
+    try {
+      await db.from('xrd_logs').delete().eq('id', id);
+    } catch(err){
+      console.warn('Supabase delete 실패:', err);
+    }
+  }
+  toast('✓ 로그 기록이 삭제되었습니다.');
+  if(xrdEditId === id) resetXrdForm();
+  renderXrdLogs();
+}
+
+function exportXrdLogsCsv(){
+  if(xrdLogs.length === 0){
+    toast('내보낼 HR-XRD 로그 데이터가 없습니다.');
+    return;
+  }
+  const headers = ['Reservation No', 'Date', 'Start Time', 'End Time', 'Duration(min)', 'Status', 'User Name', 'Professor', 'Affiliation', 'Chiller Start(°C)', 'Chiller End(°C)', 'Vacuum Start(mV)', 'Vacuum End(mV)', 'X-ray Max', 'X-ray Min', 'Position', 'Align', 'Scan Type', 'Sample Name', 'Sample Count', 'Measurement Info', 'Memo', 'Created At'];
+  const rows = xrdLogs.map(function(l){
+    return [
+      l.reservation_no || '',
+      l.used_on || '',
+      l.start_time || '',
+      l.end_time || '',
+      l.duration_min || '',
+      l.status || '',
+      l.user_name || '',
+      l.professor || '',
+      l.affiliation || '',
+      l.chiller_start ?? '',
+      l.chiller_end ?? '',
+      l.vacuum_start ?? '',
+      l.vacuum_end ?? '',
+      l.xray_max_ok ? 'OK' : 'NO',
+      l.xray_min_ok ? 'OK' : 'NO',
+      l.position_ok ? 'OK' : 'NO',
+      l.align || '',
+      l.scan_type || '',
+      l.sample_name || '',
+      l.sample_count || 1,
+      l.meas_info || '',
+      (l.memo || '').replace(/[\r\n]+/g, ' '),
+      l.created_at || ''
+    ].map(function(cell){
+      const s = String(cell ?? '').replace(/"/g, '""');
+      return '"' + s + '"';
+    }).join(',');
+  });
+
+  const csvContent = '\uFEFF' + headers.join(',') + '\r\n' + rows.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '2DQH_HR-XRD_Logbook_' + today() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✓ HR-XRD 전체 로그(' + xrdLogs.length + '건)가 CSV로 다운로드되었습니다.');
+}
+
+function renderResearchEquipmentTabs(){
+  const host = $('researchEquipmentTabs');
+  if(!host) return;
+
+  let html = '';
+  researchEquipments.forEach(function(eq){
+    const isActive = (eq.id === currentSelectedEquipment);
+    html += '<button type="button" class="research-equipment-tab ' + (isActive ? 'active' : '') + '" data-select-equipment="' + safe(eq.id) + '">' +
+      '<span class="tab-badge">' + safe(eq.code) + '</span>' +
+      '<span>' + safe(eq.name) + '</span>' +
+    '</button>';
+  });
+
+  html += '<button type="button" class="research-equipment-tab" id="btnRegisterNewEquipment" style="border-style:dashed;color:var(--primary);">' +
+    '<span>＋ 새 연구장비 등록</span>' +
+  '</button>';
+
+  host.innerHTML = html;
+}
+
+function selectResearchEquipment(eqId){
+  currentSelectedEquipment = eqId;
+  renderResearchEquipmentTabs();
+
+  const countBadge = $('logbookCountBadge');
+  const selected = researchEquipments.find(function(e){ return e.id === eqId; });
+  if(countBadge && selected){
+    countBadge.textContent = selected.code;
+  }
+
+  const isXrd = (selected && selected.type === 'xrd');
+  const xrdContainer = $('xrdLogbookContainer');
+  const generalContainer = $('generalEquipmentLogContainer');
+
+  if(xrdContainer) xrdContainer.classList.toggle('hidden', !isXrd);
+  if(generalContainer) generalContainer.classList.toggle('hidden', isXrd);
+
+  if(isXrd){
+    initXrdControls();
+    resetXrdForm();
+    renderXrdLogs();
+  } else {
+    renderGeneralEquipmentLogs();
+  }
+}
+
+function renderGeneralEquipmentLogs(){
+  const rows = $('generalEquipmentLogRows');
+  if(!rows) return;
+
+  const selected = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
+  if(!selected) return;
+
+  const filtered = equipmentLogs.filter(function(lg){
+    return String(lg.asset_id) === String(selected.id) || String(lg.asset_name).includes(selected.name);
+  });
+
+  let html =
+    '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">' +
+        '<div>' +
+          '<h3 style="margin:0 0 4px;font-size:16px;color:var(--ink);">' + safe(selected.name) + '</h3>' +
+          '<div style="font-size:13px;color:#64748b;">모델: ' + safe(selected.model) + ' · 위치: ' + safe(selected.location) + ' · 책임자: ' + safe(selected.manager) + '</div>' +
+        '</div>' +
+        '<button type="button" class="btn primary" id="btnLogThisEquipment">＋ 사용일지 작성</button>' +
+      '</div>' +
+    '</div>';
+
+  if(filtered.length === 0){
+    html += '<div style="text-align:center;padding:36px;color:#64748b;font-size:14px;">등록된 ' + safe(selected.name) + ' 사용일지가 없습니다.</div>';
+  } else {
+    html += '<div class="logbook-cards-grid" style="display:flex;flex-direction:column;gap:10px;">';
+    filtered.forEach(function(rec){
+      const dt = String(rec.start_time || '').replace('T', ' ').slice(0, 16);
+      const isIssue = rec.status_check === 'issue';
+      const statusBadge = isIssue ? '<span class="status-badge is-issue">⚠️ 점검 필요</span>' : '<span class="status-badge is-normal">✓ 정상 작동</span>';
+      html +=
+        '<div class="logbook-card">' +
+          '<div class="logbook-card-header">' +
+            '<span class="logbook-asset-name">' + safe(selected.name) + '</span>' +
+            '<div>' + statusBadge + '</div>' +
+          '</div>' +
+          '<div class="logbook-meta-row">' +
+            '<span>📅 ' + safe(dt) + '</span>' +
+            '<span>⏱️ <b>' + safe(rec.run_hours || '—') + '시간</b> 가동</span>' +
+            '<span>👤 <b>' + safe(rec.operator_name) + '</b></span>' +
+            (rec.project_name ? '<span>🎯 ' + safe(rec.project_name) + '</span>' : '') +
+          '</div>' +
+          (rec.sample_info ? '<div class="logbook-sample-box"><b>시료/샘플:</b> ' + safe(rec.sample_info) + '</div>' : '') +
+          (rec.notes ? '<div style="font-size:12px;color:#64748b;margin-top:6px;">📝 ' + safe(rec.notes) + '</div>' : '') +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  rows.innerHTML = html;
+
+  const btnLog = $('btnLogThisEquipment');
+  if(btnLog){
+    btnLog.addEventListener('click', function(){
+      openModal('equipmentLog', selected.id);
+    });
+  }
+}
+
 function renderLogbook(){
   if(!ENABLE_EQUIPMENT_LOGBOOK) return;
 
-  const countBadge = $('logbookCountBadge');
-  const searchInput = $('logbookSearch');
-  const eqFilter = $('logbookEquipmentFilter');
-  const stFilter = $('logbookStatusFilter');
-  const rowsHost = $('logbookRows');
   const standaloneBanner = $('logbookStandaloneBanner');
-
   if(standaloneBanner){
     const isStandalone = (window.location.hash || '').includes('standalone') ||
       new URLSearchParams(window.location.search).get('standalone') === 'true' ||
@@ -2133,99 +2871,25 @@ function renderLogbook(){
     standaloneBanner.classList.toggle('hidden', !isStandalone);
   }
 
-  // 장비 필터 옵션 채우기 (초기 1회)
-  if(eqFilter && eqFilter.options.length <= 1){
-    assets.forEach(function(ast){
-      const opt = document.createElement('option');
-      opt.value = ast.id;
-      opt.textContent = ast.id + ' - ' + ast.name;
-      eqFilter.appendChild(opt);
-    });
-  }
-
-  const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
-  const selectedEq = eqFilter ? eqFilter.value : 'all';
-  const selectedSt = stFilter ? stFilter.value : 'all';
-
-  const filtered = equipmentLogs.filter(function(log){
-    if(selectedEq !== 'all' && String(log.asset_id) !== String(selectedEq)) return false;
-    if(selectedSt !== 'all' && String(log.status_check) !== String(selectedSt)) return false;
-
-    if(query){
-      const searchTarget = (
-        (log.asset_id || '') + ' ' +
-        (log.asset_name || '') + ' ' +
-        (log.operator_name || '') + ' ' +
-        (log.project_name || '') + ' ' +
-        (log.sample_info || '') + ' ' +
-        (log.notes || '')
-      ).toLowerCase();
-      if(!searchTarget.includes(query)) return false;
-    }
-    return true;
-  });
-
-  if(countBadge) countBadge.textContent = filtered.length;
-
-  if(!rowsHost) return;
-
-  if(filtered.length === 0){
-    rowsHost.innerHTML =
-      '<div class="quick-return-empty" style="text-align:center;padding:48px 16px;background:#f8fafc;border-radius:14px;border:1.5px dashed #cbd5e1;">' +
-        '<div style="font-size:36px;margin-bottom:8px;">📖</div>' +
-        '<div style="font-size:16px;font-weight:700;color:#1e293b;margin-bottom:4px;">등록된 장비 사용일지가 없습니다</div>' +
-        '<p style="font-size:13px;color:#64748b;margin:0 0 16px;">연구장비 가동 후 사용일지를 등록하여 이력을 투명하게 관리하세요.</p>' +
-        '<button type="button" class="btn primary" id="btnEmptyCreateLog" style="height:42px;padding:0 20px;font-weight:700;">＋ 첫 로그북 작성하기</button>' +
-      '</div>';
-    const btnEmpty = $('btnEmptyCreateLog');
-    if(btnEmpty){
-      btnEmpty.addEventListener('click', function(){ openModal('equipmentLog'); });
-    }
-    return;
-  }
-
-  let html = '<div class="logbook-cards-grid" style="display:flex;flex-direction:column;gap:10px;">';
-
-  filtered.forEach(function(rec){
-    const ast = assetFor(rec.asset_id);
-    const astName = rec.asset_name || (ast ? ast.name : rec.asset_id);
-    const dt = String(rec.start_time || '').replace('T', ' ').slice(0, 16);
-    const isIssue = rec.status_check === 'issue';
-    const statusBadgeHtml = isIssue
-      ? '<span class="status-badge is-issue">⚠️ 점검 필요</span>'
-      : '<span class="status-badge is-normal">✓ 정상 작동</span>';
-
-    html +=
-      '<div class="logbook-card">' +
-        '<div class="logbook-card-header">' +
-          '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<span class="logbook-asset-name">' + safe(astName) + '</span>' +
-            '<span class="asset-id hide-mobile" style="font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;">' + safe(rec.asset_id) + '</span>' +
-          '</div>' +
-          '<div>' + statusBadgeHtml + '</div>' +
-        '</div>' +
-        '<div class="logbook-meta-row">' +
-          '<span>📅 ' + safe(dt) + '</span>' +
-          '<span>⏱️ <b>' + safe(rec.run_hours || '—') + '시간</b> 가동</span>' +
-          '<span>👤 <b>' + safe(rec.operator_name) + '</b></span>' +
-          (rec.project_name ? '<span>🎯 ' + safe(rec.project_name) + '</span>' : '') +
-        '</div>' +
-        (rec.sample_info ? '<div class="logbook-sample-box"><b>시료/샘플:</b> ' + safe(rec.sample_info) + '</div>' : '') +
-        (rec.notes ? '<div style="font-size:12px;color:#64748b;margin-top:6px;line-height:1.4;">📝 <b>메모:</b> ' + safe(rec.notes) + '</div>' : '') +
-      '</div>';
-  });
-
-  html += '</div>';
-  rowsHost.innerHTML = html;
+  renderResearchEquipmentTabs();
+  selectResearchEquipment(currentSelectedEquipment);
 }
 
 function exportEquipmentLogsCsv(){
+  const selected = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
+  if(selected && selected.type === 'xrd'){
+    exportXrdLogsCsv();
+  } else {
+    exportGeneralEquipmentLogsCsv();
+  }
+}
+
+function exportGeneralEquipmentLogsCsv(){
   if(equipmentLogs.length === 0){
     toast('내보낼 장비 로그북 데이터가 없습니다.');
     return;
   }
-
-  const headers = ['연번', '로그ID', '관리번호', '장비명', '사용자', '시작일시', '가동시간(h)', '연구과제명', '측정시료', '장비상태', '특이사항', '등록일시'];
+  const headers = ['연번', '로그ID', '장비코드', '장비명', '사용자', '시작일시', '가동시간(h)', '연구과제명', '측정시료', '장비상태', '특이사항', '등록일시'];
   const rows = equipmentLogs.map(function(lg, idx){
     return [
       idx + 1,
@@ -2256,7 +2920,7 @@ function exportEquipmentLogsCsv(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ 전체 장비 로그북(' + equipmentLogs.length + '건)이 CSV로 다운로드되었습니다.');
+  toast('✓ 장비 로그북이 CSV로 다운로드되었습니다.');
 }
 
 function fallbackCopyText(text, name){
@@ -2353,6 +3017,8 @@ function openModal(mode, id){
     titleText = '📝 특별관리물질 취급일지 작성';
   } else if(mode === 'equipmentLog'){
     titleText = '📖 연구장비 전자 로그북 작성';
+  } else if(mode === 'addResearchEquipment'){
+    titleText = '🔬 새 연구장비 등록 (비품과 독립 관리)';
   }
 
   $('modalTitle').textContent = titleText;
@@ -2718,6 +3384,37 @@ function openModal(mode, id){
     }
 
     parts.push('</div>');
+  } else if(mode === 'addResearchEquipment'){
+    parts.push('<div class="logbook-modal-form-wrap">');
+    parts.push('  <p style="font-size:13px;color:#64748b;margin-bottom:14px;line-height:1.45;">멀티미터, 공구 등 일반 비품(Inventory)과 구별되는 고가 연구실 실험·분석 장비를 등록합니다. 등록된 장비는 전용 로그북과 연동됩니다.</p>');
+    parts.push('  <div class="field">');
+    parts.push('    <label for="inpEqCode">장비 약칭 / 식별 코드 *</label>');
+    parts.push('    <input id="inpEqCode" name="code" required placeholder="예: AFM, FTIR, FURNACE, PL" style="text-transform:uppercase;">');
+    parts.push('  </div>');
+    parts.push('  <div class="field">');
+    parts.push('    <label for="inpEqName">연구장비 명칭 *</label>');
+    parts.push('    <input id="inpEqName" name="name" required placeholder="예: 원자현미경 (Atomic Force Microscope)">');
+    parts.push('  </div>');
+    parts.push('  <div class="field">');
+    parts.push('    <label for="inpEqModel">모델명 및 제조사</label>');
+    parts.push('    <input id="inpEqModel" name="model" placeholder="예: Park Systems NX10">');
+    parts.push('  </div>');
+    parts.push('  <div class="field">');
+    parts.push('    <label for="inpEqLoc">설치 위치 / 연구실</label>');
+    parts.push('    <input id="inpEqLoc" name="location" placeholder="예: 2DQH 정밀측정실">');
+    parts.push('  </div>');
+    parts.push('  <div class="field">');
+    parts.push('    <label for="inpEqManager">장비 책임자 / 연락처</label>');
+    parts.push('    <input id="inpEqManager" name="manager" placeholder="예: 홍길동 (연구원)">');
+    parts.push('  </div>');
+    parts.push('  <div class="field">');
+    parts.push('    <label for="inpEqType">로그북 운영 양식</label>');
+    parts.push('    <select id="inpEqType" name="type">');
+    parts.push('      <option value="standard">일반 정밀장비 일지 (가동시간 / 시료 / 장비상태)</option>');
+    parts.push('      <option value="xrd">X선 회절분석기 (HR-XRD 2단계 정밀 양식)</option>');
+    parts.push('    </select>');
+    parts.push('  </div>');
+    parts.push('</div>');
   } else if(mode === 'movement'){
     const c = consumableFor(id);
     const moveType = window.__labstockMovementType === 'in' ? 'in' : 'use';
@@ -3036,6 +3733,7 @@ function openModal(mode, id){
   else if(mode === 'quickReorder') btnText = '구매요청';
   else if(mode === 'chemicalLog') btnText = '✓ 취급일지 작성 완료';
   else if(mode === 'equipmentLog') btnText = '✓ 로그북 등록';
+  else if(mode === 'addResearchEquipment') btnText = '✓ 연구장비 등록 완료';
 
   $('saveModal').textContent = btnText;
 
@@ -3411,6 +4109,8 @@ async function saveForm(e){
       // 1. 브라우저 로컬 저장
       equipmentLogs.unshift(logEntry);
       localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
+  localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
+  localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs));
 
       // 2. Supabase 연동 시 DB 저장 시도
       if(db && !isLocalMode){
@@ -3445,7 +4145,46 @@ async function saveForm(e){
     return;
   }
 
-  // [로컬 테스트 모드 처리]
+  // [새 연구장비 등록 처리 (비품과 독립 관리)]
+  if(modalMode === 'addResearchEquipment'){
+    try {
+      const code = (v.code || '').trim().toUpperCase();
+      const name = (v.name || '').trim();
+      const model = (v.model || '').trim();
+      const location = (v.location || '').trim();
+      const manager = (v.manager || '').trim();
+      const type = (v.type || 'standard');
+
+      if(!code || !name){
+        toast('장비 식별 코드와 장비 명칭을 입력해주세요.');
+        btn.disabled = false;
+        return;
+      }
+
+      const newEq = {
+        id: 'EQ-' + code + '-' + pad(researchEquipments.length + 1),
+        code: code,
+        name: name,
+        model: model || '—',
+        location: location || '2DQH 연구실',
+        manager: manager || '장비담당자',
+        type: type
+      };
+
+      researchEquipments.push(newEq);
+      try { localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments)); } catch(_) {}
+      closeModal();
+      toast("✓ '" + name + "' 연구장비가 등록되었습니다.");
+      renderLogbook();
+      selectResearchEquipment(newEq.id);
+    } catch(err){
+      console.error('연구장비 등록 오류:', err);
+      toast('연구장비 등록 중 오류가 발생했습니다.');
+    } finally {
+      btn.disabled = false;
+    }
+    return;
+  }
   if(isLocalMode || !db){
     if(modalMode === 'borrow'){
       const newLoan = {
@@ -4137,14 +4876,73 @@ function bindEvents(){
       return;
     }
 
-    if(target.dataset.equipmentLog || target.closest('[data-equipment-log]')){
-      const btn = target.dataset.equipmentLog ? target : target.closest('[data-equipment-log]');
-      openModal('equipmentLog', btn.dataset.equipmentLog);
+    if(target.dataset.chk){
+      xrdChk[target.dataset.chk] = !xrdChk[target.dataset.chk];
+      paintXrdToggles();
       return;
     }
 
-    if(target.id === 'btnAddLogbookEntry' || target.closest('#btnAddLogbookEntry')){
-      openModal('equipmentLog');
+    if(target.dataset.align){
+      xrdAlign = target.dataset.align;
+      paintXrdToggles();
+      return;
+    }
+
+    if(target.dataset.scan){
+      const s = target.dataset.scan;
+      if(xrdScanSel.has(s)) xrdScanSel.delete(s);
+      else xrdScanSel.add(s);
+      paintXrdToggles();
+      return;
+    }
+
+    if(target.dataset.xrdAdd){
+      const addMin = parseInt(target.dataset.xrdAdd, 10);
+      const f = $('xrdForm');
+      if(f && f.start_time && f.end_time){
+        const a = f.start_time.value.split(':');
+        const startMin = (+a[0]) * 60 + (+a[1]);
+        const endMin = (startMin + addMin) % 1440;
+        f.end_time.value = pad(Math.floor(endMin / 60)) + ':' + pad(endMin % 60);
+        updXrdDur();
+        updateXrdChecks(true);
+      }
+      return;
+    }
+
+    if(target.dataset.selectEquipment){
+      selectResearchEquipment(target.dataset.selectEquipment);
+      return;
+    }
+
+    if(target.dataset.xrdEdit){
+      finishXrdSession(target.dataset.xrdEdit);
+      return;
+    }
+
+    if(target.dataset.xrdFinish){
+      finishXrdSession(target.dataset.xrdFinish);
+      return;
+    }
+
+    if(target.dataset.xrdDel){
+      deleteXrdLog(target.dataset.xrdDel);
+      return;
+    }
+
+    if(target.id === 'btnAddResearchEquipment' || target.id === 'btnRegisterNewEquipment' || target.closest('#btnAddResearchEquipment') || target.closest('#btnRegisterNewEquipment')){
+      openModal('addResearchEquipment');
+      return;
+    }
+
+    if(target.id === 'btnOpenGeneralLogModal' || target.closest('#btnOpenGeneralLogModal')){
+      openModal('equipmentLog', currentSelectedEquipment);
+      return;
+    }
+
+    if(target.dataset.equipmentLog || target.closest('[data-equipment-log]')){
+      const btn = target.dataset.equipmentLog ? target : target.closest('[data-equipment-log]');
+      openModal('equipmentLog', btn.dataset.equipmentLog);
       return;
     }
 
@@ -4655,14 +5453,17 @@ function handleUrlFastTrack(){
       return;
     }
 
-    // 4. 연구장비 전자 로그북 다이렉트 진입 (?logbook=EQ-001 or ?action=equipmentLog&id=EQ-001 or #logbook/EQ-001)
+    // 4. 연구장비 전자 로그북 다이렉트 진입 (?logbook=XRD or #logbook/XRD or ?logbook=EQ-XRD-01)
     const hashEqLogMatch = hash.match(/^(?:logbook|equipmentlog)[\/\-](.+)$/i);
-    const logbookAssetId = params.get('logbook') || (params.get('action') === 'equipmentLog' ? params.get('id') : null) || (hashEqLogMatch ? hashEqLogMatch[1] : null);
-    if(logbookAssetId){
+    const logbookCode = params.get('logbook') || (params.get('action') === 'logbook' ? params.get('id') : null) || (hashEqLogMatch ? hashEqLogMatch[1] : null);
+    if(logbookCode){
       showView('logbook', { updateUrl: false });
-      setTimeout(function(){
-        openModal('equipmentLog', logbookAssetId);
-      }, 150);
+      const found = researchEquipments.find(function(e){
+        return e.id.toLowerCase() === logbookCode.toLowerCase() || e.code.toLowerCase() === logbookCode.toLowerCase();
+      });
+      if(found){
+        selectResearchEquipment(found.id);
+      }
       return;
     }
 

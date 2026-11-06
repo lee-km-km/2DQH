@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261106_15">
+  <link rel="stylesheet" href="style.css?v=20261106_16">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -37,6 +37,10 @@
     <button type="button" class="header-tab" data-main-view="consumables" role="tab" aria-selected="false">
       <span class="tab-emoji" aria-hidden="true">📦</span>
       <span class="tab-label">소모품</span>
+    </button>
+    <button type="button" class="header-tab" data-main-view="logbook" role="tab" aria-selected="false">
+      <span class="tab-emoji" aria-hidden="true">🔬</span>
+      <span class="tab-label">연구장비 로그북</span>
     </button>
   </div>
   <div class="top-actions">
@@ -60,13 +64,13 @@
       <span class="nav-icon" aria-hidden="true">📦</span>
       <span>소모품</span>
     </button>
+    <button class="nav" data-view="logbook" id="navLogbook">
+      <span class="nav-icon" aria-hidden="true">🔬</span>
+      <span>연구장비 & 로그북</span>
+    </button>
     <button class="nav" data-view="loans">
       <span class="nav-icon" aria-hidden="true">📋</span>
       <span>대여 현황</span>
-    </button>
-    <button class="nav" data-view="logbook" id="navLogbook">
-      <span class="nav-icon" aria-hidden="true">📖</span>
-      <span>장비 로그북</span>
     </button>
     <button class="nav admin-only hidden" data-view="dashboard">
       <span class="nav-icon" aria-hidden="true">📊</span>
@@ -230,40 +234,226 @@
       </section>
     </section>
 
-    <!-- 연구장비 전자 로그북 뷰 -->
+    <!-- 🔬 연구장비 & 전자 로그북 뷰 (비품과 완전히 분리된 전용 영역) -->
     <section class="view" id="view-logbook">
       <div class="page-head hide-mobile">
         <div class="head-title">
-          <h1>🔬 연구장비 전자 로그북</h1>
-          <span class="count-badge" id="logbookCountBadge">0</span>
+          <h1>🔬 연구장비 &amp; 전자 로그북</h1>
+          <span class="count-badge" id="logbookCountBadge">HR-XRD</span>
         </div>
         <div class="head-actions">
-          <button class="btn" id="btnExportEquipmentLogs" title="연구과제 감사 및 장비 가동률 증빙용 CSV 다운로드">📥 로그북 엑셀 다운로드</button>
-          <button class="btn primary" id="btnAddLogbookEntry">＋ 로그북 작성</button>
+          <button class="btn" id="btnExportEquipmentLogs" title="연구장비 로그북 CSV 다운로드">📥 로그북 CSV</button>
+          <button class="btn primary" id="btnAddResearchEquipment">＋ 새 연구장비 등록</button>
         </div>
       </div>
-      <section class="panel">
-        <div class="toolbar">
-          <div class="search-input-box">
-            <span class="search-input-icon" aria-hidden="true">🔍</span>
-            <input id="logbookSearch" aria-label="로그북 검색" placeholder="장비명, 관리번호, 사용자, 샘플명, 과제명 검색...">
-            <button id="btnClearLogbookSearch" class="btn-clear-search hidden" type="button" aria-label="검색어 지우기">✕</button>
+
+      <!-- 비품과 연구장비 명확한 구별 안내 배너 -->
+      <div class="equipment-guide-banner">
+        <span class="guide-icon">🔬</span>
+        <div class="guide-text">
+          <strong>연구실 핵심 분석·실험장비 독립 관리 구역</strong>
+          <p>※ 공구·멀티미터 등 일반 비품(Inventory)과 분리 관리되며, 로그북이 필수인 연구장비의 가동 이력 및 상태를 정밀 기록합니다.</p>
+        </div>
+      </div>
+
+      <!-- 연구장비 선택 탭 (사용자가 로그북 관리할 장비 선택) -->
+      <div class="research-equipment-tabs" id="researchEquipmentTabs">
+        <!-- JS로 동적 렌더링 -->
+      </div>
+
+      <!-- 단독 Kiosk 모드 배너 (백도어) -->
+      <div class="logbook-standalone-banner hidden" id="logbookStandaloneBanner">
+        <div class="standalone-badge">⚡ 단독 Kiosk 모드</div>
+        <span>IBS 2DQH 연구장비 전자 사용일지 단독 운영 모드입니다. <a href="#inventory" class="text-link">← 비품 대여 시스템으로 돌아가기</a></span>
+      </div>
+
+      <!-- [1] HR-XRD 전용 통합 패널 (2DQH-XRD_log 공식 모델) -->
+      <div id="xrdLogbookContainer">
+        <!-- SOP Notice 주의사항 (접이식) -->
+        <details class="xrd-notice" id="xrdNotice">
+          <summary>⚠️ HR-XRD 사용 주의사항 (Notice &amp; SOP)</summary>
+          <ul>
+            <li>The equipment can <b>only</b> be used with the Superuser's permission after training and confirmation.</li>
+            <li>After use: set X-ray power to minimum (<b>NOT off</b>) and set initial positions (θ/2θ = ZERO etc).</li>
+            <li>Full (max.) power: <b>45 kV / 200 mA</b></li>
+            <li>Low (min.) power: <b>20 kV / 10 mA</b></li>
+          </ul>
+        </details>
+
+        <!-- 실시간 사용 중 상태 알림 -->
+        <div class="xrd-inuse hidden" id="xrdInUse"></div>
+
+        <!-- 진행 중인 활성 세션 카드 -->
+        <div id="xrdActiveBox" class="hidden"></div>
+
+        <!-- XRD 세션 기록 패널 -->
+        <section class="panel xrd-panel">
+          <div class="xrd-modebar" id="xrdModeBar">
+            <b id="xrdModeTitle">Start session (세션 시작)</b>
+            <button type="button" class="text-btn" id="xrdModeLink">Log a finished session instead →</button>
           </div>
-          <select id="logbookEquipmentFilter" aria-label="장비 필터">
-            <option value="all">모든 연구장비</option>
-          </select>
-          <select id="logbookStatusFilter" aria-label="장비 상태 필터">
-            <option value="all">모든 상태</option>
-            <option value="normal">✓ 정상 작동</option>
-            <option value="issue">⚠️ 점검/이상</option>
-          </select>
-        </div>
-        <div class="logbook-standalone-banner hidden" id="logbookStandaloneBanner">
-          <div class="standalone-badge">⚡ 단독 Kiosk 모드</div>
-          <span>IBS 2DQH 연구장비 전자 사용일지 단독 운영 모드입니다. <a href="#inventory" class="text-link">← 비품 대여 시스템으로 돌아가기</a></span>
-        </div>
-        <div id="logbookRows" class="table-wrap" aria-live="polite"></div>
-      </section>
+
+          <form id="xrdForm">
+            <!-- 1. Session -->
+            <div class="xrd-sec">
+              <h2>Session</h2>
+              <div class="xrd-grid xrd-c4">
+                <label>Reservation no. (SESS)
+                  <input name="reservation_no" maxlength="30" inputmode="numeric" placeholder="e.g. 255236">
+                </label>
+                <label>Date *
+                  <input name="used_on" type="date" required>
+                </label>
+                <label>Start *
+                  <select name="start_time" required></select>
+                </label>
+                <label class="xrd-fin">End *
+                  <select name="end_time" required></select>
+                </label>
+              </div>
+              <div class="xrd-durbox xrd-fin">
+                <div class="xrd-durhead">
+                  <span class="sub">Duration (가동 시간):</span>
+                  <span class="xrd-dur" id="xrdDur">1h 00m</span>
+                </div>
+                <div class="xrd-durgrid" id="xrdDurChips"></div>
+              </div>
+            </div>
+
+            <!-- 2. User -->
+            <div class="xrd-sec" id="xrdUserSec">
+              <h2>User</h2>
+              <div class="xrd-grid xrd-c3">
+                <label>User name *
+                  <input name="user_name" required maxlength="100" placeholder="Full name, e.g. Kang-Min Lee">
+                </label>
+                <label>Adviser *
+                  <input name="professor" required maxlength="100" placeholder="Professor, e.g. Prof. Hyeon Suk Shin">
+                </label>
+                <label>Affiliation *
+                  <input name="affiliation" required maxlength="100" placeholder="Department, e.g. 2DQH">
+                </label>
+              </div>
+              <p class="xrd-hint" id="xrdProfileHint">게스트는 직접 입력하며, 관리자/회원 로그인 시 프로필 정보가 자동 입력됩니다.</p>
+            </div>
+
+            <!-- 3. Readings -->
+            <div class="xrd-sec">
+              <h2>Readings</h2>
+              <div class="xrd-grid xrd-c2">
+                <div class="xrd-field">
+                  <span class="xrd-gl">Chiller temp. [°C] *</span>
+                  <div class="xrd-pair">
+                    <label class="xrd-mini">Start<input name="chiller_start" type="number" inputmode="decimal" step="0.1" min="0" max="60" required placeholder="22.0"></label>
+                    <label class="xrd-mini xrd-fin">End<input name="chiller_end" type="number" inputmode="decimal" step="0.1" min="0" max="60" placeholder="22.0"></label>
+                  </div>
+                </div>
+                <div class="xrd-field">
+                  <span class="xrd-gl">Vacuum level [mV] *</span>
+                  <div class="xrd-pair">
+                    <label class="xrd-mini">Start<input name="vacuum_start" type="number" inputmode="numeric" step="1" min="0" required placeholder="90"></label>
+                    <label class="xrd-mini xrd-fin">End<input name="vacuum_end" type="number" inputmode="numeric" step="1" min="0" placeholder="180"></label>
+                  </div>
+                </div>
+              </div>
+              <p class="xrd-hint warn hidden" id="xrdChillerHint">⚠️ Chiller temp. is outside the recommended range (20–24 °C, ±2 °C of 22 °C).</p>
+            </div>
+
+            <!-- 4. Checks -->
+            <div class="xrd-sec xrd-fin">
+              <h2>Checks &amp; Alignment</h2>
+              <div class="xrd-row">
+                <span class="xrd-rl">X-ray Power</span>
+                <div class="xrd-chips">
+                  <button type="button" class="xrd-chip" data-chk="xray_max_ok">Set max. while using</button>
+                  <button type="button" class="xrd-chip" id="xrdMinBtn" data-chk="xray_min_ok" disabled>Set min. after use*</button>
+                </div>
+              </div>
+              <p class="xrd-hint" id="xrdMinHint">Only if you finish outside 10:00–17:00.</p>
+
+              <div class="xrd-row">
+                <span class="xrd-rl">Position</span>
+                <div class="xrd-chips">
+                  <button type="button" class="xrd-chip" data-chk="position_ok">Set initial after use</button>
+                </div>
+              </div>
+              <p class="xrd-hint">Required, or note an issue in Memo / Issue below.</p>
+
+              <div class="xrd-row">
+                <span class="xrd-rl">Align.</span>
+                <div class="xrd-chips">
+                  <button type="button" class="xrd-chip" data-align="BB">BB</button>
+                  <button type="button" class="xrd-chip on" data-align="PB">PB</button>
+                </div>
+              </div>
+
+              <div class="xrd-row">
+                <span class="xrd-rl">Scan type *</span>
+                <div class="xrd-chips" id="xrdScanChips"></div>
+              </div>
+              <input name="scan_other" id="xrdScanOther" maxlength="60" placeholder="etc. (e.g. XRR, GIXRD, RSM)" style="margin-top:8px;">
+            </div>
+
+            <!-- 5. Sample -->
+            <div class="xrd-sec xrd-fin">
+              <h2>Sample</h2>
+              <div class="xrd-grid xrd-c2">
+                <label class="xrd-full">Sample information
+                  <input name="sample_name" maxlength="200" placeholder="e.g. MoS2 Thin film">
+                </label>
+                <label>Number of sample
+                  <select name="sample_count"></select>
+                </label>
+              </div>
+              <details class="xrd-more" id="xrdMoreBox">
+                <summary>Add description (optional)</summary>
+                <div style="margin-top:10px;">
+                  <label>Measurement inform.
+                    <input name="meas_info" maxlength="200" placeholder="e.g. φ-scan, in-plane measurement">
+                  </label>
+                </div>
+              </details>
+            </div>
+
+            <!-- 6. Memo / Issue -->
+            <div class="xrd-sec xrd-fin">
+              <h2>Memo / Issue</h2>
+              <textarea name="memo" rows="2" maxlength="500" placeholder="Anything unusual? (optional)"></textarea>
+            </div>
+
+            <div class="xrd-actions">
+              <button class="btn primary" id="xrdSaveBtn" type="submit">Start session</button>
+              <button class="btn hidden" id="xrdCancelEditBtn" type="button">Cancel edit</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- 5. XRD 로그 내역 테이블 -->
+        <section class="panel">
+          <div class="toolbar" style="margin-bottom:12px;">
+            <div class="search-input-box" style="flex:1;">
+              <span class="search-input-icon">🔍</span>
+              <input id="xrdSearch" placeholder="Search sample, user, adviser, affiliation, scan type...">
+              <button id="btnClearXrdSearch" class="btn-clear-search hidden" type="button">✕</button>
+            </div>
+          </div>
+          <div class="table-wrap" id="xrdRows" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <!-- [2] 일반 연구장비 로그북 컨테이너 (XRD 외 장비 선택 시) -->
+      <div id="generalEquipmentLogContainer" class="hidden">
+        <section class="panel">
+          <div class="toolbar" style="margin-bottom:12px;">
+            <div class="search-input-box" style="flex:1;">
+              <span class="search-input-icon">🔍</span>
+              <input id="generalLogSearch" placeholder="사용자, 연구과제, 샘플명, 특이사항 검색...">
+            </div>
+            <button class="btn primary" id="btnOpenGeneralLogModal">＋ 사용일지 작성</button>
+          </div>
+          <div class="table-wrap" id="generalEquipmentLogRows" aria-live="polite"></div>
+        </section>
+      </div>
     </section>
 
     <!-- 모바일 전용 보조 링크 (대여 현황 및 관리자 기능 격리) -->
@@ -296,7 +486,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261106_15"></script>
-<script src="app.js?v=20261106_15"></script>
+<script src="consumables_catalog.js?v=20261106_16"></script>
+<script src="app.js?v=20261106_16"></script>
 </body>
 </html>
