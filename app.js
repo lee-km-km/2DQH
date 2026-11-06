@@ -31,11 +31,9 @@ const ENABLE_CONSUMABLES = true;
 const ENABLE_EQUIPMENT_LOGBOOK = true;
 let isLocalMode = false;
 
-// [연구장비 독립 관리] 비품(일반 공구/소모성 도구)과 완전히 분리된 전용 연구장비 목록
+// [연구장비 독립 관리] 비품(일반 공구/소모성 도구)과 완전히 분리된 전용 연구장비 목록 (HR-XRD 단독 등록)
 const DEFAULT_RESEARCH_EQUIPMENTS = [
-  { id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', model: 'SmartLab / Rigaku', location: 'IBS 2DQH XRD실', manager: '이강민 / 신현석 교수님', type: 'xrd' },
-  { id: 'EQ-SEM-01', code: 'FE-SEM', name: 'FE-SEM (전계방사형 주사전자현미경)', model: 'JSM-7610F', location: '전자현미경실', manager: '장비담당자', type: 'standard' },
-  { id: 'EQ-GLV-01', code: 'GLOVEBOX', name: 'Inert Atmosphere Glovebox', model: 'UNIlab', location: '2DQH 합성실', manager: '장비담당자', type: 'standard' }
+  { id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', model: 'SmartLab / Rigaku', location: 'IBS 2DQH XRD실', manager: '이강민 / 신현석 교수님', type: 'xrd' }
 ];
 let researchEquipments = [];
 let currentSelectedEquipment = 'EQ-XRD-01';
@@ -248,8 +246,10 @@ function loadLocalStorage(forceReset){
 
   try {
     researchEquipments = JSON.parse(localStorage.getItem('labstock_research_equipments') || 'null');
-    if(!Array.isArray(researchEquipments) || researchEquipments.length === 0){
+    // 사용자 요구: HR-XRD 단독 등록 유지
+    if(!Array.isArray(researchEquipments) || researchEquipments.length === 0 || researchEquipments.some(function(e){ return e.id !== 'EQ-XRD-01'; })){
       researchEquipments = [...DEFAULT_RESEARCH_EQUIPMENTS];
+      try { localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments)); } catch(_) {}
     }
   } catch(e){
     researchEquipments = [...DEFAULT_RESEARCH_EQUIPMENTS];
@@ -2200,25 +2200,77 @@ function initXrdControls(){
     }
   }
   const opt = function(o){ return '<option value="' + o + '">' + o + '</option>'; };
-  if(f.start_time) f.start_time.innerHTML = slots.map(opt).join('');
-  if(f.end_time) f.end_time.innerHTML = slots.map(opt).join('');
-  if(f.sample_count) f.sample_count.innerHTML = XRD_COUNTS.map(function(n){
-    return '<option value="' + n + '">' + (n >= 10 ? '10 or more' : n) + '</option>';
-  }).join('');
+  if(f.start_time && f.start_time.options.length === 0) f.start_time.innerHTML = slots.map(opt).join('');
+  if(f.end_time && f.end_time.options.length === 0) f.end_time.innerHTML = slots.map(opt).join('');
+  if(f.sample_count && f.sample_count.options.length === 0){
+    f.sample_count.innerHTML = XRD_COUNTS.map(function(n){
+      return '<option value="' + n + '">' + (n >= 10 ? '10 or more' : n) + '</option>';
+    }).join('');
+  }
 
   const scanChipsHost = $('xrdScanChips');
-  if(scanChipsHost){
+  if(scanChipsHost && scanChipsHost.children.length === 0){
     scanChipsHost.innerHTML = XRD_SCAN_CHIPS.map(function(c){
       return '<button type="button" class="xrd-chip" data-scan="' + c + '">' + c + '</button>';
     }).join('');
   }
 
   const durChipsHost = $('xrdDurChips');
-  if(durChipsHost){
+  if(durChipsHost && durChipsHost.children.length === 0){
     durChipsHost.innerHTML = [[30,'0.5 h'],[60,'1 h'],[90,'1.5 h'],[120,'2 h'],[180,'3 h'],[240,'4 h']].map(function(x){
-      return '<button type="button" class="xrd-chip" data-xrd-add="' + x[0] + '">' + x[1] + '</button>';
+      return '<button type="button" class="xrd-chip sm" data-xrd-add="' + x[0] + '">' + x[1] + '</button>';
     }).join('');
   }
+
+  // 모드 전환 버튼 (측정 시작 / 측정 완료 일괄 기록)
+  const btnStart = $('btnXrdModeStart');
+  if(btnStart){
+    btnStart.addEventListener('click', function(){
+      showXrdMode('start');
+    });
+  }
+  const btnFull = $('btnXrdModeFull');
+  if(btnFull){
+    btnFull.addEventListener('click', function(){
+      showXrdMode('full');
+    });
+  }
+
+  // 칩 & 토글 클릭 이벤트 위임 (가동시간 퀵 모드, 얼라인 PB/BB, 스캔타입, 점검체크)
+  f.addEventListener('click', function(e){
+    const c = e.target.closest('.xrd-chip');
+    if(!c) return;
+    const addVal = c.dataset.xrdAdd || c.dataset.add;
+    if(addVal){
+      const val = parseInt(addVal, 10);
+      if(f.start_time && f.start_time.value){
+        const parts = f.start_time.value.split(':');
+        const t = ((+parts[0]) * 60 + (+parts[1]) + val) % 1440;
+        f.end_time.value = pad(Math.floor(t / 60)) + ':' + pad(t % 60);
+        updXrdDur();
+        updateXrdChecks(true);
+      }
+      return;
+    }
+    if(c.dataset.chk){
+      xrdChk[c.dataset.chk] = !xrdChk[c.dataset.chk];
+    } else if(c.dataset.align){
+      xrdAlign = c.dataset.align;
+    } else if(c.dataset.scan){
+      if(xrdScanSel.has(c.dataset.scan)){
+        xrdScanSel.delete(c.dataset.scan);
+      } else {
+        xrdScanSel.add(c.dataset.scan);
+      }
+    }
+    updateXrdChecks(false);
+  });
+
+  f.addEventListener('input', function(){
+    updXrdDur();
+    checkXrdChiller();
+    updateXrdChecks(true);
+  });
 
   f.addEventListener('change', function(e){
     if(e.target.name === 'start_time' || e.target.name === 'end_time'){
@@ -2316,7 +2368,7 @@ function updXrdDur(){
   if(!f || !f.start_time || !f.end_time) return;
   const m = minutesBetween(f.start_time.value, f.end_time.value);
   const durEl = $('xrdDur');
-  if(durEl) durEl.textContent = formatDurationHoursMinutes(m);
+  if(durEl) durEl.textContent = m ? '= ' + formatDurationHoursMinutes(m) : '';
 }
 
 function minutesBetween(s, e){
@@ -2344,6 +2396,12 @@ function showXrdMode(m){
   xrdMode = m;
   const f = $('xrdForm');
   if(!f) return;
+
+  const btnStart = $('btnXrdModeStart');
+  const btnFull = $('btnXrdModeFull');
+  if(btnStart) btnStart.classList.toggle('active', m === 'start');
+  if(btnFull) btnFull.classList.toggle('active', m === 'full');
+
   f.classList.toggle('mode-start', m === 'start');
   f.classList.toggle('hidden', m === 'active');
   const activeBox = $('xrdActiveBox');
@@ -2407,6 +2465,7 @@ function resetXrdForm(){
   updXrdDur();
   updateXrdChecks(false);
   checkXrdChiller();
+  paintXrdToggles();
   updateXrdSaveLabel();
   showXrdMode(myActiveXrdSession() ? 'active' : 'start');
 }
@@ -2572,6 +2631,7 @@ function finishXrdSession(id){
   updXrdDur();
   updateXrdChecks(true);
   checkXrdChiller();
+  paintXrdToggles();
 
   const cancelBtn = $('xrdCancelEditBtn');
   if(cancelBtn) cancelBtn.classList.remove('hidden');
@@ -2871,8 +2931,10 @@ function renderLogbook(){
     standaloneBanner.classList.toggle('hidden', !isStandalone);
   }
 
-  renderResearchEquipmentTabs();
-  selectResearchEquipment(currentSelectedEquipment);
+  currentSelectedEquipment = 'EQ-XRD-01';
+  initXrdControls();
+  resetXrdForm();
+  renderXrdLogs();
 }
 
 function exportEquipmentLogsCsv(){
@@ -3870,10 +3932,10 @@ function showView(name, options){
     el.setAttribute('aria-selected', isActive ? 'true' : 'false');
   });
 
-  // 모바일 하단 대여/반납 바: 소모품 및 관리자 화면에서는 숨겨서 화면 영역 확보
+  // 모바일 하단 대여/반납 바: 소모품, 관리자 화면, 로그북 화면에서는 숨겨서 화면 영역 확보
   const mobileBar = $('mobileBar');
   if(mobileBar){
-    mobileBar.classList.toggle('hidden', name === 'consumables' || name === 'dashboard' || name === 'history');
+    mobileBar.classList.toggle('hidden', name === 'consumables' || name === 'dashboard' || name === 'history' || name === 'logbook');
   }
 
   // 모바일 돋보기 버튼 상태 동기화

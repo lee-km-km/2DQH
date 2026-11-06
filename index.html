@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261106_16">
+  <link rel="stylesheet" href="style.css?v=20261106_17">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -234,40 +234,25 @@
       </section>
     </section>
 
-    <!-- 🔬 연구장비 & 전자 로그북 뷰 (비품과 완전히 분리된 전용 영역) -->
+    <!-- 🔬 HR-XRD 전자 로그북 뷰 (2DQH-XRD_log 공식 모델 - 비품과 완전 분리) -->
     <section class="view" id="view-logbook">
       <div class="page-head hide-mobile">
         <div class="head-title">
-          <h1>🔬 연구장비 &amp; 전자 로그북</h1>
-          <span class="count-badge" id="logbookCountBadge">HR-XRD</span>
+          <h1>🔬 HR-XRD 전자 로그북</h1>
+          <span class="count-badge" id="logbookCountBadge">SmartLab · Rigaku</span>
         </div>
         <div class="head-actions">
-          <button class="btn" id="btnExportEquipmentLogs" title="연구장비 로그북 CSV 다운로드">📥 로그북 CSV</button>
-          <button class="btn primary" id="btnAddResearchEquipment">＋ 새 연구장비 등록</button>
+          <button class="btn" id="btnExportEquipmentLogs" title="HR-XRD 로그북 CSV 다운로드">📥 XRD 로그 CSV</button>
         </div>
-      </div>
-
-      <!-- 비품과 연구장비 명확한 구별 안내 배너 -->
-      <div class="equipment-guide-banner">
-        <span class="guide-icon">🔬</span>
-        <div class="guide-text">
-          <strong>연구실 핵심 분석·실험장비 독립 관리 구역</strong>
-          <p>※ 공구·멀티미터 등 일반 비품(Inventory)과 분리 관리되며, 로그북이 필수인 연구장비의 가동 이력 및 상태를 정밀 기록합니다.</p>
-        </div>
-      </div>
-
-      <!-- 연구장비 선택 탭 (사용자가 로그북 관리할 장비 선택) -->
-      <div class="research-equipment-tabs" id="researchEquipmentTabs">
-        <!-- JS로 동적 렌더링 -->
       </div>
 
       <!-- 단독 Kiosk 모드 배너 (백도어) -->
       <div class="logbook-standalone-banner hidden" id="logbookStandaloneBanner">
         <div class="standalone-badge">⚡ 단독 Kiosk 모드</div>
-        <span>IBS 2DQH 연구장비 전자 사용일지 단독 운영 모드입니다. <a href="#inventory" class="text-link">← 비품 대여 시스템으로 돌아가기</a></span>
+        <span>IBS 2DQH HR-XRD 전자 사용일지 단독 운영 모드입니다. <a href="#inventory" class="text-link">← 비품 대여 시스템으로 돌아가기</a></span>
       </div>
 
-      <!-- [1] HR-XRD 전용 통합 패널 (2DQH-XRD_log 공식 모델) -->
+      <!-- HR-XRD 전용 통합 패널 (2DQH-XRD_log 모델) -->
       <div id="xrdLogbookContainer">
         <!-- SOP Notice 주의사항 (접이식) -->
         <details class="xrd-notice" id="xrdNotice">
@@ -288,12 +273,18 @@
 
         <!-- XRD 세션 기록 패널 -->
         <section class="panel xrd-panel">
+          <!-- 모드 전환 탭 (측정 시작 vs 측정 완료 일괄 기록) -->
+          <div class="xrd-mode-switcher">
+            <button type="button" class="xrd-mode-tab active" id="btnXrdModeStart">⚡ 측정 시작 (Start session)</button>
+            <button type="button" class="xrd-mode-tab" id="btnXrdModeFull">📝 측정 완료 일괄 기록 (Log finished session)</button>
+          </div>
+
           <div class="xrd-modebar" id="xrdModeBar">
             <b id="xrdModeTitle">Start session (세션 시작)</b>
             <button type="button" class="text-btn" id="xrdModeLink">Log a finished session instead →</button>
           </div>
 
-          <form id="xrdForm">
+          <form id="xrdForm" class="mode-start">
             <!-- 1. Session -->
             <div class="xrd-sec">
               <h2>Session</h2>
@@ -305,18 +296,125 @@
                   <input name="used_on" type="date" required>
                 </label>
                 <label>Start *
-                  <select name="start_time" required></select>
+                  <select name="start_time" required>
+                    <option value="00:00">00:00</option>
+                    <option value="00:30">00:30</option>
+                    <option value="01:00">01:00</option>
+                    <option value="01:30">01:30</option>
+                    <option value="02:00">02:00</option>
+                    <option value="02:30">02:30</option>
+                    <option value="03:00">03:00</option>
+                    <option value="03:30">03:30</option>
+                    <option value="04:00">04:00</option>
+                    <option value="04:30">04:30</option>
+                    <option value="05:00">05:00</option>
+                    <option value="05:30">05:30</option>
+                    <option value="06:00">06:00</option>
+                    <option value="06:30">06:30</option>
+                    <option value="07:00">07:00</option>
+                    <option value="07:30">07:30</option>
+                    <option value="08:00">08:00</option>
+                    <option value="08:30">08:30</option>
+                    <option value="09:00">09:00</option>
+                    <option value="09:30">09:30</option>
+                    <option value="10:00" selected>10:00</option>
+                    <option value="10:30">10:30</option>
+                    <option value="11:00">11:00</option>
+                    <option value="11:30">11:30</option>
+                    <option value="12:00">12:00</option>
+                    <option value="12:30">12:30</option>
+                    <option value="13:00">13:00</option>
+                    <option value="13:30">13:30</option>
+                    <option value="14:00">14:00</option>
+                    <option value="14:30">14:30</option>
+                    <option value="15:00">15:00</option>
+                    <option value="15:30">15:30</option>
+                    <option value="16:00">16:00</option>
+                    <option value="16:30">16:30</option>
+                    <option value="17:00">17:00</option>
+                    <option value="17:30">17:30</option>
+                    <option value="18:00">18:00</option>
+                    <option value="18:30">18:30</option>
+                    <option value="19:00">19:00</option>
+                    <option value="19:30">19:30</option>
+                    <option value="20:00">20:00</option>
+                    <option value="20:30">20:30</option>
+                    <option value="21:00">21:00</option>
+                    <option value="21:30">21:30</option>
+                    <option value="22:00">22:00</option>
+                    <option value="22:30">22:30</option>
+                    <option value="23:00">23:00</option>
+                    <option value="23:30">23:30</option>
+                  </select>
                 </label>
                 <label class="xrd-fin">End *
-                  <select name="end_time" required></select>
+                  <select name="end_time" required>
+                    <option value="00:00">00:00</option>
+                    <option value="00:30">00:30</option>
+                    <option value="01:00">01:00</option>
+                    <option value="01:30">01:30</option>
+                    <option value="02:00">02:00</option>
+                    <option value="02:30">02:30</option>
+                    <option value="03:00">03:00</option>
+                    <option value="03:30">03:30</option>
+                    <option value="04:00">04:00</option>
+                    <option value="04:30">04:30</option>
+                    <option value="05:00">05:00</option>
+                    <option value="05:30">05:30</option>
+                    <option value="06:00">06:00</option>
+                    <option value="06:30">06:30</option>
+                    <option value="07:00">07:00</option>
+                    <option value="07:30">07:30</option>
+                    <option value="08:00">08:00</option>
+                    <option value="08:30">08:30</option>
+                    <option value="09:00">09:00</option>
+                    <option value="09:30">09:30</option>
+                    <option value="10:00">10:00</option>
+                    <option value="10:30">10:30</option>
+                    <option value="11:00" selected>11:00</option>
+                    <option value="11:30">11:30</option>
+                    <option value="12:00">12:00</option>
+                    <option value="12:30">12:30</option>
+                    <option value="13:00">13:00</option>
+                    <option value="13:30">13:30</option>
+                    <option value="14:00">14:00</option>
+                    <option value="14:30">14:30</option>
+                    <option value="15:00">15:00</option>
+                    <option value="15:30">15:30</option>
+                    <option value="16:00">16:00</option>
+                    <option value="16:30">16:30</option>
+                    <option value="17:00">17:00</option>
+                    <option value="17:30">17:30</option>
+                    <option value="18:00">18:00</option>
+                    <option value="18:30">18:30</option>
+                    <option value="19:00">19:00</option>
+                    <option value="19:30">19:30</option>
+                    <option value="20:00">20:00</option>
+                    <option value="20:30">20:30</option>
+                    <option value="21:00">21:00</option>
+                    <option value="21:30">21:30</option>
+                    <option value="22:00">22:00</option>
+                    <option value="22:30">22:30</option>
+                    <option value="23:00">23:00</option>
+                    <option value="23:30">23:30</option>
+                  </select>
                 </label>
               </div>
+
+              <!-- 가동시간 빠른 퀵 선택 모드 (0.5h ~ 4h) -->
               <div class="xrd-durbox xrd-fin">
                 <div class="xrd-durhead">
                   <span class="sub">Duration (가동 시간):</span>
-                  <span class="xrd-dur" id="xrdDur">1h 00m</span>
+                  <span class="xrd-dur" id="xrdDur">= 1h 00m</span>
                 </div>
-                <div class="xrd-durgrid" id="xrdDurChips"></div>
+                <div class="xrd-durgrid" id="xrdDurChips">
+                  <button type="button" class="xrd-chip sm" data-xrd-add="30">0.5 h</button>
+                  <button type="button" class="xrd-chip sm" data-xrd-add="60">1 h</button>
+                  <button type="button" class="xrd-chip sm" data-xrd-add="90">1.5 h</button>
+                  <button type="button" class="xrd-chip sm" data-xrd-add="120">2 h</button>
+                  <button type="button" class="xrd-chip sm" data-xrd-add="180">3 h</button>
+                  <button type="button" class="xrd-chip sm" data-xrd-add="240">4 h</button>
+                </div>
               </div>
             </div>
 
@@ -334,7 +432,7 @@
                   <input name="affiliation" required maxlength="100" placeholder="Department, e.g. 2DQH">
                 </label>
               </div>
-              <p class="xrd-hint" id="xrdProfileHint">게스트는 직접 입력하며, 관리자/회원 로그인 시 프로필 정보가 자동 입력됩니다.</p>
+              <p class="xrd-hint" id="xrdProfileHint">사용자 정보를 입력하면 다음 번에 자동으로 채워집니다.</p>
             </div>
 
             <!-- 3. Readings -->
@@ -389,7 +487,14 @@
 
               <div class="xrd-row">
                 <span class="xrd-rl">Scan type *</span>
-                <div class="xrd-chips" id="xrdScanChips"></div>
+                <div class="xrd-chips" id="xrdScanChips">
+                  <button type="button" class="xrd-chip" data-scan="θ/2θ">θ/2θ</button>
+                  <button type="button" class="xrd-chip" data-scan="2θ/ω">2θ/ω</button>
+                  <button type="button" class="xrd-chip" data-scan="2θ">2θ</button>
+                  <button type="button" class="xrd-chip" data-scan="ω">ω</button>
+                  <button type="button" class="xrd-chip" data-scan="χ">χ</button>
+                  <button type="button" class="xrd-chip" data-scan="φ">φ</button>
+                </div>
               </div>
               <input name="scan_other" id="xrdScanOther" maxlength="60" placeholder="etc. (e.g. XRR, GIXRD, RSM)" style="margin-top:8px;">
             </div>
@@ -402,7 +507,18 @@
                   <input name="sample_name" maxlength="200" placeholder="e.g. MoS2 Thin film">
                 </label>
                 <label>Number of sample
-                  <select name="sample_count"></select>
+                  <select name="sample_count" required>
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10 or more</option>
+                  </select>
                 </label>
               </div>
               <details class="xrd-more" id="xrdMoreBox">
@@ -422,7 +538,7 @@
             </div>
 
             <div class="xrd-actions">
-              <button class="btn primary" id="xrdSaveBtn" type="submit">Start session</button>
+              <button class="btn primary" id="xrdSaveBtn" type="submit" style="background:#2457d6;border-color:#2457d6;font-weight:700;">Start session</button>
               <button class="btn hidden" id="xrdCancelEditBtn" type="button">Cancel edit</button>
             </div>
           </form>
@@ -438,20 +554,6 @@
             </div>
           </div>
           <div class="table-wrap" id="xrdRows" aria-live="polite"></div>
-        </section>
-      </div>
-
-      <!-- [2] 일반 연구장비 로그북 컨테이너 (XRD 외 장비 선택 시) -->
-      <div id="generalEquipmentLogContainer" class="hidden">
-        <section class="panel">
-          <div class="toolbar" style="margin-bottom:12px;">
-            <div class="search-input-box" style="flex:1;">
-              <span class="search-input-icon">🔍</span>
-              <input id="generalLogSearch" placeholder="사용자, 연구과제, 샘플명, 특이사항 검색...">
-            </div>
-            <button class="btn primary" id="btnOpenGeneralLogModal">＋ 사용일지 작성</button>
-          </div>
-          <div class="table-wrap" id="generalEquipmentLogRows" aria-live="polite"></div>
         </section>
       </div>
     </section>
@@ -487,6 +589,6 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script src="consumables_catalog.js?v=20261106_16"></script>
-<script src="app.js?v=20261106_16"></script>
+<script src="app.js?v=20261106_17"></script>
 </body>
 </html>
