@@ -2081,6 +2081,9 @@ function openModal(mode, id){
     } else {
       const meta = parseConsumableMeta(c);
       const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
+      const lastWorkLoc = localStorage.getItem('labstock_last_work_location') || '3층 화학실 흄후드 1번';
+      const lastWorkDesc = localStorage.getItem('labstock_last_work_description') || '2D Flake 박리 기판 세척 및 린스';
+      const lastUnit = localStorage.getItem('labstock_last_unit') || 'mL';
       const nowStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
       const ci = getControlledSubstanceInfo(c);
@@ -2102,11 +2105,42 @@ function openModal(mode, id){
       parts.push('<label class="field">취급자 성명 *<input name="handler_name" required maxlength="50" value="' + safe(lastBorrower) + '" placeholder="예: 홍길동"></label>');
       parts.push('<label class="field">취급 일시 *<input name="used_at" type="datetime-local" required value="' + nowStr + '"></label>');
 
-      parts.push('<label class="field">사용량 (취급량) *<input name="quantity" type="number" min="0.001" step="any" required placeholder="예: 25"></label>');
-      parts.push('<label class="field">단위 *<select name="unit"><option value="mL">mL (밀리리터)</option><option value="mg">mg (밀리그램)</option><option value="g">g (그램)</option></select></label>');
+      parts.push('<label class="field">사용량 (취급량) *<input name="quantity" type="number" min="0.001" step="any" required placeholder="예: 25">');
+      parts.push('<div class="preset-chips-wrap">');
+      parts.push('<span class="preset-chips-label">⚡ 빠른 수량:</span>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="5">5</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="10">10</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="25">25</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="50">50</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="quantity" data-set-val="100">100</button>');
+      parts.push('</div></label>');
 
-      parts.push('<label class="field full">작업 장소 *<input name="work_location" required maxlength="100" value="화학실험실 흄후드" placeholder="예: 3층 화학실 흄후드 3번"></label>');
-      parts.push('<label class="field full">취급 작업 내용 *<input name="work_description" required maxlength="200" placeholder="예: 2D Flake 박리 기판 세척 및 린스"></label>');
+      parts.push('<label class="field">단위 *<select name="unit">' +
+        '<option value="mL"' + (lastUnit === 'mL' ? ' selected' : '') + '>mL (밀리리터)</option>' +
+        '<option value="mg"' + (lastUnit === 'mg' ? ' selected' : '') + '>mg (밀리그램)</option>' +
+        '<option value="g"' + (lastUnit === 'g' ? ' selected' : '') + '>g (그램)</option>' +
+        '</select></label>');
+
+      parts.push('<label class="field full">작업 장소 *<input name="work_location" required maxlength="100" value="' + safe(lastWorkLoc) + '" placeholder="예: 3층 화학실 흄후드 1번">');
+      parts.push('<div class="preset-chips-wrap">');
+      parts.push('<span class="preset-chips-label">⚡ 장소 퀵선택:</span>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_location" data-set-val="3층 화학실 흄후드 1번">흄후드 1번</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_location" data-set-val="3층 화학실 흄후드 2번">흄후드 2번</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_location" data-set-val="클린룸 배기벤치">클린룸 벤치</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_location" data-set-val="PVD실 글로브박스">글로브박스</button>');
+      parts.push('</div></label>');
+
+      parts.push('<label class="field full">취급 작업 내용 *<input name="work_description" required maxlength="200" value="' + safe(lastWorkDesc) + '" placeholder="예: 2D Flake 박리 기판 세척 및 린스">');
+      parts.push('<div class="preset-chips-wrap">');
+      parts.push('<span class="preset-chips-label">⚡ 작업 퀵선택:</span>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_description" data-set-val="2D Flake 박리 기판 세척 및 린스">기판 세척/린스</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_description" data-set-val="화학재료 합성 전처리">합성 전처리</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_description" data-set-val="단결정 성장 후처리 세정">결정 세정</button>');
+      parts.push('<button type="button" class="btn-preset-chip" data-set-field="work_description" data-set-val="용매 추출 및 분액">용매 추출</button>');
+      if(lastWorkDesc && lastWorkDesc !== '2D Flake 박리 기판 세척 및 린스'){
+        parts.push('<button type="button" class="btn-preset-chip preset-recent" data-set-field="work_description" data-set-val="' + safe(lastWorkDesc) + '">⚡ 최근작업 재사용</button>');
+      }
+      parts.push('</div></label>');
 
       parts.push('<div class="field full ppe-checkbox-group">');
       parts.push('<span class="field-label" style="font-weight:700;margin-bottom:6px;display:block;">법정 안전조치 확인 *</span>');
@@ -2478,6 +2512,15 @@ async function saveForm(e){
 
       if(v.handler_name){
         localStorage.setItem('labstock_last_borrower_name', v.handler_name.trim());
+      }
+      if(v.work_location){
+        localStorage.setItem('labstock_last_work_location', v.work_location.trim());
+      }
+      if(v.work_description){
+        localStorage.setItem('labstock_last_work_description', v.work_description.trim());
+      }
+      if(v.unit){
+        localStorage.setItem('labstock_last_unit', v.unit.trim());
       }
 
       // 1. 브라우저 로컬 영구 보존 (30년 보존 규정 대비 오프라인 및 즉시 보존)
@@ -2934,6 +2977,25 @@ function bindEvents(){
   document.addEventListener('click', function(e){
     const target = e.target.closest('button');
     if(!target) return;
+
+    // 스마트 퀵 프리셋 칩 터치 시 해당 필드 즉시 입력 & 햅틱 시각 피드백
+    if(target.classList.contains('btn-preset-chip') || target.dataset.setField){
+      const fieldName = target.dataset.setField;
+      const fieldVal = target.dataset.setVal;
+      if(fieldName && fieldVal !== undefined){
+        const modalForm = $('modalForm');
+        if(modalForm){
+          const input = modalForm.querySelector('[name="' + fieldName + '"]');
+          if(input){
+            input.value = fieldVal;
+            input.focus();
+            target.classList.add('active-pulse');
+            setTimeout(function(){ target.classList.remove('active-pulse'); }, 200);
+          }
+        }
+      }
+      return;
+    }
 
     if(target.dataset.mainView){
       showView(target.dataset.mainView);
@@ -3491,6 +3553,38 @@ function subscribeRealtime(){
   }
 }
 
+// QR 코드 스캔 및 URL 딥링크 다이렉트 액션 진입 (Sortly/Snipe-IT 스타일 Fast Track)
+function handleUrlFastTrack(){
+  try {
+    const params = new URLSearchParams(window.location.search);
+
+    // 1. 특별관리물질 취급일지 다이렉트 진입 (?log=CS-041 or ?action=chemicalLog&id=CS-041)
+    const logId = params.get('log') || (params.get('action') === 'chemicalLog' ? params.get('id') : null);
+    if(logId){
+      showView('consumables');
+      selectedConsumableCategory = '시약·화학';
+      displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
+      renderConsumables();
+      setTimeout(function(){
+        openModal('chemicalLog', logId);
+      }, 150);
+      return;
+    }
+
+    // 2. 비품 대여 다이렉트 진입 (?loan=A-001 or ?action=borrow&id=A-001)
+    const loanId = params.get('loan') || (params.get('action') === 'borrow' ? params.get('id') : null);
+    if(loanId){
+      showView('inventory');
+      setTimeout(function(){
+        openModal('borrow', loanId);
+      }, 150);
+      return;
+    }
+  } catch(e) {
+    console.warn('URL Fast-track 처리 실패:', e);
+  }
+}
+
 async function initApp(){
   bindEvents();
 
@@ -3513,6 +3607,7 @@ async function initApp(){
       conn.textContent = '로컬 테스트 모드';
       conn.style.color = '#15803d';
     }
+    handleUrlFastTrack();
     return;
   }
 
@@ -3529,6 +3624,7 @@ async function initApp(){
 
   await loadData();
   subscribeRealtime();
+  handleUrlFastTrack();
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
