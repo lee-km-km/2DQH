@@ -922,7 +922,18 @@ function calcSmartDueDate(days = 1){
 }
 
 function calcSmartDueDateFor(baseDateStr, days = 1){
-  const base = baseDateStr ? new Date(baseDateStr + 'T00:00:00') : new Date();
+  let base;
+  if(baseDateStr){
+    const cleanStr = String(baseDateStr).trim().slice(0, 10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)){
+      base = new Date(cleanStr + 'T00:00:00');
+    } else {
+      base = new Date(baseDateStr);
+    }
+  }
+  if(!base || isNaN(base.getTime())){
+    base = new Date();
+  }
   base.setDate(base.getDate() + Number(days));
   const dayOfWeek = base.getDay();
   if(dayOfWeek === 6){ // 토요일 -> 월요일 (+2일)
@@ -1692,18 +1703,11 @@ function renderInventory(){
         actionBtn += '<button class="text-btn btn-action-borrow" data-borrow="' + safe(a.id) + '">⚡ 대여 신청</button>';
       } else if(st === 'borrowed'){
         if(canManage){
-          // 본인 대여 비품 (직접 반납 / 연장 가능)
-          if(info && info.canExtend){
-            actionBtn += '<button class="text-btn btn-action-extend" data-extend-loan="' + l.id + '" title="대여 기한을 24시간 연장합니다">⏰ 연장</button>';
-          }
+          // 본인 대여 비품: 깔끔하게 단일 [✓ 반납] 버튼만 노출 (대여 신청 버튼과 동일한 크기/단일 행 유지, 24시간 연장은 상단 배너 및 반납 모달에서 1클릭 지원)
           actionBtn += '<button class="text-btn btn-action-return" data-return="' + l.id + '">✓ 반납</button>';
         } else {
-          // 타인 대여 비품 (작업 컬럼에는 깔끔한 단일 칩만 노출하여 모바일 UI 가림/넘침 원천 차단)
-          if(isOverdue){
-            actionBtn += '<span class="status-chip overdue-chip" title="반납 기한 초과 (대여자: ' + safe(bName) + ')">⚠️ 기한 지남</span>';
-          } else {
-            actionBtn += '<span class="status-chip borrowed-chip" title="현재 대여 중 (대여자: ' + safe(bName) + ')">대여 중</span>';
-          }
+          // 타인 대여 비품: 줄바꿈/너비 낭비 없는 컴팩트 칩 노출
+          actionBtn += '<span class="status-chip locked-chip">대여 중</span>';
         }
       }
 
@@ -1902,8 +1906,9 @@ async function extendLoan(loanId, days = 1){
   }
 
   const todayStr = today();
-  // 기준일: 만약 기존 due_date가 오늘보다 이전이거나 오늘이면 오늘 기준, 미래이면 기존 due_date 기준
-  const baseDate = (!target.due_date || target.due_date < todayStr) ? todayStr : target.due_date;
+  // 기준일: 만약 기존 due_date가 오늘보다 이전이거나 비정상 값이면 오늘 기준, 미래이면 기존 due_date 기준
+  const rawDue = (target.due_date && target.due_date.length >= 10 && !target.due_date.includes('NaN')) ? target.due_date.slice(0, 10) : todayStr;
+  const baseDate = (rawDue < todayStr) ? todayStr : rawDue;
   const newDueDate = calcSmartDueDateFor(baseDate, days);
 
   // 연장 횟수 추적
@@ -1916,6 +1921,8 @@ async function extendLoan(loanId, days = 1){
   target.due_date = newDueDate;
   target.memo = updatedMemo;
   saveLocalStorage();
+
+  closeModal();
 
   // 2. Supabase 연동 시 DB 업데이트
   if(db && !isLocalMode){
@@ -5816,6 +5823,13 @@ function openModal(mode, id){
     parts.push('    <div class="return-location-val">' + safe(aLoc) + (aCat ? ' <span class="return-loc-sub">(' + safe(aCat) + ')</span>' : '') + '</div>');
     parts.push('  </div>');
     parts.push('</div>');
+
+    if(targetLoan && canManageLoan(targetLoan)){
+      parts.push('<div class="return-extend-callout" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-subtle,#f8fafc);border:1px solid var(--border,#cbd5e1);border-radius:10px;padding:9px 12px;margin-bottom:12px;">');
+      parts.push('  <span style="font-size:12.5px;color:var(--muted);font-weight:500;">💡 아직 사용 중이신가요?</span>');
+      parts.push('  <button type="button" class="text-btn btn-action-extend" data-extend-loan="' + safe(targetLoan.id) + '" style="font-size:12px;padding:6px 12px;height:auto;min-height:34px;">⏰ 24시간 연장하기</button>');
+      parts.push('</div>');
+    }
 
     parts.push('<div class="return-form-grid">');
     parts.push('<div class="field full return-date-card">');

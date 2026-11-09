@@ -754,12 +754,18 @@ td b { font-weight: 600; color: var(--ink); }
     width: 100%;
     min-width: 920px;
   }
-  #inventoryRows th:nth-child(1), #inventoryRows td:nth-child(1) { width: 30%; min-width: 360px; }
+  #inventoryRows th:nth-child(1), #inventoryRows td:nth-child(1) { width: 30%; min-width: 320px; }
   #inventoryRows th:nth-child(2), #inventoryRows td:nth-child(2) { width: 12%; min-width: 85px; }
-  #inventoryRows th:nth-child(3), #inventoryRows td:nth-child(3) { width: 24%; min-width: 140px; }
+  #inventoryRows th:nth-child(3), #inventoryRows td:nth-child(3) { width: 22%; min-width: 130px; }
   #inventoryRows th:nth-child(4), #inventoryRows td:nth-child(4) { width: 12%; min-width: 90px; }
-  #inventoryRows th:nth-child(5), #inventoryRows td:nth-child(5) { width: 10%; min-width: 75px; }
-  #inventoryRows th:nth-child(6), #inventoryRows td:nth-child(6) { width: 12%; min-width: 95px; text-align: right; }
+  #inventoryRows th:nth-child(5), #inventoryRows td:nth-child(5) { width: 10%; min-width: 80px; }
+  #inventoryRows th:nth-child(6), #inventoryRows td:nth-child(6) { width: 14%; min-width: 125px; text-align: right; white-space: nowrap; }
+
+  #inventoryRows td.col-action {
+    white-space: nowrap !important;
+    text-align: right;
+    vertical-align: middle;
+  }
 
   .col-main {
     display: flex;
@@ -1624,7 +1630,30 @@ tbody tr:hover .asset-thumb-box {
     background: var(--brand-red-hover) !important;
     transform: scale(0.96) !important;
   }
-  .col-action .borrowed-chip {
+  .col-action .btn-action-return {
+    height: 42px !important;
+    min-width: 86px !important;
+    padding: 0 14px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    background: #16a34a !important;
+    color: #ffffff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25) !important;
+    transition: background 0.15s, transform 0.1s !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+  .col-action .btn-action-return:active {
+    background: #15803d !important;
+    transform: scale(0.96) !important;
+  }
+  .col-action .borrowed-chip,
+  .col-action .locked-chip {
     padding: 8px 12px !important;
     font-size: 12px !important;
     border-radius: 10px !important;
@@ -1633,6 +1662,10 @@ tbody tr:hover .asset-thumb-box {
     color: #475569 !important;
     border: 1px solid #e2e8f0 !important;
     font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
   }
   
   /* Native App Bottom Sheet Modal */
