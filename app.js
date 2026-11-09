@@ -5702,22 +5702,7 @@ function openModal(mode, id){
       parts.push('  </div>');
       parts.push('</div>');
 
-      parts.push('<div class="field full return-date-card">');
-      parts.push('  <div class="return-date-header-row">');
-      parts.push('    <div class="return-date-title-wrap">');
-      parts.push('      <span class="field-title" style="margin:0;font-size:13px;font-weight:700;color:var(--text-primary);">실제 반납일</span>');
-      parts.push('      <span class="return-date-badge" id="quickReturnDateBadge">오늘 반납</span>');
-      parts.push('    </div>');
-      parts.push('    <div class="return-date-picker-wrap">');
-      parts.push('      <input name="returned_at" type="date" required value="' + today() + '" class="return-date-input" id="quickReturnedAtInput">');
-      parts.push('    </div>');
-      parts.push('  </div>');
-      parts.push('  <div class="preset-chips-wrap return-date-chips">');
-      parts.push('    <span class="preset-chips-label">빠른 선택:</span>');
-      parts.push('    <button type="button" class="btn-preset-chip active" data-set-field="returned_at" data-set-val="' + today() + '">오늘 반납</button>');
-      parts.push('    <button type="button" class="btn-preset-chip" data-set-field="returned_at" data-set-val="' + calcPastDate(1) + '">어제 반납</button>');
-      parts.push('  </div>');
-      parts.push('</div>');
+      parts.push('<input type="hidden" name="returned_at" value="' + today() + '">');
 
       parts.push('<div class="field full">');
       parts.push('  <label class="field-label" style="display:block;margin-bottom:6px;font-size:12.5px;font-weight:600;color:var(--text-secondary);">비품 상태 점검 및 메모 (선택)</label>');
@@ -5824,30 +5809,8 @@ function openModal(mode, id){
     parts.push('  </div>');
     parts.push('</div>');
 
-    if(targetLoan && canManageLoan(targetLoan)){
-      parts.push('<div class="return-extend-callout" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg-subtle,#f8fafc);border:1px solid var(--border,#cbd5e1);border-radius:10px;padding:9px 12px;margin-bottom:12px;">');
-      parts.push('  <span style="font-size:12.5px;color:var(--muted);font-weight:500;">💡 아직 사용 중이신가요?</span>');
-      parts.push('  <button type="button" class="text-btn btn-action-extend" data-extend-loan="' + safe(targetLoan.id) + '" style="font-size:12px;padding:6px 12px;height:auto;min-height:34px;">⏰ 24시간 연장하기</button>');
-      parts.push('</div>');
-    }
-
     parts.push('<div class="return-form-grid">');
-    parts.push('<div class="field full return-date-card">');
-    parts.push('  <div class="return-date-header-row">');
-    parts.push('    <div class="return-date-title-wrap">');
-    parts.push('      <span class="field-title" style="margin:0;font-size:13px;font-weight:700;color:var(--text-primary);">실제 반납일</span>');
-    parts.push('      <span class="return-date-badge" id="returnDateBadge">오늘 반납</span>');
-    parts.push('    </div>');
-    parts.push('    <div class="return-date-picker-wrap">');
-    parts.push('      <input name="returned_at" type="date" required value="' + today() + '" min="' + lStartDate + '" class="return-date-input" id="returnedAtInput">');
-    parts.push('    </div>');
-    parts.push('  </div>');
-    parts.push('  <div class="preset-chips-wrap return-date-chips">');
-    parts.push('    <span class="preset-chips-label">빠른 선택:</span>');
-    parts.push('    <button type="button" class="btn-preset-chip active" data-set-field="returned_at" data-set-val="' + today() + '">오늘 반납</button>');
-    parts.push('    <button type="button" class="btn-preset-chip" data-set-field="returned_at" data-set-val="' + calcPastDate(1) + '">어제 반납</button>');
-    parts.push('  </div>');
-    parts.push('</div>');
+    parts.push('<input type="hidden" name="returned_at" value="' + today() + '">');
 
     // 비품 상태 원터치 칩 및 반납 메모
     parts.push('<div class="field full">');
@@ -6819,10 +6782,18 @@ function bindEvents(){
     if(conn){ conn.textContent = '오프라인 (읽기 전용)'; conn.style.color = '#b45309'; }
   });
 
+  // 모바일 드로어 오버레이 클릭/터치 시 즉시 닫기
+  addEvt('mobileDrawerOverlay', 'click', closeMobileDrawer);
+  addEvt('mobileDrawerOverlay', 'touchstart', function(e){
+    e.preventDefault();
+    closeMobileDrawer();
+  });
+
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
     el.addEventListener('click', function(){
       if(el.dataset.limsNav) return; // LIMS 서브 내비게이션은 LIMS 전용 핸들러에서 라우팅
       showView(el.dataset.view, { pushState: true });
+      loadData(); // 탭 클릭 시 최신 DB 데이터 즉시 동기화 새로고침
     });
   });
 
@@ -7207,20 +7178,26 @@ function bindEvents(){
       return;
     }
 
-    // 모바일 슬라이드 아웃 서랍(Drawer) 열기/닫기
+    // 모바일 슬라이드 아웃 서랍(Drawer) 열기
     if(target.id === 'btnOpenMobileDrawer' || target.closest('#btnOpenMobileDrawer') || target.id === 'bottomTabMenu' || target.closest('#bottomTabMenu')){
       openMobileDrawer();
       return;
     }
-    if(target.id === 'btnCloseMobileDrawer' || target.closest('#btnCloseMobileDrawer') || target.id === 'mobileDrawerOverlay'){
-      closeMobileDrawer();
-      return;
+    // 모바일 슬라이드 아웃 서랍 닫기 (✕ 버튼, 흐릿한 바깥 오버레이 터치 시 즉시 취소/닫기)
+    const isSidebarOpen = $('mainSidebar') && $('mainSidebar').classList.contains('drawer-open');
+    if(isSidebarOpen){
+      if(target.id === 'btnCloseMobileDrawer' || target.closest('#btnCloseMobileDrawer') || target.id === 'mobileDrawerOverlay' || !target.closest('#mainSidebar')){
+        closeMobileDrawer();
+        return;
+      }
     }
 
-    // 모바일 하단 탭 내비게이션
+    // 모바일 하단 탭 내비게이션 (대여현황 / 소모품 / 비품대여 / 연구장비 탭 전환 및 데이터 즉시 새로고침)
     const bTab = target.dataset.view ? target : target.closest('.bottom-nav-tab[data-view]');
     if(bTab){
-      showView(bTab.dataset.view, { pushState: true });
+      const nextView = bTab.dataset.view;
+      showView(nextView, { pushState: true });
+      loadData(); // 최신 대여현황 및 재고 데이터 즉시 동기화 새로고침
       return;
     }
 
