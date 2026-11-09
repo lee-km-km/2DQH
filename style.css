@@ -4687,3 +4687,77 @@ tr.row-overdue:hover {
   color: #94a3b8 !important;
 }
 
+/* Phase 2: LIMS 파라미터 규격서 & 시험 가동 스타일 */
+.eq-schema-details {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-top: 14px;
+}
+.eq-schema-details[open] {
+  padding-bottom: 16px;
+}
+.eq-schema-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+}
+.eq-schema-sec-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+.eq-schema-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.eq-schema-badge {
+  padding: 4px 10px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.eq-test-sessions-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+}
+.eq-test-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+}
+.eq-test-item:last-child {
+  border-bottom: none;
+}
+
+[data-theme="dark"] .eq-schema-details {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-schema-badge {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-test-sessions-box {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-test-item {
+  border-bottom-color: #232f46 !important;
+}
+

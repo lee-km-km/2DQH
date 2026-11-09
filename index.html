@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_01">
+  <link rel="stylesheet" href="style.css?v=20261109_02">
   <script>
     (function(){
       try {
@@ -720,13 +720,44 @@
             </div>
           </div>
 
-          <div class="eq-standby-actions">
+          <!-- Phase 2: LIMS 파라미터 규격서 (Schema Spec) 접이식 패널 -->
+          <details class="eq-schema-details" id="eqSchemaDetails" open>
+            <summary style="cursor:pointer;font-weight:700;font-size:13.5px;color:var(--primary);padding:8px 0;">🧪 LIMS 파라미터 규격 &amp; 측정 지표 미리보기 (Phase 2 엔진)</summary>
+            <div class="eq-schema-content" id="eqSchemaContent" style="margin-top:12px;"></div>
+          </details>
+
+          <!-- 최근 시험 가동 기록 목록 (있을 경우) -->
+          <div class="eq-test-sessions-box hidden" id="eqTestSessionsBox" style="margin-top:16px;">
+            <h4 style="margin:0 0 8px;font-size:13.5px;color:var(--ink);">📋 최근 시험 가동 기록</h4>
+            <div id="eqTestSessionsList"></div>
+          </div>
+
+          <div class="eq-standby-actions" style="margin-top:20px;">
+            <button type="button" class="btn primary" id="btnTestDriveEquipment">⚡ 시험 가동 (Test-Drive)</button>
+            <button type="button" class="btn desktop-only" id="btnToggleEqActive" title="이 장비를 실운영 디지털 로그북으로 활성화">🟢 실운영 활성화</button>
             <button type="button" class="btn btn-back-hub" id="btnPlaceholderBackBottom">← 전체 연구장비 목록</button>
           </div>
         </div>
       </div>
     </div><!-- /equipmentDetailHub -->
   </section>
+
+  <!-- Phase 2 범용 장비 시험 가동 모달 -->
+  <div id="modalTestDriveBackdrop" class="backdrop">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="testDriveModalTitle" style="max-width:620px;width:min(620px,94vw);">
+      <div class="modal-head">
+        <h2 id="testDriveModalTitle">⚡ 장비 세션 시험 가동 (Test-Drive)</h2>
+        <button class="icon-btn" id="closeTestDriveModal" aria-label="닫기"><span aria-hidden="true">×</span></button>
+      </div>
+      <form id="testDriveForm">
+        <div id="testDriveFormDynamicContent"></div>
+        <div class="modal-actions" style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" class="btn" id="btnCancelTestDrive">취소</button>
+          <button type="submit" class="btn primary" id="btnSaveTestDrive" style="background:#2457d6;border-color:#2457d6;font-weight:700;">✓ 시험 기록 저장 (Save)</button>
+        </div>
+      </form>
+    </section>
+  </div>
 
     <!-- 모바일 전용 보조 링크 (대여 현황 및 관리자 기능 격리) -->
     <footer class="mobile-sub-footer">
@@ -787,7 +818,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261109_01"></script>
-<script src="app.js?v=20261109_01"></script>
+<script src="consumables_catalog.js?v=20261109_02"></script>
+<script src="app.js?v=20261109_02"></script>
 </body>
 </html>

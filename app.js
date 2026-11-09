@@ -172,6 +172,155 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
 let selectedEquipmentCategory = 'all';
 let researchEquipments = [];
 let currentSelectedEquipment = 'EQ-XRD-01';
+let equipmentSessions = [];
+
+// [Phase 2: LIMS 범용 장비 파라미터 스키마 레지스트리 (9대 전 기종 표준)]
+const EQUIPMENT_SCHEMAS = {
+  'XRD': {
+    name: 'HR-XRD (고분해능 X선 회절분석기)',
+    readings: [
+      { key: 'chiller_start', label: 'Chiller temp. (시작)', unit: '°C', step: 0.1, placeholder: '22.0', warnMin: 20, warnMax: 24 },
+      { key: 'vacuum_start', label: 'Vacuum level (시작)', unit: 'mV', step: 1, placeholder: '90' }
+    ],
+    checks: [
+      { key: 'xray_max_ok', label: 'Set max. while using (최대 전력 점검)' },
+      { key: 'position_ok', label: 'Set initial after use (초기 각도 복귀)' },
+      { key: 'xray_min_ok', label: 'Set min. after use (최소 전력 전환)' }
+    ],
+    options: [
+      { key: 'align', label: 'Align.', choices: ['PB', 'BB'], default: 'PB' }
+    ],
+    scanTypes: ['θ/2θ', '2θ/ω', '2θ', 'ω', 'χ', 'φ']
+  },
+  'AFM': {
+    name: 'AFM (원자간력현미경)',
+    readings: [
+      { key: 'laser_sum', label: 'Laser Sum Signal', unit: 'V', step: 0.1, placeholder: '6.5', warnMin: 4.0 },
+      { key: 'drive_amp', label: 'Drive Amplitude', unit: 'mV', step: 1, placeholder: '250' }
+    ],
+    checks: [
+      { key: 'tip_mounted_ok', label: 'Tip securely mounted & aligned (팁 안착 확인)' },
+      { key: 'tune_ok', label: 'Resonance peak tuned (공진 주파수 튜닝)' },
+      { key: 'parked_ok', label: 'Z-stage withdrawn & parked (스테이지 복귀)' }
+    ],
+    options: [
+      { key: 'mode', label: 'Scan Mode', choices: ['Tapping', 'Contact', 'PeakForce', 'EFM/MFM'], default: 'Tapping' }
+    ],
+    scanTypes: ['Height (Topography)', 'Phase', 'Amplitude', 'Current', 'Friction']
+  },
+  'FT-IR': {
+    name: 'FT-IR (적외선 분광기)',
+    readings: [
+      { key: 'resolution', label: 'Resolution', unit: 'cm⁻¹', step: 1, placeholder: '4' },
+      { key: 'scans', label: 'Accumulation', unit: 'scans', step: 1, placeholder: '32' }
+    ],
+    checks: [
+      { key: 'purge_ok', label: 'N₂ purge gas flow confirmed (퍼지 가스 흐름 확인)' },
+      { key: 'background_ok', label: 'Background reference scanned (백그라운드 측정)' },
+      { key: 'crystal_cleaned_ok', label: 'ATR crystal cleaned with IPA (크리스탈 세척)' }
+    ],
+    options: [
+      { key: 'accessory', label: 'Accessory', choices: ['ATR (Diamond)', 'Transmission', 'Diffuse (DRIFTS)'], default: 'ATR (Diamond)' }
+    ],
+    scanTypes: ['Absorbance', 'Transmittance', 'Reflectance']
+  },
+  'RAMAN': {
+    name: 'RAMAN (라만 분광기)',
+    readings: [
+      { key: 'laser_power', label: 'Laser Power', unit: '%', step: 1, placeholder: '10' },
+      { key: 'int_time', label: 'Integration Time', unit: 's', step: 0.5, placeholder: '5.0' }
+    ],
+    checks: [
+      { key: 'si_calib_ok', label: '520.7 cm⁻¹ Si calibration verified (Si 피크 교정)' },
+      { key: 'shutter_ok', label: 'Laser safety shutter closed (안전 셔터 차단)' }
+    ],
+    options: [
+      { key: 'wavelength', label: 'Laser Wavelength', choices: ['532 nm (Green)', '633 nm (Red)', '785 nm (NIR)'], default: '532 nm (Green)' },
+      { key: 'objective', label: 'Objective', choices: ['10×', '50×', '100×'], default: '50×' }
+    ],
+    scanTypes: ['Single Spectrum', 'XY Surface Mapping', 'Z Depth Profile', 'Time Series']
+  },
+  'TEM': {
+    name: 'TEM (투과전자현미경)',
+    readings: [
+      { key: 'col_vacuum', label: 'Column Vacuum', unit: '×10⁻⁵ Pa', step: 0.1, placeholder: '2.0', warnMax: 4.0 },
+      { key: 'emission_current', label: 'Emission Current', unit: 'μA', step: 1, placeholder: '105' }
+    ],
+    checks: [
+      { key: 'cold_trap_ok', label: 'Liquid N₂ cold trap filled (액체질소 트랩 주입)' },
+      { key: 'gun_align_ok', label: 'Gun & beam alignment verified (전자총 정렬)' },
+      { key: 'valves_closed_ok', label: 'Column beam valves closed (컬럼 밸브 폐쇄)' }
+    ],
+    options: [
+      { key: 'acc_voltage', label: 'Acc. Voltage', choices: ['80 kV', '120 kV', '200 kV', '300 kV'], default: '200 kV' }
+    ],
+    scanTypes: ['Bright Field (BF)', 'Dark Field (DF)', 'HR-TEM', 'SAED Diffraction', 'EDS Mapping']
+  },
+  'Ebeamsputter': {
+    name: 'E-beam Sputter (전자빔 스퍼터/증착기)',
+    readings: [
+      { key: 'base_press', label: 'Base Vacuum', unit: '×10⁻⁶ Torr', step: 0.1, placeholder: '2.5', warnMax: 5.0 },
+      { key: 'dep_rate', label: 'Deposition Rate', unit: 'Å/s', step: 0.1, placeholder: '1.0' }
+    ],
+    checks: [
+      { key: 'cooling_ok', label: 'Cooling water flow verified (냉각수 유량 확인)' },
+      { key: 'pocket_ok', label: 'Pocket crucible centered (포켓 위치 정렬)' },
+      { key: 'shutter_ok', label: 'Substrate shutter closed & cooled (셔터 닫힘 및 냉각)' }
+    ],
+    options: [
+      { key: 'source', label: 'Target Source', choices: ['Ti', 'Au', 'Pt', 'Cr', 'Ni', 'SiO₂'], default: 'Ti' }
+    ],
+    scanTypes: ['Single Layer', 'Multilayer Stack', 'Adhesion Layer']
+  },
+  'ALD': {
+    name: 'ALD (원자층 증착기)',
+    readings: [
+      { key: 'temp', label: 'Chamber Temp.', unit: '°C', step: 1, placeholder: '200' },
+      { key: 'cycles', label: 'Cycle Count', unit: 'cycles', step: 1, placeholder: '150' }
+    ],
+    checks: [
+      { key: 'precursor_ok', label: 'Precursor heating stabilized (전구체 가열 안정화)' },
+      { key: 'scrubber_ok', label: 'Exhaust pump & scrubber verified (배기 스크러버 점검)' },
+      { key: 'purge_ok', label: 'Post-process N₂ purge completed (종료 후 질소 퍼지)' }
+    ],
+    options: [
+      { key: 'recipe', label: 'Recipe', choices: ['Al₂O₃ (TMA+H₂O)', 'TiO₂ (TiCl₄+H₂O)', 'HfO₂ (TEMAH+H₂O)', 'ZnO (DEZ+H₂O)'], default: 'Al₂O₃ (TMA+H₂O)' }
+    ],
+    scanTypes: ['Atomic Layer Deposition', 'Surface Passivation', '2D Hetero Interface']
+  },
+  'Co-sputter': {
+    name: 'Co-sputter (동시 스퍼터링 시스템)',
+    readings: [
+      { key: 'base_press', label: 'Base Vacuum', unit: '×10⁻⁶ Torr', step: 0.1, placeholder: '3.0' },
+      { key: 'ar_flow', label: 'Ar Gas Flow', unit: 'sccm', step: 1, placeholder: '20' }
+    ],
+    checks: [
+      { key: 'rf_match_ok', label: 'RF reflected power < 2W (임피던스 매칭)' },
+      { key: 'rotation_ok', label: 'Substrate rotation active (기판 회전 확인)' },
+      { key: 'target_cool_ok', label: 'Post-process cooling completed (타겟 냉각 확인)' }
+    ],
+    options: [
+      { key: 'gun_config', label: 'Power Mode', choices: ['Gun 1 (DC) + Gun 2 (RF)', 'Dual DC', 'Dual RF'], default: 'Gun 1 (DC) + Gun 2 (RF)' }
+    ],
+    scanTypes: ['Binary Alloy', 'Composite Film', 'Graded Doping']
+  },
+  'UHVsputter': {
+    name: 'UHV Sputter (초고진공 스퍼터링 시스템)',
+    readings: [
+      { key: 'uhv_base', label: 'UHV Base Vacuum', unit: '×10⁻⁸ Torr', step: 0.1, placeholder: '4.5', warnMax: 8.0 },
+      { key: 'tmp_speed', label: 'TMP Speed', unit: 'Hz', step: 10, placeholder: '1500' }
+    ],
+    checks: [
+      { key: 'cryo_ok', label: 'Cryopump temp < 15 K verified (크라이오 펌프 온도)' },
+      { key: 'gate_valve_ok', label: 'Loadlock gate valve isolated (게이트 밸브 차단)' },
+      { key: 'bakeout_off_ok', label: 'Bakeout finished & cooled (베이크아웃 종료 확인)' }
+    ],
+    options: [
+      { key: 'gas_type', label: 'Process Gas', choices: ['Ar Pure', 'Ar + O₂ (Reactive)', 'Ar + N₂ (Nitride)'], default: 'Ar Pure' }
+    ],
+    scanTypes: ['UHV Clean Film', 'Magnetic Multilayer', 'Quantum Heterostructure']
+  }
+};
 
 // [공통 유틸리티] 숫자 2자리 패딩
 function pad(n){ return String(n).padStart(2, '0'); }
@@ -432,6 +581,12 @@ function loadLocalStorage(forceReset){
     equipmentLogs = JSON.parse(localStorage.getItem('labstock_equipment_logs') || '[]');
   } catch(e){
     equipmentLogs = [];
+  }
+
+  try {
+    equipmentSessions = JSON.parse(localStorage.getItem('labstock_equipment_sessions') || '[]');
+  } catch(e){
+    equipmentSessions = [];
   }
 
   borrowedAssetIds = new Set();
@@ -3184,6 +3339,359 @@ function downloadEquipmentQrImage(){
   }
 }
 
+// ========================================================
+// [Phase 2: LIMS 파라미터 엔진 & 시험 가동(Test-Drive) 관리]
+// ========================================================
+function renderEquipmentSchemaPreview(code){
+  const container = $('eqSchemaContent');
+  if(!container) return;
+  const schema = EQUIPMENT_SCHEMAS[code];
+  if(!schema){
+    container.innerHTML = '<p class="xrd-hint">이 장비는 표준 기본 측정 항목으로 구성됩니다.</p>';
+    return;
+  }
+
+  let html = '<div class="eq-schema-preview-box">';
+
+  // 1. 측정 지표 (Readings)
+  if(schema.readings && schema.readings.length){
+    html += '<div style="margin-bottom:12px;"><b style="font-size:12px;color:var(--ink-light);display:block;margin-bottom:6px;">📊 실시간/시작 측정 지표 (Readings)</b><div class="eq-schema-badge-list">';
+    schema.readings.forEach(function(r){
+      let rangeText = '';
+      if(r.warnMin !== undefined && r.warnMax !== undefined) rangeText = ' (' + r.warnMin + '~' + r.warnMax + ' ' + r.unit + ')';
+      else if(r.warnMin !== undefined) rangeText = ' (≥ ' + r.warnMin + ' ' + r.unit + ')';
+      else if(r.warnMax !== undefined) rangeText = ' (≤ ' + r.warnMax + ' ' + r.unit + ')';
+      html += '<span class="eq-schema-badge reading">⚡ ' + safe(r.label) + ': <b>' + (r.placeholder || '-') + ' ' + safe(r.unit) + '</b>' + safe(rangeText) + '</span>';
+    });
+    html += '</div></div>';
+  }
+
+  // 2. 프로세스 옵션 (Options)
+  if(schema.options && schema.options.length){
+    html += '<div style="margin-bottom:12px;"><b style="font-size:12px;color:var(--ink-light);display:block;margin-bottom:6px;">⚙️ 프로세스 파라미터 / 가동 옵션 (Options)</b><div class="eq-schema-badge-list">';
+    schema.options.forEach(function(opt){
+      html += '<span class="eq-schema-badge option">🔧 ' + safe(opt.label) + ': <b>' + safe(opt.choices.join(' / ')) + '</b></span>';
+    });
+    html += '</div></div>';
+  }
+
+  // 3. 표준 작업 절차 (SOP Checks)
+  if(schema.checks && schema.checks.length){
+    html += '<div style="margin-bottom:12px;"><b style="font-size:12px;color:var(--ink-light);display:block;margin-bottom:6px;">✅ 안전 및 SOP 필수 점검 항목 (Checklist)</b><div style="display:flex;flex-direction:column;gap:4px;">';
+    schema.checks.forEach(function(chk){
+      html += '<div style="font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:6px;"><span style="color:#10b981;font-weight:bold;">✔</span> ' + safe(chk.label) + '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // 4. 측정/스캔/공정 종류 (Scan / Process Types)
+  if(schema.scanTypes && schema.scanTypes.length){
+    html += '<div><b style="font-size:12px;color:var(--ink-light);display:block;margin-bottom:6px;">🎯 지원 측정 및 공정 모드 (Modes)</b><div class="eq-schema-badge-list">';
+    schema.scanTypes.forEach(function(st){
+      html += '<span class="eq-schema-badge scan">🔬 ' + safe(st) + '</span>';
+    });
+    html += '</div></div>';
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderEquipmentTestSessions(code){
+  const box = $('eqTestSessionsBox');
+  const list = $('eqTestSessionsList');
+  if(!box || !list) return;
+
+  const currentEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
+  const eqId = currentEq ? currentEq.id : 'EQ-' + code;
+
+  const matches = equipmentSessions.filter(function(s){
+    return s.equipment_id === eqId || s.equipment_code === code;
+  });
+
+  if(matches.length === 0){
+    box.classList.add('hidden');
+    list.innerHTML = '';
+    return;
+  }
+
+  box.classList.remove('hidden');
+  let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+  matches.forEach(function(s){
+    let paramSummary = [];
+    if(s.parameters){
+      for(const k in s.parameters){
+        const v = s.parameters[k];
+        if(v !== undefined && v !== null && v !== ''){
+          paramSummary.push(k + ': ' + v);
+        }
+      }
+    }
+    const paramStr = paramSummary.length ? paramSummary.slice(0, 4).join(', ') : '기본 파라미터';
+
+    html += '<div class="eq-test-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:12.5px;">';
+    html += '<div>';
+    html += '<div style="font-weight:700;color:var(--ink);margin-bottom:2px;">' + safe(s.sample_name || '샘플 미지정') + ' <span style="font-weight:400;color:var(--ink-light);font-size:11.5px;">(' + (s.sample_count || 1) + '개)</span></div>';
+    html += '<div style="color:var(--ink-light);font-size:11.5px;margin-bottom:4px;">📅 ' + safe(s.used_on || today()) + ' ' + safe(s.start_time || '') + ' ~ ' + safe(s.end_time || '') + ' (' + (s.duration_min || 0) + '분) · 👤 ' + safe(s.user_name || '연구원') + ' (' + safe(s.affiliation || '2DQH') + ')</div>';
+    html += '<div style="color:var(--primary);font-size:11.5px;font-family:monospace;background:rgba(36,87,214,0.06);padding:2px 6px;border-radius:4px;display:inline-block;">⚡ ' + safe(paramStr) + '</div>';
+    if(s.memo){
+      html += '<div style="color:var(--ink-light);font-size:11.5px;margin-top:3px;">📝 ' + safe(s.memo) + '</div>';
+    }
+    html += '</div>';
+    html += '<div style="display:flex;align-items:center;gap:8px;">';
+    html += '<span class="eq-badge-status active" style="font-size:10.5px;padding:2px 6px;">시험 가동 완료</span>';
+    html += '<button type="button" class="btn-clear-search" data-delete-eq-session="' + s.id + '" title="삭제" style="color:var(--danger);cursor:pointer;padding:4px 6px;font-size:12px;border:0;background:none;">✕</button>';
+    html += '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  list.innerHTML = html;
+}
+
+function openEquipmentTestDrive(code){
+  const currentEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || {
+    id: 'EQ-' + code, code: code, name: code
+  };
+  code = currentEq.code || code || 'AFM';
+  const schema = EQUIPMENT_SCHEMAS[code] || EQUIPMENT_SCHEMAS['AFM'];
+
+  const modal = $('modalTestDriveBackdrop');
+  if(!modal) return;
+
+  const titleEl = $('testDriveModalTitle');
+  if(titleEl) titleEl.textContent = '⚡ ' + currentEq.name + ' 세션 시험 가동 (Test-Drive)';
+
+  const container = $('testDriveFormDynamicContent');
+  if(!container) return;
+
+  const now = new Date();
+  const defTime = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  const storedUser = localStorage.getItem('xrd_user_name') || '';
+  const storedAffil = localStorage.getItem('xrd_affiliation') || '2DQH';
+  const storedProf = localStorage.getItem('xrd_professor') || '신현석 교수님';
+
+  let formHtml = '';
+
+  // 1. 공통 필수 메타데이터 (시간, 사용자, 샘플)
+  formHtml += '<div style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:14px;border:1px solid var(--border);">';
+  formHtml += '<h4 style="margin:0 0 10px;font-size:13px;color:var(--ink);">📅 기본 세션 정보</h4>';
+  formHtml += '<div class="xrd-grid xrd-c3" style="margin-bottom:8px;">';
+  formHtml += '  <label class="xrd-mini">측정 날짜<input name="used_on" type="date" value="' + today() + '" required></label>';
+  formHtml += '  <label class="xrd-mini">시작 시간<input name="start_time" type="time" value="' + defTime + '" required></label>';
+  formHtml += '  <label class="xrd-mini">가동 시간(분)<input name="duration_min" type="number" min="5" step="5" value="60" required></label>';
+  formHtml += '</div>';
+  formHtml += '<div class="xrd-grid xrd-c3">';
+  formHtml += '  <label class="xrd-mini">사용자 이름<input name="user_name" value="' + safe(storedUser) + '" placeholder="연구원 성명" required></label>';
+  formHtml += '  <label class="xrd-mini">소속 연구실<input name="affiliation" value="' + safe(storedAffil) + '" placeholder="e.g. 2DQH"></label>';
+  formHtml += '  <label class="xrd-mini">지도교수<input name="professor" value="' + safe(storedProf) + '" placeholder="e.g. 신현석 교수님"></label>';
+  formHtml += '</div>';
+  formHtml += '</div>';
+
+  // 2. 샘플 정보
+  formHtml += '<div style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:14px;border:1px solid var(--border);">';
+  formHtml += '<h4 style="margin:0 0 10px;font-size:13px;color:var(--ink);">🧪 샘플 및 공정 정보</h4>';
+  formHtml += '<div class="xrd-grid xrd-c2" style="margin-bottom:8px;">';
+  formHtml += '  <label class="xrd-full">샘플명 / 공정명<input name="sample_name" placeholder="e.g. WS2 monolayer on SiO2" required></label>';
+  formHtml += '  <label class="xrd-mini">샘플 수량<select name="sample_count"><option value="1" selected>1개</option><option value="2">2개</option><option value="3">3개</option><option value="4">4개</option><option value="5">5개 이상</option></select></label>';
+  formHtml += '</div>';
+
+  if(schema.scanTypes && schema.scanTypes.length){
+    formHtml += '<label class="xrd-mini" style="display:block;margin-top:6px;">측정 / 스캔 모드<select name="scan_type">';
+    schema.scanTypes.forEach(function(st){
+      formHtml += '<option value="' + safe(st) + '">' + safe(st) + '</option>';
+    });
+    formHtml += '</select></label>';
+  }
+  formHtml += '</div>';
+
+  // 3. 장비 고유 파라미터 (Dynamic Readings & Options)
+  formHtml += '<div style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:14px;border:1px solid var(--border);">';
+  formHtml += '<h4 style="margin:0 0 10px;font-size:13px;color:var(--primary);">⚡ ' + safe(schema.name) + ' 고유 측정 파라미터</h4>';
+
+  if(schema.readings && schema.readings.length){
+    formHtml += '<div class="xrd-grid xrd-c2" style="margin-bottom:10px;">';
+    schema.readings.forEach(function(r){
+      formHtml += '<label class="xrd-mini">' + safe(r.label) + ' (' + safe(r.unit) + ')';
+      formHtml += '<div class="xrd-input-wrap">';
+      formHtml += '<input name="param_reading_' + safe(r.key) + '" type="number" step="' + (r.step || 'any') + '" placeholder="' + (r.placeholder || '') + '" value="' + (r.placeholder || '') + '">';
+      formHtml += '<span class="xrd-unit">' + safe(r.unit) + '</span>';
+      formHtml += '</div></label>';
+    });
+    formHtml += '</div>';
+  }
+
+  if(schema.options && schema.options.length){
+    formHtml += '<div class="xrd-grid xrd-c2" style="margin-bottom:10px;">';
+    schema.options.forEach(function(opt){
+      formHtml += '<label class="xrd-mini">' + safe(opt.label);
+      formHtml += '<select name="param_opt_' + safe(opt.key) + '">';
+      opt.choices.forEach(function(c){
+        const sel = (c === opt.default) ? ' selected' : '';
+        formHtml += '<option value="' + safe(c) + '"' + sel + '>' + safe(c) + '</option>';
+      });
+      formHtml += '</select></label>';
+    });
+    formHtml += '</div>';
+  }
+
+  // 4. SOP 체크리스트
+  if(schema.checks && schema.checks.length){
+    formHtml += '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">';
+    formHtml += '<b style="font-size:12px;color:var(--ink);display:block;margin-bottom:6px;">✅ SOP 안전 점검</b>';
+    schema.checks.forEach(function(chk){
+      formHtml += '<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:6px;cursor:pointer;">';
+      formHtml += '<input type="checkbox" name="param_chk_' + safe(chk.key) + '" checked> ' + safe(chk.label);
+      formHtml += '</label>';
+    });
+    formHtml += '</div>';
+  }
+  formHtml += '</div>';
+
+  // 5. 메모
+  formHtml += '<label class="xrd-mini" style="display:block;">비고 / 특이사항 (Memo)<textarea name="memo" rows="2" placeholder="측정 상태 및 특이사항 입력" style="width:100%;box-sizing:border-box;margin-top:4px;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:13px;background:var(--card);color:var(--ink);"></textarea></label>';
+
+  container.innerHTML = formHtml;
+  modal.classList.add('open');
+}
+
+function closeEquipmentTestDrive(){
+  const modal = $('modalTestDriveBackdrop');
+  if(modal) modal.classList.remove('open');
+}
+
+async function handleTestDriveFormSubmit(e){
+  e.preventDefault();
+  const f = $('testDriveForm');
+  if(!f) return;
+
+  const currentEq = researchEquipments.find(function(eq){ return eq.id === currentSelectedEquipment; }) || {
+    id: 'EQ-UNKNOWN', code: 'EQUIP'
+  };
+  const code = currentEq.code || 'AFM';
+  const schema = EQUIPMENT_SCHEMAS[code] || {};
+
+  const usedOn = f.used_on ? f.used_on.value : today();
+  const startTime = f.start_time ? f.start_time.value : '10:00';
+  const durationMin = f.duration_min ? (parseInt(f.duration_min.value, 10) || 60) : 60;
+
+  let endTime = '';
+  if(startTime){
+    const parts = startTime.split(':');
+    const startMins = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+    const endMins = (startMins + durationMin) % (24 * 60);
+    endTime = pad(Math.floor(endMins / 60)) + ':' + pad(endMins % 60);
+  }
+
+  const userName = f.user_name ? f.user_name.value.trim() : '';
+  const affiliation = f.affiliation ? f.affiliation.value.trim() : '';
+  const professor = f.professor ? f.professor.value.trim() : '';
+  const sampleName = f.sample_name ? f.sample_name.value.trim() : '';
+  const sampleCount = f.sample_count ? (parseInt(f.sample_count.value, 10) || 1) : 1;
+  const scanType = f.scan_type ? f.scan_type.value : '';
+  const memo = f.memo ? f.memo.value.trim() : '';
+
+  const dynamicParams = {};
+  if(schema.readings){
+    schema.readings.forEach(function(r){
+      const el = f['param_reading_' + r.key];
+      if(el && el.value !== '') dynamicParams[r.key] = parseFloat(el.value);
+    });
+  }
+  if(schema.options){
+    schema.options.forEach(function(opt){
+      const el = f['param_opt_' + opt.key];
+      if(el) dynamicParams[opt.key] = el.value;
+    });
+  }
+  if(schema.checks){
+    schema.checks.forEach(function(chk){
+      const el = f['param_chk_' + chk.key];
+      dynamicParams[chk.key] = el ? el.checked : false;
+    });
+  }
+
+  const sessionEntry = {
+    id: Date.now(),
+    equipment_id: currentEq.id,
+    equipment_code: code,
+    used_on: usedOn,
+    start_time: startTime,
+    end_time: endTime,
+    duration_min: durationMin,
+    status: 'done',
+    user_name: userName,
+    affiliation: affiliation,
+    professor: professor,
+    sample_name: sampleName,
+    sample_count: sampleCount,
+    scan_type: scanType,
+    parameters: dynamicParams,
+    memo: memo,
+    created_at: new Date().toISOString()
+  };
+
+  equipmentSessions.unshift(sessionEntry);
+  try {
+    localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions));
+  } catch(_) {}
+
+  try {
+    if(userName) localStorage.setItem('xrd_user_name', userName);
+    if(affiliation) localStorage.setItem('xrd_affiliation', affiliation);
+    if(professor) localStorage.setItem('xrd_professor', professor);
+  } catch(_) {}
+
+  if(db && !isLocalMode){
+    try {
+      const { data: inserted, error: insertErr } = await db.from('equipment_sessions').insert(sessionEntry).select();
+      if(!insertErr && inserted && inserted[0]){
+        sessionEntry.id = inserted[0].id;
+      }
+    } catch(err){
+      console.warn('Supabase equipment_sessions insert fallback:', err);
+    }
+  }
+
+  closeEquipmentTestDrive();
+  toast('✓ ' + currentEq.name + ' 시험 가동 기록이 저장되었습니다.');
+  renderEquipmentTestSessions(code);
+}
+
+async function deleteEquipmentSession(id){
+  if(!confirm('이 시험 가동 기록을 삭제하시겠습니까?')) return;
+  equipmentSessions = equipmentSessions.filter(function(s){ return String(s.id) !== String(id); });
+  try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
+
+  if(db && !isLocalMode){
+    try {
+      await db.from('equipment_sessions').delete().eq('id', id);
+    } catch(err){
+      console.warn('Supabase session delete failed:', err);
+    }
+  }
+  toast('✓ 시험 기록이 삭제되었습니다.');
+  const currentEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
+  if(currentEq) renderEquipmentTestSessions(currentEq.code);
+}
+
+function toggleEquipmentActive(eqId){
+  eqId = eqId || currentSelectedEquipment;
+  const eq = researchEquipments.find(function(e){ return e.id === eqId; });
+  if(!eq) return;
+
+  const willBeActive = (eq.status !== 'active');
+  eq.status = willBeActive ? 'active' : 'standby';
+  eq.statusLabel = willBeActive ? '디지털 로그북 운영 중' : '연동 준비 중 (Standby)';
+
+  try {
+    localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
+  } catch(_) {}
+
+  toast(willBeActive ? ('🟢 ' + eq.name + ' 실운영 모드로 활성화되었습니다.') : ('⚪ ' + eq.name + ' 대기(Standby) 모드로 전환되었습니다.'));
+  selectResearchEquipment(eqId);
+  renderEquipmentPortalGrid();
+}
+
 function renderEquipmentPortalGrid(){
   const grid = $('equipmentPortalGrid');
   if(!grid) return;
@@ -3294,6 +3802,16 @@ function selectResearchEquipment(eqId){
     if(modelEl) modelEl.textContent = selected.model;
     if(mgrEl) mgrEl.textContent = selected.manager;
     if(contactEl) contactEl.textContent = selected.contact;
+
+    const toggleBtn = $('btnToggleEqActive');
+    if(toggleBtn){
+      const isActive = (selected.status === 'active');
+      toggleBtn.textContent = isActive ? '⚪ 대기(Standby)로 전환' : '🟢 실운영 활성화';
+      toggleBtn.title = isActive ? '이 장비를 대기 상태로 변경합니다.' : '이 장비를 실운영 디지털 로그북으로 활성화합니다.';
+    }
+
+    renderEquipmentSchemaPreview(selected.code);
+    renderEquipmentTestSessions(selected.code);
   }
 
   const viewLogbook = $('view-logbook');
@@ -5435,6 +5953,29 @@ function bindEvents(){
       return;
     }
 
+    // Phase 2: 시험 가동(Test-Drive) 및 실운영 활성화
+    if(target.id === 'btnTestDriveEquipment' || target.closest('#btnTestDriveEquipment')){
+      const cur = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
+      openEquipmentTestDrive(cur ? cur.code : 'AFM');
+      return;
+    }
+
+    if(target.id === 'closeTestDriveModal' || target.id === 'btnCancelTestDrive' || target.closest('#closeTestDriveModal')){
+      closeEquipmentTestDrive();
+      return;
+    }
+
+    if(target.id === 'btnToggleEqActive' || target.closest('#btnToggleEqActive')){
+      toggleEquipmentActive(currentSelectedEquipment);
+      return;
+    }
+
+    if(target.dataset.deleteEqSession || target.closest('[data-delete-eq-session]')){
+      const btn = target.dataset.deleteEqSession ? target : target.closest('[data-delete-eq-session]');
+      deleteEquipmentSession(btn.dataset.deleteEqSession);
+      return;
+    }
+
     switch(target.id){
       case 'loginBtn':
         openModal('login');
@@ -5521,6 +6062,7 @@ function bindEvents(){
   });
 
   addEvt('modalForm', 'submit', saveForm);
+  addEvt('testDriveForm', 'submit', handleTestDriveFormSubmit);
 
   const mForm = $('modalForm');
   if(mForm){
