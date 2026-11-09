@@ -4761,3 +4761,422 @@ tr.row-overdue:hover {
   border-bottom-color: #232f46 !important;
 }
 
+/* ========================================================
+   Phase 3: 연구단 장비 종합 통계 및 가동 대시보드 스타일
+   ======================================================== */
+.eq-hub-switch-group {
+  display: inline-flex;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+.eq-hub-switch-group .btn {
+  border: 0;
+  background: transparent;
+  color: var(--ink-light);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.eq-hub-switch-group .btn.active {
+  background: var(--card);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.eq-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.eq-kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.eq-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+}
+.kpi-icon-wrap {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-light);
+  margin-bottom: 2px;
+}
+.kpi-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.kpi-sub {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.eq-analytics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 900px) {
+  .eq-analytics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.eq-analytics-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+/* 장비별 가동 점유율 바 (Utilization Bars) */
+.eq-utilization-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.eq-util-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+.eq-util-row:hover {
+  background: var(--bg);
+}
+.eq-util-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.eq-util-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.eq-util-tag {
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+.eq-util-tag.active {
+  background: rgba(36,87,214,0.1);
+  color: var(--primary);
+}
+.eq-util-tag.standby {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.eq-util-stats {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.eq-util-track {
+  width: 100%;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.eq-util-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  transition: width 0.4s ease;
+}
+
+/* 캘린더 (Calendar) */
+.eq-calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-calendar-nav {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-calendar-nav:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.eq-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+  margin-top: 10px;
+}
+.eq-cal-head {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-light);
+  padding: 4px 0;
+}
+.eq-cal-head.sun { color: #ef4444; }
+.eq-cal-head.sat { color: #3b82f6; }
+.eq-cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  min-height: 40px;
+}
+.eq-cal-day.empty {
+  background: transparent;
+  cursor: default;
+}
+.eq-cal-day.today {
+  border-color: var(--primary);
+  font-weight: 700;
+}
+.eq-cal-day.has-sessions {
+  background: rgba(36,87,214,0.08);
+  border-color: rgba(36,87,214,0.3);
+  color: var(--primary);
+  font-weight: 700;
+}
+.eq-cal-day.has-sessions:hover,
+.eq-cal-day.selected {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+.eq-cal-day.has-sessions.selected .eq-cal-badge {
+  background: #ffffff;
+  color: var(--primary);
+}
+.eq-cal-badge {
+  font-size: 9.5px;
+  line-height: 1;
+  padding: 2px 4px;
+  background: var(--primary);
+  color: #ffffff;
+  border-radius: 8px;
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+/* 최근 가동 타임라인 (Timeline) */
+.eq-timeline-filters {
+  display: flex;
+  gap: 6px;
+}
+.eq-filter-pill {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--ink-light);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.eq-filter-pill.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+.eq-timeline-date-badge {
+  font-size: 12px;
+  padding: 3px 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 6px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.eq-timeline-date-badge button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: #92400e;
+  font-size: 12px;
+  padding: 0;
+}
+.eq-timeline-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.eq-timeline-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  font-size: 13px;
+  transition: transform 0.15s ease;
+}
+.eq-timeline-entry:hover {
+  transform: translateX(2px);
+}
+.eq-timeline-entry.test {
+  border-left-color: #8b5cf6;
+}
+.eq-timeline-time-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 90px;
+  font-size: 11.5px;
+  color: var(--ink-light);
+}
+.eq-timeline-time-col b {
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.eq-timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+.eq-timeline-title {
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.eq-timeline-param-tag {
+  font-size: 11px;
+  font-family: monospace;
+  background: rgba(0,0,0,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--ink);
+}
+
+/* Phase 3 다크모드 오버라이드 */
+[data-theme="dark"] .eq-hub-switch-group {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-hub-switch-group .btn.active {
+  background: #1e293b !important;
+  color: #60a5fa !important;
+}
+[data-theme="dark"] .eq-kpi-card {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .kpi-num {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .kpi-sub {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .eq-analytics-panel {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-util-row:hover {
+  background: #1e293b !important;
+}
+[data-theme="dark"] .eq-util-track {
+  background: #232f46 !important;
+}
+[data-theme="dark"] .btn-calendar-nav {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .eq-cal-day {
+  background: #111827 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .eq-cal-day.has-sessions {
+  background: rgba(59,130,246,0.18) !important;
+  border-color: #3b82f6 !important;
+  color: #93c5fd !important;
+}
+[data-theme="dark"] .eq-filter-pill {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .eq-filter-pill.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .eq-timeline-entry {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+  border-left-color: #3b82f6 !important;
+}
+[data-theme="dark"] .eq-timeline-entry.test {
+  border-left-color: #a78bfa !important;
+}
+[data-theme="dark"] .eq-timeline-param-tag {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+

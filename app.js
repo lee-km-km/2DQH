@@ -173,6 +173,11 @@ let selectedEquipmentCategory = 'all';
 let researchEquipments = [];
 let currentSelectedEquipment = 'EQ-XRD-01';
 let equipmentSessions = [];
+let currentHubView = 'catalog'; // 'catalog' | 'analytics'
+let currentCalendarYear = new Date().getFullYear();
+let currentCalendarMonth = new Date().getMonth() + 1;
+let timelineFilter = 'all'; // 'all' | 'active' | 'test'
+let timelineDateFilter = null; // 'YYYY-MM-DD' | null
 
 // [Phase 2: LIMS 범용 장비 파라미터 스키마 레지스트리 (9대 전 기종 표준)]
 const EQUIPMENT_SCHEMAS = {
@@ -3748,7 +3753,420 @@ function showEquipmentCatalogHub(){
   const detail = $('equipmentDetailHub');
   if(hub) hub.classList.remove('hidden');
   if(detail) detail.classList.add('hidden');
-  renderEquipmentPortalGrid();
+  if(currentHubView === 'analytics'){
+    renderEquipmentAnalyticsDashboard();
+  } else {
+    renderEquipmentPortalGrid();
+  }
+}
+
+// ========================================================
+// [Phase 3: 연구단 장비 종합 통계 및 가동 대시보드 엔진]
+// ========================================================
+
+function getUnifiedEquipmentSessions(){
+  const list = [];
+
+  // 1. HR-XRD logs (map to unified session object)
+  if(Array.isArray(xrdLogs)){
+    xrdLogs.forEach(function(l){
+      list.push({
+        id: 'xrd_' + (l.id || l.created_at || Math.random()),
+        raw_id: l.id,
+        equipment_id: 'EQ-XRD-01',
+        equipment_code: 'XRD',
+        equipment_name: 'HR-XRD (고분해능 X선 회절분석기)',
+        icon: '🔬',
+        is_live: true,
+        type: 'active',
+        used_on: l.used_on || (l.created_at ? l.created_at.slice(0, 10) : today()),
+        start_time: l.start_time || '10:00',
+        end_time: l.end_time || '',
+        duration_min: l.duration_min || 60,
+        user_name: l.user_name || '이강민',
+        affiliation: l.affiliation || '2DQH',
+        professor: l.professor || '신현석 교수님',
+        sample_name: l.sample_name || 'HR-XRD 분석 시료',
+        sample_count: l.sample_count || 1,
+        scan_type: l.scan_type || 'θ/2θ',
+        parameters: {
+          chiller_start: l.chiller_start,
+          chiller_end: l.chiller_end,
+          vacuum_start: l.vacuum_start,
+          vacuum_end: l.vacuum_end,
+          align: l.align,
+          xray_max_ok: l.xray_max_ok,
+          xray_min_ok: l.xray_min_ok,
+          position_ok: l.position_ok
+        },
+        memo: l.memo || '',
+        created_at: l.created_at || new Date().toISOString()
+      });
+    });
+  }
+
+  // 2. 범용 장비 시험/운영 세션 (equipmentSessions)
+  if(Array.isArray(equipmentSessions)){
+    equipmentSessions.forEach(function(s){
+      const eq = researchEquipments.find(function(e){ return e.id === s.equipment_id || e.code === s.equipment_code; }) || {};
+      list.push({
+        id: 'sess_' + (s.id || s.created_at || Math.random()),
+        raw_id: s.id,
+        equipment_id: s.equipment_id || eq.id || ('EQ-' + (s.equipment_code || 'MISC')),
+        equipment_code: s.equipment_code || eq.code || 'EQUIP',
+        equipment_name: eq.name || s.equipment_code || '연구장비',
+        icon: eq.icon || '⚡',
+        is_live: (eq.status === 'active'),
+        type: 'test',
+        used_on: s.used_on || today(),
+        start_time: s.start_time || '10:00',
+        end_time: s.end_time || '',
+        duration_min: s.duration_min || 60,
+        user_name: s.user_name || '연구원',
+        affiliation: s.affiliation || '2DQH',
+        professor: s.professor || '신현석 교수님',
+        sample_name: s.sample_name || '연구 시료',
+        sample_count: s.sample_count || 1,
+        scan_type: s.scan_type || '',
+        parameters: s.parameters || {},
+        memo: s.memo || '',
+        created_at: s.created_at || new Date().toISOString()
+      });
+    });
+  }
+
+  // 최신순 (날짜 desc, 시간 desc) 정렬
+  list.sort(function(a, b){
+    const dateA = (a.used_on || '') + ' ' + (a.start_time || '');
+    const dateB = (b.used_on || '') + ' ' + (b.start_time || '');
+    return dateB.localeCompare(dateA);
+  });
+
+  return list;
+}
+
+function switchEquipmentHubView(mode){
+  currentHubView = mode || 'catalog';
+  const isCatalog = (currentHubView === 'catalog');
+
+  const catalogView = $('eqCatalogViewContainer');
+  const analyticsView = $('equipmentAnalyticsDashboard');
+
+  if(catalogView) catalogView.classList.toggle('hidden', !isCatalog);
+  if(analyticsView) analyticsView.classList.toggle('hidden', isCatalog);
+
+  const dGrid = $('btnHubShowGrid');
+  const dAnalytics = $('btnHubShowAnalytics');
+  const mGrid = $('btnMobileHubShowGrid');
+  const mAnalytics = $('btnMobileHubShowAnalytics');
+
+  if(dGrid) dGrid.classList.toggle('active', isCatalog);
+  if(dAnalytics) dAnalytics.classList.toggle('active', !isCatalog);
+  if(mGrid) mGrid.classList.toggle('active', isCatalog);
+  if(mAnalytics) mAnalytics.classList.toggle('active', !isCatalog);
+
+  if(!isCatalog){
+    renderEquipmentAnalyticsDashboard();
+  } else {
+    renderEquipmentPortalGrid();
+  }
+}
+
+function renderEquipmentAnalyticsDashboard(){
+  const allSessions = getUnifiedEquipmentSessions();
+
+  // 1. KPI 지표 계산
+  const totalEq = researchEquipments.length;
+  const activeEq = researchEquipments.filter(function(e){ return e.status === 'active'; }).length;
+  const totalSessions = allSessions.length;
+
+  const currentMonthStr = currentCalendarYear + '-' + pad(currentCalendarMonth);
+  const thisMonthSessions = allSessions.filter(function(s){
+    return (s.used_on || '').startsWith(currentMonthStr);
+  });
+
+  let totalMins = 0;
+  const userSet = new Set();
+  const affilSet = new Set();
+
+  allSessions.forEach(function(s){
+    totalMins += (s.duration_min || 0);
+    if(s.user_name) userSet.add(s.user_name);
+    if(s.affiliation) affilSet.add(s.affiliation);
+  });
+
+  const totalHours = (totalMins / 60).toFixed(1);
+  const avgMins = totalSessions > 0 ? Math.round(totalMins / totalSessions) : 0;
+
+  // KPI UI 반영
+  const kpiEqTotal = $('kpiEqTotal');
+  const kpiEqSub = $('kpiEqSub');
+  const kpiSessionsTotal = $('kpiSessionsTotal');
+  const kpiSessionsSub = $('kpiSessionsSub');
+  const kpiRuntimeTotal = $('kpiRuntimeTotal');
+  const kpiRuntimeSub = $('kpiRuntimeSub');
+  const kpiUsersTotal = $('kpiUsersTotal');
+  const kpiAffilSub = $('kpiAffilSub');
+
+  if(kpiEqTotal) kpiEqTotal.textContent = totalEq + '대 (운영 ' + activeEq + '대)';
+  if(kpiEqSub) kpiEqSub.textContent = '분석 5 · 박막증착 4';
+  if(kpiSessionsTotal) kpiSessionsTotal.textContent = totalSessions + '건';
+  if(kpiSessionsSub) kpiSessionsSub.textContent = currentCalendarMonth + '월 ' + thisMonthSessions.length + '건';
+  if(kpiRuntimeTotal) kpiRuntimeTotal.textContent = totalHours + '시간';
+  if(kpiRuntimeSub) kpiRuntimeSub.textContent = '평균 ' + avgMins + '분 / 세션';
+  if(kpiUsersTotal) kpiUsersTotal.textContent = userSet.size + '명';
+  if(kpiAffilSub) kpiAffilSub.textContent = affilSet.size + '개 연구실 참여';
+
+  // 2. 장비별 가동 점유율 차트 렌더링
+  renderEquipmentUtilizationBars(allSessions);
+
+  // 3. 월간 가동 캘린더 렌더링
+  renderEquipmentCalendar(allSessions);
+
+  // 4. 최근 통합 타임라인 피드 렌더링
+  renderEquipmentRecentTimeline(allSessions);
+}
+
+function renderEquipmentUtilizationBars(allSessions){
+  const container = $('eqUtilizationList');
+  if(!container) return;
+
+  const stats = researchEquipments.map(function(eq){
+    const eqSessions = allSessions.filter(function(s){
+      return s.equipment_id === eq.id || s.equipment_code === eq.code;
+    });
+    let durMins = 0;
+    eqSessions.forEach(function(s){ durMins += (s.duration_min || 0); });
+    return {
+      eq: eq,
+      count: eqSessions.length,
+      hours: (durMins / 60).toFixed(1),
+      durMins: durMins
+    };
+  });
+
+  stats.sort(function(a, b){
+    if(b.durMins !== a.durMins) return b.durMins - a.durMins;
+    return b.count - a.count;
+  });
+
+  const maxHours = Math.max.apply(null, stats.map(function(s){ return parseFloat(s.hours) || 0; })) || 1;
+
+  let html = '';
+  stats.forEach(function(item){
+    const eq = item.eq;
+    const isActive = (eq.status === 'active');
+    const pct = Math.min(100, Math.max(item.count > 0 ? 12 : 3, Math.round(((parseFloat(item.hours) || 0) / maxHours) * 100)));
+
+    html += '<div class="eq-util-row" data-select-util-eq="' + safe(eq.id) + '" title="' + safe(eq.name) + ' 바로가기">';
+    html += '  <div class="eq-util-header">';
+    html += '    <div class="eq-util-title">';
+    html += '      <span>' + (eq.icon || '🔬') + '</span>';
+    html += '      <span>' + safe(eq.code) + '</span>';
+    html += '      <span style="font-size:11.5px;color:var(--ink-light);font-weight:400;">' + safe(eq.name.split('(')[0].trim()) + '</span>';
+    html += '      <span class="eq-util-tag ' + (isActive ? 'active' : 'standby') + '">' + (isActive ? '운영 중' : '대기') + '</span>';
+    html += '    </div>';
+    html += '    <div class="eq-util-stats">' + item.count + '건 <span style="font-weight:400;color:var(--ink-light);font-size:11.5px;">(' + item.hours + 'h)</span></div>';
+    html += '  </div>';
+    html += '  <div class="eq-util-track">';
+    html += '    <div class="eq-util-fill" style="width:' + pct + '%;' + (isActive ? '' : 'background:linear-gradient(90deg, #94a3b8 0%, #64748b 100%);') + '"></div>';
+    html += '  </div>';
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function renderEquipmentCalendar(allSessions){
+  const container = $('eqCalendarContainer');
+  const labelEl = $('eqCurrentMonthLabel');
+  if(!container) return;
+
+  if(labelEl){
+    labelEl.textContent = currentCalendarYear + '년 ' + currentCalendarMonth + '월';
+  }
+
+  const firstDay = new Date(currentCalendarYear, currentCalendarMonth - 1, 1).getDay();
+  const daysInMonth = new Date(currentCalendarYear, currentCalendarMonth, 0).getDate();
+
+  const sessionCountMap = {};
+  allSessions.forEach(function(s){
+    if(s.used_on){
+      sessionCountMap[s.used_on] = (sessionCountMap[s.used_on] || 0) + 1;
+    }
+  });
+
+  const todayStr = today();
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+
+  let html = '<div class="eq-calendar-grid">';
+
+  weekdays.forEach(function(w, idx){
+    const cls = (idx === 0) ? 'sun' : (idx === 6 ? 'sat' : '');
+    html += '<div class="eq-cal-head ' + cls + '">' + w + '</div>';
+  });
+
+  for(let i=0; i<firstDay; i++){
+    html += '<div class="eq-cal-day empty"></div>';
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = currentCalendarYear + '-' + pad(currentCalendarMonth) + '-' + pad(d);
+    const cnt = sessionCountMap[dateStr] || 0;
+    const isToday = (dateStr === todayStr);
+    const isSelected = (timelineDateFilter === dateStr);
+
+    let cls = 'eq-cal-day';
+    if(isToday) cls += ' today';
+    if(cnt > 0) cls += ' has-sessions';
+    if(isSelected) cls += ' selected';
+
+    html += '<div class="' + cls + '" data-cal-date="' + dateStr + '" title="' + dateStr + (cnt > 0 ? ': ' + cnt + '건 가동' : '') + '">';
+    html += '<span>' + d + '</span>';
+    if(cnt > 0){
+      html += '<span class="eq-cal-badge">' + cnt + '</span>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderEquipmentRecentTimeline(allSessions){
+  const container = $('eqRecentTimelineList');
+  const badgeEl = $('eqTimelineDateFilterBadge');
+  if(!container) return;
+
+  allSessions = allSessions || getUnifiedEquipmentSessions();
+
+  let filtered = allSessions;
+  if(timelineFilter === 'active'){
+    filtered = filtered.filter(function(s){ return s.type === 'active' || s.is_live; });
+  } else if(timelineFilter === 'test'){
+    filtered = filtered.filter(function(s){ return s.type === 'test'; });
+  }
+
+  if(timelineDateFilter){
+    filtered = filtered.filter(function(s){ return s.used_on === timelineDateFilter; });
+    if(badgeEl){
+      badgeEl.classList.remove('hidden');
+      badgeEl.innerHTML = '📅 ' + safe(timelineDateFilter) + ' 필터 중 <button type="button" id="btnClearTimelineDateFilter" title="필터 해제">✕</button>';
+    }
+  } else {
+    if(badgeEl) badgeEl.classList.add('hidden');
+  }
+
+  const filterBtns = document.querySelectorAll('#eqTimelineFilters [data-timeline-filter]');
+  filterBtns.forEach(function(b){
+    b.classList.toggle('active', b.dataset.timelineFilter === timelineFilter);
+  });
+
+  if(filtered.length === 0){
+    container.innerHTML = '<div style="text-align:center;padding:32px 16px;color:#64748b;font-size:13.5px;">해당 조건의 연구장비 가동 기록이 없습니다.</div>';
+    return;
+  }
+
+  let html = '<div class="eq-timeline-feed">';
+  filtered.slice(0, 30).forEach(function(s){
+    let paramSummary = [];
+    if(s.parameters){
+      for(const k in s.parameters){
+        const val = s.parameters[k];
+        if(val !== undefined && val !== null && val !== false && val !== ''){
+          paramSummary.push(k + ': ' + val);
+        }
+      }
+    }
+    const paramStr = paramSummary.length ? paramSummary.slice(0, 3).join(', ') : '기본 운영 파라미터';
+
+    html += '<div class="eq-timeline-entry ' + (s.type === 'test' ? 'test' : '') + '">';
+    html += '  <div class="eq-timeline-time-col">';
+    html += '    <b>' + safe(s.used_on || '') + '</b>';
+    html += '    <span>' + safe(s.start_time || '') + (s.end_time ? ' ~ ' + safe(s.end_time) : '') + '</span>';
+    html += '    <span style="color:var(--primary);font-weight:600;">⏱️ ' + (s.duration_min || 0) + '분</span>';
+    html += '  </div>';
+    html += '  <div class="eq-timeline-content">';
+    html += '    <div class="eq-timeline-title">';
+    html += '      <span>' + (s.icon || '🔬') + ' ' + safe(s.equipment_name) + '</span>';
+    html += '      <span class="eq-util-tag ' + (s.type === 'active' ? 'active' : 'standby') + '">' + (s.type === 'active' ? '실운영 로그' : '시험 가동') + '</span>';
+    html += '    </div>';
+    html += '    <div style="font-weight:600;color:var(--ink);margin-bottom:4px;font-size:13px;">' + safe(s.sample_name || '시료 미지정') + ' <span style="font-weight:400;color:var(--ink-light);font-size:12px;">(' + (s.sample_count || 1) + '개)</span></div>';
+    html += '    <div style="margin-bottom:4px;"><span class="eq-timeline-param-tag">⚡ ' + safe(paramStr) + '</span></div>';
+    html += '    <div style="font-size:12px;color:var(--ink-light);display:flex;justify-content:space-between;align-items:center;">';
+    html += '      <span>👤 ' + safe(s.user_name || '연구원') + ' (' + safe(s.affiliation || '2DQH') + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span>';
+    html += '      <button type="button" class="text-link" data-select-util-eq="' + safe(s.equipment_id) + '" style="font-size:12px;color:var(--primary);background:none;border:0;cursor:pointer;text-decoration:underline;">장비 페이지 →</button>';
+    html += '    </div>';
+    if(s.memo){
+      html += '    <div style="font-size:12px;color:var(--ink-light);margin-top:4px;">📝 ' + safe(s.memo) + '</div>';
+    }
+    html += '  </div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+
+function exportUnifiedSessionsCsv(){
+  const allSessions = getUnifiedEquipmentSessions();
+  if(allSessions.length === 0){
+    toast('내보낼 연구장비 세션 데이터가 없습니다.');
+    return;
+  }
+
+  const headers = [
+    'Equipment ID', 'Equipment Code', 'Equipment Name', 'Date', 'Start Time', 'End Time',
+    'Duration(min)', 'Type', 'User Name', 'Affiliation', 'Adviser', 'Sample Name',
+    'Sample Count', 'Scan / Mode', 'Parameters Summary', 'Memo', 'Created At'
+  ];
+
+  const rows = allSessions.map(function(s){
+    let paramSummary = [];
+    if(s.parameters){
+      for(const k in s.parameters){
+        const val = s.parameters[k];
+        if(val !== undefined && val !== null && val !== false && val !== ''){
+          paramSummary.push(k + '=' + val);
+        }
+      }
+    }
+
+    return [
+      s.equipment_id || '',
+      s.equipment_code || '',
+      s.equipment_name || '',
+      s.used_on || '',
+      s.start_time || '',
+      s.end_time || '',
+      s.duration_min || 0,
+      s.type === 'active' ? 'Live Operational' : 'Test Drive',
+      s.user_name || '',
+      s.affiliation || '',
+      s.professor || '',
+      s.sample_name || '',
+      s.sample_count || 1,
+      s.scan_type || '',
+      paramSummary.join('; '),
+      (s.memo || '').replace(/[\r\n]+/g, ' '),
+      s.created_at || ''
+    ].map(function(cell){
+      const str = String(cell ?? '').replace(/"/g, '""');
+      return '"' + str + '"';
+    }).join(',');
+  });
+
+  const csvContent = '\uFEFF' + headers.join(',') + '\r\n' + rows.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '2DQH_Equipment_Unified_Logbook_' + today() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✓ 전체 연구장비 통합 세션 로그(' + allSessions.length + '건)가 CSV로 다운로드되었습니다.');
 }
 
 function selectResearchEquipment(eqId){
@@ -5973,6 +6391,74 @@ function bindEvents(){
     if(target.dataset.deleteEqSession || target.closest('[data-delete-eq-session]')){
       const btn = target.dataset.deleteEqSession ? target : target.closest('[data-delete-eq-session]');
       deleteEquipmentSession(btn.dataset.deleteEqSession);
+      return;
+    }
+
+    // Phase 3: 허브 뷰 전환 (장비 목록 vs 운영 통계)
+    if(target.id === 'btnHubShowGrid' || target.id === 'btnMobileHubShowGrid' || target.closest('#btnHubShowGrid') || target.closest('#btnMobileHubShowGrid')){
+      switchEquipmentHubView('catalog');
+      return;
+    }
+
+    if(target.id === 'btnHubShowAnalytics' || target.id === 'btnMobileHubShowAnalytics' || target.closest('#btnHubShowAnalytics') || target.closest('#btnMobileHubShowAnalytics')){
+      switchEquipmentHubView('analytics');
+      return;
+    }
+
+    if(target.id === 'btnExportAllUnifiedLogs' || target.closest('#btnExportAllUnifiedLogs')){
+      exportUnifiedSessionsCsv();
+      return;
+    }
+
+    // Phase 3: 캘린더 월 이동
+    if(target.id === 'btnPrevMonth' || target.closest('#btnPrevMonth')){
+      currentCalendarMonth--;
+      if(currentCalendarMonth < 1){
+        currentCalendarMonth = 12;
+        currentCalendarYear--;
+      }
+      renderEquipmentAnalyticsDashboard();
+      return;
+    }
+
+    if(target.id === 'btnNextMonth' || target.closest('#btnNextMonth')){
+      currentCalendarMonth++;
+      if(currentCalendarMonth > 12){
+        currentCalendarMonth = 1;
+        currentCalendarYear++;
+      }
+      renderEquipmentAnalyticsDashboard();
+      return;
+    }
+
+    // Phase 3: 캘린더 날짜 클릭 필터링
+    const calDay = target.dataset.calDate ? target : target.closest('[data-cal-date]');
+    if(calDay){
+      const d = calDay.dataset.calDate;
+      timelineDateFilter = (timelineDateFilter === d) ? null : d;
+      renderEquipmentAnalyticsDashboard();
+      return;
+    }
+
+    // Phase 3: 날짜 필터 해제
+    if(target.id === 'btnClearTimelineDateFilter' || target.closest('#btnClearTimelineDateFilter')){
+      timelineDateFilter = null;
+      renderEquipmentAnalyticsDashboard();
+      return;
+    }
+
+    // Phase 3: 타임라인 필터 탭
+    const tlFilterBtn = target.dataset.timelineFilter ? target : target.closest('[data-timeline-filter]');
+    if(tlFilterBtn){
+      timelineFilter = tlFilterBtn.dataset.timelineFilter;
+      renderEquipmentRecentTimeline();
+      return;
+    }
+
+    // Phase 3: 점유율 바 또는 타임라인에서 장비 바로가기
+    const utilEq = target.dataset.selectUtilEq ? target : target.closest('[data-select-util-eq]');
+    if(utilEq){
+      selectResearchEquipment(utilEq.dataset.selectUtilEq);
       return;
     }
 

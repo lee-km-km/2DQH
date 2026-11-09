@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_02">
+  <link rel="stylesheet" href="style.css?v=20261109_03">
   <script>
     (function(){
       try {
@@ -258,26 +258,119 @@
             <span class="count-badge" id="equipmentTotalBadge">총 9대 등록</span>
           </div>
           <div class="head-actions">
-            <span style="font-size:12.5px;color:var(--muted);font-weight:600;">IBS 2DQH 연구시설 공동 활용 기기</span>
+            <div class="eq-hub-switch-group">
+              <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
+              <button type="button" class="btn" id="btnHubShowAnalytics">📊 운영 통계</button>
+            </div>
+            <button class="btn" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 로그 CSV</button>
           </div>
         </div>
 
-        <!-- 카테고리 필터 탭 & 검색 -->
-        <div class="eq-catalog-toolbar">
-          <div class="eq-category-tabs" id="eqCategoryTabs">
-            <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt">9</span></button>
-            <button type="button" class="eq-cat-tab" data-eq-cat="analysis">분석·측정 <span class="tab-cnt">5</span></button>
-            <button type="button" class="eq-cat-tab" data-eq-cat="deposition">박막·증착 <span class="tab-cnt">4</span></button>
-          </div>
-          <div class="search-input-box eq-search-box">
-            <span class="search-input-icon">🔍</span>
-            <input id="eqSearchInput" placeholder="장비명, 코드(XRD, AFM, Sputter...), 위치 검색">
-            <button id="btnClearEqSearch" class="btn-clear-search hidden" type="button">✕</button>
-          </div>
+        <!-- 모바일 전용 뷰 전환 바 -->
+        <div class="mobile-only eq-mobile-view-bar" style="margin-bottom:12px;display:flex;gap:8px;">
+          <button type="button" class="btn active" id="btnMobileHubShowGrid" style="flex:1;font-size:13px;padding:8px 0;text-align:center;">📇 장비 목록</button>
+          <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:13px;padding:8px 0;text-align:center;">📊 운영 통계</button>
         </div>
 
-        <!-- 9대 연구장비 카드 그리드 -->
-        <div class="equipment-portal-grid" id="equipmentPortalGrid"></div>
+        <!-- A. 장비 목록 뷰 (Toolbar & Grid) -->
+        <div id="eqCatalogViewContainer">
+          <!-- 카테고리 필터 탭 & 검색 -->
+          <div class="eq-catalog-toolbar">
+            <div class="eq-category-tabs" id="eqCategoryTabs">
+              <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt">9</span></button>
+              <button type="button" class="eq-cat-tab" data-eq-cat="analysis">분석·측정 <span class="tab-cnt">5</span></button>
+              <button type="button" class="eq-cat-tab" data-eq-cat="deposition">박막·증착 <span class="tab-cnt">4</span></button>
+            </div>
+            <div class="search-input-box eq-search-box">
+              <span class="search-input-icon">🔍</span>
+              <input id="eqSearchInput" placeholder="장비명, 코드(XRD, AFM, Sputter...), 위치 검색">
+              <button id="btnClearEqSearch" class="btn-clear-search hidden" type="button">✕</button>
+            </div>
+          </div>
+
+          <!-- 9대 연구장비 카드 그리드 -->
+          <div class="equipment-portal-grid" id="equipmentPortalGrid"></div>
+        </div>
+
+        <!-- B. Phase 3: 연구단 장비 종합 통계 및 가동 대시보드 (Executive Analytics Hub) -->
+        <div id="equipmentAnalyticsDashboard" class="hidden">
+          <!-- 1. 핵심 KPI 요약 카드 그리드 (4-card metrics) -->
+          <div class="eq-kpi-grid">
+            <div class="eq-kpi-card">
+              <div class="kpi-icon-wrap" style="background:#eff6ff;color:#2563eb;">🔬</div>
+              <div class="kpi-info">
+                <span class="kpi-label">보유 연구장비</span>
+                <div class="kpi-num" id="kpiEqTotal">9대</div>
+                <span class="kpi-sub" id="kpiEqSub">분석 5 · 증착 4</span>
+              </div>
+            </div>
+            <div class="eq-kpi-card">
+              <div class="kpi-icon-wrap" style="background:#ecfdf5;color:#059669;">⚡</div>
+              <div class="kpi-info">
+                <span class="kpi-label">누적 가동 세션</span>
+                <div class="kpi-num" id="kpiSessionsTotal">0건</div>
+                <span class="kpi-sub" id="kpiSessionsSub">이번 달 0건</span>
+              </div>
+            </div>
+            <div class="eq-kpi-card">
+              <div class="kpi-icon-wrap" style="background:#fef3c7;color:#d97706;">⏱️</div>
+              <div class="kpi-info">
+                <span class="kpi-label">누적 연구 가동시간</span>
+                <div class="kpi-num" id="kpiRuntimeTotal">0시간</div>
+                <span class="kpi-sub" id="kpiRuntimeSub">평균 세션 0분</span>
+              </div>
+            </div>
+            <div class="eq-kpi-card">
+              <div class="kpi-icon-wrap" style="background:#f3e8ff;color:#7c3aed;">👥</div>
+              <div class="kpi-info">
+                <span class="kpi-label">참여 연구원 / 연구실</span>
+                <div class="kpi-num" id="kpiUsersTotal">0명</div>
+                <span class="kpi-sub" id="kpiAffilSub">IBS 2DQH</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 장비별 가동 점유율 & 월간 가동 캘린더 (2-Column Grid) -->
+          <div class="eq-analytics-row">
+            <!-- 좌: 9대 장비별 가동 점유율 및 누적 시간 (Utilization Ranking) -->
+            <div class="panel eq-analytics-panel">
+              <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h3 style="margin:0;font-size:15px;color:var(--ink);">📊 장비별 가동률 및 점유 랭킹</h3>
+                <span style="font-size:12px;color:var(--ink-light);">누적 시간 &amp; 세션 기준</span>
+              </div>
+              <div id="eqUtilizationList" class="eq-utilization-list"></div>
+            </div>
+
+            <!-- 우: 월간 연구장비 가동 캘린더 (Equipment Activity Calendar) -->
+            <div class="panel eq-analytics-panel">
+              <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqCalendarTitle">📅 이달의 장비 가동 캘린더</h3>
+                <div class="eq-calendar-nav" style="display:flex;align-items:center;gap:6px;">
+                  <button type="button" class="btn-calendar-nav" id="btnPrevMonth" title="이전 달">‹</button>
+                  <span id="eqCurrentMonthLabel" style="font-weight:700;font-size:13px;color:var(--ink);min-width:70px;text-align:center;"></span>
+                  <button type="button" class="btn-calendar-nav" id="btnNextMonth" title="다음 달">›</button>
+                </div>
+              </div>
+              <div id="eqCalendarContainer"></div>
+            </div>
+          </div>
+
+          <!-- 3. 실시간 통합 최근 가동 피드 (Unified Activity Timeline) -->
+          <div class="panel eq-analytics-panel" style="margin-top:16px;">
+            <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <h3 style="margin:0;font-size:15px;color:var(--ink);">🕒 최근 연구장비 가동 타임라인 (전체 통합)</h3>
+                <span id="eqTimelineDateFilterBadge" class="eq-timeline-date-badge hidden"></span>
+              </div>
+              <div class="eq-timeline-filters" id="eqTimelineFilters">
+                <button type="button" class="eq-filter-pill active" data-timeline-filter="all">전체 내역</button>
+                <button type="button" class="eq-filter-pill" data-timeline-filter="active">실운영 (XRD)</button>
+                <button type="button" class="eq-filter-pill" data-timeline-filter="test">시험 가동 (기타 장비)</button>
+              </div>
+            </div>
+            <div id="eqRecentTimelineList"></div>
+          </div>
+        </div>
       </div>
 
       <!-- 2. 개별 장비 상세 / 작업 공간 (Equipment Detail Workstation) -->
@@ -818,7 +911,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261109_02"></script>
-<script src="app.js?v=20261109_02"></script>
+<script src="consumables_catalog.js?v=20261109_03"></script>
+<script src="app.js?v=20261109_03"></script>
 </body>
 </html>
