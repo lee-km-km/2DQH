@@ -3790,6 +3790,10 @@ function toggleTheme(){
 // [장비 본체 부착용 QR 라벨 생성 및 인쇄 모달]
 // ========================================================
 function openEquipmentQrModal(eqId){
+  if(!isAdmin()){
+    toast('장비 본체 부착용 QR 관리는 관리자 전용 기능입니다.');
+    return;
+  }
   eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
   const eq = researchEquipments.find(function(e){ return e.id === eqId; }) || {
     id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', model: 'SmartLab / Rigaku', location: 'IBS 2DQH XRD실'
@@ -7621,6 +7625,14 @@ function bindEvents(){
       return;
     }
 
+    const loginTarget = target.closest('#loginBtn, #sidebarLoginBtn');
+    if(loginTarget){
+      e.preventDefault();
+      closeMobileDrawer();
+      openModal('login');
+      return;
+    }
+
     const logoutTarget = target.closest('#logoutBtn, #sidebarLogoutBtn');
     if(logoutTarget){
       e.preventDefault();
@@ -7860,6 +7872,15 @@ function bindEvents(){
   addEvt('exportCsv', 'click', exportHistoryCsv);
   addEvt('loanAdd', 'click', function(){ openModal('borrow'); });
   addEvt('quickBorrow', 'click', function(){ openModal('borrow'); });
+  addEvt('loginBtn', 'click', function(e){
+    e.preventDefault();
+    openModal('login');
+  });
+  addEvt('sidebarLoginBtn', 'click', function(e){
+    e.preventDefault();
+    closeMobileDrawer();
+    openModal('login');
+  });
   addEvt('logoutBtn', 'click', handleLogout);
   addEvt('sidebarLogoutBtn', 'click', handleLogout);
 
