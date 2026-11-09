@@ -35,14 +35,16 @@
 <body>
 
 <header class="topbar">
-  <div class="topbar-brand-group">
+  <div class="topbar-left">
     <a class="brand" href="#" id="brandLogoLink">
       <img src="logo_2dqh.jpg" alt="2DQH" class="brand-img-logo">
       <span class="brand-sep" aria-hidden="true"></span>
       <span class="brand-sub" id="brandSubText">2DQH LIMS</span>
     </a>
+  </div>
 
-    <!-- 2-in-1 모듈 스위처: [🔬 연구장비 LIMS] vs [📦 자재·비품 관리] -->
+  <div class="topbar-center">
+    <!-- 2-in-1 모듈 스위처: [🔬 연구장비 LIMS] vs [📦 연구자재·비품] -->
     <div class="portal-module-switcher" id="portalModuleSwitcher" role="tablist" aria-label="연구 포털 모듈 전환">
       <button type="button" class="portal-module-btn active" data-portal-module="lims" id="btnModuleLims" role="tab" aria-selected="true" title="성균관대 AQT/SESS 연구장비 및 전자 로그북">
         <span class="mod-icon">🔬</span>
@@ -50,12 +52,12 @@
       </button>
       <button type="button" class="portal-module-btn" data-portal-module="inventory" id="btnModuleInventory" role="tab" aria-selected="false" title="연구실 소모품 재고 및 공용 비품 대여 관리">
         <span class="mod-icon">📦</span>
-        <span class="mod-label">자재·비품 관리</span>
+        <span class="mod-label">연구자재·비품</span>
       </button>
     </div>
   </div>
 
-  <div class="top-actions">
+  <div class="topbar-right top-actions">
     <button id="btnToggleSearch" class="btn-toggle-search" aria-label="검색 및 카테고리 필터 열기/닫기" type="button" title="검색">
       <span class="search-btn-icon" aria-hidden="true">🔍</span>
       <span class="search-btn-label">검색</span>
@@ -71,41 +73,49 @@
 
 <div class="layout">
   <nav class="sidebar" aria-label="주 메뉴">
-    <!-- A. 연구장비 LIMS 모듈 전용 사이드바 메뉴 -->
+    <!-- A. 연구장비 LIMS 모듈 메뉴 -->
+    <div class="sidebar-section-header">
+      <span class="sidebar-section-title">연구장비 LIMS</span>
+      <span class="sidebar-section-pill">SESS AQT</span>
+    </div>
     <div class="sidebar-nav-group" id="sidebarGroupLims">
-      <button class="nav active" data-lims-nav="catalog">
+      <button class="nav active" data-view="logbook" data-lims-nav="catalog" id="sidebarNavCatalog">
         <span class="nav-icon" aria-hidden="true">🔬</span>
         <span>연구장비 포털</span>
       </button>
-      <button class="nav" data-lims-nav="xrd">
+      <button class="nav" data-view="logbook" data-lims-nav="xrd" id="sidebarNavXrd">
         <span class="nav-icon" aria-hidden="true">⚡</span>
         <span>HR-XRD 전자 로그북</span>
       </button>
-      <button class="nav" data-lims-nav="analytics">
+      <button class="nav" data-view="logbook" data-lims-nav="analytics" id="sidebarNavAnalytics">
         <span class="nav-icon" aria-hidden="true">📊</span>
         <span>장비 운영 통계</span>
       </button>
     </div>
 
-    <!-- B. 자재·비품 관리 모듈 전용 사이드바 메뉴 -->
-    <div class="sidebar-nav-group hidden" id="sidebarGroupInventory">
-      <button class="nav" data-view="consumables">
+    <!-- B. 연구자재·비품 관리 메뉴 -->
+    <div class="sidebar-section-header" style="margin-top:14px;">
+      <span class="sidebar-section-title">연구자재 관리</span>
+      <span class="sidebar-section-pill">재고·비품</span>
+    </div>
+    <div class="sidebar-nav-group" id="sidebarGroupInventory">
+      <button class="nav" data-view="consumables" id="sidebarNavConsumables">
         <span class="nav-icon" aria-hidden="true">📦</span>
         <span>소모품 재고</span>
       </button>
-      <button class="nav" data-view="inventory">
+      <button class="nav" data-view="inventory" id="sidebarNavInventory">
         <span class="nav-icon" aria-hidden="true">🛠️</span>
         <span>비품 대여</span>
       </button>
-      <button class="nav" data-view="loans">
+      <button class="nav" data-view="loans" id="sidebarNavLoans">
         <span class="nav-icon" aria-hidden="true">📋</span>
         <span>대여 현황</span>
       </button>
-      <button class="nav admin-only hidden" data-view="dashboard">
+      <button class="nav admin-only hidden" data-view="dashboard" id="sidebarNavDashboard">
         <span class="nav-icon" aria-hidden="true">📊</span>
         <span>자산 대시보드</span>
       </button>
-      <button class="nav admin-only hidden" data-view="history">
+      <button class="nav admin-only hidden" data-view="history" id="sidebarNavHistory">
         <span class="nav-icon" aria-hidden="true">📜</span>
         <span>대여 이력</span>
       </button>
@@ -953,7 +963,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261109_07"></script>
-<script src="app.js?v=20261109_07"></script>
+<script src="consumables_catalog.js?v=20261109_08"></script>
+<script src="app.js?v=20261109_08"></script>
 </body>
 </html>

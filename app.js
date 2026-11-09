@@ -225,11 +225,11 @@ function setPortalModule(mod, options){
     brandSubText.textContent = (mod === 'lims') ? '2DQH LIMS' : '2DQH 자재·비품';
   }
 
-  // 3. 사이드바 메뉴 그룹 전환 (LIMS vs 자재/비품)
+  // 3. 사이드바 메뉴 그룹 가시성: 통합 메뉴로 상시 접근 가능
   const groupLims = $('sidebarGroupLims');
   const groupInventory = $('sidebarGroupInventory');
-  if(groupLims) groupLims.classList.toggle('hidden', mod !== 'lims');
-  if(groupInventory) groupInventory.classList.toggle('hidden', mod !== 'inventory');
+  if(groupLims) groupLims.classList.remove('hidden');
+  if(groupInventory) groupInventory.classList.remove('hidden');
 
   // 4. 사이드바 연구실 안내 카드 정보 갱신
   const infoBadge = $('sidebarInfoBadge');
@@ -3940,11 +3940,7 @@ function showEquipmentCatalogHub(){
   const detail = $('equipmentDetailHub');
   if(hub) hub.classList.remove('hidden');
   if(detail) detail.classList.add('hidden');
-  if(currentHubView === 'analytics'){
-    renderEquipmentAnalyticsDashboard();
-  } else {
-    renderEquipmentPortalGrid();
-  }
+  switchEquipmentHubView(currentHubView || 'catalog');
 }
 
 // ========================================================
@@ -4036,6 +4032,11 @@ function switchEquipmentHubView(mode){
   currentHubView = mode || 'catalog';
   const isCatalog = (currentHubView === 'catalog');
 
+  const hub = $('equipmentCatalogHub');
+  const detail = $('equipmentDetailHub');
+  if(hub) hub.classList.remove('hidden');
+  if(detail) detail.classList.add('hidden');
+
   const catalogView = $('eqCatalogViewContainer');
   const analyticsView = $('equipmentAnalyticsDashboard');
 
@@ -4051,6 +4052,8 @@ function switchEquipmentHubView(mode){
   if(dAnalytics) dAnalytics.classList.toggle('active', !isCatalog);
   if(mGrid) mGrid.classList.toggle('active', isCatalog);
   if(mAnalytics) mAnalytics.classList.toggle('active', !isCatalog);
+
+  updateLimsNavActive(isCatalog ? 'catalog' : 'analytics');
 
   if(!isCatalog){
     renderEquipmentAnalyticsDashboard();
@@ -4447,7 +4450,10 @@ function renderLogbook(){
   const hash = (window.location.hash || '').toLowerCase();
   const hasSpecificEq = params.get('eq') || params.get('logbook') || hash.includes('xrd') || hash.includes('eq=');
 
-  if(!hasSpecificEq){
+  if(currentHubView === 'analytics'){
+    showEquipmentCatalogHub();
+    switchEquipmentHubView('analytics');
+  } else if(!hasSpecificEq){
     showEquipmentCatalogHub();
   } else {
     selectResearchEquipment(currentSelectedEquipment || 'EQ-XRD-01');
@@ -5447,7 +5453,17 @@ function showView(name, options){
   });
 
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
-    el.classList.toggle('active', el.dataset.view === name);
+    if(el.dataset.limsNav){
+      if(name === 'logbook'){
+        const isDetail = $('equipmentDetailHub') && !$('equipmentDetailHub').classList.contains('hidden');
+        const expected = isDetail ? 'xrd' : (currentHubView === 'analytics' ? 'analytics' : 'catalog');
+        el.classList.toggle('active', el.dataset.limsNav === expected);
+      } else {
+        el.classList.remove('active');
+      }
+    } else {
+      el.classList.toggle('active', el.dataset.view === name);
+    }
   });
 
   // 상단 헤더 메인 탭 활성화 상태 동기화
@@ -6283,8 +6299,9 @@ function bindEvents(){
   addEvt('logbookStatusFilter', 'change', renderLogbook);
 
   document.addEventListener('click', function(e){
-    const target = e.target.closest('button');
-    if(!target) return;
+    const el = e.target;
+    if(!el) return;
+    const target = el.closest('button, a, [data-select-eq], [data-select-util-eq], [data-cal-date], [data-timeline-filter], [data-eq-cat], [data-portal-module], [data-lims-nav], [data-main-view], [data-goto], [data-view]') || el;
 
     // 스마트 퀵 프리셋 칩 터치 시 해당 필드 즉시 입력 & 햅틱 시각 피드백
     if(target.classList.contains('btn-preset-chip') || target.dataset.setField){
@@ -6564,13 +6581,16 @@ function bindEvents(){
     const limsNavBtn = target.dataset.limsNav ? target : target.closest('[data-lims-nav]');
     if(limsNavBtn){
       const navType = limsNavBtn.dataset.limsNav;
-      showView('logbook');
       if(navType === 'catalog'){
+        currentHubView = 'catalog';
+        showView('logbook');
         showEquipmentCatalogHub();
-        switchEquipmentHubView('catalog');
       } else if(navType === 'xrd'){
+        showView('logbook');
         selectResearchEquipment('EQ-XRD-01');
       } else if(navType === 'analytics'){
+        currentHubView = 'analytics';
+        showView('logbook');
         showEquipmentCatalogHub();
         switchEquipmentHubView('analytics');
       }
