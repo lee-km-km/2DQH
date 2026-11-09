@@ -1090,6 +1090,11 @@ function setAdminUI(){
   if(!isAdm && activeView && activeView.classList.contains('admin-only')){
     showView('inventory');
   }
+
+  if(!isAdm && currentLogbookMode === 'admin'){
+    currentLogbookMode = 'user';
+  }
+  applyLogbookModeUI();
 }
 
 async function refreshAdminState(){
@@ -2748,6 +2753,59 @@ function exportChemicalLogsCsv(){
 // [연구장비 & 전자 로그북 모듈 - 2DQH-XRD_log 공식 기반]
 // ========================================================
 
+// [로그북 사용자 모드 vs 관리자 모드 제어]
+let currentLogbookMode = 'user';
+
+function setLogbookMode(mode){
+  if(mode === 'admin' && !isAdmin()){
+    toast('🛡️ 관리자 로그인이 필요한 모드입니다.');
+    openModal('login');
+    return;
+  }
+  currentLogbookMode = mode;
+  try { localStorage.setItem('labstock_logbook_mode', mode); } catch(_){}
+  applyLogbookModeUI();
+  toast(mode === 'admin' ? '🛡️ 관리자 운영 모드로 전환되었습니다.' : '👤 연구원 사용자 모드로 전환되었습니다.');
+}
+
+function applyLogbookModeUI(){
+  const isAdmMode = (currentLogbookMode === 'admin' && isAdmin());
+
+  const btnUser = $('btnLogbookModeUser');
+  const btnAdmin = $('btnLogbookModeAdmin');
+  if(btnUser) {
+    btnUser.classList.toggle('active', !isAdmMode);
+    btnUser.setAttribute('aria-selected', !isAdmMode ? 'true' : 'false');
+  }
+  if(btnAdmin) {
+    btnAdmin.classList.toggle('active', isAdmMode);
+    btnAdmin.setAttribute('aria-selected', isAdmMode ? 'true' : 'false');
+  }
+
+  const descEl = $('logbookModeDesc');
+  if(descEl){
+    descEl.textContent = isAdmMode 
+      ? '🛡️ 관리자 운영 모드 (전체 통계 분석 및 로그 수정·삭제 활성화)' 
+      : '👤 연구원 사용자 모드 (간편 일지 작성 및 열람 전용)';
+  }
+
+  const xrdContainer = $('xrdLogbookContainer');
+  if(xrdContainer){
+    xrdContainer.setAttribute('data-logbook-mode', isAdmMode ? 'admin' : 'user');
+  }
+  const eqDetail = $('equipmentDetailHub');
+  if(eqDetail){
+    eqDetail.setAttribute('data-logbook-mode', isAdmMode ? 'admin' : 'user');
+  }
+
+  if(currentSelectedEquipment === 'EQ-XRD-01'){
+    renderXrdLogs();
+  } else {
+    const curEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
+    if(curEq) renderEquipmentTestSessions(curEq.code);
+  }
+}
+
 function initXrdControls(){
   if(xrdControlsInitialized) return;
   const f = $('xrdForm');
@@ -3227,11 +3285,16 @@ function renderXrdLogs(){
       '<td data-l="Align.">' + (isActive ? '—' : safe(l.align || 'PB')) + '</td>' +
       '<td data-l="Scan">' + (safe(l.scan_type) || '—') + '</td>' +
       '<td data-l="Sample"><b>' + (safe(l.sample_name) || '—') + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + (isActive ? '' : '×' + safe(l.sample_count || 1)) + (l.meas_info ? ' · ' + safe(l.meas_info) : '') + (l.memo ? ' · 📝 ' + safe(l.memo) : '') + '</span></td>' +
-      '<td data-l="Action">' +
-        (isActive ? '<button type="button" class="text-btn" data-xrd-finish="' + l.id + '" style="font-weight:700;color:var(--primary);">Finish</button> ' : '<button type="button" class="text-btn" data-xrd-edit="' + l.id + '">Edit</button> ') +
-        '<button type="button" class="text-btn del" data-xrd-del="' + l.id + '">Delete</button>' +
-      '</td>' +
-      '</tr>';
+      '<td data-l="Action">';
+    if(isActive){
+      html += '<button type="button" class="text-btn" data-xrd-finish="' + l.id + '" style="font-weight:700;color:var(--primary);background:rgba(36,87,214,0.08);padding:4px 8px;border-radius:6px;">Finish</button>';
+    } else if(isAdmin() && currentLogbookMode === 'admin'){
+      html += '<button type="button" class="text-btn btn-log-edit" data-xrd-edit="' + l.id + '" style="margin-right:6px;">수정</button>' +
+        '<button type="button" class="text-btn del btn-log-del" data-xrd-del="' + l.id + '" style="color:#dc2626;">삭제</button>';
+    } else {
+      html += '<span style="font-size:11.5px;color:#059669;font-weight:600;background:#ecfdf5;padding:2px 7px;border-radius:6px;">완료</span>';
+    }
+    html += '</td></tr>';
   });
 
   html += '</tbody></table>';
@@ -3241,11 +3304,16 @@ function renderXrdLogs(){
 function finishXrdSession(id){
   const l = xrdLogs.find(function(x){ return String(x.id) === String(id); });
   if(!l) return;
+  const isCurrentlyActive = (l.status === 'active');
+  if(!isCurrentlyActive && !isAdmin()){
+    toast('완료된 로그북 기록 수정은 관리자만 가능합니다.');
+    return;
+  }
   const f = $('xrdForm');
   if(!f) return;
 
   xrdEditId = l.id;
-  xrdFinishing = (l.status === 'active');
+  xrdFinishing = isCurrentlyActive;
 
   for(const k of ['reservation_no','used_on','chiller_start','chiller_end','vacuum_start','vacuum_end','sample_name','meas_info','affiliation','user_name','professor','memo']){
     if(f[k]) f[k].value = l[k] ?? '';
@@ -3417,6 +3485,10 @@ async function handleXrdFormSubmit(e){
 }
 
 async function deleteXrdLog(id){
+  if(!isAdmin()){
+    toast('로그북 삭제 권한은 관리자에게만 있습니다.');
+    return;
+  }
   if(!confirm('이 HR-XRD 로그 기록을 삭제하시겠습니까?')) return;
   xrdLogs = xrdLogs.filter(function(l){ return String(l.id) !== String(id); });
   try { localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs)); } catch(_) {}
@@ -3954,7 +4026,9 @@ function renderEquipmentTestSessions(code){
     html += '</div>';
     html += '<div style="display:flex;align-items:center;gap:8px;">';
     html += '<span class="eq-badge-status active" style="font-size:10.5px;padding:2px 6px;">시험 가동 완료</span>';
-    html += '<button type="button" class="btn-clear-search" data-delete-eq-session="' + s.id + '" title="삭제" style="color:var(--danger);cursor:pointer;padding:4px 6px;font-size:12px;border:0;background:none;">✕</button>';
+    if(isAdmin() && currentLogbookMode === 'admin'){
+      html += '<button type="button" class="btn-clear-search btn-log-del" data-delete-eq-session="' + s.id + '" title="삭제" style="color:var(--danger,#dc2626);cursor:pointer;padding:4px 6px;font-size:12px;border:0;background:none;font-weight:600;">✕ 삭제</button>';
+    }
     html += '</div>';
     html += '</div>';
   });
@@ -4172,6 +4246,10 @@ async function handleTestDriveFormSubmit(e){
 }
 
 async function deleteEquipmentSession(id){
+  if(!isAdmin()){
+    toast('가동 기록 삭제 권한은 관리자에게만 있습니다.');
+    return;
+  }
   if(!confirm('이 시험 가동 기록을 삭제하시겠습니까?')) return;
   equipmentSessions = equipmentSessions.filter(function(s){ return String(s.id) !== String(id); });
   try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
@@ -4883,6 +4961,8 @@ function selectResearchEquipment(eqId){
 
   if(xrdContainer) xrdContainer.classList.toggle('hidden', !isXrd);
   if(placeholderContainer) placeholderContainer.classList.toggle('hidden', isXrd);
+
+  applyLogbookModeUI();
 
   if(isXrd){
     initXrdControls();
@@ -7265,7 +7345,21 @@ function bindEvents(){
       return;
     }
 
+    if(target.id === 'btnLogbookModeUser' || target.closest('#btnLogbookModeUser')){
+      setLogbookMode('user');
+      return;
+    }
+
+    if(target.id === 'btnLogbookModeAdmin' || target.closest('#btnLogbookModeAdmin')){
+      setLogbookMode('admin');
+      return;
+    }
+
     if(target.dataset.xrdEdit){
+      if(!isAdmin()){
+        toast('로그북 기록 수정은 관리자만 가능합니다.');
+        return;
+      }
       finishXrdSession(target.dataset.xrdEdit);
       return;
     }
@@ -7276,6 +7370,10 @@ function bindEvents(){
     }
 
     if(target.dataset.xrdDel){
+      if(!isAdmin()){
+        toast('로그북 기록 삭제는 관리자만 가능합니다.');
+        return;
+      }
       deleteXrdLog(target.dataset.xrdDel);
       return;
     }
@@ -7437,6 +7535,10 @@ function bindEvents(){
 
     if(target.dataset.deleteEqSession || target.closest('[data-delete-eq-session]')){
       const btn = target.dataset.deleteEqSession ? target : target.closest('[data-delete-eq-session]');
+      if(!isAdmin()){
+        toast('가동 기록 삭제 권한은 관리자에게만 있습니다.');
+        return;
+      }
       deleteEquipmentSession(btn.dataset.deleteEqSession);
       return;
     }
@@ -7766,6 +7868,8 @@ function bindEvents(){
     renderHistory();
   });
   addEvt('exportCsv', 'click', exportHistoryCsv);
+  addEvt('btnLogbookModeUser', 'click', function(){ setLogbookMode('user'); });
+  addEvt('btnLogbookModeAdmin', 'click', function(){ setLogbookMode('admin'); });
   addEvt('logoutBtn', 'click', handleLogout);
   addEvt('sidebarLogoutBtn', 'click', handleLogout);
 

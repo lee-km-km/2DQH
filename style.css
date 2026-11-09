@@ -7066,4 +7066,95 @@ tr.row-overdue:hover {
   color: #60a5fa !important;
 }
 
+/* ========================================================
+   [로그북 사용자 모드 vs 관리자 모드 전용 분리 스타일]
+   ======================================================== */
+.logbook-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-subtle, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.logbook-mode-tabs {
+  display: inline-flex;
+  background: var(--bg, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 4px;
+}
+.btn-logbook-mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-logbook-mode-tab.active {
+  background: var(--brand-red, #c2272d);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(194, 39, 45, 0.2);
+}
+.btn-logbook-mode-tab:hover:not(.active) {
+  background: var(--bg-subtle, #f1f5f9);
+  color: var(--ink, #0f172a);
+}
+.mode-info-badge {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted, #64748b);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* User Mode Visibility Constraints */
+[data-logbook-mode="user"] .xrd-admin-kpi-bar {
+  display: none !important;
+}
+[data-logbook-mode="user"] .btn-log-del,
+[data-logbook-mode="user"] .btn-log-edit,
+[data-logbook-mode="user"] [data-xrd-del],
+[data-logbook-mode="user"] [data-xrd-edit],
+[data-logbook-mode="user"] [data-delete-eq-session] {
+  display: none !important;
+}
+
+/* Admin Mode Styling */
+[data-logbook-mode="admin"] .xrd-admin-kpi-bar {
+  display: grid !important;
+}
+
+[data-theme="dark"] .logbook-mode-bar {
+  background: #162032 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .logbook-mode-tabs {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .btn-logbook-mode-tab {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .btn-logbook-mode-tab.active {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .mode-info-badge {
+  color: #94a3b8 !important;
+}
+
 

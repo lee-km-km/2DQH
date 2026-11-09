@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_16">
+  <link rel="stylesheet" href="style.css?v=20261109_17">
   <script>
     (function(){
       try {
@@ -488,6 +488,21 @@
           </div>
         </div>
 
+        <!-- 로그북 사용자 모드 vs 관리자 모드 전환 스위처 -->
+        <div class="logbook-mode-bar" id="logbookModeBar">
+          <div class="logbook-mode-tabs" role="tablist" aria-label="로그북 모드 전환">
+            <button type="button" class="btn-logbook-mode-tab active" id="btnLogbookModeUser" role="tab" aria-selected="true" title="연구원 가동 일지 작성 및 간편 세션 시작">
+              <span>👤 연구원 사용자 모드</span>
+            </button>
+            <button type="button" class="btn-logbook-mode-tab" id="btnLogbookModeAdmin" role="tab" aria-selected="false" title="관리자 전용: 전체 통계 분석, 로그 수정/삭제, 엑셀/CSV 추출">
+              <span>🛡️ 관리자 운영 모드</span>
+            </button>
+          </div>
+          <div class="logbook-mode-info">
+            <span class="mode-info-badge" id="logbookModeDesc">👤 연구원 간편 일지 작성 모드 (수정·삭제는 관리자 전용)</span>
+          </div>
+        </div>
+
         <div class="page-head hide-mobile">
           <div class="head-title">
             <h1 id="detailEqPageTitle">🔬 HR-XRD 전자 로그북</h1>
@@ -495,8 +510,8 @@
           </div>
           <div class="head-actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
             <button class="btn" id="btnShowEquipmentQr" title="장비 본체 부착용 QR 코드 생성 및 라벨 인쇄" style="display:inline-flex;align-items:center;gap:4px;">📷 본체 부착용 QR</button>
-            <button class="btn" id="btnExportEquipmentLogs" title="표준 CSV 포맷으로 로그북 다운로드">📥 CSV 다운로드</button>
-            <button class="btn primary" id="btnExportEquipmentLogsXls" title="날짜 오류 없이 즉시 열리는 엑셀(.XLS) 보고서 서식 다운로드" style="display:inline-flex;align-items:center;gap:4px;">📊 엑셀(.XLS) 다운로드</button>
+            <button class="btn admin-only hidden" id="btnExportEquipmentLogs" title="표준 CSV 포맷으로 로그북 다운로드">📥 CSV 다운로드</button>
+            <button class="btn primary admin-only hidden" id="btnExportEquipmentLogsXls" title="날짜 오류 없이 즉시 열리는 엑셀(.XLS) 보고서 서식 다운로드" style="display:inline-flex;align-items:center;gap:4px;">📊 엑셀(.XLS) 다운로드</button>
           </div>
         </div>
 
@@ -944,7 +959,7 @@
 
           <div class="eq-standby-actions" style="margin-top:20px;">
             <button type="button" class="btn primary" id="btnTestDriveEquipment">⚡ 시험 가동 (Test-Drive)</button>
-            <button type="button" class="btn desktop-only" id="btnToggleEqActive" title="이 장비를 실운영 디지털 로그북으로 활성화">🟢 실운영 활성화</button>
+            <button type="button" class="btn desktop-only admin-only hidden" id="btnToggleEqActive" title="이 장비를 실운영 디지털 로그북으로 활성화">🟢 실운영 활성화</button>
             <button type="button" class="btn btn-back-hub" id="btnPlaceholderBackBottom">← 전체 연구장비 목록</button>
           </div>
         </div>
@@ -1052,7 +1067,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261109_16"></script>
-<script src="app.js?v=20261109_16"></script>
+<script src="consumables_catalog.js?v=20261109_17"></script>
+<script src="app.js?v=20261109_17"></script>
 </body>
 </html>
