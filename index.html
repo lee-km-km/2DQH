@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_15">
+  <link rel="stylesheet" href="style.css?v=20261109_16">
   <script>
     (function(){
       try {
@@ -263,15 +263,31 @@
 
     <!-- 대여 이력 뷰 (관리자) -->
     <section class="view admin-only hidden" id="view-history">
-      <div class="page-head">
+      <div class="page-head" style="flex-wrap:wrap;gap:10px;">
         <div class="head-title">
-          <h1>대여 이력</h1>
+          <h1>📜 비품 대여·반납 이력 관리</h1>
+          <span class="count-badge" id="historySummaryBadge">총 0건</span>
         </div>
-        <button class="btn" id="exportCsv">CSV 내보내기</button>
+        <div class="head-actions" style="display:flex;gap:8px;align-items:center;">
+          <button class="btn" id="exportCsv" title="현재 필터링된 대여 이력 내보내기">📥 이력 CSV 다운로드</button>
+        </div>
       </div>
       <section class="panel">
-        <div class="toolbar">
-          <input id="historySearch" aria-label="이력 검색" placeholder="비품명, 식별번호, 대여자 검색...">
+        <div class="toolbar" style="flex-wrap:wrap;gap:10px;align-items:center;padding:12px 16px;">
+          <input id="historySearch" aria-label="이력 검색" placeholder="비품명, 식별번호, 대여자 검색..." style="flex:1 1 200px;min-width:180px;">
+          <select id="historyAssetFilter" aria-label="비품별 필터" style="flex:1 1 180px;min-width:160px;">
+            <option value="all">모든 비품 (전체)</option>
+          </select>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">📅 월별:</span>
+            <input type="month" id="historyMonthFilter" aria-label="월별 이력 필터" style="width:145px;height:38px;padding:4px 8px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--ink);">
+          </div>
+          <select id="historyStatusFilter" aria-label="상태 필터" style="width:110px;">
+            <option value="all">전체 상태</option>
+            <option value="returned">반납 완료</option>
+            <option value="active">대여 중</option>
+          </select>
+          <button type="button" class="btn" id="btnResetHistoryFilters" title="모든 필터 초기화" style="padding:6px 12px;font-size:12.5px;height:38px;">초기화</button>
         </div>
         <div id="historyRows"></div>
       </section>
@@ -1036,7 +1052,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261109_15"></script>
-<script src="app.js?v=20261109_15"></script>
+<script src="consumables_catalog.js?v=20261109_16"></script>
+<script src="app.js?v=20261109_16"></script>
 </body>
 </html>

@@ -761,33 +761,65 @@ td b { font-weight: 600; color: var(--ink); }
   #inventoryRows th:nth-child(5), #inventoryRows td:nth-child(5) { width: 10%; min-width: 80px; }
   #inventoryRows th:nth-child(6), #inventoryRows td:nth-child(6) { width: 14%; min-width: 125px; text-align: right; white-space: nowrap; }
 
-  #inventoryRows td.col-action {
-    white-space: nowrap !important;
-    text-align: right;
+  #inventoryRows td.col-main {
+    display: table-cell !important;
     vertical-align: middle;
   }
-
-  .col-main {
+  .asset-cell-wrap {
     display: flex;
     align-items: center;
     gap: 12px;
     white-space: nowrap;
   }
-  .col-main .asset-info-col {
+  #inventoryRows td.col-action {
+    display: table-cell !important;
+    vertical-align: middle;
+    text-align: right;
+    white-space: nowrap !important;
+  }
+  .col-action-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    vertical-align: middle;
+  }
+  .btn-action-edit {
+    height: 38px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--border) !important;
+    background: var(--bg) !important;
+    color: var(--muted) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+  .btn-action-edit:hover {
+    background: var(--bg-subtle) !important;
+    color: var(--ink) !important;
+    border-color: var(--faint) !important;
+  }
+
+  .asset-cell-wrap .asset-info-col {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 8px;
     white-space: nowrap;
   }
-  .col-main .asset-name {
+  .asset-cell-wrap .asset-name {
     font-size: 14.5px;
     font-weight: 600;
     color: var(--ink);
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .col-main .asset-id {
+  .asset-cell-wrap .asset-id {
     font-family: var(--font-mono);
     font-size: 11.5px;
     color: var(--faint);
@@ -1349,7 +1381,10 @@ td b { font-weight: 600; color: var(--ink); }
 
 /* Quick-Row & Mobile Compact Columns (Desktop Baseline) */
 .hide-mobile { display: table-cell; }
-.col-main {
+td.col-main {
+  vertical-align: middle;
+}
+.asset-cell-wrap {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1533,7 +1568,8 @@ tbody tr:hover .asset-thumb-box {
     background: #fcfcfc !important;
     transform: scale(0.985);
   }
-  .col-main {
+  .col-main,
+  .asset-cell-wrap {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;

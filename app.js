@@ -1727,26 +1727,28 @@ function renderInventory(){
 
       const rowClass = 'quick-row' + (st === 'borrowed' ? ' is-borrowed' + (isMine ? ' is-my-loan' : '') + (isOverdue ? ' is-overdue' : '') : '');
 
-      // 모바일 비품 카드: [좌측 54px 썸네일] + [중앙: 상태/대여자, 비품명 Bold, 📍위치] + [우측 대여/반납 버튼]
+      // 모바일 비품 카드 & 데스크톱 테이블 행 (셀 래퍼를 통해 테이블 border-bottom 일관 정렬 보장)
       listHtml += '<tr data-status="' + st + '" class="' + rowClass + '">' +
         '<td class="col-main">' +
-          '<div class="asset-thumb-box" aria-hidden="true">' +
-            getEquipmentImageHtml(a, 'thumb') +
-          '</div>' +
-          '<div class="asset-info-col">' +
-            '<div class="card-meta">' +
-              cardMetaHtml +
+          '<div class="asset-cell-wrap">' +
+            '<div class="asset-thumb-box" aria-hidden="true">' +
+              getEquipmentImageHtml(a, 'thumb') +
             '</div>' +
-            '<b class="asset-name">' + safe(a.name) + '</b>' +
-            '<span class="asset-id hide-mobile">' + safe(a.id) + '</span>' +
-            '<div class="asset-loc">📍 ' + safe(loc) + '</div>' +
+            '<div class="asset-info-col">' +
+              '<div class="card-meta">' +
+                cardMetaHtml +
+              '</div>' +
+              '<b class="asset-name">' + safe(a.name) + '</b>' +
+              '<span class="asset-id hide-mobile">' + safe(a.id) + '</span>' +
+              '<div class="asset-loc">📍 ' + safe(loc) + '</div>' +
+            '</div>' +
           '</div>' +
         '</td>' +
         '<td class="col-meta hide-mobile">' + safe(a.category) + '</td>' +
         '<td class="col-meta hide-mobile">' + safe(loc) + '</td>' +
         '<td class="col-meta hide-mobile"><span class="status ' + st + '">' + statusLabel(st) + '</span></td>' +
         '<td class="col-meta hide-mobile">' + safe(bName) + '</td>' +
-        '<td class="col-action">' + actionBtn + '</td></tr>';
+        '<td class="col-action"><div class="col-action-wrap">' + actionBtn + '</div></td></tr>';
     }
 
     // 본인이 현재 대여 중인 비품이 있는 경우, 최상단에 원클릭 반납 리마인드 배너 노출
@@ -5149,37 +5151,92 @@ function consumableFor(id){
   }) || null;
 }
 
+let currentFilteredHistoryLoans = [];
+
 function renderHistory(){
   const searchEl = $('historySearch');
+  const assetFilterEl = $('historyAssetFilter');
+  const monthFilterEl = $('historyMonthFilter');
+  const statusFilterEl = $('historyStatusFilter');
+
   const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const selectedAsset = assetFilterEl ? assetFilterEl.value : 'all';
+  const selectedMonth = monthFilterEl ? monthFilterEl.value.trim() : ''; // YYYY-MM
+  const selectedStatus = statusFilterEl ? statusFilterEl.value : 'all';
+
+  // 비품 드롭다운 옵션 동적 채우기 (현재 등록된 assets 기준)
+  if(assetFilterEl && assetFilterEl.options.length <= 1){
+    const sortedAssets = assets.slice().sort(function(a, b){
+      return (a.name || '').localeCompare(b.name || '', 'ko');
+    });
+    sortedAssets.forEach(function(a){
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = a.name + ' (' + a.id + ')';
+      assetFilterEl.appendChild(opt);
+    });
+    if(selectedAsset && selectedAsset !== 'all') assetFilterEl.value = selectedAsset;
+  }
 
   const list = loans.filter(function(l){
-    return [l.asset_id, l.borrower_name, fmtName(l.asset_id)]
-      .join(' ').toLowerCase().includes(q);
+    // 1. 검색어 필터 (비품 식별번호, 비품명, 대여자, 메모)
+    const matchesSearch = !q || [l.asset_id, l.borrower_name, fmtName(l.asset_id), l.memo || ''].join(' ').toLowerCase().includes(q);
+    if(!matchesSearch) return false;
+
+    // 2. 비품별 필터
+    if(selectedAsset && selectedAsset !== 'all' && l.asset_id !== selectedAsset) return false;
+
+    // 3. 월별 / 날짜별 필터 (대여일 또는 반납일이 해당 월 YYYY-MM에 속하는지)
+    if(selectedMonth){
+      const borrowMonth = (l.borrowed_at || '').substring(0, 7);
+      const returnMonth = (l.returned_at || '').substring(0, 7);
+      const dueMonth = (l.due_date || '').substring(0, 7);
+      if(borrowMonth !== selectedMonth && returnMonth !== selectedMonth && dueMonth !== selectedMonth){
+        return false;
+      }
+    }
+
+    // 4. 상태별 필터 (all, returned, active)
+    if(selectedStatus === 'returned' && !l.returned_at) return false;
+    if(selectedStatus === 'active' && !!l.returned_at) return false;
+
+    return true;
   });
+
+  currentFilteredHistoryLoans = list;
+
+  const summaryBadge = $('historySummaryBadge');
+  if(summaryBadge){
+    const activeCount = list.filter(function(l){ return !l.returned_at; }).length;
+    const returnedCount = list.filter(function(l){ return !!l.returned_at; }).length;
+    summaryBadge.textContent = '총 ' + list.length + '건 (대여중 ' + activeCount + ' · 반납완료 ' + returnedCount + ')';
+  }
 
   if(list.length > 0){
     let histHtml = '';
 
     for(let i=0; i<list.length; i++){
       const l = list[i];
-      const statClass = l.returned_at ? 'available' : 'borrowed';
-      const statText = l.returned_at ? '반납 완료' : '대여 중';
+      const isRet = !!l.returned_at;
+      const statClass = isRet ? 'available' : 'borrowed';
+      const statText = isRet ? '반납 완료' : '대여 중';
 
-      histHtml += '<tr><td data-label="비품 / 식별번호"><b>' + safe(fmtName(l.asset_id)) +
-        '</b><div class="asset-id">' + safe(l.asset_id) +
-        '</div></td><td data-label="대여자">' + safe(l.borrower_name) +
-        '</td><td data-label="시작일">' + dateText(l.borrowed_at) +
-        '</td><td data-label="예정 반납일">' + dateText(l.due_date) +
-        '</td><td data-label="실제 반납일">' + dateText(l.returned_at) +
-        '</td><td data-label="상태"><span class="status ' + statClass + '">' +
-        statText + '</span></td></tr>';
+      histHtml += '<tr>' +
+        '<td data-label="비품 / 식별번호"><b>' + safe(fmtName(l.asset_id)) + '</b><div class="asset-id">' + safe(l.asset_id) + '</div></td>' +
+        '<td data-label="대여자">' + safe(l.borrower_name) + '</td>' +
+        '<td data-label="대여 시작일">' + dateText(l.borrowed_at) + '</td>' +
+        '<td data-label="반납 예정일">' + dateText(l.due_date) + '</td>' +
+        '<td data-label="실제 반납일">' + (isRet ? '<span style="color:#16a34a;font-weight:600;">' + dateText(l.returned_at) + '</span>' : '<span style="color:var(--muted);">미반납</span>') + '</td>' +
+        '<td data-label="상태"><span class="status ' + statClass + '">' + statText + '</span></td>' +
+        '<td data-label="특이사항/메모" style="font-size:12px;color:var(--muted);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + safe(l.memo || '') + '">' + safe(l.memo || '—') + '</td>' +
+        '</tr>';
     }
 
-    $('historyRows').innerHTML = '<div class="table-wrap"><table aria-label="전체 비품 대여 및 반납 이력"><thead><tr><th scope="col">비품 / 식별번호</th><th scope="col">대여자</th><th scope="col">시작일</th><th scope="col">예정 반납일</th><th scope="col">실제 반납일</th><th scope="col">상태</th></tr></thead><tbody>' +
-      histHtml + '</tbody></table></div>';
+    $('historyRows').innerHTML = '<div class="table-wrap"><table aria-label="전체 비품 대여 및 반납 이력"><thead><tr>' +
+      '<th scope="col">비품 / 식별번호</th><th scope="col">대여자</th><th scope="col">대여 시작일</th><th scope="col">반납 예정일</th><th scope="col">실제 반납일</th><th scope="col">상태</th><th scope="col">메모</th>' +
+      '</tr></thead><tbody>' + histHtml + '</tbody></table></div>';
   } else {
-    $('historyRows').innerHTML = '<div class="empty">검색 결과가 없습니다.</div>';
+    $('historyRows').innerHTML = '<div class="empty">선택한 조건에 일치하는 대여 이력이 없습니다.</div>';
   }
 }
 
@@ -6756,10 +6813,12 @@ async function saveForm(e){
 }
 
 function exportHistoryCsv(){
-  const headers = ['비품 식별번호','비품명','대여자','대여 시작일','반납 예정일','실제 반납일','메모'];
+  const headers = ['비품 식별번호','비품명','대여자','대여 시작일','반납 예정일','실제 반납일','상태','메모'];
+  const sourceLoans = (currentFilteredHistoryLoans && currentFilteredHistoryLoans.length > 0) ? currentFilteredHistoryLoans : loans;
 
-  const rows = loans.map(function(l){
-    return [l.asset_id, fmtName(l.asset_id), l.borrower_name, l.borrowed_at, l.due_date, l.returned_at || '', l.memo || ''];
+  const rows = sourceLoans.map(function(l){
+    const statText = l.returned_at ? '반납 완료' : '대여 중';
+    return [l.asset_id, fmtName(l.asset_id), l.borrower_name, l.borrowed_at, l.due_date, l.returned_at || '', statText, l.memo || ''];
   });
 
   // 대여자 이름/메모는 누구나 입력할 수 있으므로 =,+,-,@ 로 시작하면 엑셀 수식으로 실행되지 않게 막는다
@@ -6773,15 +6832,58 @@ function exportHistoryCsv(){
     return r.map(cell).join(',');
   }).join('\r\n');
 
+  const monthFilterEl = $('historyMonthFilter');
+  const monthVal = monthFilterEl ? monthFilterEl.value.trim() : '';
+  const assetFilterEl = $('historyAssetFilter');
+  const assetVal = assetFilterEl ? assetFilterEl.value : 'all';
+
+  let fileSuffix = monthVal ? monthVal : today();
+  if(assetVal && assetVal !== 'all') fileSuffix += '-' + assetVal;
+
   const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
   const a = document.createElement('a');
 
   a.href = url;
-  a.download = 'labstock-history-' + today() + '.csv';
+  a.download = 'labstock-history-' + fileSuffix + '.csv';
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+// ==========================================
+// [관리자 로그아웃 처리]
+// ==========================================
+async function handleLogout(){
+  try {
+    if(db && db.auth){
+      await db.auth.signOut().catch(function(e){ console.warn('Supabase signOut error:', e); });
+    }
+  } catch(err){
+    console.warn('SignOut exception:', err);
+  } finally {
+    session = null;
+    admin = false;
+    // 로컬스토리지 잔여 Supabase auth 토큰 캐시 확실히 정리
+    try {
+      for(let i = localStorage.length - 1; i >= 0; i--){
+        const key = localStorage.key(i);
+        if(key && (key.startsWith('sb-') || key.includes('auth-token') || key === 'supabase.auth.token')){
+          localStorage.removeItem(key);
+        }
+      }
+    } catch(e){}
+
+    setAdminUI();
+    // 관리자 전용 화면에 머물고 있을 경우 즉시 비품 현황으로 복귀
+    const currentView = document.querySelector('.view:not(.hidden)');
+    if(currentView && currentView.classList.contains('admin-only')){
+      showView('inventory');
+    }
+    closeMobileDrawer();
+    toast('로그아웃되었습니다.');
+    render();
+  }
 }
 
 // ==========================================
@@ -7434,6 +7536,20 @@ function bindEvents(){
       return;
     }
 
+    const logoutTarget = target.closest('#logoutBtn, #sidebarLogoutBtn');
+    if(logoutTarget){
+      e.preventDefault();
+      handleLogout();
+      return;
+    }
+
+    const exportCsvTarget = target.closest('#exportCsv');
+    if(exportCsvTarget){
+      e.preventDefault();
+      exportHistoryCsv();
+      return;
+    }
+
     switch(target.id){
       case 'loginBtn':
       case 'sidebarLoginBtn':
@@ -7443,19 +7559,7 @@ function bindEvents(){
 
       case 'logoutBtn':
       case 'sidebarLogoutBtn':
-        if(db && db.auth){
-          db.auth.signOut().then(function(){
-            session = null;
-            admin = false;
-            setAdminUI();
-            toast('로그아웃했습니다.');
-            loadData();
-            closeMobileDrawer();
-          }).catch(function(err){
-            console.error(err);
-            toast('로그아웃 실패: ' + err.message);
-          });
-        }
+        handleLogout();
         break;
 
       case 'addAsset':
@@ -7651,6 +7755,19 @@ function bindEvents(){
   addEvt('loanSearch', 'input', debounce(renderLoans, 180));
   addEvt('loanFilter', 'change', renderLoans);
   addEvt('historySearch', 'input', debounce(renderHistory, 180));
+  addEvt('historyAssetFilter', 'change', renderHistory);
+  addEvt('historyMonthFilter', 'change', renderHistory);
+  addEvt('historyStatusFilter', 'change', renderHistory);
+  addEvt('btnResetHistoryFilters', 'click', function(){
+    const s = $('historySearch'); if(s) s.value = '';
+    const a = $('historyAssetFilter'); if(a) a.value = 'all';
+    const m = $('historyMonthFilter'); if(m) m.value = '';
+    const st = $('historyStatusFilter'); if(st) st.value = 'all';
+    renderHistory();
+  });
+  addEvt('exportCsv', 'click', exportHistoryCsv);
+  addEvt('logoutBtn', 'click', handleLogout);
+  addEvt('sidebarLogoutBtn', 'click', handleLogout);
 
   // 접근성 키보드 제어: ESC로 닫기 및 포커스 트랩(Focus Trap)
   document.addEventListener('keydown', function(e){
