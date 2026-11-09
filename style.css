@@ -4531,7 +4531,303 @@ tr.row-overdue:hover {
   max-width: 380px;
 }
 
-/* 9대 장비 카드 그리드 */
+/* ========================================================
+   [Primary Action First LIMS Architecture]
+   실운영 장비(HR-XRD) 퀵액션 히어로 카드 & SESS 콤팩트 인프라
+   ======================================================== */
+.eq-primary-hero-card {
+  background: #ffffff;
+  border: 1.5px solid #2563eb;
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+.eq-primary-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+}
+.eq-hero-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.eq-hero-status-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.eq-hero-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+.eq-hero-live-pill.in-use {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulseGreen 2s infinite;
+}
+@keyframes pulseGreen {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+.eq-hero-asset-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.eq-hero-scope-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+.eq-hero-main {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+.eq-hero-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  flex-shrink: 0;
+}
+.eq-hero-title {
+  margin: 0 0 4px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.eq-hero-sub {
+  margin: 0;
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+}
+.eq-hero-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-size: 13px;
+}
+.eq-hero-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eq-hero-stat-item .lbl {
+  color: #64748b;
+  font-weight: 500;
+}
+.eq-hero-stat-item b {
+  color: var(--ink);
+  font-weight: 700;
+}
+.eq-hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.btn-hero-action {
+  padding: 10px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-hero-action.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+.btn-hero-action.primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+/* SESS Secondary Infrastructure Section */
+.eq-secondary-section {
+  margin-top: 24px;
+}
+.eq-secondary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.eq-secondary-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.eq-secondary-title {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 콤팩트 카드 그리드 */
+.equipment-portal-grid.compact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+.eq-compact-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+}
+.eq-compact-card:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+}
+.eq-compact-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.eq-compact-code-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.eq-compact-code {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+.eq-compact-asset {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.eq-compact-cat-pill {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.eq-compact-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.eq-compact-model {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eq-compact-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  color: #64748b;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+.eq-compact-mode-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #334155;
+}
+.btn-compact-view {
+  width: 100%;
+  font-size: 12px;
+  padding: 6px 0;
+  text-align: center;
+  font-weight: 600;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+.eq-compact-card:hover .btn-compact-view {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* 9대 장비 카드 그리드 (레거시 호환) */
 .equipment-portal-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -4844,6 +5140,85 @@ tr.row-overdue:hover {
 }
 
 /* Dark Mode Overrides */
+[data-theme="dark"] .eq-primary-hero-card {
+  background: #111827 !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+[data-theme="dark"] .eq-hero-live-pill {
+  background: rgba(6, 95, 70, 0.3) !important;
+  color: #34d399 !important;
+  border-color: #059669 !important;
+}
+[data-theme="dark"] .eq-hero-live-pill.in-use {
+  background: rgba(29, 78, 216, 0.25) !important;
+  color: #60a5fa !important;
+  border-color: #3b82f6 !important;
+}
+[data-theme="dark"] .eq-hero-asset-code {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #60a5fa !important;
+}
+[data-theme="dark"] .eq-hero-scope-pill {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .eq-hero-icon-wrap {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .eq-hero-title {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-hero-sub {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .eq-hero-meta-row {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-hero-stat-item b {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-secondary-title {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-compact-card {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-compact-card:hover {
+  border-color: #3b82f6 !important;
+  background: #1a2238 !important;
+}
+[data-theme="dark"] .eq-compact-name {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-compact-model,
+[data-theme="dark"] .eq-compact-footer {
+  color: #94a3b8 !important;
+  border-top-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-compact-asset,
+[data-theme="dark"] .eq-compact-cat-pill {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .eq-compact-mode-pill {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .btn-compact-view {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .eq-compact-card:hover .btn-compact-view {
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}
 [data-theme="dark"] .eq-category-tabs {
   background: #1e293b !important;
 }

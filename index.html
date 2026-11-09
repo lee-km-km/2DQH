@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_05">
+  <link rel="stylesheet" href="style.css?v=20261109_06">
   <script>
     (function(){
       try {
@@ -272,25 +272,38 @@
           <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:13px;padding:8px 0;text-align:center;">📊 운영 통계</button>
         </div>
 
-        <!-- A. 장비 목록 뷰 (Toolbar & Grid) -->
+        <!-- A. 장비 목록 뷰 (Primary Action First & Decluttered LIMS Infrastructure) -->
         <div id="eqCatalogViewContainer">
-          <!-- 카테고리 필터 탭 & 검색 -->
-          <div class="eq-catalog-toolbar">
-            <div class="eq-category-tabs" id="eqCategoryTabs">
-              <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt" id="catCntAll">9</span></button>
-              <button type="button" class="eq-cat-tab" data-eq-cat="structural">구조분석 <span class="tab-cnt" id="catCntStructural">2</span></button>
-              <button type="button" class="eq-cat-tab" data-eq-cat="optical">광학·표면 <span class="tab-cnt" id="catCntOptical">3</span></button>
-              <button type="button" class="eq-cat-tab" data-eq-cat="deposition">박막·증착 <span class="tab-cnt" id="catCntDeposition">4</span></button>
-            </div>
-            <div class="search-input-box eq-search-box">
-              <span class="search-input-icon">🔍</span>
-              <input id="eqSearchInput" placeholder="장비명, 코드(XRD, AFM, Sputter...), 위치 검색">
-              <button id="btnClearEqSearch" class="btn-clear-search hidden" type="button">✕</button>
-            </div>
-          </div>
+          <!-- 1. 최상단 실운영 장비 (Primary Active Instrument - HR-XRD) -->
+          <div class="eq-primary-hero-card" id="eqPrimaryHeroCard"></div>
 
-          <!-- 9대 연구장비 카드 그리드 -->
-          <div class="equipment-portal-grid" id="equipmentPortalGrid"></div>
+          <!-- 2. SESS AQT 공용 연구시설 인프라 섹션 -->
+          <div class="eq-secondary-section">
+            <div class="eq-secondary-header">
+              <div class="eq-secondary-title-box">
+                <h3 class="eq-secondary-title">성균관대 양자기술첨단기기센터(AQT / SESS) 연동 장비</h3>
+                <span class="count-badge" id="eqSecondaryCountBadge">8대 연동 대기</span>
+              </div>
+              <div class="search-input-box eq-search-box">
+                <span class="search-input-icon">🔍</span>
+                <input id="eqSearchInput" placeholder="장비명, 코드, 모델, 위치, 규격 검색">
+                <button id="btnClearEqSearch" class="btn-clear-search hidden" type="button">✕</button>
+              </div>
+            </div>
+
+            <!-- 카테고리 필터 탭 -->
+            <div class="eq-catalog-toolbar">
+              <div class="eq-category-tabs" id="eqCategoryTabs">
+                <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt" id="catCntAll">8</span></button>
+                <button type="button" class="eq-cat-tab" data-eq-cat="structural">구조분석 <span class="tab-cnt" id="catCntStructural">1</span></button>
+                <button type="button" class="eq-cat-tab" data-eq-cat="optical">광학·표면 <span class="tab-cnt" id="catCntOptical">3</span></button>
+                <button type="button" class="eq-cat-tab" data-eq-cat="deposition">박막·증착 <span class="tab-cnt" id="catCntDeposition">4</span></button>
+              </div>
+            </div>
+
+            <!-- SESS 연동 연구장비 콤팩트 카드 그리드 -->
+            <div class="equipment-portal-grid compact-grid" id="equipmentPortalGrid"></div>
+          </div>
         </div>
 
         <!-- B. Phase 3: 연구단 장비 종합 통계 및 가동 대시보드 (Executive Analytics Hub) -->
@@ -924,7 +937,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261109_05"></script>
-<script src="app.js?v=20261109_05"></script>
+<script src="consumables_catalog.js?v=20261109_06"></script>
+<script src="app.js?v=20261109_06"></script>
 </body>
 </html>

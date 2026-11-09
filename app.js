@@ -3756,26 +3756,78 @@ function toggleEquipmentActive(eqId){
   renderEquipmentPortalGrid();
 }
 
+function renderEquipmentPrimaryHero(){
+  const heroContainer = $('eqPrimaryHeroCard');
+  if(!heroContainer) return;
+  const xrd = researchEquipments.find(function(e){ return e.type === 'xrd' || e.code === 'XRD'; }) || researchEquipments[0];
+  if(!xrd) return;
+
+  const totalLogs = Array.isArray(xrdLogs) ? xrdLogs.length : 0;
+  const todayStr = today();
+  const todayLogs = Array.isArray(xrdLogs) ? xrdLogs.filter(function(l){ return l.used_on === todayStr; }).length : 0;
+  const activeSession = (xrdLogs.length > 0 && xrdLogs[0].status === 'running') || false;
+
+  let html =
+    '<div class="eq-hero-inner">' +
+      '<div class="eq-hero-topline">' +
+        '<div class="eq-hero-status-group">' +
+          '<span class="eq-hero-live-pill ' + (activeSession ? 'in-use' : 'ready') + '">' +
+            '<span class="pulse-dot"></span> ' + (activeSession ? '측정 가동 중 (In-Use)' : '정상 작동 · 즉시 측정 가능') +
+          '</span>' +
+          '<span class="eq-hero-asset-code">' + safe(xrd.assetNo || 'SESS-AQT-XRD-01') + '</span>' +
+        '</div>' +
+        '<span class="eq-hero-scope-pill">실운영 장비</span>' +
+      '</div>' +
+      '<div class="eq-hero-main">' +
+        '<div class="eq-hero-icon-wrap">' + (xrd.icon || '🔬') + '</div>' +
+        '<div class="eq-hero-headings">' +
+          '<h2 class="eq-hero-title">' + safe(xrd.name) + '</h2>' +
+          '<p class="eq-hero-sub">' + safe(xrd.model) + ' &bull; 📍 ' + safe(xrd.location) + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="eq-hero-meta-row">' +
+        '<div class="eq-hero-stat-item"><span class="lbl">누적 측정 기록</span><b>' + totalLogs + '건</b></div>' +
+        '<div class="eq-hero-stat-item"><span class="lbl">오늘 측정 세션</span><b>' + todayLogs + '건</b></div>' +
+        '<div class="eq-hero-stat-item"><span class="lbl">담당 오퍼레이터</span><span>' + safe(xrd.manager) + ' (' + safe(xrd.contact) + ')</span></div>' +
+      '</div>' +
+      '<div class="eq-hero-actions">' +
+        '<button type="button" class="btn primary btn-hero-action" data-quick-action="xrd_start">⚡ 로그북 바로 작성 / 측정 시작</button>' +
+        '<button type="button" class="btn btn-hero-action" data-quick-action="xrd_qr">📷 본체 QR 라벨</button>' +
+        '<button type="button" class="btn btn-hero-action" data-quick-action="xrd_table">📋 전체 측정 이력</button>' +
+      '</div>' +
+    '</div>';
+
+  heroContainer.innerHTML = html;
+}
+
 function renderEquipmentPortalGrid(){
+  // 1. 최상단 실운영 장비(HR-XRD) 퀵액션 히어로 렌더링
+  renderEquipmentPrimaryHero();
+
   const grid = $('equipmentPortalGrid');
   if(!grid) return;
 
-  // SESS 카테고리 탭 카운트 실시간 업데이트
-  const cntAll = researchEquipments.length;
-  const cntStructural = researchEquipments.filter(function(e){ return e.category === 'structural'; }).length;
-  const cntOptical = researchEquipments.filter(function(e){ return e.category === 'optical'; }).length;
-  const cntDeposition = researchEquipments.filter(function(e){ return e.category === 'deposition'; }).length;
+  // SESS 8대 공용 연구시설 인프라 분리
+  const secondaryEquips = researchEquipments.filter(function(eq){
+    return eq.code !== 'XRD';
+  });
+
+  const cntAll = secondaryEquips.length;
+  const cntStructural = secondaryEquips.filter(function(e){ return e.category === 'structural'; }).length;
+  const cntOptical = secondaryEquips.filter(function(e){ return e.category === 'optical'; }).length;
+  const cntDeposition = secondaryEquips.filter(function(e){ return e.category === 'deposition'; }).length;
   if($('catCntAll')) $('catCntAll').textContent = cntAll;
   if($('catCntStructural')) $('catCntStructural').textContent = cntStructural;
   if($('catCntOptical')) $('catCntOptical').textContent = cntOptical;
   if($('catCntDeposition')) $('catCntDeposition').textContent = cntDeposition;
+  if($('eqSecondaryCountBadge')) $('eqSecondaryCountBadge').textContent = cntAll + '대 연동 대기';
 
   const searchInput = $('eqSearchInput');
   const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
   const clearBtn = $('btnClearEqSearch');
   if(clearBtn) clearBtn.classList.toggle('hidden', !q);
 
-  const filtered = researchEquipments.filter(function(eq){
+  const filtered = secondaryEquips.filter(function(eq){
     const matchCat = (selectedEquipmentCategory === 'all' || eq.category === selectedEquipmentCategory);
     if(!matchCat) return false;
     if(!q) return true;
@@ -3784,36 +3836,29 @@ function renderEquipmentPortalGrid(){
   });
 
   if(filtered.length === 0){
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:#64748b;font-size:14.5px;">검색 조건에 맞는 연구장비가 없습니다.</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:36px 20px;color:#64748b;font-size:14px;">검색 조건에 맞는 SESS 연동 연구장비가 없습니다.</div>';
     return;
   }
 
   let html = '';
   filtered.forEach(function(eq){
-    const isActive = (eq.status === 'active');
+    const serviceSimple = (eq.serviceMode || '직접사용').split('/')[0].trim();
     html +=
-      '<div class="eq-card ' + (isActive ? 'active-card' : '') + '" data-select-eq="' + safe(eq.id) + '">' +
-        '<div class="eq-card-header">' +
-          '<div class="eq-card-icon-box">' + (eq.icon || '🔬') + '</div>' +
-          '<div class="eq-card-pills">' +
-            '<span class="eq-cat-pill">' + safe(eq.categoryName || '장비') + '</span>' +
-            '<span class="eq-status-pill ' + (isActive ? 'active' : 'standby') + '">' + safe(eq.statusLabel) + '</span>' +
+      '<div class="eq-compact-card" data-select-eq="' + safe(eq.id) + '">' +
+        '<div class="eq-compact-head">' +
+          '<div class="eq-compact-code-group">' +
+            '<span class="eq-compact-code">' + safe(eq.code) + '</span>' +
+            (eq.assetNo ? '<span class="eq-compact-asset">' + safe(eq.assetNo) + '</span>' : '') +
           '</div>' +
+          '<span class="eq-compact-cat-pill">' + safe(eq.categoryName || '장비') + '</span>' +
         '</div>' +
-        '<div class="eq-card-body">' +
-          '<div class="eq-card-code-row">' +
-            '<span class="eq-card-code">' + safe(eq.code) + '</span>' +
-            (eq.assetNo ? '<span class="eq-card-asset-tag">' + safe(eq.assetNo) + '</span>' : '') +
-          '</div>' +
-          '<h3 class="eq-card-name">' + safe(eq.name) + '</h3>' +
-          '<div class="eq-card-model">' + safe(eq.model) + '</div>' +
+        '<h4 class="eq-compact-name">' + safe(eq.name) + '</h4>' +
+        '<p class="eq-compact-model">' + safe(eq.model) + '</p>' +
+        '<div class="eq-compact-footer">' +
+          '<span class="eq-compact-loc">📍 ' + safe(eq.location) + '</span>' +
+          '<span class="eq-compact-mode-pill">' + safe(serviceSimple) + '</span>' +
         '</div>' +
-        '<div class="eq-card-footer">' +
-          '<span class="eq-card-loc">📍 ' + safe(eq.location) + '</span>' +
-          '<button type="button" class="btn ' + (isActive ? 'primary' : '') + ' btn-eq-action">' +
-            (isActive ? '⚡ 로그북 작성' : '장비 규격·정보') +
-          '</button>' +
-        '</div>' +
+        '<button type="button" class="btn btn-compact-view">상세 규격 및 LIMS 스키마</button>' +
       '</div>';
   });
 
@@ -6428,6 +6473,28 @@ function bindEvents(){
     if(target.id === 'btnToggleTheme' || target.closest('#btnToggleTheme') || target.id === 'btnLogbookThemeToggle' || target.closest('#btnLogbookThemeToggle')){
       toggleTheme();
       return;
+    }
+
+    // Primary Hero Quick Actions (HR-XRD 바로가기 액션)
+    const heroActionBtn = target.dataset.quickAction ? target : target.closest('[data-quick-action]');
+    if(heroActionBtn){
+      const act = heroActionBtn.dataset.quickAction;
+      if(act === 'xrd_start'){
+        selectResearchEquipment('EQ-XRD-01');
+        showXrdMode('start');
+        toast('⚡ HR-XRD 측정 시작 폼으로 진입했습니다.');
+        return;
+      }
+      if(act === 'xrd_qr'){
+        openEquipmentQrModal('EQ-XRD-01');
+        return;
+      }
+      if(act === 'xrd_table'){
+        selectResearchEquipment('EQ-XRD-01');
+        const tbl = $('xrdRows');
+        if(tbl) tbl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
     }
 
     // 장비 본체 부착용 QR 모달 제어
