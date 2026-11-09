@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261106_21">
+  <link rel="stylesheet" href="style.css?v=20261109_01">
   <script>
     (function(){
       try {
@@ -248,24 +248,67 @@
       </section>
     </section>
 
-    <!-- 🔬 HR-XRD 전자 로그북 뷰 (2DQH-XRD_log 공식 모델 - 비품과 완전 분리) -->
+    <!-- 🔬 연구장비 포털 & 로그북 뷰 (Phase 1: 9대 연구장비 포털 및 독립 스테이션 모델) -->
     <section class="view" id="view-logbook">
-      <div class="page-head hide-mobile">
-        <div class="head-title">
-          <h1>🔬 HR-XRD 전자 로그북</h1>
-          <span class="count-badge" id="logbookCountBadge">SmartLab · Rigaku</span>
+      <!-- 1. 장비 목록 허브 (Catalog Hub) -->
+      <div id="equipmentCatalogHub">
+        <div class="page-head hide-mobile">
+          <div class="head-title">
+            <h1>🔬 연구장비 포털 &amp; 전자 로그북</h1>
+            <span class="count-badge" id="equipmentTotalBadge">총 9대 등록</span>
+          </div>
+          <div class="head-actions">
+            <span style="font-size:12.5px;color:var(--muted);font-weight:600;">IBS 2DQH 연구시설 공동 활용 기기</span>
+          </div>
         </div>
-        <div class="head-actions">
-          <button class="btn" id="btnShowEquipmentQr" title="장비 본체 부착용 QR 코드 생성 및 라벨 인쇄" style="display:inline-flex;align-items:center;gap:4px;">📷 본체 부착용 QR</button>
-          <button class="btn" id="btnExportEquipmentLogs" title="HR-XRD 로그북 CSV 다운로드">📥 XRD 로그 CSV</button>
+
+        <!-- 카테고리 필터 탭 & 검색 -->
+        <div class="eq-catalog-toolbar">
+          <div class="eq-category-tabs" id="eqCategoryTabs">
+            <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt">9</span></button>
+            <button type="button" class="eq-cat-tab" data-eq-cat="analysis">분석·측정 <span class="tab-cnt">5</span></button>
+            <button type="button" class="eq-cat-tab" data-eq-cat="deposition">박막·증착 <span class="tab-cnt">4</span></button>
+          </div>
+          <div class="search-input-box eq-search-box">
+            <span class="search-input-icon">🔍</span>
+            <input id="eqSearchInput" placeholder="장비명, 코드(XRD, AFM, Sputter...), 위치 검색">
+            <button id="btnClearEqSearch" class="btn-clear-search hidden" type="button">✕</button>
+          </div>
         </div>
+
+        <!-- 9대 연구장비 카드 그리드 -->
+        <div class="equipment-portal-grid" id="equipmentPortalGrid"></div>
       </div>
 
-      <!-- 단독 Kiosk 모드 배너 (백도어) -->
-      <div class="logbook-standalone-banner hidden" id="logbookStandaloneBanner">
-        <div class="standalone-badge">⚡ 단독 Kiosk 모드</div>
-        <span>IBS 2DQH HR-XRD 전자 사용일지 단독 운영 모드입니다. <a href="#inventory" class="text-link">← 비품 대여 시스템으로 돌아가기</a></span>
-      </div>
+      <!-- 2. 개별 장비 상세 / 작업 공간 (Equipment Detail Workstation) -->
+      <div id="equipmentDetailHub" class="hidden">
+        <!-- 상단 네비게이션: 허브 복귀 버튼 & 장비 상태 뱃지 -->
+        <div class="eq-detail-topbar">
+          <button type="button" class="btn btn-back-hub" id="btnBackToEqCatalog" style="display:inline-flex;align-items:center;gap:6px;font-weight:600;">
+            ← 전체 연구장비 목록
+          </button>
+          <div class="eq-detail-badges">
+            <span class="eq-badge-cat" id="detailEqCategory">분석·측정</span>
+            <span class="eq-badge-status" id="detailEqStatus">운영 중</span>
+          </div>
+        </div>
+
+        <div class="page-head hide-mobile">
+          <div class="head-title">
+            <h1 id="detailEqPageTitle">🔬 HR-XRD 전자 로그북</h1>
+            <span class="count-badge" id="logbookCountBadge">SmartLab · Rigaku</span>
+          </div>
+          <div class="head-actions">
+            <button class="btn" id="btnShowEquipmentQr" title="장비 본체 부착용 QR 코드 생성 및 라벨 인쇄" style="display:inline-flex;align-items:center;gap:4px;">📷 본체 부착용 QR</button>
+            <button class="btn" id="btnExportEquipmentLogs" title="HR-XRD 로그북 CSV 다운로드">📥 XRD 로그 CSV</button>
+          </div>
+        </div>
+
+        <!-- 단독 Kiosk 모드 배너 (백도어) -->
+        <div class="logbook-standalone-banner hidden" id="logbookStandaloneBanner">
+          <div class="standalone-badge">⚡ 단독 Kiosk 모드</div>
+          <span>IBS 2DQH HR-XRD 전자 사용일지 단독 운영 모드입니다. <a href="#inventory" class="text-link">← 비품 대여 시스템으로 돌아가기</a></span>
+        </div>
 
       <!-- HR-XRD 전용 통합 패널 (2DQH-XRD_log 모델) -->
       <div id="xrdLogbookContainer">
@@ -634,7 +677,56 @@
           </div>
         </div>
       </div>
-    </section>
+
+      <!-- B. 깡통 장비 (Standby / Placeholder) 안내 카드 -->
+      <div id="placeholderEquipmentContainer" class="hidden">
+        <div class="eq-standby-card">
+          <div class="eq-standby-header-row">
+            <div class="eq-standby-icon" id="placeholderEqIcon">🔬</div>
+            <div class="eq-standby-titles">
+              <div class="eq-standby-header">
+                <span class="eq-standby-code" id="placeholderEqCode">AFM</span>
+                <span class="eq-standby-pill">연동 준비 중 (Standby)</span>
+              </div>
+              <h2 class="eq-standby-title" id="placeholderEqName">AFM (원자간력현미경)</h2>
+            </div>
+          </div>
+          <p class="eq-standby-desc">현재 본 장비는 디지털 로그북 및 SOP(표준작업절차) 파라미터 연동 사전 점검 단계입니다.</p>
+
+          <div class="eq-standby-meta-grid">
+            <div class="eq-meta-item">
+              <span class="meta-label">📍 설치 위치</span>
+              <span class="meta-val" id="placeholderEqLocation">IBS 2DQH 기기분석실</span>
+            </div>
+            <div class="eq-meta-item">
+              <span class="meta-label">🏷️ 장비 모델</span>
+              <span class="meta-val" id="placeholderEqModel">모델 규격 확인 중</span>
+            </div>
+            <div class="eq-meta-item">
+              <span class="meta-label">👤 담당 오퍼레이터</span>
+              <span class="meta-val" id="placeholderEqManager">장비 담당자 / 신현석 교수님</span>
+            </div>
+            <div class="eq-meta-item">
+              <span class="meta-label">📞 문의처</span>
+              <span class="meta-val" id="placeholderEqContact">연구실 내선 문의</span>
+            </div>
+          </div>
+
+          <div class="eq-standby-notice">
+            <span class="notice-icon">ℹ️</span>
+            <div class="notice-text">
+              <b>장비 사용 및 수기 일지 안내:</b><br>
+              현재 오프라인 현장 일지로 운영되고 있습니다. 장비 사용 예약, 트레이닝 교육 이수 및 로그북 전산화 요청은 담당 오퍼레이터에게 문의 바랍니다.
+            </div>
+          </div>
+
+          <div class="eq-standby-actions">
+            <button type="button" class="btn btn-back-hub" id="btnPlaceholderBackBottom">← 전체 연구장비 목록</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /equipmentDetailHub -->
+  </section>
 
     <!-- 모바일 전용 보조 링크 (대여 현황 및 관리자 기능 격리) -->
     <footer class="mobile-sub-footer">
@@ -695,7 +787,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261106_21"></script>
-<script src="app.js?v=20261106_21"></script>
+<script src="consumables_catalog.js?v=20261109_01"></script>
+<script src="app.js?v=20261109_01"></script>
 </body>
 </html>

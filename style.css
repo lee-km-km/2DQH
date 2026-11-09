@@ -4261,3 +4261,429 @@ tr.row-overdue:hover {
   }
 }
 
+/* ==========================================================================
+   [Phase 1: 연구장비 9대 포털 허브 & 스탠바이 카드 스타일]
+   ========================================================================== */
+.eq-catalog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.eq-category-tabs {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 24px;
+  gap: 4px;
+  border: 1px solid var(--border);
+}
+.eq-cat-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+.eq-cat-tab:hover {
+  color: var(--ink);
+}
+.eq-cat-tab.active {
+  background: #ffffff;
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+.eq-cat-tab .tab-cnt {
+  display: inline-block;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+.eq-search-box {
+  min-width: 280px;
+  max-width: 380px;
+}
+
+/* 9대 장비 카드 그리드 */
+.equipment-portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+.eq-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  position: relative;
+}
+.eq-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  border-color: #cbd5e1;
+}
+.eq-card.active-card {
+  border-color: #93c5fd;
+  background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%);
+}
+.eq-card.active-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);
+}
+.eq-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.eq-card-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.eq-card.active-card .eq-card-icon-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+.eq-card-pills {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.eq-cat-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #475569;
+}
+.eq-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 12px;
+}
+.eq-status-pill.active {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.eq-status-pill.standby {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.eq-card-body {
+  flex: 1;
+}
+.eq-card-code {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--primary);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.eq-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 6px;
+  line-height: 1.35;
+}
+.eq-card-model {
+  font-size: 13px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eq-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12.5px;
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+.eq-card-loc {
+  font-weight: 500;
+}
+.btn-eq-action {
+  font-size: 12.5px;
+  padding: 6px 14px;
+  height: 32px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* 개별 장비 상세 상단 바 */
+.eq-detail-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.btn-back-hub {
+  font-size: 13px;
+  padding: 6px 14px;
+  height: 36px;
+  border-radius: 8px;
+}
+.eq-detail-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eq-badge-cat {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  color: #475569;
+}
+.eq-badge-status {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+.eq-badge-status.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+.eq-badge-status.standby {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* 깡통 장비 (Standby / Placeholder) 안내 카드 */
+.eq-standby-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 760px;
+  margin: 20px auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+.eq-standby-header-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+.eq-standby-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  flex-shrink: 0;
+}
+.eq-standby-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.eq-standby-code {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+.eq-standby-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.eq-standby-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.eq-standby-desc {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0 0 20px;
+}
+.eq-standby-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.eq-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.meta-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+.meta-val {
+  font-size: 14px;
+  color: var(--ink);
+  font-weight: 600;
+}
+.eq-standby-notice {
+  background: #fffbe6;
+  border: 1px solid #fef08a;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.notice-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.notice-text {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #854d0e;
+}
+.eq-standby-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 700px) {
+  .eq-catalog-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .eq-search-box {
+    max-width: 100%;
+  }
+  .equipment-portal-grid {
+    grid-template-columns: 1fr;
+  }
+  .eq-standby-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .eq-category-tabs {
+  background: #1e293b !important;
+}
+[data-theme="dark"] .eq-cat-tab {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .eq-cat-tab.active {
+  background: #0f172a !important;
+  color: #60a5fa !important;
+}
+[data-theme="dark"] .eq-card {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-card.active-card {
+  background: linear-gradient(180deg, #172554 0%, #151c2e 100%) !important;
+  border-color: #3b82f6 !important;
+}
+[data-theme="dark"] .eq-card-icon-box {
+  background: #1e293b !important;
+}
+[data-theme="dark"] .eq-card-name {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-card-model,
+[data-theme="dark"] .eq-card-footer {
+  color: #94a3b8 !important;
+  border-top-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-cat-pill {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .eq-status-pill.standby {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .eq-standby-card {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-standby-meta-grid {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .meta-val {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-standby-title {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-standby-icon {
+  background: #1e293b !important;
+}
+[data-theme="dark"] .eq-standby-notice {
+  background: #1c1917 !important;
+  border-color: #44403c !important;
+}
+[data-theme="dark"] .notice-text {
+  color: #fef08a !important;
+}
+[data-theme="dark"] .eq-detail-topbar {
+  border-bottom-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-badge-cat {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .eq-badge-status.standby {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
