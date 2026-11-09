@@ -1002,11 +1002,6 @@ function setAdminUI(){
     adminEls[i].classList.toggle('hidden', !isAdm);
   }
 
-  // 비로그인 사용자는 장비 운영 통계 접근 불가 (카탈로그 목록으로 강제 복귀)
-  if(!isAdm && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
-    switchEquipmentHubView('catalog');
-  }
-
   const activeView = document.querySelector('.view.active');
   if(!isAdm && activeView && activeView.classList.contains('admin-only')){
     showView('inventory');
@@ -4015,10 +4010,6 @@ function getUnifiedEquipmentSessions(){
 }
 
 function switchEquipmentHubView(mode){
-  if(mode === 'analytics' && !isAdmin()){
-    toast('장비 운영 통계는 관리자 로그인 후 조회 가능합니다.');
-    mode = 'catalog';
-  }
   currentHubView = mode || 'catalog';
   const isCatalog = (currentHubView === 'catalog');
 
@@ -6223,6 +6214,7 @@ function bindEvents(){
 
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
     el.addEventListener('click', function(){
+      if(el.dataset.limsNav) return; // LIMS 서브 내비게이션은 LIMS 전용 핸들러에서 라우팅
       showView(el.dataset.view, { pushState: true });
     });
   });
@@ -6617,13 +6609,6 @@ function bindEvents(){
     const bTab = target.dataset.view ? target : target.closest('.bottom-nav-tab[data-view]');
     if(bTab){
       showView(bTab.dataset.view, { pushState: true });
-      return;
-    }
-
-    // 대시보드에서 전자로그북 바로가기 원클릭 버튼
-    if(target.id === 'btnDashboardGoLogbook' || target.closest('#btnDashboardGoLogbook')){
-      showView('logbook');
-      selectResearchEquipment('EQ-XRD-01');
       return;
     }
 
@@ -7061,6 +7046,73 @@ function bindEvents(){
       }
     }
   });
+
+  // LIMS 서브 내비게이션 & 통계 허브 원클릭 즉시 연결
+  const navCatalog = $('sidebarNavCatalog');
+  if(navCatalog){
+    navCatalog.addEventListener('click', function(e){
+      e.preventDefault();
+      currentHubView = 'catalog';
+      showView('logbook');
+      showEquipmentCatalogHub();
+      switchEquipmentHubView('catalog');
+      updateLimsNavActive('catalog');
+    });
+  }
+
+  const navXrd = $('sidebarNavXrd');
+  if(navXrd){
+    navXrd.addEventListener('click', function(e){
+      e.preventDefault();
+      showView('logbook');
+      selectResearchEquipment('EQ-XRD-01');
+      updateLimsNavActive('xrd');
+    });
+  }
+
+  const navAnalytics = $('sidebarNavAnalytics');
+  if(navAnalytics){
+    navAnalytics.addEventListener('click', function(e){
+      e.preventDefault();
+      currentHubView = 'analytics';
+      showView('logbook');
+      showEquipmentCatalogHub();
+      switchEquipmentHubView('analytics');
+      updateLimsNavActive('analytics');
+    });
+  }
+
+  const bHubAnalytics = $('btnHubShowAnalytics');
+  if(bHubAnalytics){
+    bHubAnalytics.addEventListener('click', function(e){
+      e.preventDefault();
+      switchEquipmentHubView('analytics');
+    });
+  }
+
+  const bMobileHubAnalytics = $('btnMobileHubShowAnalytics');
+  if(bMobileHubAnalytics){
+    bMobileHubAnalytics.addEventListener('click', function(e){
+      e.preventDefault();
+      switchEquipmentHubView('analytics');
+    });
+  }
+
+  const bHubGrid = $('btnHubShowGrid');
+  if(bHubGrid){
+    bHubGrid.addEventListener('click', function(e){
+      e.preventDefault();
+      switchEquipmentHubView('catalog');
+    });
+  }
+
+  const bMobileHubGrid = $('btnMobileHubShowGrid');
+  if(bMobileHubGrid){
+    bMobileHubGrid.addEventListener('click', function(e){
+      e.preventDefault();
+      switchEquipmentHubView('catalog');
+    });
+  }
 }
 
 // ==========================================

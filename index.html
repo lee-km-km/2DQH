@@ -122,6 +122,10 @@
         <span class="nav-icon" aria-hidden="true">⚡</span>
         <span>HR-XRD 전자 로그북</span>
       </button>
+      <button class="nav" data-view="logbook" data-lims-nav="analytics" id="sidebarNavAnalytics">
+        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span>장비 운영 통계</span>
+      </button>
     </div>
 
     <!-- C. 👑 관리자 전용 메뉴 (관리자 로그인 시 언락) -->
@@ -131,12 +135,8 @@
     </div>
     <div class="sidebar-nav-group admin-only hidden" id="sidebarGroupAdmin">
       <button class="nav" data-view="dashboard" id="sidebarNavDashboard">
-        <span class="nav-icon" aria-hidden="true">📊</span>
-        <span>자산 관리 대시보드</span>
-      </button>
-      <button class="nav" data-view="logbook" data-lims-nav="analytics" id="sidebarNavAnalytics">
         <span class="nav-icon" aria-hidden="true">📈</span>
-        <span>장비 운영 통계</span>
+        <span>자산 관리 대시보드</span>
       </button>
       <button class="nav" data-view="history" id="sidebarNavHistory">
         <span class="nav-icon" aria-hidden="true">📜</span>
@@ -228,8 +228,7 @@
           <span class="count-badge" id="statsSubBadge">실시간 모니터링</span>
         </div>
         <div class="head-actions" style="display:flex;gap:8px;align-items:center;">
-          <button type="button" class="btn primary" id="btnDashboardGoLogbook" style="font-weight:600;">⚡ HR-XRD 전자로그북 바로가기</button>
-          <button class="btn desktop-only" id="quickBorrow">＋ 새 비품 대여</button>
+          <button class="btn primary" id="quickBorrow">＋ 새 비품 대여</button>
         </div>
       </div>
       
@@ -326,7 +325,7 @@
           <div class="head-actions">
             <div class="eq-hub-switch-group">
               <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
-              <button type="button" class="btn admin-only hidden" id="btnHubShowAnalytics">📊 장비 운영 통계</button>
+              <button type="button" class="btn" id="btnHubShowAnalytics">📊 장비 운영 통계</button>
             </div>
             <button class="btn admin-only hidden" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 로그 CSV</button>
           </div>
@@ -335,7 +334,7 @@
         <!-- 모바일 전용 뷰 전환 바 -->
         <div class="mobile-only eq-mobile-view-bar" style="margin-bottom:12px;display:flex;gap:6px;">
           <button type="button" class="btn active" id="btnMobileHubShowGrid" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📇 장비 목록</button>
-          <button type="button" class="btn admin-only hidden" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 장비 운영 통계</button>
+          <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 장비 운영 통계</button>
         </div>
 
         <!-- A. 장비 목록 뷰 (균형 잡힌 9대 연구장비 통합 포털) -->
