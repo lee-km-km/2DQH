@@ -842,6 +842,45 @@ td b { font-weight: 600; color: var(--ink); }
   color: #64748b;
   border: 1px solid #e2e8f0;
 }
+.overdue-chip {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.loan-user-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 1px 6px;
+  line-height: 1.3;
+  vertical-align: middle;
+}
+.loan-user-tag.is-me {
+  color: #15803d;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+.loan-overdue-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 1px 6px;
+  line-height: 1.3;
+  vertical-align: middle;
+}
 
 /* 반납 D-Day 상태 배지 (Persona Walkthrough & ERP 스타일) */
 .due-date-cell {
@@ -1828,10 +1867,20 @@ tbody tr:hover .asset-thumb-box {
   }
 
   /* Quick Row (.col-action & .btn-action-borrow) 모바일 가림/넘침 원천 차단 */
+  .table-wrap tr.quick-row.is-borrowed {
+    border-left: 3.5px solid #94a3b8 !important;
+  }
+  .table-wrap tr.quick-row.is-borrowed.is-my-loan {
+    border-left: 3.5px solid #16a34a !important;
+  }
+  .table-wrap tr.quick-row.is-borrowed.is-overdue {
+    border-left: 3.5px solid #ef4444 !important;
+  }
   .table-wrap tr.quick-row td.col-action {
     display: flex !important;
     align-items: center !important;
     justify-content: flex-end !important;
+    gap: 6px !important;
     width: auto !important;
     max-width: none !important;
     min-width: 0 !important;
@@ -1846,8 +1895,8 @@ tbody tr:hover .asset-thumb-box {
     justify-content: center !important;
     width: auto !important;
     min-width: 84px !important;
-    height: 42px !important;
-    min-height: 42px !important;
+    height: 40px !important;
+    min-height: 40px !important;
     padding: 0 14px !important;
     font-size: 13.5px !important;
     font-weight: 700 !important;
@@ -1861,6 +1910,51 @@ tbody tr:hover .asset-thumb-box {
     opacity: 1 !important;
     box-shadow: 0 2px 8px rgba(194, 39, 45, 0.25) !important;
   }
+  .table-wrap tr.quick-row td.col-action .btn-action-return {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 14px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    background: #16a34a !important;
+    color: #ffffff !important;
+    border: none !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25) !important;
+  }
+  .table-wrap tr.quick-row td.col-action .btn-action-return:active {
+    background: #15803d !important;
+    transform: scale(0.96) !important;
+  }
+  .table-wrap tr.quick-row td.col-action .btn-action-extend {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+  }
+  .table-wrap tr.quick-row td.col-action .btn-action-extend:active {
+    background: #e2e8f0 !important;
+    transform: scale(0.96) !important;
+  }
   .table-wrap tr.quick-row td.col-action .borrowed-chip,
   .table-wrap tr.quick-row td.col-action .status-chip {
     display: inline-flex !important;
@@ -1869,10 +1963,22 @@ tbody tr:hover .asset-thumb-box {
     width: auto !important;
     min-width: 0 !important;
     flex: 0 0 auto !important;
+    height: 38px !important;
     min-height: 38px !important;
-    padding: 6px 12px !important;
+    padding: 0 10px !important;
     font-size: 12px !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
     white-space: nowrap !important;
+  }
+  .table-wrap tr.quick-row td.col-action .overdue-chip {
+    background: #fef2f2 !important;
+    color: #b91c1c !important;
+    border-color: #fecaca !important;
+    font-weight: 700 !important;
   }
 
 
@@ -4597,6 +4703,144 @@ tr.row-overdue:hover {
 [data-theme="dark"] #xrdRows tr {
   background: #151c2e !important;
   border-color: #232f46 !important;
+}
+
+/* Dark Mode: Equipment Loan & Supply Table Enhancements */
+[data-theme="dark"] .table-wrap tr.quick-row {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+[data-theme="dark"] .table-wrap tr.quick-row:active {
+  background: #1a2236 !important;
+}
+[data-theme="dark"] .table-wrap tr.quick-row.is-borrowed {
+  border-left-color: #475569 !important;
+}
+[data-theme="dark"] .table-wrap tr.quick-row.is-borrowed.is-my-loan {
+  border-left-color: #22c55e !important;
+}
+[data-theme="dark"] .table-wrap tr.quick-row.is-borrowed.is-overdue {
+  border-left-color: #ef4444 !important;
+}
+[data-theme="dark"] .asset-thumb-box {
+  background: #1a2236 !important;
+  border-color: #2a3754 !important;
+}
+[data-theme="dark"] .table-wrap tr:not(.quick-row) {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .table-wrap td {
+  border-bottom-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .table-wrap td:first-child {
+  border-bottom-color: #232f46 !important;
+}
+[data-theme="dark"] .status.borrowed {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .status.borrowed:before {
+  background: #64748b !important;
+}
+[data-theme="dark"] .status.available {
+  color: #4ade80 !important;
+}
+[data-theme="dark"] .status.available:before {
+  background: #22c55e !important;
+}
+[data-theme="dark"] .status-chip.borrowed-chip,
+[data-theme="dark"] .table-wrap tr.quick-row td.col-action .borrowed-chip {
+  background: #1a2236 !important;
+  color: #94a3b8 !important;
+  border-color: #2a3754 !important;
+}
+[data-theme="dark"] .status-chip.locked-chip {
+  background: #1a2236 !important;
+  color: #94a3b8 !important;
+  border-color: #2d3b55 !important;
+}
+[data-theme="dark"] .status-chip.overdue-chip,
+[data-theme="dark"] .table-wrap tr.quick-row td.col-action .overdue-chip {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+[data-theme="dark"] .table-wrap tr.quick-row td.col-action .btn-action-extend {
+  background: #1a2236 !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .loan-user-tag {
+  color: #cbd5e1 !important;
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .loan-user-tag.is-me {
+  color: #86efac !important;
+  background: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+[data-theme="dark"] .loan-overdue-tag {
+  color: #fca5a5 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Dark Mode: Loan Reminder Banner */
+[data-theme="dark"] .my-active-loan-banner {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+  border-left-color: #f87171 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+}
+[data-theme="dark"] .my-active-loan-banner b {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .my-active-loan-banner small {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .my-active-loan-banner.is-overdue-banner {
+  background: #1f1719 !important;
+  border-color: #7f1d1d !important;
+  border-left-color: #ef4444 !important;
+}
+[data-theme="dark"] .my-active-loan-banner.is-overdue-banner b {
+  color: #fca5a5 !important;
+}
+[data-theme="dark"] .btn-banner-extend {
+  background: #1a2236 !important;
+  color: #e2e8f0 !important;
+  border-color: #374768 !important;
+}
+[data-theme="dark"] .btn-banner-extend:hover {
+  background: #232f46 !important;
+}
+
+/* Dark Mode: Return Modal Elements */
+[data-theme="dark"] .return-summary-box {
+  background: rgba(34, 197, 94, 0.1) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+[data-theme="dark"] .return-location-card {
+  background: #172554 !important;
+  border-color: #2563eb !important;
+}
+[data-theme="dark"] .return-location-title {
+  color: #93c5fd !important;
+}
+[data-theme="dark"] .return-location-val {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .return-date-card {
+  background: #1a2236 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .return-date-badge {
+  background: #1e293b !important;
+  color: #60a5fa !important;
+  border-color: #2563eb !important;
 }
 
 [data-theme="dark"] .header-tab {

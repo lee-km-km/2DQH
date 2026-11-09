@@ -1388,11 +1388,11 @@ function renderDashboard(){
       const l = active[i];
       const isOverdue = l.due_date && l.due_date < today();
 
-      rowsHtml += '<tr><td><b>' + safe(fmtName(l.asset_id)) +
+      rowsHtml += '<tr><td data-label="비품"><b>' + safe(fmtName(l.asset_id)) +
         '</b><div class="asset-id">' + safe(l.asset_id) +
-        '</div></td><td>' + safe(l.borrower_name) +
-        '</td><td>' + dateText(l.borrowed_at) +
-        '</td><td><span class="status borrowed">대여 중</span></td></tr>';
+        '</div></td><td data-label="대여자">' + safe(l.borrower_name) +
+        '</td><td data-label="대여일">' + dateText(l.borrowed_at) +
+        '</td><td data-label="상태">' + (isOverdue ? '<span class="status-chip overdue-chip">⚠️ 기간 지남</span>' : '<span class="status borrowed">대여 중</span>') + '</td></tr>';
     }
 
     $('dashboardLoans').innerHTML = '<table aria-label="현재 대여 중인 비품"><thead><tr><th scope="col">비품</th><th scope="col">대여자</th><th scope="col">대여일</th><th scope="col">상태</th></tr></thead><tbody>' +
@@ -1681,25 +1681,29 @@ function renderInventory(){
       const st = statusFor(a);
       const bName = l && l.borrower_name ? l.borrower_name : '—';
       const loc = a.location ? a.location : '—';
+      const isMine = l && isMyLoan(l);
+      const canManage = l && canManageLoan(l);
+      const info = l ? getLoanDeadlineInfo(l) : null;
+      const isOverdue = !!(info && info.isOverdue);
 
       let actionBtn = '';
 
       if(st === 'available'){
         actionBtn += '<button class="text-btn btn-action-borrow" data-borrow="' + safe(a.id) + '">⚡ 대여 신청</button>';
       } else if(st === 'borrowed'){
-        const info = getLoanDeadlineInfo(l);
-        if(info.isOverdue){
-          actionBtn += '<span class="status-chip overdue-chip">⚠️ 기간 지남 (' + safe(bName) + ')</span>';
-        } else {
-          actionBtn += '<span class="status-chip borrowed-chip">대여 중 (' + safe(bName) + ')</span>';
-        }
-
-        if(l && canManageLoan(l)){
-          // 24시간 미만 남았거나 기한 지난 경우에만 24시간 연장 버튼 노출
-          if(info.canExtend){
-            actionBtn += ' <button class="text-btn btn-action-extend" data-extend-loan="' + l.id + '" title="대여 기한을 24시간 연장합니다">⏰ 24시간 연장</button>';
+        if(canManage){
+          // 본인 대여 비품 (직접 반납 / 연장 가능)
+          if(info && info.canExtend){
+            actionBtn += '<button class="text-btn btn-action-extend" data-extend-loan="' + l.id + '" title="대여 기한을 24시간 연장합니다">⏰ 연장</button>';
           }
-          actionBtn += ' <button class="text-btn btn-action-return" data-return="' + l.id + '">✓ 반납</button>';
+          actionBtn += '<button class="text-btn btn-action-return" data-return="' + l.id + '">✓ 반납</button>';
+        } else {
+          // 타인 대여 비품 (작업 컬럼에는 깔끔한 단일 칩만 노출하여 모바일 UI 가림/넘침 원천 차단)
+          if(isOverdue){
+            actionBtn += '<span class="status-chip overdue-chip" title="반납 기한 초과 (대여자: ' + safe(bName) + ')">⚠️ 기한 지남</span>';
+          } else {
+            actionBtn += '<span class="status-chip borrowed-chip" title="현재 대여 중 (대여자: ' + safe(bName) + ')">대여 중</span>';
+          }
         }
       }
 
@@ -1707,15 +1711,27 @@ function renderInventory(){
         actionBtn += '<button class="text-btn btn-action-edit" data-edit="' + safe(a.id) + '">수정</button>';
       }
 
-      // 모바일 비품 카드: [좌측 56px 썸네일] + [중앙: 상태점, 비품명 16px Bold, 📍위치] + [우측 대여 신청 버튼]
-      listHtml += '<tr data-status="' + st + '" class="quick-row">' +
+      // 모바일 친화적 카드 메타: 상태 및 대여자 정보 노출
+      let cardMetaHtml = '<span class="status ' + st + '">' + statusLabel(st) + '</span>';
+      if(st === 'borrowed'){
+        const borrowerBadgeText = isMine ? '내 대여' : safe(bName);
+        cardMetaHtml += ' <span class="loan-user-tag ' + (isMine ? 'is-me' : '') + '">👤 ' + borrowerBadgeText + '</span>';
+        if(isOverdue){
+          cardMetaHtml += ' <span class="loan-overdue-tag">⚠️ 기한초과</span>';
+        }
+      }
+
+      const rowClass = 'quick-row' + (st === 'borrowed' ? ' is-borrowed' + (isMine ? ' is-my-loan' : '') + (isOverdue ? ' is-overdue' : '') : '');
+
+      // 모바일 비품 카드: [좌측 54px 썸네일] + [중앙: 상태/대여자, 비품명 Bold, 📍위치] + [우측 대여/반납 버튼]
+      listHtml += '<tr data-status="' + st + '" class="' + rowClass + '">' +
         '<td class="col-main">' +
           '<div class="asset-thumb-box" aria-hidden="true">' +
             getEquipmentImageHtml(a, 'thumb') +
           '</div>' +
           '<div class="asset-info-col">' +
             '<div class="card-meta">' +
-              '<span class="status ' + st + '">' + statusLabel(st) + '</span>' +
+              cardMetaHtml +
             '</div>' +
             '<b class="asset-name">' + safe(a.name) + '</b>' +
             '<span class="asset-id hide-mobile">' + safe(a.id) + '</span>' +
@@ -5111,13 +5127,13 @@ function renderHistory(){
       const statClass = l.returned_at ? 'available' : 'borrowed';
       const statText = l.returned_at ? '반납 완료' : '대여 중';
 
-      histHtml += '<tr><td><b>' + safe(fmtName(l.asset_id)) +
+      histHtml += '<tr><td data-label="비품 / 식별번호"><b>' + safe(fmtName(l.asset_id)) +
         '</b><div class="asset-id">' + safe(l.asset_id) +
-        '</div></td><td>' + safe(l.borrower_name) +
-        '</td><td>' + dateText(l.borrowed_at) +
-        '</td><td>' + dateText(l.due_date) +
-        '</td><td>' + dateText(l.returned_at) +
-        '</td><td><span class="status ' + statClass + '">' +
+        '</div></td><td data-label="대여자">' + safe(l.borrower_name) +
+        '</td><td data-label="시작일">' + dateText(l.borrowed_at) +
+        '</td><td data-label="예정 반납일">' + dateText(l.due_date) +
+        '</td><td data-label="실제 반납일">' + dateText(l.returned_at) +
+        '</td><td data-label="상태"><span class="status ' + statClass + '">' +
         statText + '</span></td></tr>';
     }
 
