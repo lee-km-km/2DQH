@@ -7090,4 +7090,200 @@ body:not(.is-admin) [data-delete-eq-session] {
   display: none !important;
 }
 
+/* ========================================================
+   [범용 연구장비 시험 가동 세션 카드 UI (단정하고 구조화된 카드)]
+   ======================================================== */
+.eq-test-sessions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.eq-test-card {
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+.eq-test-card:hover {
+  border-color: var(--primary, #2457d6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.eq-test-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.eq-test-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eq-test-sample-name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+}
+.eq-test-count-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--bg-subtle, #f1f5f9);
+  color: var(--muted, #64748b);
+  border: 1px solid var(--border, #e2e8f0);
+}
+.eq-test-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eq-test-meta-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ink-light, #64748b);
+  align-items: center;
+}
+.eq-test-mode-pill {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(36, 87, 214, 0.08);
+  color: var(--primary, #2457d6);
+}
+.eq-test-params-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.eq-test-param-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg-subtle, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+  color: var(--ink, #0f172a);
+}
+.eq-test-memo {
+  font-size: 12px;
+  color: var(--ink-light, #64748b);
+  background: var(--bg-subtle, #f8fafc);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border-left: 3px solid var(--border-strong, #cbd5e1);
+}
+
+/* ========================================================
+   [다크 모드: 반납 완료 및 비품 반납 UI 완벽 지원]
+   ======================================================== */
+[data-theme="dark"] .status.return-pending {
+  background: rgba(34, 197, 94, 0.2) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(74, 222, 128, 0.4) !important;
+}
+[data-theme="dark"] .return-summary-box {
+  background: rgba(34, 197, 94, 0.1) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+[data-theme="dark"] .return-location-card {
+  background: #172554 !important;
+  border-color: #2563eb !important;
+}
+[data-theme="dark"] .return-location-title {
+  color: #93c5fd !important;
+}
+[data-theme="dark"] .return-location-val {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .return-date-card {
+  background: #1a2236 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .return-date-label {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .return-date-input {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .return-plain-card {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .table-wrap td .status.available {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(34, 197, 94, 0.3) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+[data-theme="dark"] .table-wrap td .status.available:before {
+  background: #22c55e !important;
+}
+[data-theme="dark"] .status-chip.returned-chip {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  border-color: rgba(34, 197, 94, 0.35) !important;
+}
+[data-theme="dark"] #modalForm[data-mode="return"] #saveModal,
+[data-theme="dark"] #saveModal.return-save-btn {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] #modalForm[data-mode="return"] #saveModal:hover,
+[data-theme="dark"] #saveModal.return-save-btn:hover {
+  background: #22c55e !important;
+}
+
+/* 다크 모드: 시험 가동 세션 카드 */
+[data-theme="dark"] .eq-test-card {
+  background: #162032 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-test-sample-name {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-test-count-pill {
+  background: #111827 !important;
+  color: #94a3b8 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-test-meta-info {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .eq-test-mode-pill {
+  background: rgba(37, 99, 235, 0.2) !important;
+  color: #93c5fd !important;
+}
+[data-theme="dark"] .eq-test-param-chip {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .eq-test-memo {
+  background: #111827 !important;
+  border-left-color: #2563eb !important;
+  color: #cbd5e1 !important;
+}
+
+
 

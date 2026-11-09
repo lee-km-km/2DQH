@@ -681,7 +681,7 @@ function loadLocalStorage(forceReset){
     consumables = [...DEFAULT_2DQH_CONSUMABLES];
   }
 
-  const SESS_EQUIP_DATA_VER = '20261109_sess_aqt_v3_bonder';
+  const SESS_EQUIP_DATA_VER = '20261109_sess_aqt_v5_bonder_img';
   try {
     const savedVer = localStorage.getItem('labstock_sess_eq_ver');
     const savedEqs = JSON.parse(localStorage.getItem('labstock_research_equipments') || 'null');
@@ -3956,34 +3956,59 @@ function renderEquipmentTestSessions(code){
   }
 
   box.classList.remove('hidden');
-  let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+  let html = '<div class="eq-test-sessions-container">';
   matches.forEach(function(s){
-    let paramSummary = [];
+    const paramChips = [];
     if(s.parameters){
       for(const k in s.parameters){
         const v = s.parameters[k];
-        if(v !== undefined && v !== null && v !== ''){
-          paramSummary.push(k + ': ' + v);
+        if(v !== undefined && v !== null && v !== false && v !== ''){
+          let label = k;
+          if(k === 'ultrasonic_power') label = '초음파 ' + v + ' W';
+          else if(k === 'bonding_force') label = '본딩압력 ' + v + ' gf';
+          else if(k === 'stage_temp') label = '스테이지 ' + v + ' °C';
+          else if(k === 'wire_type') label = String(v);
+          else if(k === 'bonding_mode') label = String(v);
+          else if(v === true) label = k.replace(/_ok$/, '') + ' 점검완료';
+          else label = k + ': ' + v;
+          paramChips.push(label);
         }
       }
     }
-    const paramStr = paramSummary.length ? paramSummary.slice(0, 4).join(', ') : '기본 파라미터';
 
-    html += '<div class="eq-test-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:12.5px;">';
-    html += '<div>';
-    html += '<div style="font-weight:700;color:var(--ink);margin-bottom:2px;">' + safe(s.sample_name || '샘플 미지정') + ' <span style="font-weight:400;color:var(--ink-light);font-size:11.5px;">(' + (s.sample_count || 1) + '개)</span></div>';
-    html += '<div style="color:var(--ink-light);font-size:11.5px;margin-bottom:4px;">📅 ' + safe(s.used_on || today()) + ' ' + safe(s.start_time || '') + ' ~ ' + safe(s.end_time || '') + ' (' + (s.duration_min || 0) + '분) · 👤 ' + safe(s.user_name || '연구원') + ' (' + safe(s.affiliation || '2DQH') + ')</div>';
-    html += '<div style="color:var(--primary);font-size:11.5px;font-family:monospace;background:rgba(36,87,214,0.06);padding:2px 6px;border-radius:4px;display:inline-block;">⚡ ' + safe(paramStr) + '</div>';
-    if(s.memo){
-      html += '<div style="color:var(--ink-light);font-size:11.5px;margin-top:3px;">📝 ' + safe(s.memo) + '</div>';
-    }
-    html += '</div>';
-    html += '<div style="display:flex;align-items:center;gap:8px;">';
-    html += '<span class="eq-badge-status active" style="font-size:10.5px;padding:2px 6px;">시험 가동 완료</span>';
+    html += '<div class="eq-test-card">';
+    html += '  <div class="eq-test-card-header">';
+    html += '    <div class="eq-test-card-title-group">';
+    html += '      <span class="eq-test-sample-name">' + safe(s.sample_name || '샘플 미지정') + '</span>';
+    html += '      <span class="eq-test-count-pill">' + (s.sample_count || 1) + '개</span>';
+    html += '    </div>';
+    html += '    <div class="eq-test-card-actions">';
+    html += '      <span class="eq-badge-status active">가동 완료</span>';
     if(isAdmin()){
-      html += '<button type="button" class="btn-clear-search btn-log-del" data-delete-eq-session="' + s.id + '" title="삭제" style="color:var(--danger,#dc2626);cursor:pointer;padding:4px 6px;font-size:12px;border:0;background:none;font-weight:600;">✕ 삭제</button>';
+      html += '      <button type="button" class="btn-clear-search btn-log-del" data-delete-eq-session="' + s.id + '" title="기록 삭제" style="color:var(--danger,#dc2626);font-size:12px;font-weight:600;padding:2px 6px;cursor:pointer;">✕ 삭제</button>';
     }
-    html += '</div>';
+    html += '    </div>';
+    html += '  </div>';
+
+    html += '  <div class="eq-test-meta-info">';
+    html += '    <span>📅 ' + safe(s.used_on || today()) + ' ' + safe(s.start_time || '') + (s.end_time ? ' ~ ' + safe(s.end_time) : '') + ' (' + (s.duration_min || 0) + '분)</span>';
+    html += '    <span>👤 ' + safe(s.user_name || '연구원') + ' (' + safe(s.affiliation || '2DQH') + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span>';
+    if(s.scan_type){
+      html += '    <span class="eq-test-mode-pill">🔬 ' + safe(s.scan_type) + '</span>';
+    }
+    html += '  </div>';
+
+    if(paramChips.length > 0){
+      html += '  <div class="eq-test-params-list">';
+      paramChips.forEach(function(chip){
+        html += '    <span class="eq-test-param-chip">⚡ ' + safe(chip) + '</span>';
+      });
+      html += '  </div>';
+    }
+
+    if(s.memo){
+      html += '  <div class="eq-test-memo">📝 ' + safe(s.memo) + '</div>';
+    }
     html += '</div>';
   });
   html += '</div>';
@@ -4282,10 +4307,20 @@ function renderEquipmentPortalGrid(){
   let html = '';
   filtered.forEach(function(eq){
     const serviceSimple = (eq.serviceMode || '직접사용').split('/')[0].trim();
-    const isActive = (eq.status === 'active' || eq.code === 'XRD');
-    const actionBtnHtml = isActive
-      ? '<button type="button" class="btn btn-compact-view btn-view-active" style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;">⚡ HR-XRD 전자로그북 열기</button>'
-      : '<button type="button" class="btn btn-compact-view">🔍 상세 규격 및 LIMS 스키마</button>';
+    const isXrd = (eq.code === 'XRD');
+    const isBonder = (eq.code === 'WireBonder');
+    const isActive = (eq.status === 'active' || isXrd || isBonder);
+
+    let actionBtnText = '🔍 상세 규격 및 시험가동';
+    if(isXrd){
+      actionBtnText = '⚡ HR-XRD 전자로그북 열기';
+    } else if(isBonder){
+      actionBtnText = '⚡ Wire Bonder 전자 로그북 열기';
+    } else if(isActive){
+      actionBtnText = '⚡ ' + safe(eq.code) + ' 전자로그북 열기';
+    }
+
+    const actionBtnHtml = '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;"' : '') + '>' + actionBtnText + '</button>';
     const statusBadgeHtml = isActive
       ? '<span class="eq-card-cat-badge" style="background:rgba(22,101,52,0.85);color:#bbf7d0;border-color:rgba(187,247,208,0.4);">🟢 실운영 (로그북)</span>'
       : '<span class="eq-card-cat-badge">' + safe(eq.categoryName || '장비') + '</span>';
@@ -4900,16 +4935,18 @@ function selectResearchEquipment(eqId){
   const titleEl = $('detailEqPageTitle');
   const countBadge = $('logbookCountBadge');
 
+  const isXrd = (selected.type === 'xrd' || selected.code === 'XRD');
+  const isBonder = (selected.code === 'WireBonder');
+  const isActive = (selected.status === 'active' || isXrd || isBonder);
+
   if(catBadge) catBadge.textContent = selected.categoryName || '연구장비';
   if(statusBadge){
-    const isActive = (selected.status === 'active');
     statusBadge.textContent = isActive ? '🟢 운영 중' : '⚪ 연동 준비 중';
     statusBadge.className = 'eq-badge-status ' + (isActive ? 'active' : 'standby');
   }
-  if(titleEl) titleEl.textContent = (selected.icon || '🔬') + ' ' + selected.name;
+  if(titleEl) titleEl.textContent = (selected.icon || '🔬') + ' ' + selected.name + ' 전자 로그북';
   if(countBadge) countBadge.textContent = selected.model || selected.code;
 
-  const isXrd = (selected.type === 'xrd');
   const xrdContainer = $('xrdLogbookContainer');
   const placeholderContainer = $('placeholderEquipmentContainer');
 
@@ -4951,9 +4988,17 @@ function selectResearchEquipment(eqId){
     if(mgrEl) mgrEl.textContent = selected.manager;
     if(contactEl) contactEl.textContent = selected.contact;
 
+    const noticeEl = $('eqStandbyNoticeText');
+    if(noticeEl){
+      if(isActive){
+        noticeEl.innerHTML = '<b>디지털 전자 로그북 운영 중:</b><br>하단의 <b>[⚡ 시험 가동 (Test-Drive)]</b> 버튼을 눌러 소자 본딩/패키징 파라미터 및 세션 가동 일지를 즉시 기록할 수 있습니다.';
+      } else {
+        noticeEl.innerHTML = '<b>장비 사용 및 수기 일지 안내:</b><br>현재 오프라인 현장 일지로 운영되고 있습니다. 장비 사용 예약, 트레이닝 교육 이수 및 로그북 전산화 요청은 담당 오퍼레이터에게 문의 바랍니다.';
+      }
+    }
+
     const toggleBtn = $('btnToggleEqActive');
     if(toggleBtn){
-      const isActive = (selected.status === 'active');
       toggleBtn.textContent = isActive ? '⚪ 대기(Standby)로 전환' : '🟢 실운영 활성화';
       toggleBtn.title = isActive ? '이 장비를 대기 상태로 변경합니다.' : '이 장비를 실운영 디지털 로그북으로 활성화합니다.';
     }
@@ -5982,7 +6027,14 @@ function openModal(mode, id){
   else if(mode === 'equipmentLog') btnText = '✓ 로그북 등록';
   else if(mode === 'addResearchEquipment') btnText = '✓ 연구장비 등록 완료';
 
-  $('saveModal').textContent = btnText;
+  const isReturn = (mode === 'return' || mode === 'quickReturn');
+  const modalFormEl = $('modalForm');
+  if(modalFormEl) modalFormEl.setAttribute('data-mode', mode);
+  const saveBtnEl = $('saveModal');
+  if(saveBtnEl){
+    saveBtnEl.textContent = btnText;
+    saveBtnEl.classList.toggle('return-save-btn', isReturn);
+  }
 
   const hasAvail = assets.some(function(x){
     return statusFor(x) === 'available';
@@ -6218,7 +6270,12 @@ function closeModal(){
   if(bd) bd.classList.remove('open');
   if(document.body) document.body.classList.remove('modal-open');
   const mf = $('modalForm');
-  if(mf) mf.reset();
+  if(mf){
+    mf.reset();
+    mf.removeAttribute('data-mode');
+  }
+  const saveBtnEl = $('saveModal');
+  if(saveBtnEl) saveBtnEl.classList.remove('return-save-btn');
 
   if(window.__labstockFromHome){
     window.__labstockFromHome = false;
@@ -7806,9 +7863,36 @@ function bindEvents(){
   addEvt('logoutBtn', 'click', handleLogout);
   addEvt('sidebarLogoutBtn', 'click', handleLogout);
 
+  addEvt('btnTestDriveEquipment', 'click', function(e){
+    e.preventDefault();
+    const cur = researchEquipments.find(function(x){ return x.id === currentSelectedEquipment; });
+    openEquipmentTestDrive(cur ? cur.code : 'AFM');
+  });
+  addEvt('closeTestDriveModal', 'click', function(e){
+    e.preventDefault();
+    closeEquipmentTestDrive();
+  });
+  addEvt('btnCancelTestDrive', 'click', function(e){
+    e.preventDefault();
+    closeEquipmentTestDrive();
+  });
+
+  const tdModalEl = $('modalTestDriveBackdrop');
+  if(tdModalEl){
+    tdModalEl.addEventListener('click', function(e){
+      if(e.target === tdModalEl) closeEquipmentTestDrive();
+    });
+  }
+
   // 접근성 키보드 제어: ESC로 닫기 및 포커스 트랩(Focus Trap)
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape'){
+      const tdBackdrop = $('modalTestDriveBackdrop');
+      if(tdBackdrop && tdBackdrop.classList.contains('open')){
+        e.preventDefault();
+        closeEquipmentTestDrive();
+        return;
+      }
       const eqQrB = $('modalEquipmentQrBackdrop');
       if(eqQrB && eqQrB.classList.contains('open')){
         e.preventDefault();
