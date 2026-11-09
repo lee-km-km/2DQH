@@ -36,6 +36,9 @@
 
 <header class="topbar">
   <div class="topbar-left">
+    <button id="btnOpenMobileDrawer" class="btn-hamburger mobile-only" type="button" aria-label="메뉴 열기">
+      <span aria-hidden="true">☰</span>
+    </button>
     <a class="brand" href="#" id="brandLogoLink">
       <img src="logo_2dqh.jpg" alt="2DQH" class="brand-img-logo">
       <span class="brand-sep" aria-hidden="true"></span>
@@ -72,14 +75,54 @@
 </header>
 
 <div class="layout">
-  <nav class="sidebar" aria-label="주 메뉴">
-    <!-- A. 연구장비 LIMS 모듈 메뉴 -->
+  <!-- 모바일 슬라이드 아웃 서랍 배경 오버레이 -->
+  <div id="mobileDrawerOverlay" class="mobile-drawer-overlay"></div>
+
+  <nav class="sidebar" id="mainSidebar" aria-label="주 메뉴">
+    <!-- 모바일 전용 서랍 헤더 -->
+    <div class="sidebar-mobile-head mobile-only">
+      <div class="brand">
+        <img src="logo_2dqh.jpg" alt="2DQH" class="brand-img-logo">
+        <span class="brand-text" style="font-size:15px;font-weight:800;color:var(--ink);">2DQH 연구포털</span>
+      </div>
+      <button id="btnCloseMobileDrawer" class="btn-close-drawer" type="button" aria-label="메뉴 닫기">✕</button>
+    </div>
+
+    <!-- A. 연구자재·비품 관리 메뉴 (우선 배치) -->
     <div class="sidebar-section-header">
+      <span class="sidebar-section-title">연구자재 관리</span>
+      <span class="sidebar-section-pill">재고·비품</span>
+    </div>
+    <div class="sidebar-nav-group" id="sidebarGroupInventory">
+      <button class="nav active" data-view="inventory" id="sidebarNavInventory">
+        <span class="nav-icon" aria-hidden="true">🛠️</span>
+        <span>비품 대여</span>
+      </button>
+      <button class="nav" data-view="consumables" id="sidebarNavConsumables">
+        <span class="nav-icon" aria-hidden="true">📦</span>
+        <span>소모품 재고</span>
+      </button>
+      <button class="nav" data-view="loans" id="sidebarNavLoans">
+        <span class="nav-icon" aria-hidden="true">📋</span>
+        <span>대여 현황</span>
+      </button>
+      <button class="nav" data-view="dashboard" id="sidebarNavDashboard">
+        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span>통계 분석 대시보드</span>
+      </button>
+      <button class="nav admin-only hidden" data-view="history" id="sidebarNavHistory">
+        <span class="nav-icon" aria-hidden="true">📜</span>
+        <span>대여 이력</span>
+      </button>
+    </div>
+
+    <!-- B. 연구장비 LIMS 모듈 메뉴 -->
+    <div class="sidebar-section-header" style="margin-top:16px;">
       <span class="sidebar-section-title">연구장비 LIMS</span>
       <span class="sidebar-section-pill">SESS AQT</span>
     </div>
     <div class="sidebar-nav-group" id="sidebarGroupLims">
-      <button class="nav active" data-view="logbook" data-lims-nav="catalog" id="sidebarNavCatalog">
+      <button class="nav" data-view="logbook" data-lims-nav="catalog" id="sidebarNavCatalog">
         <span class="nav-icon" aria-hidden="true">🔬</span>
         <span>연구장비 포털</span>
       </button>
@@ -88,36 +131,8 @@
         <span>HR-XRD 전자 로그북</span>
       </button>
       <button class="nav" data-view="logbook" data-lims-nav="analytics" id="sidebarNavAnalytics">
-        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span class="nav-icon" aria-hidden="true">📈</span>
         <span>장비 운영 통계</span>
-      </button>
-    </div>
-
-    <!-- B. 연구자재·비품 관리 메뉴 -->
-    <div class="sidebar-section-header" style="margin-top:14px;">
-      <span class="sidebar-section-title">연구자재 관리</span>
-      <span class="sidebar-section-pill">재고·비품</span>
-    </div>
-    <div class="sidebar-nav-group" id="sidebarGroupInventory">
-      <button class="nav" data-view="consumables" id="sidebarNavConsumables">
-        <span class="nav-icon" aria-hidden="true">📦</span>
-        <span>소모품 재고</span>
-      </button>
-      <button class="nav" data-view="inventory" id="sidebarNavInventory">
-        <span class="nav-icon" aria-hidden="true">🛠️</span>
-        <span>비품 대여</span>
-      </button>
-      <button class="nav" data-view="loans" id="sidebarNavLoans">
-        <span class="nav-icon" aria-hidden="true">📋</span>
-        <span>대여 현황</span>
-      </button>
-      <button class="nav admin-only hidden" data-view="dashboard" id="sidebarNavDashboard">
-        <span class="nav-icon" aria-hidden="true">📊</span>
-        <span>자산 대시보드</span>
-      </button>
-      <button class="nav admin-only hidden" data-view="history" id="sidebarNavHistory">
-        <span class="nav-icon" aria-hidden="true">📜</span>
-        <span>대여 이력</span>
       </button>
     </div>
 
@@ -185,13 +200,18 @@
       </section>
     </section>
 
-    <!-- 대시보드 뷰 (관리자) -->
-    <section class="view admin-only hidden" id="view-dashboard">
-      <div class="page-head">
+    <!-- 대시보드 뷰 (연구실 종합 통계 분석 센터) -->
+    <section class="view" id="view-dashboard">
+      <div class="page-head" style="flex-wrap:wrap;gap:10px;">
         <div class="head-title">
-          <h1>운영 대시보드</h1>
+          <h1>📊 연구실 통계 분석 센터</h1>
+          <span class="count-badge" id="statsSubBadge">통합 모니터링</span>
         </div>
-        <button class="btn primary" id="quickBorrow">＋ 대여</button>
+        <div class="eq-hub-switch-group">
+          <button type="button" class="btn active" id="btnStatsShowAssets">🛠️ 비품 대여 통계</button>
+          <button type="button" class="btn" id="btnStatsShowEquip">🔬 연구장비 가동 통계</button>
+        </div>
+        <button class="btn primary desktop-only" id="quickBorrow">＋ 새 대여</button>
       </div>
       
       <!-- 핵심 통계 지표 -->
@@ -205,6 +225,7 @@
           <span class="stat-badge" id="statTotalLoans">총 대여 0건</span>
         </div>
         <div class="chart-container" style="position: relative; height: 220px; padding: 12px 16px;">
+          <div id="topAssetsEmptyNotice" class="empty hidden">대여 기록이 충분하지 않습니다.</div>
           <canvas id="topAssetsChart" role="img" aria-label="연구실 비품별 누적 대여 빈도 TOP 5 차트"></canvas>
         </div>
       </section>
@@ -287,15 +308,17 @@
             <div class="eq-hub-switch-group">
               <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
               <button type="button" class="btn" id="btnHubShowAnalytics">📊 운영 통계</button>
+              <button type="button" class="btn" id="btnHubShowAssetDashboard">🛠️ 비품 통계</button>
             </div>
             <button class="btn" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 로그 CSV</button>
           </div>
         </div>
 
         <!-- 모바일 전용 뷰 전환 바 -->
-        <div class="mobile-only eq-mobile-view-bar" style="margin-bottom:12px;display:flex;gap:8px;">
-          <button type="button" class="btn active" id="btnMobileHubShowGrid" style="flex:1;font-size:13px;padding:8px 0;text-align:center;">📇 장비 목록</button>
-          <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:13px;padding:8px 0;text-align:center;">📊 운영 통계</button>
+        <div class="mobile-only eq-mobile-view-bar" style="margin-bottom:12px;display:flex;gap:6px;">
+          <button type="button" class="btn active" id="btnMobileHubShowGrid" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📇 장비 목록</button>
+          <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 운영 통계</button>
+          <button type="button" class="btn" id="btnMobileHubShowAssetDashboard" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">🛠️ 비품 통계</button>
         </div>
 
         <!-- A. 장비 목록 뷰 (Primary Action First & Decluttered LIMS Infrastructure) -->
@@ -963,7 +986,31 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261109_08"></script>
-<script src="app.js?v=20261109_08"></script>
+<!-- 모바일 하단 플로팅 퀵 탭 바 (언제든 1탭 즉시 이동) -->
+<nav class="mobile-bottom-nav mobile-only" aria-label="모바일 하단 내비게이션">
+  <button type="button" class="bottom-nav-tab active" data-view="inventory" id="bottomTabInventory">
+    <span class="bottom-tab-icon">🛠️</span>
+    <span class="bottom-tab-label">비품대여</span>
+  </button>
+  <button type="button" class="bottom-nav-tab" data-view="consumables" id="bottomTabConsumables">
+    <span class="bottom-tab-icon">📦</span>
+    <span class="bottom-tab-label">소모품</span>
+  </button>
+  <button type="button" class="bottom-nav-tab" data-view="logbook" id="bottomTabLogbook">
+    <span class="bottom-tab-icon">🔬</span>
+    <span class="bottom-tab-label">연구장비</span>
+  </button>
+  <button type="button" class="bottom-nav-tab" data-view="dashboard" id="bottomTabDashboard">
+    <span class="bottom-tab-icon">📊</span>
+    <span class="bottom-tab-label">통계분석</span>
+  </button>
+  <button type="button" class="bottom-nav-tab" id="bottomTabMenu">
+    <span class="bottom-tab-icon">☰</span>
+    <span class="bottom-tab-label">전체메뉴</span>
+  </button>
+</nav>
+
+<script src="consumables_catalog.js?v=20261109_09"></script>
+<script src="app.js?v=20261109_09"></script>
 </body>
 </html>

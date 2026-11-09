@@ -255,7 +255,7 @@ function setPortalModule(mod, options){
       }
     } else {
       if(curView === 'logbook'){
-        showView('consumables', { updateUrl: true, pushState: true });
+        showView('inventory', { updateUrl: true, pushState: true });
       }
     }
   }
@@ -5397,8 +5397,8 @@ function getViewFromUrl(){
   } catch(e){
     console.warn('URL 뷰 라우팅 파싱 에러:', e);
   }
-  const defaultMod = localStorage.getItem('labstock_active_portal_module') || 'lims';
-  return (defaultMod === 'lims') ? 'logbook' : 'consumables';
+  const defaultMod = localStorage.getItem('labstock_active_portal_module') || 'inventory';
+  return (defaultMod === 'lims') ? 'logbook' : 'inventory';
 }
 
 function showView(name, options){
@@ -5486,6 +5486,18 @@ function showView(name, options){
     const isOpen = targetPanel && targetPanel.classList.contains('open');
     btnToggleSearch.classList.toggle('active', !!isOpen);
   }
+
+  // 모바일 슬라이드 아웃 서랍 자동 닫기
+  closeMobileDrawer();
+
+  // 모바일 하단 탭 바 활성화 상태 동기화
+  document.querySelectorAll('.bottom-nav-tab[data-view]').forEach(function(b){
+    const v = b.dataset.view;
+    const isActive = (v === name) ||
+      (v === 'logbook' && name === 'logbook' && currentHubView !== 'analytics') ||
+      (v === 'dashboard' && (name === 'dashboard' || (name === 'logbook' && currentHubView === 'analytics')));
+    b.classList.toggle('active', isActive);
+  });
 
   // 뷰 진입 시 렌더링 보장
   if(name === 'consumables'){
@@ -6185,6 +6197,25 @@ function exportHistoryCsv(){
   URL.revokeObjectURL(url);
 }
 
+// ==========================================
+// [모바일 슬라이드 아웃 서랍(Drawer) 제어]
+// ==========================================
+function openMobileDrawer(){
+  const sidebar = $('mainSidebar');
+  const overlay = $('mobileDrawerOverlay');
+  if(sidebar) sidebar.classList.add('drawer-open');
+  if(overlay) overlay.classList.add('active');
+  document.body.classList.add('drawer-locked');
+}
+
+function closeMobileDrawer(){
+  const sidebar = $('mainSidebar');
+  const overlay = $('mobileDrawerOverlay');
+  if(sidebar) sidebar.classList.remove('drawer-open');
+  if(overlay) overlay.classList.remove('active');
+  document.body.classList.remove('drawer-locked');
+}
+
 function bindEvents(){
   window.addEventListener('online', function(){
     toast('네트워크가 복구되었습니다. 최신 데이터를 동기화합니다.');
@@ -6570,6 +6601,40 @@ function bindEvents(){
       return;
     }
 
+    // 모바일 슬라이드 아웃 서랍(Drawer) 열기/닫기
+    if(target.id === 'btnOpenMobileDrawer' || target.closest('#btnOpenMobileDrawer') || target.id === 'bottomTabMenu' || target.closest('#bottomTabMenu')){
+      openMobileDrawer();
+      return;
+    }
+    if(target.id === 'btnCloseMobileDrawer' || target.closest('#btnCloseMobileDrawer') || target.id === 'mobileDrawerOverlay'){
+      closeMobileDrawer();
+      return;
+    }
+
+    // 모바일 하단 탭 내비게이션
+    const bTab = target.dataset.view ? target : target.closest('.bottom-nav-tab[data-view]');
+    if(bTab){
+      showView(bTab.dataset.view, { pushState: true });
+      return;
+    }
+
+    // 통계 분석 센터 듀얼 탭 전환 (비품 대여 통계 vs 연구장비 가동 통계)
+    if(target.id === 'btnStatsShowAssets' || target.closest('#btnStatsShowAssets')){
+      showView('dashboard');
+      return;
+    }
+    if(target.id === 'btnStatsShowEquip' || target.closest('#btnStatsShowEquip')){
+      currentHubView = 'analytics';
+      showView('logbook');
+      showEquipmentCatalogHub();
+      switchEquipmentHubView('analytics');
+      return;
+    }
+    if(target.id === 'btnHubShowAssetDashboard' || target.id === 'btnMobileHubShowAssetDashboard' || target.closest('#btnHubShowAssetDashboard') || target.closest('#btnMobileHubShowAssetDashboard')){
+      showView('dashboard');
+      return;
+    }
+
     // 2-in-1 연구 포털 모듈 스위처 (LIMS vs 자재·비품)
     const modBtn = target.dataset.portalModule ? target : target.closest('[data-portal-module]');
     if(modBtn){
@@ -6598,14 +6663,14 @@ function bindEvents(){
       return;
     }
 
-    // 브랜드 로고 클릭 시 홈 뷰 이동
+    // 브랜드 로고 클릭 시 홈 뷰 이동 (자재·비품 모드에서는 비품 대여 직행)
     if(target.id === 'brandLogoLink' || target.closest('#brandLogoLink')){
       if(currentPortalModule === 'lims'){
         showEquipmentCatalogHub();
         switchEquipmentHubView('catalog');
         showView('logbook');
       } else {
-        showView('consumables');
+        showView('inventory');
       }
       return;
     }
@@ -7116,10 +7181,16 @@ function renderTopAssetsChart(){
   if(totalBadge) totalBadge.textContent = '총 대여 ' + loans.length + '건';
 
   const top5 = calculateLoanStats();
+  const emptyNotice = $('topAssetsEmptyNotice');
+
   if(top5.length === 0){
-    canvas.parentElement.innerHTML = '<div class="empty">대여 기록이 충분하지 않습니다.</div>';
+    if(emptyNotice) emptyNotice.classList.remove('hidden');
+    canvas.classList.add('hidden');
     return;
   }
+
+  if(emptyNotice) emptyNotice.classList.add('hidden');
+  canvas.classList.remove('hidden');
 
   if(topAssetsChartInstance){
     topAssetsChartInstance.destroy();
