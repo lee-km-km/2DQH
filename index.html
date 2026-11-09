@@ -118,10 +118,6 @@
         <span class="nav-icon" aria-hidden="true">🔬</span>
         <span>연구장비 포털</span>
       </button>
-      <button class="nav" data-view="logbook" data-lims-nav="xrd" id="sidebarNavXrd">
-        <span class="nav-icon" aria-hidden="true">⚡</span>
-        <span>HR-XRD 전자 로그북</span>
-      </button>
       <button class="nav" data-view="logbook" data-lims-nav="analytics" id="sidebarNavAnalytics">
         <span class="nav-icon" aria-hidden="true">📊</span>
         <span>장비 운영 통계</span>
@@ -322,12 +318,13 @@
             <h1>🔬 연구장비 포털 &amp; 전자 로그북</h1>
             <span class="count-badge" id="equipmentTotalBadge">총 9대 등록</span>
           </div>
-          <div class="head-actions">
+          <div class="head-actions" style="display:flex;gap:6px;align-items:center;">
             <div class="eq-hub-switch-group">
               <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
               <button type="button" class="btn" id="btnHubShowAnalytics">📊 장비 운영 통계</button>
             </div>
-            <button class="btn admin-only hidden" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 로그 CSV</button>
+            <button class="btn admin-only hidden" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 세션 CSV</button>
+            <button class="btn admin-only hidden primary" id="btnExportAllUnifiedLogsXls" title="전체 연구장비 통합 세션 엑셀(.XLS) 다운로드">📊 통합 세션 엑셀</button>
           </div>
         </div>
 
@@ -466,9 +463,10 @@
             <h1 id="detailEqPageTitle">🔬 HR-XRD 전자 로그북</h1>
             <span class="count-badge" id="logbookCountBadge">SmartLab · Rigaku</span>
           </div>
-          <div class="head-actions">
+          <div class="head-actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
             <button class="btn" id="btnShowEquipmentQr" title="장비 본체 부착용 QR 코드 생성 및 라벨 인쇄" style="display:inline-flex;align-items:center;gap:4px;">📷 본체 부착용 QR</button>
-            <button class="btn" id="btnExportEquipmentLogs" title="HR-XRD 로그북 CSV 다운로드">📥 XRD 로그 CSV</button>
+            <button class="btn" id="btnExportEquipmentLogs" title="표준 CSV 포맷으로 로그북 다운로드">📥 CSV 다운로드</button>
+            <button class="btn primary" id="btnExportEquipmentLogsXls" title="날짜 오류 없이 즉시 열리는 엑셀(.XLS) 보고서 서식 다운로드" style="display:inline-flex;align-items:center;gap:4px;">📊 엑셀(.XLS) 다운로드</button>
           </div>
         </div>
 

@@ -3302,44 +3302,264 @@ async function deleteXrdLog(id){
   renderXrdLogs();
 }
 
+// ========================================================
+// [스마트 내보내기 엔진: Excel 친화적 Date/Number 포맷터 & XLS 생성기]
+// ========================================================
+
+function normalizeExportDate(val){
+  if(!val) return '';
+  if(val instanceof Date){
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + d;
+  }
+  const s = String(val).trim();
+  if(/T\d{2}:\d{2}/.test(s)){
+    return s.split('T')[0];
+  }
+  const match = s.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})/);
+  if(match){
+    return match[1] + '-' + match[2].padStart(2, '0') + '-' + match[3].padStart(2, '0');
+  }
+  return s;
+}
+
+function normalizeExportDateTime(val){
+  if(!val) return '';
+  if(val instanceof Date){
+    const y = val.getFullYear();
+    const m = String(val.getMonth() + 1).padStart(2, '0');
+    const d = String(val.getDate()).padStart(2, '0');
+    const hh = String(val.getHours()).padStart(2, '0');
+    const mm = String(val.getMinutes()).padStart(2, '0');
+    const ss = String(val.getSeconds()).padStart(2, '0');
+    return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss;
+  }
+  const s = String(val).trim();
+  if(s.includes('T')){
+    const dt = new Date(s);
+    if(!isNaN(dt.getTime())){
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const d = String(dt.getDate()).padStart(2, '0');
+      const hh = String(dt.getHours()).padStart(2, '0');
+      const mm = String(dt.getMinutes()).padStart(2, '0');
+      const ss = String(dt.getSeconds()).padStart(2, '0');
+      return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss;
+    }
+  }
+  return s.replace('T', ' ').replace(/\.\d+Z?$/, '');
+}
+
+function formatCsvCell(val, type){
+  if(val === null || val === undefined || val === '') return '""';
+  if(type === 'date'){
+    const dStr = normalizeExportDate(val);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(dStr)){
+      return dStr; // unquoted ISO date: Excel parses this natively as Date!
+    }
+    return '"' + dStr + '"';
+  }
+  if(type === 'time'){
+    const tStr = String(val).trim();
+    if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(tStr)){
+      return tStr;
+    }
+    return '"' + tStr + '"';
+  }
+  if(type === 'number'){
+    const n = Number(val);
+    if(!isNaN(n)) return String(n);
+  }
+  let str = String(val).replace(/[\r\n]+/g, ' ').trim();
+  if(/^[=+\-@\t\r]/.test(str)){
+    str = "'" + str;
+  }
+  return '"' + str.replace(/"/g, '""') + '"';
+}
+
+function exportToExcelFile(filename, sheetName, headers, rows, colWidths){
+  let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+  html += '<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>' + sheetName + '</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>';
+  html += 'table { border-collapse: collapse; font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif; font-size: 10pt; }';
+  html += 'th { background-color: #1e3a8a; color: #ffffff; font-weight: bold; border: 1px solid #0f172a; padding: 10px 14px; text-align: center; white-space: nowrap; }';
+  html += 'td { border: 1px solid #cbd5e1; padding: 7px 12px; color: #1e293b; vertical-align: middle; }';
+  html += 'tr:nth-child(even) td { background-color: #f8fafc; }';
+  html += '.cell-text { mso-number-format:"\\@"; text-align: left; }';
+  html += '.cell-center { mso-number-format:"\\@"; text-align: center; }';
+  html += '.cell-date { mso-number-format:"yyyy-mm-dd"; text-align: center; }';
+  html += '.cell-time { mso-number-format:"hh:mm"; text-align: center; }';
+  html += '.cell-datetime { mso-number-format:"yyyy-mm-dd hh:mm:ss"; text-align: center; }';
+  html += '.cell-num { mso-number-format:"#,##0"; text-align: right; }';
+  html += '.cell-dec { mso-number-format:"#,##0.0"; text-align: right; }';
+  html += '</style></head><body>';
+  html += '<table>';
+  if(Array.isArray(colWidths)){
+    html += '<colgroup>';
+    colWidths.forEach(function(w){ html += '<col width="' + w + '">'; });
+    html += '</colgroup>';
+  }
+  html += '<thead><tr>';
+  headers.forEach(function(h){ html += '<th>' + h + '</th>'; });
+  html += '</tr></thead><tbody>';
+  rows.forEach(function(r){
+    html += '<tr>';
+    r.forEach(function(cell){
+      const cls = cell.cls || 'cell-text';
+      const val = (cell.val !== undefined && cell.val !== null) ? cell.val : '';
+      const safeText = String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      html += '<td class="' + cls + '">' + safeText + '</td>';
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></body></html>';
+
+  const blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function getXrdExportData(){
+  const headers = [
+    '예약번호 (No)',
+    '장비명 (Equipment)',
+    '측정일자 (Date)',
+    '시작시간 (Start)',
+    '종료시간 (End)',
+    '가동구간 (Period)',
+    '가동시간_분 (min)',
+    '가동시간_시간 (hrs)',
+    '진행상태 (Status)',
+    '사용자 (User)',
+    '소속 (Affiliation)',
+    '지도교수 (Adviser)',
+    '시료명 (Sample)',
+    '시료수량 (Qty)',
+    '스캔타입 (Scan Mode)',
+    '광학계정렬 (Align)',
+    '냉각수_시작(°C)',
+    '냉각수_종료(°C)',
+    '진공도_시작(mV)',
+    '진공도_종료(mV)',
+    'X선최대점검 (Max)',
+    'X선최저점검 (Min)',
+    '위치초기화점검 (Init)',
+    '측정정보 (Details)',
+    '특이사항_메모 (Memo)',
+    '등록일시 (Created At)'
+  ];
+
+  const csvRows = [];
+  const excelRows = [];
+
+  xrdLogs.forEach(function(l){
+    const resNo = l.reservation_no || '';
+    const eqName = 'HR-XRD (고분해능 X선 회절분석기)';
+    const dateStr = normalizeExportDate(l.used_on || '');
+    const startTm = l.start_time ? String(l.start_time).slice(0, 5) : '';
+    const endTm = l.end_time ? String(l.end_time).slice(0, 5) : '';
+    const period = dateStr + ' ' + (startTm || '??:??') + ' ~ ' + (endTm || (l.status === 'active' ? '측정진행중' : '??:??'));
+    const durMin = l.duration_min != null ? Number(l.duration_min) : 0;
+    const durHrs = durMin > 0 ? Number((durMin / 60).toFixed(1)) : 0;
+    const statusText = l.status === 'active' ? '측정진행중' : '측정완료';
+    const userName = l.user_name || '';
+    const affil = l.affiliation || '2DQH';
+    const prof = l.professor || '';
+    const sample = l.sample_name || '';
+    const qty = l.sample_count || 1;
+    const scan = l.scan_type || '';
+    const align = l.align || 'PB';
+    const chStart = l.chiller_start != null ? Number(l.chiller_start) : '';
+    const chEnd = l.chiller_end != null ? Number(l.chiller_end) : '';
+    const vacStart = l.vacuum_start != null ? Number(l.vacuum_start) : '';
+    const vacEnd = l.vacuum_end != null ? Number(l.vacuum_end) : '';
+    const xMax = l.xray_max_ok ? '정상(OK)' : '미체크';
+    const xMin = l.xray_min_ok ? '정상(OK)' : '미체크';
+    const pos = l.position_ok ? '초기화완료' : '미완료';
+    const details = l.meas_info || '';
+    const memo = l.memo || '';
+    const createdAt = normalizeExportDateTime(l.created_at || '');
+
+    // CSV Row
+    csvRows.push([
+      formatCsvCell(resNo, 'text'),
+      formatCsvCell(eqName, 'text'),
+      formatCsvCell(dateStr, 'date'),
+      formatCsvCell(startTm, 'time'),
+      formatCsvCell(endTm, 'time'),
+      formatCsvCell(period, 'text'),
+      formatCsvCell(durMin, 'number'),
+      formatCsvCell(durHrs, 'number'),
+      formatCsvCell(statusText, 'text'),
+      formatCsvCell(userName, 'text'),
+      formatCsvCell(affil, 'text'),
+      formatCsvCell(prof, 'text'),
+      formatCsvCell(sample, 'text'),
+      formatCsvCell(qty, 'number'),
+      formatCsvCell(scan, 'text'),
+      formatCsvCell(align, 'text'),
+      formatCsvCell(chStart, 'number'),
+      formatCsvCell(chEnd, 'number'),
+      formatCsvCell(vacStart, 'number'),
+      formatCsvCell(vacEnd, 'number'),
+      formatCsvCell(xMax, 'text'),
+      formatCsvCell(xMin, 'text'),
+      formatCsvCell(pos, 'text'),
+      formatCsvCell(details, 'text'),
+      formatCsvCell(memo, 'text'),
+      formatCsvCell(createdAt, 'text')
+    ].join(','));
+
+    // Excel Row with styles
+    excelRows.push([
+      { val: resNo, cls: 'cell-center' },
+      { val: eqName, cls: 'cell-text' },
+      { val: dateStr, cls: 'cell-date' },
+      { val: startTm, cls: 'cell-time' },
+      { val: endTm, cls: 'cell-time' },
+      { val: period, cls: 'cell-text' },
+      { val: durMin, cls: 'cell-num' },
+      { val: durHrs, cls: 'cell-dec' },
+      { val: statusText, cls: 'cell-center' },
+      { val: userName, cls: 'cell-text' },
+      { val: affil, cls: 'cell-center' },
+      { val: prof, cls: 'cell-text' },
+      { val: sample, cls: 'cell-text' },
+      { val: qty, cls: 'cell-num' },
+      { val: scan, cls: 'cell-text' },
+      { val: align, cls: 'cell-center' },
+      { val: chStart, cls: 'cell-dec' },
+      { val: chEnd, cls: 'cell-dec' },
+      { val: vacStart, cls: 'cell-num' },
+      { val: vacEnd, cls: 'cell-num' },
+      { val: xMax, cls: 'cell-center' },
+      { val: xMin, cls: 'cell-center' },
+      { val: pos, cls: 'cell-center' },
+      { val: details, cls: 'cell-text' },
+      { val: memo, cls: 'cell-text' },
+      { val: createdAt, cls: 'cell-datetime' }
+    ]);
+  });
+
+  const colWidths = [100, 210, 110, 80, 80, 190, 85, 85, 90, 100, 100, 110, 180, 70, 120, 90, 95, 95, 95, 95, 95, 95, 95, 180, 180, 160];
+
+  return { headers, csvRows, excelRows, colWidths };
+}
+
 function exportXrdLogsCsv(){
   if(xrdLogs.length === 0){
     toast('내보낼 HR-XRD 로그 데이터가 없습니다.');
     return;
   }
-  const headers = ['Reservation No', 'Date', 'Start Time', 'End Time', 'Duration(min)', 'Status', 'User Name', 'Professor', 'Affiliation', 'Chiller Start(°C)', 'Chiller End(°C)', 'Vacuum Start(mV)', 'Vacuum End(mV)', 'X-ray Max', 'X-ray Min', 'Position', 'Align', 'Scan Type', 'Sample Name', 'Sample Count', 'Measurement Info', 'Memo', 'Created At'];
-  const rows = xrdLogs.map(function(l){
-    return [
-      l.reservation_no || '',
-      l.used_on || '',
-      l.start_time || '',
-      l.end_time || '',
-      l.duration_min || '',
-      l.status || '',
-      l.user_name || '',
-      l.professor || '',
-      l.affiliation || '',
-      l.chiller_start ?? '',
-      l.chiller_end ?? '',
-      l.vacuum_start ?? '',
-      l.vacuum_end ?? '',
-      l.xray_max_ok ? 'OK' : 'NO',
-      l.xray_min_ok ? 'OK' : 'NO',
-      l.position_ok ? 'OK' : 'NO',
-      l.align || '',
-      l.scan_type || '',
-      l.sample_name || '',
-      l.sample_count || 1,
-      l.meas_info || '',
-      (l.memo || '').replace(/[\r\n]+/g, ' '),
-      l.created_at || ''
-    ].map(function(cell){
-      const s = String(cell ?? '').replace(/"/g, '""');
-      return '"' + s + '"';
-    }).join(',');
-  });
-
-  const csvContent = '\uFEFF' + headers.join(',') + '\r\n' + rows.join('\r\n');
+  const data = getXrdExportData();
+  const csvContent = '\uFEFF' + data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -3349,7 +3569,23 @@ function exportXrdLogsCsv(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ HR-XRD 전체 로그(' + xrdLogs.length + '건)가 CSV로 다운로드되었습니다.');
+  toast('✓ HR-XRD 전체 로그(' + xrdLogs.length + '건)가 정돈된 CSV로 다운로드되었습니다.');
+}
+
+function exportXrdLogsExcel(){
+  if(xrdLogs.length === 0){
+    toast('내보낼 HR-XRD 로그 데이터가 없습니다.');
+    return;
+  }
+  const data = getXrdExportData();
+  exportToExcelFile(
+    '2DQH_HR-XRD_Logbook_' + today() + '.xls',
+    'HR-XRD 전자 로그북',
+    data.headers,
+    data.excelRows,
+    data.colWidths
+  );
+  toast('✓ HR-XRD 로그북 엑셀 서식 파일(.XLS)이 다운로드되었습니다.');
 }
 
 // ========================================================
@@ -4280,20 +4516,33 @@ function renderEquipmentRecentTimeline(allSessions){
   container.innerHTML = html;
 }
 
-function exportUnifiedSessionsCsv(){
+function getUnifiedSessionsExportData(){
   const allSessions = getUnifiedEquipmentSessions();
-  if(allSessions.length === 0){
-    toast('내보낼 연구장비 세션 데이터가 없습니다.');
-    return;
-  }
-
   const headers = [
-    'Equipment ID', 'Equipment Code', 'Equipment Name', 'Date', 'Start Time', 'End Time',
-    'Duration(min)', 'Type', 'User Name', 'Affiliation', 'Adviser', 'Sample Name',
-    'Sample Count', 'Scan / Mode', 'Parameters Summary', 'Memo', 'Created At'
+    '장비ID (ID)',
+    '장비코드 (Code)',
+    '장비명 (Equipment)',
+    '측정일자 (Date)',
+    '시작시간 (Start)',
+    '종료시간 (End)',
+    '가동구간 (Period)',
+    '가동시간_분 (min)',
+    '가동시간_시간 (hrs)',
+    '운영모드 (Mode)',
+    '사용자 (User)',
+    '소속 (Affiliation)',
+    '지도교수 (Adviser)',
+    '측정시료 (Sample)',
+    '시료수량 (Qty)',
+    '스캔/파라미터 (Parameters)',
+    '특이사항_메모 (Memo)',
+    '등록일시 (Created At)'
   ];
 
-  const rows = allSessions.map(function(s){
+  const csvRows = [];
+  const excelRows = [];
+
+  allSessions.forEach(function(s){
     let paramSummary = [];
     if(s.parameters){
       for(const k in s.parameters){
@@ -4303,32 +4552,79 @@ function exportUnifiedSessionsCsv(){
         }
       }
     }
+    const eqId = s.equipment_id || '';
+    const eqCode = s.equipment_code || '';
+    const eqName = s.equipment_name || '';
+    const dateStr = normalizeExportDate(s.used_on || '');
+    const startTm = s.start_time ? String(s.start_time).slice(0, 5) : '';
+    const endTm = s.end_time ? String(s.end_time).slice(0, 5) : '';
+    const period = dateStr + ' ' + (startTm || '??:??') + ' ~ ' + (endTm || '??:??');
+    const durMin = s.duration_min != null ? Number(s.duration_min) : 0;
+    const durHrs = durMin > 0 ? Number((durMin / 60).toFixed(1)) : 0;
+    const modeText = s.type === 'active' ? '실운영(Operational)' : '테스트드라이브(Test)';
+    const userName = s.user_name || '';
+    const affil = s.affiliation || '';
+    const prof = s.professor || '';
+    const sample = s.sample_name || '';
+    const qty = s.sample_count || 1;
+    const params = (s.scan_type ? s.scan_type + (paramSummary.length ? '; ' : '') : '') + paramSummary.join('; ');
+    const memo = s.memo || '';
+    const createdAt = normalizeExportDateTime(s.created_at || '');
 
-    return [
-      s.equipment_id || '',
-      s.equipment_code || '',
-      s.equipment_name || '',
-      s.used_on || '',
-      s.start_time || '',
-      s.end_time || '',
-      s.duration_min || 0,
-      s.type === 'active' ? 'Live Operational' : 'Test Drive',
-      s.user_name || '',
-      s.affiliation || '',
-      s.professor || '',
-      s.sample_name || '',
-      s.sample_count || 1,
-      s.scan_type || '',
-      paramSummary.join('; '),
-      (s.memo || '').replace(/[\r\n]+/g, ' '),
-      s.created_at || ''
-    ].map(function(cell){
-      const str = String(cell ?? '').replace(/"/g, '""');
-      return '"' + str + '"';
-    }).join(',');
+    csvRows.push([
+      formatCsvCell(eqId, 'text'),
+      formatCsvCell(eqCode, 'text'),
+      formatCsvCell(eqName, 'text'),
+      formatCsvCell(dateStr, 'date'),
+      formatCsvCell(startTm, 'time'),
+      formatCsvCell(endTm, 'time'),
+      formatCsvCell(period, 'text'),
+      formatCsvCell(durMin, 'number'),
+      formatCsvCell(durHrs, 'number'),
+      formatCsvCell(modeText, 'text'),
+      formatCsvCell(userName, 'text'),
+      formatCsvCell(affil, 'text'),
+      formatCsvCell(prof, 'text'),
+      formatCsvCell(sample, 'text'),
+      formatCsvCell(qty, 'number'),
+      formatCsvCell(params, 'text'),
+      formatCsvCell(memo, 'text'),
+      formatCsvCell(createdAt, 'text')
+    ].join(','));
+
+    excelRows.push([
+      { val: eqId, cls: 'cell-center' },
+      { val: eqCode, cls: 'cell-center' },
+      { val: eqName, cls: 'cell-text' },
+      { val: dateStr, cls: 'cell-date' },
+      { val: startTm, cls: 'cell-time' },
+      { val: endTm, cls: 'cell-time' },
+      { val: period, cls: 'cell-text' },
+      { val: durMin, cls: 'cell-num' },
+      { val: durHrs, cls: 'cell-dec' },
+      { val: modeText, cls: 'cell-center' },
+      { val: userName, cls: 'cell-text' },
+      { val: affil, cls: 'cell-center' },
+      { val: prof, cls: 'cell-text' },
+      { val: sample, cls: 'cell-text' },
+      { val: qty, cls: 'cell-num' },
+      { val: params, cls: 'cell-text' },
+      { val: memo, cls: 'cell-text' },
+      { val: createdAt, cls: 'cell-datetime' }
+    ]);
   });
 
-  const csvContent = '\uFEFF' + headers.join(',') + '\r\n' + rows.join('\r\n');
+  const colWidths = [100, 90, 180, 110, 80, 80, 190, 85, 85, 120, 100, 100, 110, 180, 70, 180, 180, 160];
+  return { allSessions, headers, csvRows, excelRows, colWidths };
+}
+
+function exportUnifiedSessionsCsv(){
+  const data = getUnifiedSessionsExportData();
+  if(data.allSessions.length === 0){
+    toast('내보낼 연구장비 세션 데이터가 없습니다.');
+    return;
+  }
+  const csvContent = '\uFEFF' + data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4338,7 +4634,23 @@ function exportUnifiedSessionsCsv(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ 전체 연구장비 통합 세션 로그(' + allSessions.length + '건)가 CSV로 다운로드되었습니다.');
+  toast('✓ 전체 연구장비 통합 세션 로그(' + data.allSessions.length + '건)가 정돈된 CSV로 다운로드되었습니다.');
+}
+
+function exportUnifiedSessionsExcel(){
+  const data = getUnifiedSessionsExportData();
+  if(data.allSessions.length === 0){
+    toast('내보낼 연구장비 세션 데이터가 없습니다.');
+    return;
+  }
+  exportToExcelFile(
+    '2DQH_Equipment_Unified_Logbook_' + today() + '.xls',
+    '연구장비 통합 세션 로그',
+    data.headers,
+    data.excelRows,
+    data.colWidths
+  );
+  toast('✓ 전체 연구장비 통합 세션 엑셀 서식 파일(.XLS)이 다운로드되었습니다.');
 }
 
 function selectResearchEquipment(eqId){
@@ -4448,13 +4760,75 @@ function renderLogbook(){
   }
 }
 
-function exportEquipmentLogsCsv(){
-  const selected = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
-  if(selected && selected.type === 'xrd'){
-    exportXrdLogsCsv();
-  } else {
-    exportGeneralEquipmentLogsCsv();
-  }
+function getGeneralEquipmentExportData(){
+  const headers = [
+    '연번',
+    '로그ID',
+    '장비코드',
+    '장비명',
+    '측정일자 (Date)',
+    '시작일시 (Start Time)',
+    '가동시간_h (Run Hours)',
+    '사용자 (Operator)',
+    '연구과제명 (Project)',
+    '측정시료 (Sample)',
+    '장비상태 (Status)',
+    '특이사항_메모 (Notes)',
+    '등록일시 (Created At)'
+  ];
+
+  const csvRows = [];
+  const excelRows = [];
+
+  equipmentLogs.forEach(function(lg, idx){
+    const id = lg.id || '';
+    const code = lg.asset_id || '';
+    const name = lg.asset_name || '';
+    const dateStr = normalizeExportDate(lg.start_time || '');
+    const startTimeStr = normalizeExportDateTime(lg.start_time || '');
+    const hours = Number(lg.run_hours) || 1.0;
+    const operator = lg.operator_name || '';
+    const project = lg.project_name || '';
+    const sample = lg.sample_info || '';
+    const statusText = lg.status_check === 'issue' ? '점검필요(이상)' : '정상작동';
+    const notes = lg.notes || '';
+    const createdAt = normalizeExportDateTime(lg.created_at || '');
+
+    csvRows.push([
+      formatCsvCell(idx + 1, 'number'),
+      formatCsvCell(id, 'text'),
+      formatCsvCell(code, 'text'),
+      formatCsvCell(name, 'text'),
+      formatCsvCell(dateStr, 'date'),
+      formatCsvCell(startTimeStr, 'text'),
+      formatCsvCell(hours, 'number'),
+      formatCsvCell(operator, 'text'),
+      formatCsvCell(project, 'text'),
+      formatCsvCell(sample, 'text'),
+      formatCsvCell(statusText, 'text'),
+      formatCsvCell(notes, 'text'),
+      formatCsvCell(createdAt, 'text')
+    ].join(','));
+
+    excelRows.push([
+      { val: idx + 1, cls: 'cell-num' },
+      { val: id, cls: 'cell-center' },
+      { val: code, cls: 'cell-center' },
+      { val: name, cls: 'cell-text' },
+      { val: dateStr, cls: 'cell-date' },
+      { val: startTimeStr, cls: 'cell-datetime' },
+      { val: hours, cls: 'cell-dec' },
+      { val: operator, cls: 'cell-text' },
+      { val: project, cls: 'cell-text' },
+      { val: sample, cls: 'cell-text' },
+      { val: statusText, cls: 'cell-center' },
+      { val: notes, cls: 'cell-text' },
+      { val: createdAt, cls: 'cell-datetime' }
+    ]);
+  });
+
+  const colWidths = [60, 90, 110, 180, 110, 160, 90, 100, 160, 160, 110, 200, 160];
+  return { headers, csvRows, excelRows, colWidths };
 }
 
 function exportGeneralEquipmentLogsCsv(){
@@ -4462,28 +4836,8 @@ function exportGeneralEquipmentLogsCsv(){
     toast('내보낼 장비 로그북 데이터가 없습니다.');
     return;
   }
-  const headers = ['연번', '로그ID', '장비코드', '장비명', '사용자', '시작일시', '가동시간(h)', '연구과제명', '측정시료', '장비상태', '특이사항', '등록일시'];
-  const rows = equipmentLogs.map(function(lg, idx){
-    return [
-      idx + 1,
-      lg.id || '',
-      lg.asset_id || '',
-      lg.asset_name || '',
-      lg.operator_name || '',
-      lg.start_time ? lg.start_time.replace('T', ' ') : '',
-      lg.run_hours || '',
-      lg.project_name || '',
-      lg.sample_info || '',
-      lg.status_check === 'issue' ? '점검필요' : '정상작동',
-      (lg.notes || '').replace(/[\r\n]+/g, ' '),
-      lg.created_at ? lg.created_at.replace('T', ' ') : ''
-    ].map(function(cell){
-      const s = String(cell || '').replace(/"/g, '""');
-      return '"' + s + '"';
-    }).join(',');
-  });
-
-  const csvContent = '\uFEFF' + headers.join(',') + '\r\n' + rows.join('\r\n');
+  const data = getGeneralEquipmentExportData();
+  const csvContent = '\uFEFF' + data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4493,7 +4847,41 @@ function exportGeneralEquipmentLogsCsv(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ 장비 로그북이 CSV로 다운로드되었습니다.');
+  toast('✓ 장비 로그북(' + equipmentLogs.length + '건)이 정돈된 CSV로 다운로드되었습니다.');
+}
+
+function exportGeneralEquipmentLogsExcel(){
+  if(equipmentLogs.length === 0){
+    toast('내보낼 장비 로그북 데이터가 없습니다.');
+    return;
+  }
+  const data = getGeneralEquipmentExportData();
+  exportToExcelFile(
+    '2DQH_연구장비_전자로그북_' + today() + '.xls',
+    '연구장비 전자로그북',
+    data.headers,
+    data.excelRows,
+    data.colWidths
+  );
+  toast('✓ 장비 로그북 엑셀 서식 파일(.XLS)이 다운로드되었습니다.');
+}
+
+function exportEquipmentLogsCsv(){
+  const selected = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
+  if(selected && selected.type === 'xrd'){
+    exportXrdLogsCsv();
+  } else {
+    exportGeneralEquipmentLogsCsv();
+  }
+}
+
+function exportEquipmentLogsExcel(){
+  const selected = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
+  if(selected && selected.type === 'xrd'){
+    exportXrdLogsExcel();
+  } else {
+    exportGeneralEquipmentLogsExcel();
+  }
 }
 
 function fallbackCopyText(text, name){
@@ -5445,7 +5833,7 @@ function showView(name, options){
     if(el.dataset.limsNav){
       if(name === 'logbook'){
         const isDetail = $('equipmentDetailHub') && !$('equipmentDetailHub').classList.contains('hidden');
-        const expected = isDetail ? 'xrd' : (currentHubView === 'analytics' ? 'analytics' : 'catalog');
+        const expected = isDetail ? 'catalog' : (currentHubView === 'analytics' ? 'analytics' : 'catalog');
         el.classList.toggle('active', el.dataset.limsNav === expected);
       } else {
         el.classList.remove('active');
@@ -6589,6 +6977,11 @@ function bindEvents(){
       return;
     }
 
+    if(target.id === 'btnExportEquipmentLogsXls' || target.closest('#btnExportEquipmentLogsXls')){
+      exportEquipmentLogsExcel();
+      return;
+    }
+
     // 테마 토글 (다크모드 / 라이트모드 / 암실 모드)
     if(target.id === 'btnToggleTheme' || target.closest('#btnToggleTheme') || target.id === 'btnLogbookThemeToggle' || target.closest('#btnLogbookThemeToggle')){
       toggleTheme();
@@ -6731,6 +7124,11 @@ function bindEvents(){
 
     if(target.id === 'btnExportAllUnifiedLogs' || target.closest('#btnExportAllUnifiedLogs')){
       exportUnifiedSessionsCsv();
+      return;
+    }
+
+    if(target.id === 'btnExportAllUnifiedLogsXls' || target.closest('#btnExportAllUnifiedLogsXls')){
+      exportUnifiedSessionsExcel();
       return;
     }
 
@@ -7060,16 +7458,6 @@ function bindEvents(){
     });
   }
 
-  const navXrd = $('sidebarNavXrd');
-  if(navXrd){
-    navXrd.addEventListener('click', function(e){
-      e.preventDefault();
-      showView('logbook');
-      selectResearchEquipment('EQ-XRD-01');
-      updateLimsNavActive('xrd');
-    });
-  }
-
   const navAnalytics = $('sidebarNavAnalytics');
   if(navAnalytics){
     navAnalytics.addEventListener('click', function(e){
@@ -7111,6 +7499,38 @@ function bindEvents(){
     bMobileHubGrid.addEventListener('click', function(e){
       e.preventDefault();
       switchEquipmentHubView('catalog');
+    });
+  }
+
+  const bExpEqLogs = $('btnExportEquipmentLogs');
+  if(bExpEqLogs){
+    bExpEqLogs.addEventListener('click', function(e){
+      e.preventDefault();
+      exportEquipmentLogsCsv();
+    });
+  }
+
+  const bExpEqLogsXls = $('btnExportEquipmentLogsXls');
+  if(bExpEqLogsXls){
+    bExpEqLogsXls.addEventListener('click', function(e){
+      e.preventDefault();
+      exportEquipmentLogsExcel();
+    });
+  }
+
+  const bExpUnified = $('btnExportAllUnifiedLogs');
+  if(bExpUnified){
+    bExpUnified.addEventListener('click', function(e){
+      e.preventDefault();
+      exportUnifiedSessionsCsv();
+    });
+  }
+
+  const bExpUnifiedXls = $('btnExportAllUnifiedLogsXls');
+  if(bExpUnifiedXls){
+    bExpUnifiedXls.addEventListener('click', function(e){
+      e.preventDefault();
+      exportUnifiedSessionsExcel();
     });
   }
 }
