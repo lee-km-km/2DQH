@@ -31,140 +31,168 @@ const ENABLE_CONSUMABLES = true;
 const ENABLE_EQUIPMENT_LOGBOOK = true;
 let isLocalMode = false;
 
-// [연구장비 독립 관리] Phase 1 9대 연구장비 목록 (HR-XRD 실가동 + 8대 스탠바이/깡통)
+// [연구장비 독립 관리] 성균관대학교 양자기술첨단기기센터 (AQT / SESS) 표준 9대 연구장비
+// 구조분석(structural: HR-XRD, Cs-TEM), 광학·표면(optical: AFM, RAMAN, FT-IR), 박막·증착(deposition: Ebeamsputter, ALD, Co-sputter, UHVsputter)
 const DEFAULT_RESEARCH_EQUIPMENTS = [
   {
     id: 'EQ-XRD-01',
+    assetNo: 'SESS-AQT-XRD-01',
     code: 'XRD',
     name: 'HR-XRD (고분해능 X선 회절분석기)',
-    category: 'analysis',
-    categoryName: '분석·측정',
-    model: 'SmartLab / Rigaku',
-    location: 'IBS 2DQH XRD실',
-    manager: '이강민 / 신현석 교수님',
-    contact: '031-299-6576',
+    category: 'structural',
+    categoryName: '구조분석',
+    model: 'SmartLab 9 kW (Rigaku, Japan)',
+    location: 'N센터 C동 지하 86013호 (XRD실)',
+    serviceMode: '직접사용 / 측정의뢰 (SESS 연동)',
+    spec: '9 kW 회전양극 Cu-Kα, PB/BB Dual-optical, In-plane 5축 고니오미터, 박막/단결정 정밀구조 분석',
+    manager: '이강민 연구원 / 신현석 교수님',
+    contact: '031-299-6576 (XRD실)',
     status: 'active',
     statusLabel: '디지털 로그북 가동 중',
     icon: '🔬',
     type: 'xrd'
   },
   {
-    id: 'EQ-AFM-01',
-    code: 'AFM',
-    name: 'AFM (원자간력현미경)',
-    category: 'analysis',
-    categoryName: '분석·측정',
-    model: 'Atomic Force Microscope',
-    location: 'IBS 2DQH 기기분석실',
-    manager: '장비 오퍼레이터 / 신현석 교수님',
-    contact: '연구실 내선 문의',
-    status: 'standby',
-    statusLabel: '로그북 연동 준비 중',
-    icon: '📐',
-    type: 'placeholder'
-  },
-  {
-    id: 'EQ-FTIR-01',
-    code: 'FT-IR',
-    name: 'FT-IR (적외선 분광기)',
-    category: 'analysis',
-    categoryName: '분석·측정',
-    model: 'Fourier Transform Infrared Spectrometer',
-    location: 'IBS 2DQH 기기분석실',
-    manager: '장비 오퍼레이터 / 신현석 교수님',
-    contact: '연구실 내선 문의',
-    status: 'standby',
-    statusLabel: '로그북 연동 준비 중',
-    icon: '💡',
-    type: 'placeholder'
-  },
-  {
-    id: 'EQ-RAMAN-01',
-    code: 'RAMAN',
-    name: 'RAMAN (라만 분광기)',
-    category: 'analysis',
-    categoryName: '분석·측정',
-    model: 'Laser Raman Spectrometer',
-    location: 'IBS 2DQH 라만실',
-    manager: '장비 오퍼레이터 / 신현석 교수님',
-    contact: '연구실 내선 문의',
-    status: 'standby',
-    statusLabel: '로그북 연동 준비 중',
-    icon: '🌈',
-    type: 'placeholder'
-  },
-  {
     id: 'EQ-TEM-01',
+    assetNo: 'SESS-AQT-TEM-01',
     code: 'TEM',
-    name: 'TEM (투과전자현미경)',
-    category: 'analysis',
-    categoryName: '분석·측정',
-    model: 'Transmission Electron Microscope',
-    location: '공용 전자현미경동',
-    manager: '장비 오퍼레이터 / 신현석 교수님',
-    contact: '연구실 내선 문의',
+    name: 'Cs-TEM (수차보정 투과전자현미경)',
+    category: 'structural',
+    categoryName: '구조분석',
+    model: 'JEM-ARM300CF Grand ARM (JEOL, Japan)',
+    location: 'N센터 C동 지하 86012호 (무진동 전현실)',
+    serviceMode: '측정지원 / 공동연구지원 (전담 오퍼레이터)',
+    spec: '80~300 kV Cold-FEG, Double Cs Corrector, Sub-0.05 nm 분해능, Dual SDD EDS, 원자단위 격자·화학분석',
+    manager: 'SESS TEM 전담 엔지니어 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 행정실/분석지원)',
     status: 'standby',
-    statusLabel: '로그북 연동 준비 중',
+    statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🔭',
     type: 'placeholder'
   },
   {
+    id: 'EQ-AFM-01',
+    assetNo: 'SESS-AQT-AFM-01',
+    code: 'AFM',
+    name: 'AFM (원자간력현미경)',
+    category: 'optical',
+    categoryName: '광학·표면',
+    model: 'Dimension Icon with ScanAsyst (Bruker, USA)',
+    location: 'N센터 C동 86275호 (SPM 표면분석실)',
+    serviceMode: '직접사용 (정기 사용자 교육 이수자)',
+    spec: 'PeakForce QNM, ScanAsyst, Contact/Tapping Mode, 90×90 ㎛ 스캐너, 원자 스케일 표면 토포그래피 및 물성',
+    manager: 'SESS 표면분석 엔지니어 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 행정실/분석지원)',
+    status: 'standby',
+    statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
+    icon: '📐',
+    type: 'placeholder'
+  },
+  {
+    id: 'EQ-RAMAN-01',
+    assetNo: 'SESS-AQT-RAMAN-01',
+    code: 'RAMAN',
+    name: 'Laser Raman (마이크로 라만 분광기)',
+    category: 'optical',
+    categoryName: '광학·표면',
+    model: 'XperRam 200 Multi-laser (NanoBase, Korea)',
+    location: 'N센터 C동 86275호 (라만 분광분석실)',
+    serviceMode: '직접사용 / 측정지원',
+    spec: '532 nm / 633 nm / 785 nm 3파장 레이저, 100~4000 cm⁻¹, 초미세 고속 라만 2D/3D 이미징 매핑',
+    manager: 'SESS 광학분광 엔지니어 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 행정실/분석지원)',
+    status: 'standby',
+    statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
+    icon: '🌈',
+    type: 'placeholder'
+  },
+  {
+    id: 'EQ-FTIR-01',
+    assetNo: 'SESS-AQT-FTIR-01',
+    code: 'FT-IR',
+    name: 'Vacuum FT-IR (진공 적외선 분광기)',
+    category: 'optical',
+    categoryName: '광학·표면',
+    model: 'Vertex 70v 진공형 FT-IR (Bruker Optics, Germany)',
+    location: 'N센터 C동 86275호 (적외선 분광분석실)',
+    serviceMode: '직접사용 (자율운영)',
+    spec: '< 2 hPa 고진공 광학 챔버, 4000~400 cm⁻¹, Diamond ATR / Transmission, 대기 수분·CO2 간섭 배제 고순도 분광',
+    manager: 'SESS 분광분석 엔지니어 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 행정실/분석지원)',
+    status: 'standby',
+    statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
+    icon: '💡',
+    type: 'placeholder'
+  },
+  {
     id: 'EQ-EBEAM-01',
+    assetNo: 'SESS-AQT-EBEAM-01',
     code: 'Ebeamsputter',
-    name: 'E-beam Sputter (전자빔 스퍼터/증착기)',
+    name: 'E-beam Evaporator (전자빔 진공 증착기)',
     category: 'deposition',
     categoryName: '박막·증착',
-    model: 'Electron Beam Sputter & Evaporator',
-    location: 'IBS 2DQH 박막공정실',
-    manager: '장비 오퍼레이터 / 신현석 교수님',
-    contact: '연구실 내선 문의',
+    model: 'KVE-T2000 6-Pocket (Korea Vacuum Tech / AQT Custom)',
+    location: '제1종합연구관 지하 81105호 (양자팹 클린룸)',
+    serviceMode: '직접사용 / 공정의뢰 (클린룸 이수자)',
+    spec: '6-Pocket 전자빔 건, 로드락 고진공 챔버 (<2×10⁻⁶ Torr), 고순도 금속(Ti, Au, Cr, Ni, Pt) 정밀 박막 증착',
+    manager: 'SESS 클린룸 박막공정 엔지니어 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 클린룸지원)',
     status: 'standby',
-    statusLabel: '로그북 연동 준비 중',
+    statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '⚡',
     type: 'placeholder'
   },
   {
     id: 'EQ-ALD-01',
+    assetNo: 'SESS-AQT-ALD-01',
     code: 'ALD',
-    name: 'ALD (원자층 증착기)',
+    name: 'Thermal ALD (원자층 박막 증착기)',
     category: 'deposition',
     categoryName: '박막·증착',
-    model: 'Atomic Layer Deposition System',
-    location: 'IBS 2DQH 박막공정실',
-    manager: '장비 오퍼레이터 / 신현석 교수님',
-    contact: '연구실 내선 문의',
+    model: 'Sunale R-200 Thermal ALD (Picosun, Finland)',
+    location: '제1종합연구관 지하 81105호 (양자팹 클린룸)',
+    serviceMode: '직접사용 / 공정의뢰 (클린룸 이수자)',
+    spec: '최대 8인치 웨이퍼 대응, 4 Source Line (Al₂O₃, HfO₂, TiO₂, ZnO 전구체), 초정밀 원자단위 절연막 증착',
+    manager: 'SESS 클린룸 공정 엔지니어 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 클린룸지원)',
     status: 'standby',
-    statusLabel: '로그북 연동 준비 중',
+    statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '⚛️',
     type: 'placeholder'
   },
   {
     id: 'EQ-COSPUTTER-01',
+    assetNo: 'SESS-AQT-SPUTTER-01',
     code: 'Co-sputter',
-    name: 'Co-sputter (동시 스퍼터링 시스템)',
+    name: 'Multi-Cathode Sputter (다원 동시 스퍼터링 시스템)',
     category: 'deposition',
     categoryName: '박막·증착',
-    model: 'Multi-target Co-sputtering System',
-    location: 'IBS 2DQH 박막공정실',
-    manager: '장비 오퍼레이터 / 신현석 교수님',
-    contact: '연구실 내선 문의',
+    model: 'Multi-Cathode RF/DC Magnetron Sputter (AQT Fab Custom)',
+    location: '제1종합연구관 지하 81105호 (양자팹 클린룸)',
+    serviceMode: '직접사용 / 공정의뢰 (클린룸 이수자)',
+    spec: '3-Cathode Gun (DC 1.5 kW 2기, RF 600 W 1기), Ar/O₂/N₂ MFCs, 기판 가열/회전, 다성분계 합금·화합물 박막',
+    manager: 'SESS 스퍼터 전담 엔지니어 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 클린룸지원)',
     status: 'standby',
-    statusLabel: '로그북 연동 준비 중',
+    statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🌀',
     type: 'placeholder'
   },
   {
     id: 'EQ-UHVSPUTTER-01',
+    assetNo: 'SESS-AQT-UHV-01',
     code: 'UHVsputter',
-    name: 'UHV Sputter (초고진공 스퍼터링 시스템)',
+    name: 'UHV Sputter (초고진공 마그네트론 스퍼터)',
     category: 'deposition',
     categoryName: '박막·증착',
-    model: 'Ultra-High Vacuum Sputter System',
-    location: 'IBS 2DQH 박막공정실',
-    manager: '장비 오퍼레이터 / 신현석 교수님',
-    contact: '연구실 내선 문의',
+    model: 'Ultra-High Vacuum Quantum Thin-Film Sputterer (AVS/VTC Custom)',
+    location: '제1종합연구관 지하 81105호 (양자팹 클린룸)',
+    serviceMode: '공동연구지원 / 전문 오퍼레이터 운영',
+    spec: '기저진공 < 5.0×10⁻⁸ Torr, Cryopump (<15K), 로드락 이송계, 초고순도 양자소재/자성 2D 박막 전용',
+    manager: 'SESS 초고진공 박막 오퍼레이터 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 클린룸지원)',
     status: 'standby',
-    statusLabel: '로그북 연동 준비 중',
+    statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🌌',
     type: 'placeholder'
   }
@@ -536,11 +564,32 @@ function loadLocalStorage(forceReset){
     consumables = [...DEFAULT_2DQH_CONSUMABLES];
   }
 
+  const SESS_EQUIP_DATA_VER = '20261109_sess_aqt_v1';
   try {
-    researchEquipments = JSON.parse(localStorage.getItem('labstock_research_equipments') || 'null');
-    if(!Array.isArray(researchEquipments) || researchEquipments.length < DEFAULT_RESEARCH_EQUIPMENTS.length){
-      researchEquipments = [...DEFAULT_RESEARCH_EQUIPMENTS];
-      try { localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments)); } catch(_) {}
+    const savedVer = localStorage.getItem('labstock_sess_eq_ver');
+    const savedEqs = JSON.parse(localStorage.getItem('labstock_research_equipments') || 'null');
+    if(savedVer !== SESS_EQUIP_DATA_VER || !Array.isArray(savedEqs) || savedEqs.length < DEFAULT_RESEARCH_EQUIPMENTS.length){
+      // 기존 사용자가 변경한 active 상태 맵 보존
+      const activeMap = {};
+      if(Array.isArray(savedEqs)){
+        savedEqs.forEach(function(e){
+          if(e && e.code) activeMap[e.code] = e.status;
+        });
+      }
+      researchEquipments = DEFAULT_RESEARCH_EQUIPMENTS.map(function(def){
+        const copy = Object.assign({}, def);
+        if(activeMap[def.code] === 'active'){
+          copy.status = 'active';
+          copy.statusLabel = '디지털 로그북 가동 중';
+        }
+        return copy;
+      });
+      try {
+        localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
+        localStorage.setItem('labstock_sess_eq_ver', SESS_EQUIP_DATA_VER);
+      } catch(_) {}
+    } else {
+      researchEquipments = savedEqs;
     }
   } catch(e){
     researchEquipments = [...DEFAULT_RESEARCH_EQUIPMENTS];
@@ -3356,7 +3405,17 @@ function renderEquipmentSchemaPreview(code){
     return;
   }
 
+  const eq = researchEquipments.find(function(e){ return e.code === code; });
   let html = '<div class="eq-schema-preview-box">';
+
+  if(eq){
+    html += '<div style="margin-bottom:14px;padding:10px 14px;background:var(--card-subtle, #f8fafc);border-radius:8px;border:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--ink-light);">';
+    html += '<span>🏛️ <b>SESS 관리번호:</b> <code style="color:var(--primary);font-weight:700;">' + safe(eq.assetNo || eq.id) + '</code></span>';
+    html += '<span>🏷️ <b>장비모델:</b> ' + safe(eq.model) + '</span>';
+    html += '<span>📍 <b>설치장소:</b> ' + safe(eq.location) + '</span>';
+    html += '<span>🛠️ <b>서비스구분:</b> ' + safe(eq.serviceMode || '직접사용 / 측정지원') + '</span>';
+    html += '</div>';
+  }
 
   // 1. 측정 지표 (Readings)
   if(schema.readings && schema.readings.length){
@@ -3701,6 +3760,16 @@ function renderEquipmentPortalGrid(){
   const grid = $('equipmentPortalGrid');
   if(!grid) return;
 
+  // SESS 카테고리 탭 카운트 실시간 업데이트
+  const cntAll = researchEquipments.length;
+  const cntStructural = researchEquipments.filter(function(e){ return e.category === 'structural'; }).length;
+  const cntOptical = researchEquipments.filter(function(e){ return e.category === 'optical'; }).length;
+  const cntDeposition = researchEquipments.filter(function(e){ return e.category === 'deposition'; }).length;
+  if($('catCntAll')) $('catCntAll').textContent = cntAll;
+  if($('catCntStructural')) $('catCntStructural').textContent = cntStructural;
+  if($('catCntOptical')) $('catCntOptical').textContent = cntOptical;
+  if($('catCntDeposition')) $('catCntDeposition').textContent = cntDeposition;
+
   const searchInput = $('eqSearchInput');
   const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
   const clearBtn = $('btnClearEqSearch');
@@ -3710,7 +3779,7 @@ function renderEquipmentPortalGrid(){
     const matchCat = (selectedEquipmentCategory === 'all' || eq.category === selectedEquipmentCategory);
     if(!matchCat) return false;
     if(!q) return true;
-    const hay = [eq.code, eq.name, eq.categoryName, eq.model, eq.location, eq.manager].join(' ').toLowerCase();
+    const hay = [eq.code, eq.name, eq.categoryName, eq.model, eq.location, eq.manager, eq.assetNo || '', eq.serviceMode || '', eq.spec || ''].join(' ').toLowerCase();
     return hay.includes(q);
   });
 
@@ -3732,14 +3801,17 @@ function renderEquipmentPortalGrid(){
           '</div>' +
         '</div>' +
         '<div class="eq-card-body">' +
-          '<div class="eq-card-code">' + safe(eq.code) + '</div>' +
+          '<div class="eq-card-code-row">' +
+            '<span class="eq-card-code">' + safe(eq.code) + '</span>' +
+            (eq.assetNo ? '<span class="eq-card-asset-tag">' + safe(eq.assetNo) + '</span>' : '') +
+          '</div>' +
           '<h3 class="eq-card-name">' + safe(eq.name) + '</h3>' +
           '<div class="eq-card-model">' + safe(eq.model) + '</div>' +
         '</div>' +
         '<div class="eq-card-footer">' +
           '<span class="eq-card-loc">📍 ' + safe(eq.location) + '</span>' +
           '<button type="button" class="btn ' + (isActive ? 'primary' : '') + ' btn-eq-action">' +
-            (isActive ? '⚡ 로그북 작성' : '장비 정보') +
+            (isActive ? '⚡ 로그북 작성' : '장비 규격·정보') +
           '</button>' +
         '</div>' +
       '</div>';
@@ -4204,20 +4276,28 @@ function selectResearchEquipment(eqId){
     resetXrdForm();
     renderXrdLogs();
   } else {
-    // 깡통 장비 (Standby / Placeholder) 안내 렌더링
+    // 깡통 장비 (Standby / Placeholder) LIMS 규격 및 정보 안내 렌더링
     const iconEl = $('placeholderEqIcon');
     const codeEl = $('placeholderEqCode');
     const nameEl = $('placeholderEqName');
+    const assetNoEl = $('placeholderEqAssetNo');
+    const assetPillEl = $('placeholderEqAssetPill');
     const locEl = $('placeholderEqLocation');
     const modelEl = $('placeholderEqModel');
+    const serviceModeEl = $('placeholderEqServiceMode');
+    const specEl = $('placeholderEqSpec');
     const mgrEl = $('placeholderEqManager');
     const contactEl = $('placeholderEqContact');
 
     if(iconEl) iconEl.textContent = selected.icon || '🔬';
     if(codeEl) codeEl.textContent = selected.code;
     if(nameEl) nameEl.textContent = selected.name;
+    if(assetNoEl) assetNoEl.textContent = selected.assetNo || selected.id;
+    if(assetPillEl) assetPillEl.textContent = selected.assetNo || selected.code;
     if(locEl) locEl.textContent = selected.location;
     if(modelEl) modelEl.textContent = selected.model;
+    if(serviceModeEl) serviceModeEl.textContent = selected.serviceMode || '직접사용 / 측정지원';
+    if(specEl) specEl.textContent = selected.spec || '표준 분석/공정 규격';
     if(mgrEl) mgrEl.textContent = selected.manager;
     if(contactEl) contactEl.textContent = selected.contact;
 

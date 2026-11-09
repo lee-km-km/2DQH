@@ -4616,13 +4616,28 @@ tr.row-overdue:hover {
 .eq-card-body {
   flex: 1;
 }
+.eq-card-code-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  flex-wrap: wrap;
+}
+.eq-card-asset-tag {
+  font-size: 10.5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
 .eq-card-code {
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
   color: var(--primary);
   text-transform: uppercase;
-  margin-bottom: 2px;
 }
 .eq-card-name {
   font-size: 16px;
@@ -4774,6 +4789,9 @@ tr.row-overdue:hover {
   flex-direction: column;
   gap: 4px;
 }
+.eq-meta-item.full-width {
+  grid-column: 1 / -1;
+}
 .meta-label {
   font-size: 12px;
   color: #64748b;
@@ -4849,6 +4867,10 @@ tr.row-overdue:hover {
 }
 [data-theme="dark"] .eq-card-name {
   color: #f8fafc !important;
+}
+[data-theme="dark"] .eq-card-asset-tag {
+  color: #94a3b8 !important;
+  background: rgba(148, 163, 184, 0.15) !important;
 }
 [data-theme="dark"] .eq-card-model,
 [data-theme="dark"] .eq-card-footer {

@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_04">
+  <link rel="stylesheet" href="style.css?v=20261109_05">
   <script>
     (function(){
       try {
@@ -277,9 +277,10 @@
           <!-- 카테고리 필터 탭 & 검색 -->
           <div class="eq-catalog-toolbar">
             <div class="eq-category-tabs" id="eqCategoryTabs">
-              <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt">9</span></button>
-              <button type="button" class="eq-cat-tab" data-eq-cat="analysis">분석·측정 <span class="tab-cnt">5</span></button>
-              <button type="button" class="eq-cat-tab" data-eq-cat="deposition">박막·증착 <span class="tab-cnt">4</span></button>
+              <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt" id="catCntAll">9</span></button>
+              <button type="button" class="eq-cat-tab" data-eq-cat="structural">구조분석 <span class="tab-cnt" id="catCntStructural">2</span></button>
+              <button type="button" class="eq-cat-tab" data-eq-cat="optical">광학·표면 <span class="tab-cnt" id="catCntOptical">3</span></button>
+              <button type="button" class="eq-cat-tab" data-eq-cat="deposition">박막·증착 <span class="tab-cnt" id="catCntDeposition">4</span></button>
             </div>
             <div class="search-input-box eq-search-box">
               <span class="search-input-icon">🔍</span>
@@ -779,29 +780,41 @@
             <div class="eq-standby-titles">
               <div class="eq-standby-header">
                 <span class="eq-standby-code" id="placeholderEqCode">AFM</span>
-                <span class="eq-standby-pill">연동 준비 중 (Standby)</span>
+                <span class="eq-standby-pill" id="placeholderEqAssetPill">SESS-AQT-AFM-01</span>
               </div>
               <h2 class="eq-standby-title" id="placeholderEqName">AFM (원자간력현미경)</h2>
             </div>
           </div>
-          <p class="eq-standby-desc">현재 본 장비는 디지털 로그북 및 SOP(표준작업절차) 파라미터 연동 사전 점검 단계입니다.</p>
+          <p class="eq-standby-desc">성균관대학교 양자기술첨단기기센터(AQT / SESS) 공용 연구장비 정보 및 LIMS 표준 규격 관리 시스템입니다.</p>
 
           <div class="eq-standby-meta-grid">
             <div class="eq-meta-item">
+              <span class="meta-label">🏛️ SESS 관리번호</span>
+              <span class="meta-val" id="placeholderEqAssetNo">SESS-AQT-AFM-01</span>
+            </div>
+            <div class="eq-meta-item">
               <span class="meta-label">📍 설치 위치</span>
-              <span class="meta-val" id="placeholderEqLocation">IBS 2DQH 기기분석실</span>
+              <span class="meta-val" id="placeholderEqLocation">N센터 C동 86275호 (SPM 표면분석실)</span>
             </div>
             <div class="eq-meta-item">
               <span class="meta-label">🏷️ 장비 모델</span>
-              <span class="meta-val" id="placeholderEqModel">모델 규격 확인 중</span>
+              <span class="meta-val" id="placeholderEqModel">Dimension Icon with ScanAsyst (Bruker, USA)</span>
+            </div>
+            <div class="eq-meta-item">
+              <span class="meta-label">🛠️ 서비스 구분</span>
+              <span class="meta-val" id="placeholderEqServiceMode">직접사용 (정기 사용자 교육 이수자)</span>
+            </div>
+            <div class="eq-meta-item full-width" style="grid-column: 1 / -1;">
+              <span class="meta-label">🔬 분석·공정 주요 규격 (Specifications)</span>
+              <span class="meta-val" id="placeholderEqSpec">PeakForce QNM, ScanAsyst, Contact/Tapping Mode, 90×90 ㎛ 스캐너</span>
             </div>
             <div class="eq-meta-item">
               <span class="meta-label">👤 담당 오퍼레이터</span>
-              <span class="meta-val" id="placeholderEqManager">장비 담당자 / 신현석 교수님</span>
+              <span class="meta-val" id="placeholderEqManager">SESS 표면분석 엔지니어 / AQT 첨단기기센터</span>
             </div>
             <div class="eq-meta-item">
               <span class="meta-label">📞 문의처</span>
-              <span class="meta-val" id="placeholderEqContact">연구실 내선 문의</span>
+              <span class="meta-val" id="placeholderEqContact">031-299-6512 (AQT 행정실/분석지원)</span>
             </div>
           </div>
 
@@ -911,7 +924,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261109_04"></script>
-<script src="app.js?v=20261109_04"></script>
+<script src="consumables_catalog.js?v=20261109_05"></script>
+<script src="app.js?v=20261109_05"></script>
 </body>
 </html>
