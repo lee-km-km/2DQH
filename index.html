@@ -316,7 +316,7 @@
         <div class="page-head hide-mobile">
           <div class="head-title">
             <h1>🔬 연구장비 포털 &amp; 전자 로그북</h1>
-            <span class="count-badge" id="equipmentTotalBadge">총 9대 등록</span>
+            <span class="count-badge" id="equipmentTotalBadge">총 10대 등록</span>
           </div>
           <div class="head-actions" style="display:flex;gap:6px;align-items:center;">
             <div class="eq-hub-switch-group">
@@ -334,13 +334,13 @@
           <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 장비 운영 통계</button>
         </div>
 
-        <!-- A. 장비 목록 뷰 (균형 잡힌 9대 연구장비 통합 포털) -->
+        <!-- A. 장비 목록 뷰 (균형 잡힌 10대 연구장비 통합 포털) -->
         <div id="eqCatalogViewContainer">
           <div class="eq-secondary-section" style="margin-top:0;">
             <div class="eq-secondary-header">
               <div class="eq-secondary-title-box">
-                <h3 class="eq-secondary-title">성균관대 양자기술첨단기기센터(SESS) 연구장비 (9대)</h3>
-                <span class="count-badge" id="eqSecondaryCountBadge">9대 보유</span>
+                <h3 class="eq-secondary-title">성균관대 양자기술첨단기기센터(SESS) 연구장비 (10대)</h3>
+                <span class="count-badge" id="eqSecondaryCountBadge">10대 보유</span>
               </div>
               <div class="search-input-box eq-search-box">
                 <span class="search-input-icon">🔍</span>
@@ -352,10 +352,11 @@
             <!-- 카테고리 필터 탭 -->
             <div class="eq-catalog-toolbar">
               <div class="eq-category-tabs" id="eqCategoryTabs">
-                <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt" id="catCntAll">9</span></button>
-                <button type="button" class="eq-cat-tab" data-eq-cat="structural">구조분석 <span class="tab-cnt" id="catCntStructural">3</span></button>
-                <button type="button" class="eq-cat-tab" data-eq-cat="optical">광학·표면 <span class="tab-cnt" id="catCntOptical">2</span></button>
+                <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt" id="catCntAll">10</span></button>
+                <button type="button" class="eq-cat-tab" data-eq-cat="structural">구조분석 <span class="tab-cnt" id="catCntStructural">2</span></button>
+                <button type="button" class="eq-cat-tab" data-eq-cat="optical">광학·표면 <span class="tab-cnt" id="catCntOptical">3</span></button>
                 <button type="button" class="eq-cat-tab" data-eq-cat="deposition">박막·증착 <span class="tab-cnt" id="catCntDeposition">4</span></button>
+                <button type="button" class="eq-cat-tab" data-eq-cat="fabrication">공정·패키징 <span class="tab-cnt" id="catCntFabrication">1</span></button>
               </div>
             </div>
 
@@ -366,6 +367,20 @@
 
         <!-- B. Phase 3: 연구단 장비 종합 통계 및 가동 대시보드 (Executive Analytics Hub) -->
         <div id="equipmentAnalyticsDashboard" class="hidden">
+          <!-- 장비별 통계 분리 필터 바 (전체 통합 vs 개별 장비 독립 누적 통계) -->
+          <div class="eq-analytics-scope-bar" style="margin-bottom:14px;background:var(--card);padding:12px 16px;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+              <span style="font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px;">
+                <span>📊 분석 스코프 선택:</span>
+                <span id="eqAnalyticsScopeDesc" style="font-weight:400;color:var(--ink-light);font-size:12px;">전체 연구장비 통합 누적 현황</span>
+              </span>
+              <button type="button" class="btn text-link-sub hidden" id="btnGoSelectedEqWorkstation" style="font-size:12px;padding:4px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--border);">
+                👉 선택 장비 워크스테이션 바로가기
+              </button>
+            </div>
+            <div id="eqAnalyticsScopeChips" class="preset-chips-wrap" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+          </div>
+
           <!-- 1. 핵심 KPI 요약 카드 그리드 (4-card metrics) -->
           <div class="eq-kpi-grid">
             <div class="eq-kpi-card">

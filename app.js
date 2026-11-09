@@ -204,6 +204,25 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     icon: '🌌',
     image: 'img/equipment/uhv_sputter.jpg',
     type: 'placeholder'
+  },
+  {
+    id: 'EQ-BONDER-01',
+    assetNo: 'SESS-AQT-BOND-01',
+    code: 'WireBonder',
+    name: 'Wire Bonder (초음파 와이어본더 / 나노와이어본더)',
+    category: 'fabrication',
+    categoryName: '소자공정·패키징',
+    model: 'West-Bond 7476E Deep Access Wire Bonder (USA)',
+    location: '제1종합연구관 지하 81105호 (양자팹 클린룸 패키징실)',
+    serviceMode: '직접사용 / 공정의뢰 (소자패키징 교육 이수자)',
+    spec: 'Al/Au 와이어 웨지/볼 본딩 (0.7~2.0 mil), 초음파 파워 0~10 W, 접촉압력 10~150 gf, 마이크로/나노소자 전극 패키징',
+    manager: 'SESS 소자공정 엔지니어 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 클린룸지원)',
+    status: 'active',
+    statusLabel: '디지털 로그북 가동 중',
+    icon: '🪡',
+    image: 'img/equipment/wire_bonder.jpg',
+    type: 'placeholder'
   }
 ];
 // [2-in-1 연구 포털 모듈 아키텍처]
@@ -280,6 +299,7 @@ let selectedEquipmentCategory = 'all';
 let researchEquipments = [];
 let currentSelectedEquipment = 'EQ-XRD-01';
 let equipmentSessions = [];
+let selectedAnalyticsEquipmentId = 'all'; // 'all' | 'EQ-XRD-01' | 'EQ-BONDER-01' ... 장비별 통계 분리 스코프
 let currentHubView = 'catalog'; // 'catalog' | 'analytics'
 let currentCalendarYear = new Date().getFullYear();
 let currentCalendarMonth = new Date().getMonth() + 1;
@@ -431,6 +451,24 @@ const EQUIPMENT_SCHEMAS = {
       { key: 'gas_type', label: 'Process Gas', choices: ['Ar Pure', 'Ar + O₂ (Reactive)', 'Ar + N₂ (Nitride)'], default: 'Ar Pure' }
     ],
     scanTypes: ['UHV Clean Film', 'Magnetic Multilayer', 'Quantum Heterostructure']
+  },
+  'WireBonder': {
+    name: 'Wire Bonder (초음파 와이어본더 / 나노와이어본더)',
+    readings: [
+      { key: 'ultrasonic_power', label: '초음파 파워 (Ultrasonic Power)', unit: 'W', step: 0.1, placeholder: '3.5', warnMin: 1.0, warnMax: 8.0 },
+      { key: 'bonding_force', label: '본딩 가압력 (Bonding Force)', unit: 'gf', step: 1, placeholder: '45', warnMin: 15, warnMax: 120 },
+      { key: 'stage_temp', label: '스테이지 히터 온도 (Stage Temp)', unit: '°C', step: 1, placeholder: '25' }
+    ],
+    checks: [
+      { key: 'wire_feed_ok', label: '와이어 피딩 및 텐션 상태 정상 확인 (Wire Feed OK)' },
+      { key: 'wedge_tip_ok', label: '웨지 본딩 팁 상태 및 광학 현미경 정렬 정상 (Tip Clean & Aligned)' },
+      { key: 'electrode_test_ok', label: '테스트 패드 본딩 및 접촉 저항 검증 완료 (Bonding Check OK)' }
+    ],
+    options: [
+      { key: 'wire_type', label: '와이어 재질 규격', choices: ['Al 1.0 mil (25 ㎛)', 'Au 1.0 mil (25 ㎛)', 'Al 0.8 mil (20 ㎛)', 'Au 0.7 mil (18 ㎛)'], default: 'Al 1.0 mil (25 ㎛)' },
+      { key: 'bonding_mode', label: '본딩 모드', choices: ['Ultrasonic Wedge (웨지 본딩)', 'Thermosonic Ball (볼 본딩)', 'Deep Access Ribbon'], default: 'Ultrasonic Wedge (웨지 본딩)' }
+    ],
+    scanTypes: ['Chamber 16-ch 패드', '양자홀바(Hall-bar) 전극', '2D 이종접합 전극', 'RF 고주파 패키징', 'PCB 헤더 리드 본딩', '기타 특수 전극']
   }
 };
 
@@ -643,7 +681,7 @@ function loadLocalStorage(forceReset){
     consumables = [...DEFAULT_2DQH_CONSUMABLES];
   }
 
-  const SESS_EQUIP_DATA_VER = '20261109_sess_aqt_v2_photos';
+  const SESS_EQUIP_DATA_VER = '20261109_sess_aqt_v3_bonder';
   try {
     const savedVer = localStorage.getItem('labstock_sess_eq_ver');
     const savedEqs = JSON.parse(localStorage.getItem('labstock_research_equipments') || 'null');
@@ -722,6 +760,40 @@ function loadLocalStorage(forceReset){
     equipmentSessions = [];
   }
 
+  // SESS 나노와이어본더(Wire Bonder) 초기 독립 세션 데이터 자동 등록 보장
+  if(!Array.isArray(equipmentSessions) || !equipmentSessions.some(function(s){ return s.equipment_code === 'WireBonder' || s.equipment_id === 'EQ-BONDER-01'; })){
+    if(!Array.isArray(equipmentSessions)) equipmentSessions = [];
+    equipmentSessions.unshift({
+      id: 'sess_bonder_001',
+      equipment_id: 'EQ-BONDER-01',
+      equipment_code: 'WireBonder',
+      equipment_name: 'Wire Bonder (초음파 와이어본더 / 나노와이어본더)',
+      used_on: today(),
+      start_time: '14:00',
+      end_time: '16:00',
+      duration_min: 120,
+      user_name: '박지원 연구원',
+      affiliation: '2DQH',
+      professor: '신현석 교수님',
+      sample_name: 'Graphene/h-BN Hall-bar 소자 전극 와이어 본딩 (16 ch)',
+      sample_count: 16,
+      scan_type: '양자홀바(Hall-bar) 전극',
+      parameters: {
+        wire_type: 'Al 1.0 mil (25 ㎛)',
+        bonding_mode: 'Ultrasonic Wedge (웨지 본딩)',
+        ultrasonic_power: 3.5,
+        bonding_force: 45,
+        stage_temp: 25,
+        wire_feed_ok: true,
+        wedge_tip_ok: true,
+        electrode_test_ok: true
+      },
+      memo: '16채널 Al 와이어 웨지 본딩 완료. 4단자 전극 접촉 저항 2.1 Ω 확인, 정상 통전 확인.',
+      created_at: new Date(Date.now() - 3600000 * 1.5).toISOString()
+    });
+    try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
+  }
+
   borrowedAssetIds = new Set();
   activeLoanMap = new Map();
   for(let i=0; i<loans.length; i++){
@@ -741,6 +813,7 @@ function saveLocalStorage(){
   localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
   localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
   localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs));
+  localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions));
   
   borrowedAssetIds = new Set();
   activeLoanMap = new Map();
@@ -1122,6 +1195,7 @@ async function loadData(){
           localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
   localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
   localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs));
+  localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions));
         }
       } catch(e){
         console.warn('Supabase equipment_logs 로드 건너뜀 (로컬 스토리지 유지):', e);
@@ -4280,16 +4354,75 @@ function switchEquipmentHubView(mode){
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function renderEquipmentAnalyticsScopeChips(){
+  const container = $('eqAnalyticsScopeChips');
+  const descEl = $('eqAnalyticsScopeDesc');
+  const goBtn = $('btnGoSelectedEqWorkstation');
+  if(!container) return;
+
+  const allSessions = getUnifiedEquipmentSessions();
+
+  let html = '';
+  // 1. 전체 장비 통합 칩
+  const isAll = (selectedAnalyticsEquipmentId === 'all');
+  html += '<button type="button" class="btn-preset-chip ' + (isAll ? 'active' : '') + '" data-analytics-eq="all">';
+  html += '🌐 전체 연구장비 통합 (' + researchEquipments.length + '대 · ' + allSessions.length + '건)';
+  html += '</button>';
+
+  // 2. 개별 장비 칩들 (세션이 있거나 가동 중인 장비 강조)
+  researchEquipments.forEach(function(eq){
+    const isSelected = (selectedAnalyticsEquipmentId === eq.id);
+    const count = allSessions.filter(function(s){ return s.equipment_id === eq.id || s.equipment_code === eq.code; }).length;
+    const durMins = allSessions.filter(function(s){ return s.equipment_id === eq.id || s.equipment_code === eq.code; })
+                               .reduce(function(acc, cur){ return acc + (cur.duration_min || 0); }, 0);
+    const durHours = durMins > 0 ? (durMins / 60).toFixed(1) + 'h' : '0h';
+
+    html += '<button type="button" class="btn-preset-chip ' + (isSelected ? 'active' : '') + '" data-analytics-eq="' + safe(eq.id) + '">';
+    html += (eq.icon || '🔬') + ' ' + safe(eq.name.split(' ')[0]) + ' <span style="font-size:11px;opacity:0.85;">(' + count + '건 · ' + durHours + ')</span>';
+    html += '</button>';
+  });
+
+  container.innerHTML = html;
+
+  if(isAll){
+    if(descEl) descEl.textContent = '10대 전체 연구장비 통합 누적 현황 및 가동 점유율';
+    if(goBtn) goBtn.classList.add('hidden');
+  } else {
+    const selectedEq = researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
+    if(descEl && selectedEq) {
+      descEl.textContent = selectedEq.name + ' [' + selectedEq.code + '] 독립 세션 및 개별 누적 통계';
+    }
+    if(goBtn && selectedEq){
+      goBtn.classList.remove('hidden');
+      goBtn.innerHTML = '👉 ' + safe(selectedEq.code || selectedEq.name) + ' 워크스테이션 바로가기';
+      goBtn.onclick = function(){
+        showView('logbook');
+        selectResearchEquipment(selectedEq.id);
+      };
+    }
+  }
+}
+
 function renderEquipmentAnalyticsDashboard(){
   const allSessions = getUnifiedEquipmentSessions();
+
+  renderEquipmentAnalyticsScopeChips();
+
+  const isAll = (selectedAnalyticsEquipmentId === 'all');
+  const selectedEq = isAll ? null : researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
+
+  // 세션 스코프 분리: 전체 vs 선택된 단일 장비
+  const targetSessions = isAll ? allSessions : allSessions.filter(function(s){
+    return s.equipment_id === selectedAnalyticsEquipmentId || (selectedEq && s.equipment_code === selectedEq.code);
+  });
 
   // 1. KPI 지표 계산
   const totalEq = researchEquipments.length;
   const activeEq = researchEquipments.filter(function(e){ return e.status === 'active'; }).length;
-  const totalSessions = allSessions.length;
+  const totalSessions = targetSessions.length;
 
   const currentMonthStr = currentCalendarYear + '-' + pad(currentCalendarMonth);
-  const thisMonthSessions = allSessions.filter(function(s){
+  const thisMonthSessions = targetSessions.filter(function(s){
     return (s.used_on || '').startsWith(currentMonthStr);
   });
 
@@ -4297,7 +4430,7 @@ function renderEquipmentAnalyticsDashboard(){
   const userSet = new Set();
   const affilSet = new Set();
 
-  allSessions.forEach(function(s){
+  targetSessions.forEach(function(s){
     totalMins += (s.duration_min || 0);
     if(s.user_name) userSet.add(s.user_name);
     if(s.affiliation) affilSet.add(s.affiliation);
@@ -4316,23 +4449,34 @@ function renderEquipmentAnalyticsDashboard(){
   const kpiUsersTotal = $('kpiUsersTotal');
   const kpiAffilSub = $('kpiAffilSub');
 
-  if(kpiEqTotal) kpiEqTotal.textContent = totalEq + '대 (운영 ' + activeEq + '대)';
-  if(kpiEqSub) kpiEqSub.textContent = '분석 5 · 박막증착 4';
-  if(kpiSessionsTotal) kpiSessionsTotal.textContent = totalSessions + '건';
-  if(kpiSessionsSub) kpiSessionsSub.textContent = currentCalendarMonth + '월 ' + thisMonthSessions.length + '건';
-  if(kpiRuntimeTotal) kpiRuntimeTotal.textContent = totalHours + '시간';
-  if(kpiRuntimeSub) kpiRuntimeSub.textContent = '평균 ' + avgMins + '분 / 세션';
-  if(kpiUsersTotal) kpiUsersTotal.textContent = userSet.size + '명';
-  if(kpiAffilSub) kpiAffilSub.textContent = affilSet.size + '개 연구실 참여';
+  if(isAll){
+    if(kpiEqTotal) kpiEqTotal.textContent = totalEq + '대 (가동 ' + activeEq + '대)';
+    if(kpiEqSub) kpiEqSub.textContent = '구조 2 · 광학 3 · 증착 4 · 공정 1';
+    if(kpiSessionsTotal) kpiSessionsTotal.textContent = totalSessions + '건';
+    if(kpiSessionsSub) kpiSessionsSub.textContent = currentCalendarMonth + '월 ' + thisMonthSessions.length + '건 누적';
+    if(kpiRuntimeTotal) kpiRuntimeTotal.textContent = totalHours + '시간';
+    if(kpiRuntimeSub) kpiRuntimeSub.textContent = '장비당 평균 ' + avgMins + '분 / 세션';
+    if(kpiUsersTotal) kpiUsersTotal.textContent = userSet.size + '명';
+    if(kpiAffilSub) kpiAffilSub.textContent = affilSet.size + '개 연구실 참여';
+  } else if(selectedEq) {
+    if(kpiEqTotal) kpiEqTotal.textContent = selectedEq.code || selectedEq.name;
+    if(kpiEqSub) kpiEqSub.textContent = (selectedEq.categoryName || '연구장비') + ' · ' + (selectedEq.status === 'active' ? '🟢 가동중' : '⚪ 준비중');
+    if(kpiSessionsTotal) kpiSessionsTotal.textContent = totalSessions + '건';
+    if(kpiSessionsSub) kpiSessionsSub.textContent = '이번 달 ' + thisMonthSessions.length + '건 측정';
+    if(kpiRuntimeTotal) kpiRuntimeTotal.textContent = totalHours + '시간';
+    if(kpiRuntimeSub) kpiRuntimeSub.textContent = totalSessions > 0 ? ('평균 세션 ' + avgMins + '분') : '가동 대기 중';
+    if(kpiUsersTotal) kpiUsersTotal.textContent = Array.from(userSet).join(', ') || '기록 없음';
+    if(kpiAffilSub) kpiAffilSub.textContent = Array.from(affilSet).join(', ') || selectedEq.location;
+  }
 
-  // 2. 장비별 가동 점유율 차트 렌더링
+  // 2. 장비별 가동 점유율 차트 렌더링 (전체 랭킹)
   renderEquipmentUtilizationBars(allSessions);
 
-  // 3. 월간 가동 캘린더 렌더링
-  renderEquipmentCalendar(allSessions);
+  // 3. 월간 가동 캘린더 렌더링 (선택된 스코프의 세션 전달)
+  renderEquipmentCalendar(targetSessions);
 
-  // 4. 최근 통합 타임라인 피드 렌더링
-  renderEquipmentRecentTimeline(allSessions);
+  // 4. 최근 통합 타임라인 피드 렌더링 (선택된 스코프의 세션 전달)
+  renderEquipmentRecentTimeline(targetSessions);
 }
 
 function renderEquipmentUtilizationBars(allSessions){
@@ -4761,18 +4905,35 @@ function renderLogbook(){
 }
 
 function getGeneralEquipmentExportData(){
+  const curEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || {};
+
+  // 1. 해당 장비의 전용 독립 세션(equipmentSessions) 우선 조회
+  const eqSessions = equipmentSessions.filter(function(s){
+    return s.equipment_id === curEq.id || s.equipment_code === curEq.code;
+  });
+
+  const sourceList = (eqSessions.length > 0) ? eqSessions : equipmentLogs.filter(function(l){
+    return l.asset_id === curEq.id || l.asset_id === curEq.code;
+  });
+
   const headers = [
-    '연번',
-    '로그ID',
-    '장비코드',
-    '장비명',
-    '측정일자 (Date)',
-    '시작일시 (Start Time)',
-    '가동시간_h (Run Hours)',
+    '연번 (No)',
+    '세션ID (Session ID)',
+    '장비코드 (Code)',
+    '장비명 (Equipment)',
+    '작업일자 (Date)',
+    '시작시간 (Start)',
+    '종료시간 (End)',
+    '가동구간 (Period)',
+    '가동시간_분 (min)',
+    '가동시간_시간 (hrs)',
     '사용자 (Operator)',
-    '연구과제명 (Project)',
-    '측정시료 (Sample)',
-    '장비상태 (Status)',
+    '소속 (Affiliation)',
+    '지도교수 (Adviser)',
+    '시료/작업명 (Sample)',
+    '시료수량 (Qty)',
+    '공정모드/스캔 (Mode)',
+    '세부파라미터 (Parameters)',
     '특이사항_메모 (Notes)',
     '등록일시 (Created At)'
   ];
@@ -4780,19 +4941,34 @@ function getGeneralEquipmentExportData(){
   const csvRows = [];
   const excelRows = [];
 
-  equipmentLogs.forEach(function(lg, idx){
-    const id = lg.id || '';
-    const code = lg.asset_id || '';
-    const name = lg.asset_name || '';
-    const dateStr = normalizeExportDate(lg.start_time || '');
-    const startTimeStr = normalizeExportDateTime(lg.start_time || '');
-    const hours = Number(lg.run_hours) || 1.0;
-    const operator = lg.operator_name || '';
-    const project = lg.project_name || '';
-    const sample = lg.sample_info || '';
-    const statusText = lg.status_check === 'issue' ? '점검필요(이상)' : '정상작동';
-    const notes = lg.notes || '';
-    const createdAt = normalizeExportDateTime(lg.created_at || '');
+  sourceList.forEach(function(s, idx){
+    let paramSummary = [];
+    if(s.parameters){
+      for(const k in s.parameters){
+        const val = s.parameters[k];
+        if(val !== undefined && val !== null && val !== false && val !== ''){
+          paramSummary.push(k + '=' + val);
+        }
+      }
+    }
+    const id = s.id || ('sess_' + (idx + 1));
+    const code = s.equipment_code || curEq.code || '';
+    const name = s.equipment_name || curEq.name || '';
+    const dateStr = normalizeExportDate(s.used_on || s.start_time || '');
+    const startTm = s.start_time ? String(s.start_time).replace(/.*T/, '').slice(0, 5) : '';
+    const endTm = s.end_time ? String(s.end_time).replace(/.*T/, '').slice(0, 5) : '';
+    const period = dateStr + ' ' + (startTm || '??:??') + ' ~ ' + (endTm || '??:??');
+    const durMin = s.duration_min != null ? Number(s.duration_min) : (Number(s.run_hours) ? Math.round(Number(s.run_hours) * 60) : 60);
+    const durHrs = durMin > 0 ? Number((durMin / 60).toFixed(1)) : 1.0;
+    const operator = s.user_name || s.operator_name || '연구원';
+    const affil = s.affiliation || '2DQH';
+    const prof = s.professor || '신현석 교수님';
+    const sample = s.sample_name || s.sample_info || s.project_name || '연구 시료';
+    const qty = s.sample_count || 1;
+    const mode = s.scan_type || '표준 공정';
+    const params = paramSummary.join('; ') || '기본 공정 규격';
+    const notes = s.memo || s.notes || '';
+    const createdAt = normalizeExportDateTime(s.created_at || '');
 
     csvRows.push([
       formatCsvCell(idx + 1, 'number'),
@@ -4800,12 +4976,18 @@ function getGeneralEquipmentExportData(){
       formatCsvCell(code, 'text'),
       formatCsvCell(name, 'text'),
       formatCsvCell(dateStr, 'date'),
-      formatCsvCell(startTimeStr, 'text'),
-      formatCsvCell(hours, 'number'),
+      formatCsvCell(startTm, 'time'),
+      formatCsvCell(endTm, 'time'),
+      formatCsvCell(period, 'text'),
+      formatCsvCell(durMin, 'number'),
+      formatCsvCell(durHrs, 'number'),
       formatCsvCell(operator, 'text'),
-      formatCsvCell(project, 'text'),
+      formatCsvCell(affil, 'text'),
+      formatCsvCell(prof, 'text'),
       formatCsvCell(sample, 'text'),
-      formatCsvCell(statusText, 'text'),
+      formatCsvCell(qty, 'number'),
+      formatCsvCell(mode, 'text'),
+      formatCsvCell(params, 'text'),
       formatCsvCell(notes, 'text'),
       formatCsvCell(createdAt, 'text')
     ].join(','));
@@ -4816,54 +4998,60 @@ function getGeneralEquipmentExportData(){
       { val: code, cls: 'cell-center' },
       { val: name, cls: 'cell-text' },
       { val: dateStr, cls: 'cell-date' },
-      { val: startTimeStr, cls: 'cell-datetime' },
-      { val: hours, cls: 'cell-dec' },
+      { val: startTm, cls: 'cell-time' },
+      { val: endTm, cls: 'cell-time' },
+      { val: period, cls: 'cell-text' },
+      { val: durMin, cls: 'cell-num' },
+      { val: durHrs, cls: 'cell-dec' },
       { val: operator, cls: 'cell-text' },
-      { val: project, cls: 'cell-text' },
+      { val: affil, cls: 'cell-center' },
+      { val: prof, cls: 'cell-text' },
       { val: sample, cls: 'cell-text' },
-      { val: statusText, cls: 'cell-center' },
+      { val: qty, cls: 'cell-num' },
+      { val: mode, cls: 'cell-text' },
+      { val: params, cls: 'cell-text' },
       { val: notes, cls: 'cell-text' },
       { val: createdAt, cls: 'cell-datetime' }
     ]);
   });
 
-  const colWidths = [60, 90, 110, 180, 110, 160, 90, 100, 160, 160, 110, 200, 160];
-  return { headers, csvRows, excelRows, colWidths };
+  const colWidths = [60, 100, 100, 180, 110, 80, 80, 190, 85, 85, 100, 100, 110, 180, 70, 120, 180, 180, 160];
+  return { curEq, count: sourceList.length, headers, csvRows, excelRows, colWidths };
 }
 
 function exportGeneralEquipmentLogsCsv(){
-  if(equipmentLogs.length === 0){
-    toast('내보낼 장비 로그북 데이터가 없습니다.');
+  const data = getGeneralEquipmentExportData();
+  if(data.count === 0){
+    toast('내보낼 ' + (data.curEq.name || '장비') + ' 로그북 세션 데이터가 없습니다.');
     return;
   }
-  const data = getGeneralEquipmentExportData();
   const csvContent = '\uFEFF' + data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = '2DQH_연구장비_전자로그북_' + today() + '.csv';
+  a.download = '2DQH_' + (data.curEq.code || 'Equipment') + '_Logbook_' + today() + '.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ 장비 로그북(' + equipmentLogs.length + '건)이 정돈된 CSV로 다운로드되었습니다.');
+  toast('✓ ' + (data.curEq.name || '장비') + ' 세션 로그(' + data.count + '건)가 CSV로 다운로드되었습니다.');
 }
 
 function exportGeneralEquipmentLogsExcel(){
-  if(equipmentLogs.length === 0){
-    toast('내보낼 장비 로그북 데이터가 없습니다.');
+  const data = getGeneralEquipmentExportData();
+  if(data.count === 0){
+    toast('내보낼 ' + (data.curEq.name || '장비') + ' 로그북 세션 데이터가 없습니다.');
     return;
   }
-  const data = getGeneralEquipmentExportData();
   exportToExcelFile(
-    '2DQH_연구장비_전자로그북_' + today() + '.xls',
-    '연구장비 전자로그북',
+    '2DQH_' + (data.curEq.code || 'Equipment') + '_Logbook_' + today() + '.xls',
+    (data.curEq.code || '장비') + ' 전자 로그북',
     data.headers,
     data.excelRows,
     data.colWidths
   );
-  toast('✓ 장비 로그북 엑셀 서식 파일(.XLS)이 다운로드되었습니다.');
+  toast('✓ ' + (data.curEq.name || '장비') + ' 세션 로그 엑셀 파일(.XLS)이 다운로드되었습니다.');
 }
 
 function exportEquipmentLogsCsv(){
@@ -6099,6 +6287,7 @@ async function saveForm(e){
       localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
   localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
   localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs));
+  localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions));
 
       // 2. Supabase 연동 시 DB 저장 시도
       if(db && !isLocalMode){
@@ -6706,7 +6895,7 @@ function bindEvents(){
   document.addEventListener('click', function(e){
     const el = e.target;
     if(!el) return;
-    const target = el.closest('button, a, [data-select-eq], [data-select-util-eq], [data-cal-date], [data-timeline-filter], [data-eq-cat], [data-portal-module], [data-lims-nav], [data-main-view], [data-goto], [data-view]') || el;
+    const target = el.closest('button, a, [data-select-eq], [data-select-util-eq], [data-analytics-eq], [data-cal-date], [data-timeline-filter], [data-eq-cat], [data-portal-module], [data-lims-nav], [data-main-view], [data-goto], [data-view]') || el;
 
     // 모달 닫기 / 취소 버튼 최우선 처리 (이벤트 트랩 및 무반응 방지)
     if(target.id === 'closeModal' || target.id === 'cancelModal' || target.closest('#closeModal') || target.closest('#cancelModal')){
@@ -7177,10 +7366,32 @@ function bindEvents(){
       return;
     }
 
-    // Phase 3: 점유율 바 또는 타임라인에서 장비 바로가기
+    // 장비 운영 통계: 분석 스코프 선택 칩 (전체 10대 장비 통합 vs 개별 장비 독립 세션 통계)
+    const scopeChip = target.dataset.analyticsEq ? target : target.closest('[data-analytics-eq]');
+    if(scopeChip){
+      selectedAnalyticsEquipmentId = scopeChip.dataset.analyticsEq;
+      renderEquipmentAnalyticsDashboard();
+      return;
+    }
+
+    if(target.id === 'btnGoSelectedEqWorkstation' || target.closest('#btnGoSelectedEqWorkstation')){
+      if(selectedAnalyticsEquipmentId && selectedAnalyticsEquipmentId !== 'all'){
+        showView('logbook');
+        selectResearchEquipment(selectedAnalyticsEquipmentId);
+      }
+      return;
+    }
+
+    // Phase 3: 점유율 바 또는 타임라인에서 장비 바로가기 / 독립 통계 조회
     const utilEq = target.dataset.selectUtilEq ? target : target.closest('[data-select-util-eq]');
     if(utilEq){
-      selectResearchEquipment(utilEq.dataset.selectUtilEq);
+      const eqId = utilEq.dataset.selectUtilEq;
+      if(utilEq.classList.contains('eq-util-row') || utilEq.closest('.eq-util-row')){
+        selectedAnalyticsEquipmentId = eqId;
+        renderEquipmentAnalyticsDashboard();
+      } else {
+        selectResearchEquipment(eqId);
+      }
       return;
     }
 
