@@ -4796,8 +4796,82 @@ tr.row-overdue:hover {
   border-bottom: 0 !important;
 }
 [data-theme="dark"] .asset-thumb-box {
-  background: #1a2236 !important;
-  border-color: #2a3754 !important;
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+[data-theme="dark"] .asset-thumb-box svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+[data-theme="dark"] .modal-asset-thumb-wrap,
+[data-theme="dark"] .modal-thumb-box {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .asset-name {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .asset-info-col .asset-name {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .asset-id {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border: 1px solid #334155 !important;
+}
+[data-theme="dark"] .asset-loc,
+[data-theme="dark"] .asset-info-col .asset-loc {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .col-meta {
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .btn-action-borrow {
+  background: var(--brand-red) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3) !important;
+}
+[data-theme="dark"] .btn-action-borrow:hover {
+  background: var(--brand-red-hover) !important;
+}
+[data-theme="dark"] .btn-action-return {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3) !important;
+}
+[data-theme="dark"] .btn-action-return:hover {
+  background: #22c55e !important;
+}
+[data-theme="dark"] .btn-action-edit {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #334155 !important;
+}
+[data-theme="dark"] .btn-action-edit:hover {
+  background: #27354f !important;
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .inventory-categories .category-tab {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border: 1px solid #334155 !important;
+}
+[data-theme="dark"] .inventory-categories .category-tab:hover {
+  background: #27354f !important;
+  color: #f8fafc !important;
+  border-color: #3b82f6 !important;
+}
+[data-theme="dark"] .inventory-categories .category-tab.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.4) !important;
+}
+[data-theme="dark"] #view-inventory .search-collapsible-panel {
+  background: #111827 !important;
+  border-bottom: 1px solid #232f46 !important;
 }
 [data-theme="dark"] .table-wrap tr:not(.quick-row) {
   background: #131c2e !important;
