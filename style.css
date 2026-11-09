@@ -4933,6 +4933,212 @@ tr.row-overdue:hover {
 }
 
 /* ==========================================================================
+   [Dark Mode: Consumables & Reagents Catalog System - PC & Mobile 전면 다크화]
+   ========================================================================== */
+[data-theme="dark"] #view-consumables .panel {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+}
+
+[data-theme="dark"] #view-consumables .search-collapsible-panel {
+  background: rgba(17, 24, 39, 0.98) !important;
+  border-bottom: 1px solid #232f46 !important;
+}
+
+[data-theme="dark"] .consumables-container {
+  background: transparent !important;
+}
+
+[data-theme="dark"] .consumables-result-summary {
+  background: #151c2e !important;
+  border: 1px solid #232f46 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .consumables-result-summary strong {
+  color: #60a5fa !important;
+}
+[data-theme="dark"] .consumables-result-summary .summary-sub {
+  color: #94a3b8 !important;
+}
+
+/* 카드형 뷰 (Card Grid) */
+[data-theme="dark"] .consumable-card {
+  background: #151c2e !important;
+  border: 1px solid #232f46 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+[data-theme="dark"] .consumable-card:hover {
+  background: #1a233a !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45) !important;
+}
+
+[data-theme="dark"] .consumable-name {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .consumable-cat-tag {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border: 1px solid #334155 !important;
+}
+
+[data-theme="dark"] .consumable-id-tag {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border: 1px solid #334155 !important;
+}
+
+/* 위치 하이라이트 박스 */
+[data-theme="dark"] .consumable-location-box {
+  background: #0f172a !important;
+  border: 1px solid #232f46 !important;
+  border-left: 3.5px solid var(--brand-red) !important;
+}
+
+[data-theme="dark"] .sub-loc-text {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .consumable-spec-text {
+  background: #1a2236 !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #232f46 !important;
+}
+
+[data-theme="dark"] .consumable-card-actions {
+  border-top: 1px dashed #232f46 !important;
+}
+
+/* 위치 복사 버튼 */
+[data-theme="dark"] .btn-copy-loc,
+[data-theme="dark"] .btn-compact-copy {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #334155 !important;
+}
+[data-theme="dark"] .btn-copy-loc:hover,
+[data-theme="dark"] .btn-compact-copy:hover {
+  background: #27354f !important;
+  border-color: #3b82f6 !important;
+  color: #60a5fa !important;
+}
+[data-theme="dark"] .btn-copy-loc.copied,
+[data-theme="dark"] .btn-compact-copy.copied {
+  background: #064e3b !important;
+  border-color: #059669 !important;
+  color: #a7f3d0 !important;
+}
+
+/* 보기 모드 토글 (카드 vs 컴팩트) */
+[data-theme="dark"] .view-mode-toggle {
+  background: #111827 !important;
+  border: 1px solid #232f46 !important;
+}
+[data-theme="dark"] .btn-view-mode {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .btn-view-mode.active {
+  background: #1e293b !important;
+  color: #60a5fa !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* 컴팩트 목록형 뷰 (Dense List Layout) */
+[data-theme="dark"] .consumable-compact-row {
+  background: #151c2e !important;
+  border: 1px solid #232f46 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+}
+[data-theme="dark"] .consumable-compact-row:hover {
+  background: #1a233a !important;
+  border-color: #3b82f6 !important;
+}
+[data-theme="dark"] .compact-name,
+[data-theme="dark"] .compact-sub-loc {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .compact-row-bottom {
+  color: #94a3b8 !important;
+}
+
+/* 구역 뱃지 (Room Badges) 다크화 */
+[data-theme="dark"] .room-badge.room-cleanroom {
+  background: rgba(59, 130, 246, 0.15) !important;
+  color: #93c5fd !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+[data-theme="dark"] .room-badge.room-chemical {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fcd34d !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+[data-theme="dark"] .room-badge.room-measurement {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+[data-theme="dark"] .room-badge.room-facility {
+  background: rgba(139, 92, 246, 0.15) !important;
+  color: #c4b5fd !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+[data-theme="dark"] .room-badge.room-default {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+
+/* 전문 뱃지 시스템 다크화 */
+[data-theme="dark"] .cas-badge {
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #a5b4fc !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+[data-theme="dark"] .maker-badge {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .hazard-badge.hazard-high {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+[data-theme="dark"] .hazard-badge.hazard-med {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #fcd34d !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+}
+[data-theme="dark"] .hazard-badge.hazard-low {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border-color: #334155 !important;
+}
+
+/* 검색 결과 없을 때 (Empty State) */
+[data-theme="dark"] .consumables-empty-state {
+  background: transparent !important;
+  border: 1px dashed #232f46 !important;
+}
+[data-theme="dark"] .consumables-empty-state h3 {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .consumables-empty-state p {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .consumables-load-more-btn {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .consumables-load-more-btn:hover {
+  background: #27354f !important;
+  border-color: #3b82f6 !important;
+  color: #60a5fa !important;
+}
+
+/* ==========================================================================
    [장비 본체 부착용 QR 라벨 카드 & 인쇄 스타일]
    ========================================================================== */
 .equipment-qr-label-card {
