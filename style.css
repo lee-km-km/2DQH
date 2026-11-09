@@ -539,19 +539,19 @@ tbody tr:hover { background: #fbfcfe; }
 tbody tr:last-child td { border-bottom: 0; }
 td b { font-weight: 600; color: var(--ink); }
 
-/* Table Column Widths for Balanced Desktop Grid (Desktop Only) */
+/* Table Column Widths for Balanced Desktop Grid (Desktop Only) - Scoped to Inventory */
 @media (min-width: 701px) {
-  .table-wrap table {
+  #inventoryRows table {
     table-layout: fixed;
     width: 100%;
     min-width: 920px;
   }
-  .table-wrap th:nth-child(1), .table-wrap td:nth-child(1) { width: 30%; min-width: 360px; }
-  .table-wrap th:nth-child(2), .table-wrap td:nth-child(2) { width: 12%; min-width: 85px; }
-  .table-wrap th:nth-child(3), .table-wrap td:nth-child(3) { width: 24%; min-width: 140px; }
-  .table-wrap th:nth-child(4), .table-wrap td:nth-child(4) { width: 12%; min-width: 90px; }
-  .table-wrap th:nth-child(5), .table-wrap td:nth-child(5) { width: 10%; min-width: 75px; }
-  .table-wrap th:nth-child(6), .table-wrap td:nth-child(6) { width: 12%; min-width: 95px; text-align: right; }
+  #inventoryRows th:nth-child(1), #inventoryRows td:nth-child(1) { width: 30%; min-width: 360px; }
+  #inventoryRows th:nth-child(2), #inventoryRows td:nth-child(2) { width: 12%; min-width: 85px; }
+  #inventoryRows th:nth-child(3), #inventoryRows td:nth-child(3) { width: 24%; min-width: 140px; }
+  #inventoryRows th:nth-child(4), #inventoryRows td:nth-child(4) { width: 12%; min-width: 90px; }
+  #inventoryRows th:nth-child(5), #inventoryRows td:nth-child(5) { width: 10%; min-width: 75px; }
+  #inventoryRows th:nth-child(6), #inventoryRows td:nth-child(6) { width: 12%; min-width: 95px; text-align: right; }
 
   .col-main {
     display: flex;
@@ -3535,8 +3535,221 @@ tr.row-overdue:hover {
     background: #cbd5e1;
     border-radius: 4px;
   }
+  .xrd-form-col .xrd-c4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
   .xrd-admin-col {
     min-width: 0;
+  }
+}
+
+/* ========================================================
+   [PC 전용] HR-XRD 로그 테이블 균형 레이아웃 (세로 줄바꿈 방지)
+   ======================================================== */
+@media (min-width: 769px) {
+  #xrdRows.table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card, #ffffff);
+  }
+  #xrdRows table {
+    width: 100% !important;
+    min-width: 1020px !important;
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+    display: table !important;
+  }
+  #xrdRows thead {
+    display: table-header-group !important;
+  }
+  #xrdRows tbody {
+    display: table-row-group !important;
+  }
+  #xrdRows tr {
+    display: table-row !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  #xrdRows th {
+    display: table-cell !important;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    text-align: left;
+    letter-spacing: 0.02em;
+  }
+  #xrdRows td {
+    display: table-cell !important;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    white-space: nowrap;
+    color: var(--ink);
+    font-size: 13px;
+  }
+  #xrdRows td::before {
+    display: none !important;
+  }
+  #xrdRows tr:hover td {
+    background: rgba(36, 87, 214, 0.03);
+  }
+  #xrdRows th:nth-child(1), #xrdRows td:nth-child(1) { width: 14%; min-width: 135px; }
+  #xrdRows th:nth-child(2), #xrdRows td:nth-child(2) { width: 13%; min-width: 125px; }
+  #xrdRows th:nth-child(3), #xrdRows td:nth-child(3) { width: 9%; min-width: 85px; text-align: center; font-family: monospace; }
+  #xrdRows th:nth-child(4), #xrdRows td:nth-child(4) { width: 9%; min-width: 85px; text-align: center; font-family: monospace; }
+  #xrdRows th:nth-child(5), #xrdRows td:nth-child(5) { width: 13%; min-width: 125px; text-align: center; }
+  #xrdRows th:nth-child(6), #xrdRows td:nth-child(6) { width: 6%; min-width: 55px; text-align: center; font-weight: 700; }
+  #xrdRows th:nth-child(7), #xrdRows td:nth-child(7) { width: 10%; min-width: 90px; }
+  #xrdRows th:nth-child(8), #xrdRows td:nth-child(8) {
+    width: 18%;
+    min-width: 180px;
+    max-width: 320px;
+    white-space: normal !important;
+    word-break: break-word;
+    line-height: 1.4;
+  }
+  #xrdRows th:nth-child(9), #xrdRows td:nth-child(9) { width: 8%; min-width: 85px; text-align: right; }
+}
+
+/* ========================================================
+   [PC 전용] 소모품 및 시약 도감 뷰 여백 최적화 (빈공간 제거)
+   ======================================================== */
+@media (min-width: 769px) {
+  #view-consumables .panel {
+    padding: 0 !important;
+    background: var(--card, #ffffff);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  #view-consumables .search-collapsible-panel {
+    position: static !important;
+    padding: 16px 20px 10px !important;
+    border-bottom: 1px solid var(--border) !important;
+    background: transparent !important;
+    margin-bottom: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  #view-consumables .toolbar {
+    padding: 0 0 12px 0 !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+  }
+  #view-consumables .toolbar .search-input-box {
+    flex: 1 !important;
+    max-width: 640px !important;
+  }
+  #view-consumables .toolbar input {
+    max-width: none !important;
+    width: 100% !important;
+    height: 42px !important;
+  }
+  #view-consumables #consumableCategories {
+    padding: 0 0 10px 0 !important;
+  }
+  #view-consumables .category-tabs {
+    margin: 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  #view-consumables #consumablesResultSummary {
+    margin: 0 0 8px 0 !important;
+  }
+  #view-consumables .consumables-container {
+    padding: 16px 20px 24px !important;
+  }
+
+  /* 비품 검색창 PC 정렬 */
+  #view-inventory .panel {
+    padding: 0 !important;
+    background: var(--card, #ffffff);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  #view-inventory .search-collapsible-panel {
+    padding: 16px 20px 10px !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+  #view-inventory .toolbar {
+    padding: 0 0 12px 0 !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  #view-inventory .toolbar .search-input-box {
+    flex: 1 !important;
+    max-width: 540px !important;
+  }
+  #view-inventory .toolbar input {
+    max-width: none !important;
+    width: 100% !important;
+    height: 42px !important;
+  }
+  #view-inventory .toolbar select {
+    height: 42px !important;
+    padding: 0 14px !important;
+    border-radius: 10px !important;
+  }
+  #view-inventory #inventoryCategories {
+    padding: 0 0 4px 0 !important;
+  }
+  #view-inventory .category-tabs {
+    margin: 0 !important;
+  }
+  #view-inventory .table-wrap {
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* 연구장비 포털 툴바 정밀 정렬 */
+  .eq-catalog-toolbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    margin-bottom: 20px !important;
+  }
+  .eq-search-box {
+    flex: 1 !important;
+    max-width: 440px !important;
+    min-width: 240px !important;
+  }
+  .eq-search-box input {
+    height: 42px !important;
+    width: 100% !important;
+  }
+
+  /* 로그북 테이블 상단 검색바 정렬 */
+  .xrd-table-header-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    margin-bottom: 14px !important;
+  }
+  .xrd-search-box {
+    flex: 1 !important;
+    max-width: 380px !important;
+    min-width: 200px !important;
+  }
+  .xrd-search-box input {
+    height: 38px !important;
+    width: 100% !important;
   }
 }
 .xrd-modebar {
@@ -5178,5 +5391,31 @@ tr.row-overdue:hover {
 [data-theme="dark"] .eq-timeline-param-tag {
   background: #1e293b !important;
   color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] #xrdRows.table-wrap {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] #xrdRows th {
+  background: #111827 !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #232f46 !important;
+}
+[data-theme="dark"] #xrdRows td {
+  border-bottom-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] #xrdRows tr:hover td {
+  background: rgba(59, 130, 246, 0.08) !important;
+}
+[data-theme="dark"] #view-consumables .panel,
+[data-theme="dark"] #view-inventory .panel {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] #view-consumables .search-collapsible-panel,
+[data-theme="dark"] #view-inventory .search-collapsible-panel {
+  border-bottom-color: #232f46 !important;
 }
 
