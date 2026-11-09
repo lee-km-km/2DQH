@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_17">
+  <link rel="stylesheet" href="style.css?v=20261109_18">
   <script>
     (function(){
       try {
@@ -334,7 +334,7 @@
             <span class="count-badge" id="equipmentTotalBadge">총 10대 등록</span>
           </div>
           <div class="head-actions" style="display:flex;gap:6px;align-items:center;">
-            <div class="eq-hub-switch-group">
+            <div class="eq-hub-switch-group admin-only hidden">
               <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
               <button type="button" class="btn" id="btnHubShowAnalytics">📊 장비 운영 통계</button>
             </div>
@@ -343,8 +343,8 @@
           </div>
         </div>
 
-        <!-- 모바일 전용 뷰 전환 바 -->
-        <div class="mobile-only eq-mobile-view-bar" style="margin-bottom:12px;display:flex;gap:6px;">
+        <!-- 모바일 전용 뷰 전환 바 (관리자 전용) -->
+        <div class="mobile-only eq-mobile-view-bar admin-only hidden" style="margin-bottom:12px;display:flex;gap:6px;">
           <button type="button" class="btn active" id="btnMobileHubShowGrid" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📇 장비 목록</button>
           <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 장비 운영 통계</button>
         </div>
@@ -485,21 +485,6 @@
           <div class="eq-detail-badges">
             <span class="eq-badge-cat" id="detailEqCategory">분석·측정</span>
             <span class="eq-badge-status" id="detailEqStatus">운영 중</span>
-          </div>
-        </div>
-
-        <!-- 로그북 사용자 모드 vs 관리자 모드 전환 스위처 -->
-        <div class="logbook-mode-bar" id="logbookModeBar">
-          <div class="logbook-mode-tabs" role="tablist" aria-label="로그북 모드 전환">
-            <button type="button" class="btn-logbook-mode-tab active" id="btnLogbookModeUser" role="tab" aria-selected="true" title="연구원 가동 일지 작성 및 간편 세션 시작">
-              <span>👤 연구원 사용자 모드</span>
-            </button>
-            <button type="button" class="btn-logbook-mode-tab" id="btnLogbookModeAdmin" role="tab" aria-selected="false" title="관리자 전용: 전체 통계 분석, 로그 수정/삭제, 엑셀/CSV 추출">
-              <span>🛡️ 관리자 운영 모드</span>
-            </button>
-          </div>
-          <div class="logbook-mode-info">
-            <span class="mode-info-badge" id="logbookModeDesc">👤 연구원 간편 일지 작성 모드 (수정·삭제는 관리자 전용)</span>
           </div>
         </div>
 
@@ -854,8 +839,8 @@
 
           <!-- 우측: 관리자 가동 대시보드 및 일지 테이블 -->
           <div class="xrd-admin-col">
-            <!-- PC 관리자 가동 현황 요약 KPI 카드 -->
-            <div class="xrd-admin-kpi-bar" id="xrdAdminKpiBar">
+            <!-- PC 관리자 가동 현황 요약 KPI 카드 (관리자 전용 통계) -->
+            <div class="xrd-admin-kpi-bar admin-only hidden" id="xrdAdminKpiBar">
               <div class="xrd-kpi-card">
                 <span class="xrd-kpi-label">⏱️ 총 누적 가동시간</span>
                 <b class="xrd-kpi-val" id="xrdKpiHours">0.0h</b>
@@ -1067,7 +1052,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261109_17"></script>
-<script src="app.js?v=20261109_17"></script>
+<script src="consumables_catalog.js?v=20261109_18"></script>
+<script src="app.js?v=20261109_18"></script>
 </body>
 </html>

@@ -1075,6 +1075,7 @@ function fmtName(id){
 
 function setAdminUI(){
   const isAdm = isAdmin();
+  if(document.body) document.body.classList.toggle('is-admin', isAdm);
   if($('loginBtn')) $('loginBtn').classList.toggle('hidden', isAdm);
   if($('logoutBtn')) $('logoutBtn').classList.toggle('hidden', !isAdm);
 
@@ -1091,10 +1092,13 @@ function setAdminUI(){
     showView('inventory');
   }
 
-  if(!isAdm && currentLogbookMode === 'admin'){
-    currentLogbookMode = 'user';
+  // 장비 관련 화면 갱신 (관리자 로그인 상태에 따라 수정/삭제 및 통계 뷰 동적 반영)
+  if(currentSelectedEquipment === 'EQ-XRD-01'){
+    renderXrdLogs();
+  } else {
+    const curEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
+    if(curEq) renderEquipmentTestSessions(curEq.code);
   }
-  applyLogbookModeUI();
 }
 
 async function refreshAdminState(){
@@ -2094,7 +2098,10 @@ function renderLoans(){
     $('loanRows').innerHTML = '<table aria-label="대여 현황"><thead><tr><th scope="col">비품</th><th scope="col">대여자</th><th scope="col">대여일</th><th scope="col">상태</th><th scope="col">반납(예정)일</th><th scope="col">처리</th></tr></thead><tbody>' +
       loanHtml + '</tbody></table>';
   } else {
-    $('loanRows').innerHTML = '<div class="empty">표시할 기록이 없습니다.</div>';
+    $('loanRows').innerHTML = '<div class="empty">' +
+      '<p style="font-size:14.5px;font-weight:600;margin-bottom:8px;">표시할 대여 기록이 없습니다.</p>' +
+      '<button type="button" class="btn primary" id="btnEmptyLoanBorrow" style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;">⚡ 비품 대여 신청하기</button>' +
+      '</div>';
   }
 
   const activeCountBadge = $('activeLoansCountBadge');
@@ -2753,59 +2760,6 @@ function exportChemicalLogsCsv(){
 // [연구장비 & 전자 로그북 모듈 - 2DQH-XRD_log 공식 기반]
 // ========================================================
 
-// [로그북 사용자 모드 vs 관리자 모드 제어]
-let currentLogbookMode = 'user';
-
-function setLogbookMode(mode){
-  if(mode === 'admin' && !isAdmin()){
-    toast('🛡️ 관리자 로그인이 필요한 모드입니다.');
-    openModal('login');
-    return;
-  }
-  currentLogbookMode = mode;
-  try { localStorage.setItem('labstock_logbook_mode', mode); } catch(_){}
-  applyLogbookModeUI();
-  toast(mode === 'admin' ? '🛡️ 관리자 운영 모드로 전환되었습니다.' : '👤 연구원 사용자 모드로 전환되었습니다.');
-}
-
-function applyLogbookModeUI(){
-  const isAdmMode = (currentLogbookMode === 'admin' && isAdmin());
-
-  const btnUser = $('btnLogbookModeUser');
-  const btnAdmin = $('btnLogbookModeAdmin');
-  if(btnUser) {
-    btnUser.classList.toggle('active', !isAdmMode);
-    btnUser.setAttribute('aria-selected', !isAdmMode ? 'true' : 'false');
-  }
-  if(btnAdmin) {
-    btnAdmin.classList.toggle('active', isAdmMode);
-    btnAdmin.setAttribute('aria-selected', isAdmMode ? 'true' : 'false');
-  }
-
-  const descEl = $('logbookModeDesc');
-  if(descEl){
-    descEl.textContent = isAdmMode 
-      ? '🛡️ 관리자 운영 모드 (전체 통계 분석 및 로그 수정·삭제 활성화)' 
-      : '👤 연구원 사용자 모드 (간편 일지 작성 및 열람 전용)';
-  }
-
-  const xrdContainer = $('xrdLogbookContainer');
-  if(xrdContainer){
-    xrdContainer.setAttribute('data-logbook-mode', isAdmMode ? 'admin' : 'user');
-  }
-  const eqDetail = $('equipmentDetailHub');
-  if(eqDetail){
-    eqDetail.setAttribute('data-logbook-mode', isAdmMode ? 'admin' : 'user');
-  }
-
-  if(currentSelectedEquipment === 'EQ-XRD-01'){
-    renderXrdLogs();
-  } else {
-    const curEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
-    if(curEq) renderEquipmentTestSessions(curEq.code);
-  }
-}
-
 function initXrdControls(){
   if(xrdControlsInitialized) return;
   const f = $('xrdForm');
@@ -3288,7 +3242,7 @@ function renderXrdLogs(){
       '<td data-l="Action">';
     if(isActive){
       html += '<button type="button" class="text-btn" data-xrd-finish="' + l.id + '" style="font-weight:700;color:var(--primary);background:rgba(36,87,214,0.08);padding:4px 8px;border-radius:6px;">Finish</button>';
-    } else if(isAdmin() && currentLogbookMode === 'admin'){
+    } else if(isAdmin()){
       html += '<button type="button" class="text-btn btn-log-edit" data-xrd-edit="' + l.id + '" style="margin-right:6px;">수정</button>' +
         '<button type="button" class="text-btn del btn-log-del" data-xrd-del="' + l.id + '" style="color:#dc2626;">삭제</button>';
     } else {
@@ -4026,7 +3980,7 @@ function renderEquipmentTestSessions(code){
     html += '</div>';
     html += '<div style="display:flex;align-items:center;gap:8px;">';
     html += '<span class="eq-badge-status active" style="font-size:10.5px;padding:2px 6px;">시험 가동 완료</span>';
-    if(isAdmin() && currentLogbookMode === 'admin'){
+    if(isAdmin()){
       html += '<button type="button" class="btn-clear-search btn-log-del" data-delete-eq-session="' + s.id + '" title="삭제" style="color:var(--danger,#dc2626);cursor:pointer;padding:4px 6px;font-size:12px;border:0;background:none;font-weight:600;">✕ 삭제</button>';
     }
     html += '</div>';
@@ -4962,8 +4916,6 @@ function selectResearchEquipment(eqId){
   if(xrdContainer) xrdContainer.classList.toggle('hidden', !isXrd);
   if(placeholderContainer) placeholderContainer.classList.toggle('hidden', isXrd);
 
-  applyLogbookModeUI();
-
   if(isXrd){
     initXrdControls();
     resetXrdForm();
@@ -5407,29 +5359,13 @@ function openModal(mode, id){
     const preselectedAsset = id ? assetFor(id) : null;
     const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
 
-    // 1. 기본 동시 대여 제한: 1인당 최대 3개까지
-    const activeLoans = getMyActiveLoans(lastBorrower);
-    if(activeLoans.length >= 3){
-      toast('💡 비품은 1인당 최대 3개까지 동시 대여 가능합니다. 기존 비품을 먼저 반납해 주세요 :)', 4000);
-      closeModal();
-      setTimeout(function(){ openModal('return', activeLoans[0].id); }, 350);
-      return;
+    // 대여자 정보 및 기존 대여 상태 팁 (모달을 닫거나 강제 차단하지 않고 대여 신청 정상 진행)
+    const activeLoans = lastBorrower ? getMyActiveLoans(lastBorrower) : [];
+    if(lastBorrower && activeLoans.length > 0){
+      parts.push('<div style="background:var(--bg-subtle,#f8fafc);border:1px solid var(--border,#e2e8f0);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;color:var(--muted,#64748b);">');
+      parts.push('💡 <b>' + safe(lastBorrower) + '</b>님은 현재 ' + activeLoans.length + '개의 비품을 대여 중입니다. (다른 연구원이 대여하는 경우 아래 대여자 이름을 변경해주세요)');
+      parts.push('</div>');
     }
-
-    // 2. 24시간 이상 경과 비품이 2개 이상일 때: 반납 팝업 먼저 노출 (단, 취소 시 대여창으로 복귀)
-    if(!window.__bypass24hPrompt){
-      const overdue24h = getMy24hOverdueLoans(lastBorrower);
-      if(overdue24h.length >= 2){
-        window.__pendingBorrowAssetId = id || null;
-        window.__isPromptingReturnBeforeBorrow = true;
-        closeModal();
-        setTimeout(function(){
-          openModal('return', overdue24h[0].id);
-        }, 120);
-        return;
-      }
-    }
-    window.__bypass24hPrompt = false;
 
     if(preselectedAsset){
       parts.push('<div class="selected-asset-box has-modal-thumb">');
@@ -7345,16 +7281,6 @@ function bindEvents(){
       return;
     }
 
-    if(target.id === 'btnLogbookModeUser' || target.closest('#btnLogbookModeUser')){
-      setLogbookMode('user');
-      return;
-    }
-
-    if(target.id === 'btnLogbookModeAdmin' || target.closest('#btnLogbookModeAdmin')){
-      setLogbookMode('admin');
-      return;
-    }
-
     if(target.dataset.xrdEdit){
       if(!isAdmin()){
         toast('로그북 기록 수정은 관리자만 가능합니다.');
@@ -7652,6 +7578,13 @@ function bindEvents(){
       return;
     }
 
+    const loanAddTarget = target.closest('#loanAdd, #quickBorrow, #inventoryQuickBorrow, #btnEmptyLoanBorrow');
+    if(loanAddTarget){
+      e.preventDefault();
+      openModal('borrow');
+      return;
+    }
+
     switch(target.id){
       case 'loginBtn':
       case 'sidebarLoginBtn':
@@ -7868,8 +7801,8 @@ function bindEvents(){
     renderHistory();
   });
   addEvt('exportCsv', 'click', exportHistoryCsv);
-  addEvt('btnLogbookModeUser', 'click', function(){ setLogbookMode('user'); });
-  addEvt('btnLogbookModeAdmin', 'click', function(){ setLogbookMode('admin'); });
+  addEvt('loanAdd', 'click', function(){ openModal('borrow'); });
+  addEvt('quickBorrow', 'click', function(){ openModal('borrow'); });
   addEvt('logoutBtn', 'click', handleLogout);
   addEvt('sidebarLogoutBtn', 'click', handleLogout);
 
