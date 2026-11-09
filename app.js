@@ -981,17 +981,26 @@ function fmtName(id){
 }
 
 function setAdminUI(){
-  $('loginBtn').classList.toggle('hidden', isAdmin());
-  $('logoutBtn').classList.toggle('hidden', !isAdmin());
+  const isAdm = isAdmin();
+  if($('loginBtn')) $('loginBtn').classList.toggle('hidden', isAdm);
+  if($('logoutBtn')) $('logoutBtn').classList.toggle('hidden', !isAdm);
+
+  if($('sidebarLoginBtn')) $('sidebarLoginBtn').classList.toggle('hidden', isAdm);
+  if($('sidebarAdminProfile')) $('sidebarAdminProfile').classList.toggle('hidden', !isAdm);
 
   const adminEls = document.querySelectorAll('.admin-only');
   for(let i=0; i<adminEls.length; i++){
-    adminEls[i].classList.toggle('hidden', !isAdmin());
+    adminEls[i].classList.toggle('hidden', !isAdm);
   }
 
   const activeView = document.querySelector('.view.active');
-  if(!isAdmin() && activeView && activeView.classList.contains('admin-only')){
+  if(!isAdm && activeView && activeView.classList.contains('admin-only')){
     showView('inventory');
+  }
+
+  // 관리자가 아닌 경우 장비 허브의 운영 통계 뷰에서 일반 카탈로그로 안전 복귀
+  if(!isAdm && currentHubView === 'analytics'){
+    switchEquipmentHubView('catalog');
   }
 }
 
@@ -4029,6 +4038,10 @@ function getUnifiedEquipmentSessions(){
 }
 
 function switchEquipmentHubView(mode){
+  if(mode === 'analytics' && !isAdmin()){
+    toast('장비 운영 통계는 관리자 전용 기능입니다. 관리자로 로그인해주세요.');
+    mode = 'catalog';
+  }
   currentHubView = mode || 'catalog';
   const isCatalog = (currentHubView === 'catalog');
 
@@ -5409,6 +5422,7 @@ function showView(name, options){
   if(name === 'equipment') name = 'inventory';
 
   if((name === 'dashboard' || name === 'history') && !isAdmin()){
+    toast('관리자 전용 화면입니다. 관리자로 로그인해주세요.');
     name = 'inventory';
   }
 
@@ -5490,12 +5504,10 @@ function showView(name, options){
   // 모바일 슬라이드 아웃 서랍 자동 닫기
   closeMobileDrawer();
 
-  // 모바일 하단 탭 바 활성화 상태 동기화
+  // 모바일 하단 탭 바 활성화 상태 동기화 (inventory, consumables, logbook, loans)
   document.querySelectorAll('.bottom-nav-tab[data-view]').forEach(function(b){
     const v = b.dataset.view;
-    const isActive = (v === name) ||
-      (v === 'logbook' && name === 'logbook' && currentHubView !== 'analytics') ||
-      (v === 'dashboard' && (name === 'dashboard' || (name === 'logbook' && currentHubView === 'analytics')));
+    const isActive = (v === name);
     b.classList.toggle('active', isActive);
   });
 
@@ -6620,10 +6632,18 @@ function bindEvents(){
 
     // 통계 분석 센터 듀얼 탭 전환 (비품 대여 통계 vs 연구장비 가동 통계)
     if(target.id === 'btnStatsShowAssets' || target.closest('#btnStatsShowAssets')){
+      if(!isAdmin()){
+        toast('관리자 전용 기능입니다.');
+        return;
+      }
       showView('dashboard');
       return;
     }
     if(target.id === 'btnStatsShowEquip' || target.closest('#btnStatsShowEquip')){
+      if(!isAdmin()){
+        toast('관리자 전용 기능입니다.');
+        return;
+      }
       currentHubView = 'analytics';
       showView('logbook');
       showEquipmentCatalogHub();
@@ -6631,6 +6651,10 @@ function bindEvents(){
       return;
     }
     if(target.id === 'btnHubShowAssetDashboard' || target.id === 'btnMobileHubShowAssetDashboard' || target.closest('#btnHubShowAssetDashboard') || target.closest('#btnMobileHubShowAssetDashboard')){
+      if(!isAdmin()){
+        toast('관리자 전용 기능입니다.');
+        return;
+      }
       showView('dashboard');
       return;
     }
@@ -6654,6 +6678,10 @@ function bindEvents(){
         showView('logbook');
         selectResearchEquipment('EQ-XRD-01');
       } else if(navType === 'analytics'){
+        if(!isAdmin()){
+          toast('장비 운영 통계는 관리자 전용 기능입니다. 관리자로 로그인해주세요.');
+          return;
+        }
         currentHubView = 'analytics';
         showView('logbook');
         showEquipmentCatalogHub();
@@ -6811,20 +6839,26 @@ function bindEvents(){
 
     switch(target.id){
       case 'loginBtn':
+      case 'sidebarLoginBtn':
         openModal('login');
+        closeMobileDrawer();
         break;
 
       case 'logoutBtn':
-        db.auth.signOut().then(function(){
-          session = null;
-          admin = false;
-          setAdminUI();
-          toast('로그아웃했습니다.');
-          loadData();
-        }).catch(function(err){
-          console.error(err);
-          toast('로그아웃 실패: ' + err.message);
-        });
+      case 'sidebarLogoutBtn':
+        if(db && db.auth){
+          db.auth.signOut().then(function(){
+            session = null;
+            admin = false;
+            setAdminUI();
+            toast('로그아웃했습니다.');
+            loadData();
+            closeMobileDrawer();
+          }).catch(function(err){
+            console.error(err);
+            toast('로그아웃 실패: ' + err.message);
+          });
+        }
         break;
 
       case 'addAsset':

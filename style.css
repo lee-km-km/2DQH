@@ -31,9 +31,15 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
-* { box-sizing: border-box; }
-body {
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: 100vw !important;
   margin: 0;
+  padding: 0;
+}
+body {
   background: #f8fafc;
   color: var(--ink);
   font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -2386,9 +2392,12 @@ tbody tr:hover .asset-thumb-box {
 
 @media (max-width: 700px) {
   .topbar {
-    height: 50px;
-    padding: 0 8px;
-    gap: 4px;
+    height: 52px;
+    padding: 0 12px !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
   }
   .brand {
     gap: 4px;
@@ -2402,15 +2411,21 @@ tbody tr:hover .asset-thumb-box {
   }
   .topbar-left {
     flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   .topbar-center {
     flex: 1;
     min-width: 0;
     justify-content: center;
+    display: flex;
   }
   .topbar-right {
     flex: 0 0 auto;
-    gap: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   .portal-module-switcher {
     padding: 2px;
@@ -2435,16 +2450,19 @@ tbody tr:hover .asset-thumb-box {
     display: none;
   }
 
-  /* 모바일 소모품 검색창: 상단 여백 완전 제거 및 리스트를 가리지 않는 정적 플로우 */
-  #view-consumables .search-collapsible-panel {
+  /* 모바일 검색창: 상단 여백 완전 제거 및 리스트를 가리지 않는 대칭 플로우 */
+  #view-consumables .search-collapsible-panel,
+  #view-inventory .search-collapsible-panel {
     position: static !important;
     top: auto !important;
     z-index: 1 !important;
-    padding: 8px 4px 6px 4px !important;
-    margin: 0 0 6px 0 !important;
+    padding: 10px 0 8px 0 !important;
+    margin: 0 0 8px 0 !important;
     background: transparent !important;
     border-bottom: 1px dashed var(--border) !important;
     box-shadow: none !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .toolbar {
@@ -2452,6 +2470,9 @@ tbody tr:hover .asset-thumb-box {
     align-items: center !important;
     gap: 8px !important;
     padding: 0 0 6px 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
   }
 
   .search-input-box {
@@ -4218,7 +4239,8 @@ tr.row-overdue:hover {
   display: none !important;
 }
 #xrdForm.mode-start .xrd-pair {
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 /* 모바일 XRD 로그북 최적화 */
@@ -5350,8 +5372,30 @@ tr.row-overdue:hover {
     flex-direction: column;
     align-items: stretch;
   }
+  .eq-secondary-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .eq-secondary-title-box {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+  .eq-secondary-title {
+    font-size: 14px !important;
+    word-break: keep-all !important;
+    margin: 0 !important;
+  }
   .eq-search-box {
-    max-width: 100%;
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
   .equipment-portal-grid {
     grid-template-columns: 1fr;
@@ -6061,5 +6105,29 @@ tr.row-overdue:hover {
 [data-theme="dark"] #view-consumables .search-collapsible-panel,
 [data-theme="dark"] #view-inventory .search-collapsible-panel {
   border-bottom-color: #232f46 !important;
+}
+
+[data-theme="dark"] .sidebar-auth-box {
+  border-top-color: #232f46 !important;
+}
+[data-theme="dark"] .btn-sidebar-login {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .btn-sidebar-login:hover {
+  background: #334155 !important;
+}
+[data-theme="dark"] .sidebar-admin-profile {
+  background: #450a0a !important;
+  border-color: #7f1d1d !important;
+}
+[data-theme="dark"] .sidebar-admin-profile span {
+  color: #f87171 !important;
+}
+[data-theme="dark"] #sidebarLogoutBtn {
+  background: #7f1d1d !important;
+  border-color: #991b1b !important;
+  color: #ffffff !important;
 }
 

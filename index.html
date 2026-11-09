@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_07">
+  <link rel="stylesheet" href="style.css?v=20261109_10">
   <script>
     (function(){
       try {
@@ -88,10 +88,10 @@
       <button id="btnCloseMobileDrawer" class="btn-close-drawer" type="button" aria-label="메뉴 닫기">✕</button>
     </div>
 
-    <!-- A. 연구자재·비품 관리 메뉴 (우선 배치) -->
+    <!-- A. 연구자재·비품 관리 메뉴 (일반 연구원 기본) -->
     <div class="sidebar-section-header">
       <span class="sidebar-section-title">연구자재 관리</span>
-      <span class="sidebar-section-pill">재고·비품</span>
+      <span class="sidebar-section-pill">자재·비품</span>
     </div>
     <div class="sidebar-nav-group" id="sidebarGroupInventory">
       <button class="nav active" data-view="inventory" id="sidebarNavInventory">
@@ -106,17 +106,9 @@
         <span class="nav-icon" aria-hidden="true">📋</span>
         <span>대여 현황</span>
       </button>
-      <button class="nav" data-view="dashboard" id="sidebarNavDashboard">
-        <span class="nav-icon" aria-hidden="true">📊</span>
-        <span>통계 분석 대시보드</span>
-      </button>
-      <button class="nav admin-only hidden" data-view="history" id="sidebarNavHistory">
-        <span class="nav-icon" aria-hidden="true">📜</span>
-        <span>대여 이력</span>
-      </button>
     </div>
 
-    <!-- B. 연구장비 LIMS 모듈 메뉴 -->
+    <!-- B. 연구장비 LIMS 모듈 메뉴 (일반 연구원 기본) -->
     <div class="sidebar-section-header" style="margin-top:16px;">
       <span class="sidebar-section-title">연구장비 LIMS</span>
       <span class="sidebar-section-pill">SESS AQT</span>
@@ -130,10 +122,38 @@
         <span class="nav-icon" aria-hidden="true">⚡</span>
         <span>HR-XRD 전자 로그북</span>
       </button>
+    </div>
+
+    <!-- C. 👑 관리자 전용 메뉴 (관리자 로그인 시 언락) -->
+    <div class="sidebar-section-header admin-only hidden" style="margin-top:16px;">
+      <span class="sidebar-section-title">👑 관리자 전용</span>
+      <span class="sidebar-section-pill" style="background:#fee2e2;color:#991b1b;">Admin</span>
+    </div>
+    <div class="sidebar-nav-group admin-only hidden" id="sidebarGroupAdmin">
+      <button class="nav" data-view="dashboard" id="sidebarNavDashboard">
+        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span>자산 관리 대시보드</span>
+      </button>
       <button class="nav" data-view="logbook" data-lims-nav="analytics" id="sidebarNavAnalytics">
         <span class="nav-icon" aria-hidden="true">📈</span>
         <span>장비 운영 통계</span>
       </button>
+      <button class="nav" data-view="history" id="sidebarNavHistory">
+        <span class="nav-icon" aria-hidden="true">📜</span>
+        <span>전체 대여 이력 (감사)</span>
+      </button>
+    </div>
+
+    <!-- D. 사이드바 하단 관리자 로그인/로그아웃 바 (모바일 및 데스크톱 공통) -->
+    <div class="sidebar-auth-box" style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
+      <button id="sidebarLoginBtn" class="btn btn-sidebar-login" type="button" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;font-size:12.5px;font-weight:600;border-radius:8px;background:var(--bg-subtle);border:1px solid var(--border);color:var(--ink);">
+        <span>🔒</span>
+        <span>관리자 로그인</span>
+      </button>
+      <div id="sidebarAdminProfile" class="sidebar-admin-profile hidden" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+        <span style="font-size:12px;font-weight:700;color:#991b1b;display:flex;align-items:center;gap:4px;">👑 관리자 모드</span>
+        <button id="sidebarLogoutBtn" class="btn" type="button" style="padding:4px 8px;font-size:11px;height:auto;background:#ffffff;border:1px solid #fca5a5;color:#991b1b;">로그아웃</button>
+      </div>
     </div>
 
     <div class="sidebar-info desktop-only">
@@ -200,8 +220,8 @@
       </section>
     </section>
 
-    <!-- 대시보드 뷰 (연구실 종합 통계 분석 센터) -->
-    <section class="view" id="view-dashboard">
+    <!-- 대시보드 뷰 (연구실 종합 통계 분석 센터 - 관리자 전용) -->
+    <section class="view admin-only hidden" id="view-dashboard">
       <div class="page-head" style="flex-wrap:wrap;gap:10px;">
         <div class="head-title">
           <h1>📊 연구실 통계 분석 센터</h1>
@@ -305,17 +325,17 @@
             <span class="count-badge" id="equipmentTotalBadge">총 9대 등록</span>
           </div>
           <div class="head-actions">
-            <div class="eq-hub-switch-group">
+            <div class="eq-hub-switch-group admin-only hidden">
               <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
               <button type="button" class="btn" id="btnHubShowAnalytics">📊 운영 통계</button>
               <button type="button" class="btn" id="btnHubShowAssetDashboard">🛠️ 비품 통계</button>
             </div>
-            <button class="btn" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 로그 CSV</button>
+            <button class="btn admin-only hidden" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 로그 CSV</button>
           </div>
         </div>
 
-        <!-- 모바일 전용 뷰 전환 바 -->
-        <div class="mobile-only eq-mobile-view-bar" style="margin-bottom:12px;display:flex;gap:6px;">
+        <!-- 모바일 전용 뷰 전환 바 (관리자 전용) -->
+        <div class="mobile-only eq-mobile-view-bar admin-only hidden" style="margin-bottom:12px;display:flex;gap:6px;">
           <button type="button" class="btn active" id="btnMobileHubShowGrid" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📇 장비 목록</button>
           <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 운영 통계</button>
           <button type="button" class="btn" id="btnMobileHubShowAssetDashboard" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">🛠️ 비품 통계</button>
@@ -1000,9 +1020,9 @@
     <span class="bottom-tab-icon">🔬</span>
     <span class="bottom-tab-label">연구장비</span>
   </button>
-  <button type="button" class="bottom-nav-tab" data-view="dashboard" id="bottomTabDashboard">
-    <span class="bottom-tab-icon">📊</span>
-    <span class="bottom-tab-label">통계분석</span>
+  <button type="button" class="bottom-nav-tab" data-view="loans" id="bottomTabLoans">
+    <span class="bottom-tab-icon">📋</span>
+    <span class="bottom-tab-label">대여현황</span>
   </button>
   <button type="button" class="bottom-nav-tab" id="bottomTabMenu">
     <span class="bottom-tab-icon">☰</span>
@@ -1010,7 +1030,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261109_09"></script>
-<script src="app.js?v=20261109_09"></script>
+<script src="consumables_catalog.js?v=20261109_10"></script>
+<script src="app.js?v=20261109_10"></script>
 </body>
 </html>
