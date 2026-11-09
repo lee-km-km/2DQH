@@ -2794,7 +2794,7 @@ function initXrdControls(){
     }).join('');
   }
 
-  // 모드 전환 버튼 (측정 시작 / 측정 완료 일괄 기록)
+  // 모드 전환 버튼 (측정 시작 / 완료 일지 작성)
   const btnStart = $('btnXrdModeStart');
   if(btnStart){
     btnStart.addEventListener('click', function(){
@@ -3017,11 +3017,11 @@ function showXrdMode(m){
 
   const modeTitle = $('xrdModeTitle');
   if(modeTitle){
-    modeTitle.textContent = m === 'start' ? 'Start session (세션 시작)' : (xrdFinishing ? 'Finish session (세션 종료)' : (xrdEditId ? 'Edit log (수정)' : 'Log a finished session (사후 일괄 기록)'));
+    modeTitle.textContent = m === 'start' ? 'Start session (세션 시작)' : (xrdFinishing ? 'Finish session (세션 종료)' : (xrdEditId ? 'Edit log (수정)' : 'Log finished session (완료 일지 직접 입력)'));
   }
   const modeLink = $('xrdModeLink');
   if(modeLink){
-    modeLink.textContent = m === 'start' ? 'Log a finished session instead →' : '← Back';
+    modeLink.textContent = m === 'start' ? 'Log finished session (완료 일지 작성) →' : '← Back';
     modeLink.classList.toggle('hidden', !!xrdEditId);
   }
   if(m === 'active') renderXrdActive();
@@ -5932,7 +5932,7 @@ function openModal(mode, id){
     const lStartDate = targetLoan ? (targetLoan.borrowed_at || lStart) : lStart;
 
     if(window.__isPromptingReturnBeforeBorrow){
-      parts.push('<div class="borrow-fast-notice" style="background:#fef2f2; border-left:4px solid var(--brand-red); margin-bottom:14px; padding:12px 14px; font-size:13px; line-height:1.5; border-radius:10px;">');
+      parts.push('<div class="borrow-fast-notice" style="border-left:4px solid var(--brand-red); margin-bottom:14px; padding:12px 14px; font-size:13px; line-height:1.5; border-radius:10px;">');
       parts.push('<b style="color:var(--brand-red);">⏰ 24시간 이상 대여 중인 비품이 2개 이상 있습니다.</b><br>');
       parts.push('먼저 반납하시겠습니까? <b>[취소]</b>를 누르면 신규 비품 대여 화면으로 바로 이동합니다.');
       parts.push('</div>');
