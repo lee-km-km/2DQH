@@ -326,7 +326,7 @@
           <div class="head-actions">
             <div class="eq-hub-switch-group">
               <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
-              <button type="button" class="btn" id="btnHubShowAnalytics">📊 장비 운영 통계</button>
+              <button type="button" class="btn admin-only hidden" id="btnHubShowAnalytics">📊 장비 운영 통계</button>
             </div>
             <button class="btn admin-only hidden" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 로그 CSV</button>
           </div>
@@ -335,20 +335,16 @@
         <!-- 모바일 전용 뷰 전환 바 -->
         <div class="mobile-only eq-mobile-view-bar" style="margin-bottom:12px;display:flex;gap:6px;">
           <button type="button" class="btn active" id="btnMobileHubShowGrid" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📇 장비 목록</button>
-          <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 장비 운영 통계</button>
+          <button type="button" class="btn admin-only hidden" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 장비 운영 통계</button>
         </div>
 
-        <!-- A. 장비 목록 뷰 (Primary Action First & Decluttered LIMS Infrastructure) -->
+        <!-- A. 장비 목록 뷰 (균형 잡힌 9대 연구장비 통합 포털) -->
         <div id="eqCatalogViewContainer">
-          <!-- 1. 최상단 실운영 장비 (Primary Active Instrument - HR-XRD) -->
-          <div class="eq-primary-hero-card" id="eqPrimaryHeroCard"></div>
-
-          <!-- 2. SESS AQT 공용 연구시설 인프라 섹션 -->
-          <div class="eq-secondary-section">
+          <div class="eq-secondary-section" style="margin-top:0;">
             <div class="eq-secondary-header">
               <div class="eq-secondary-title-box">
-                <h3 class="eq-secondary-title">성균관대 양자기술첨단기기센터(AQT / SESS) 연동 장비</h3>
-                <span class="count-badge" id="eqSecondaryCountBadge">8대 연동 대기</span>
+                <h3 class="eq-secondary-title">성균관대 양자기술첨단기기센터(SESS) 연구장비 (9대)</h3>
+                <span class="count-badge" id="eqSecondaryCountBadge">9대 보유</span>
               </div>
               <div class="search-input-box eq-search-box">
                 <span class="search-input-icon">🔍</span>
@@ -360,14 +356,14 @@
             <!-- 카테고리 필터 탭 -->
             <div class="eq-catalog-toolbar">
               <div class="eq-category-tabs" id="eqCategoryTabs">
-                <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt" id="catCntAll">8</span></button>
-                <button type="button" class="eq-cat-tab" data-eq-cat="structural">구조분석 <span class="tab-cnt" id="catCntStructural">1</span></button>
-                <button type="button" class="eq-cat-tab" data-eq-cat="optical">광학·표면 <span class="tab-cnt" id="catCntOptical">3</span></button>
+                <button type="button" class="eq-cat-tab active" data-eq-cat="all">전체 장비 <span class="tab-cnt" id="catCntAll">9</span></button>
+                <button type="button" class="eq-cat-tab" data-eq-cat="structural">구조분석 <span class="tab-cnt" id="catCntStructural">3</span></button>
+                <button type="button" class="eq-cat-tab" data-eq-cat="optical">광학·표면 <span class="tab-cnt" id="catCntOptical">2</span></button>
                 <button type="button" class="eq-cat-tab" data-eq-cat="deposition">박막·증착 <span class="tab-cnt" id="catCntDeposition">4</span></button>
               </div>
             </div>
 
-            <!-- SESS 연동 연구장비 콤팩트 카드 그리드 -->
+            <!-- SESS 9대 핵심 연구장비 콤팩트 카드 그리드 -->
             <div class="equipment-portal-grid compact-grid" id="equipmentPortalGrid"></div>
           </div>
         </div>
@@ -962,7 +958,7 @@
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-head">
       <h2 id="modalTitle">대여</h2>
-      <button class="icon-btn" id="closeModal" aria-label="닫기"><span aria-hidden="true">×</span></button>
+      <button type="button" class="icon-btn" id="closeModal" aria-label="닫기"><span aria-hidden="true">✕</span></button>
     </div>
     <form id="modalForm">
       <div id="modalBody" class="modal-body"></div>

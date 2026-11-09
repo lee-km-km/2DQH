@@ -6284,3 +6284,148 @@ tr.row-overdue:hover {
   color: #ffffff !important;
 }
 
+/* ==========================================================================
+   추가 다크모드 및 모바일 바닥 패딩 최적화
+   ========================================================================== */
+.eq-compact-card.is-active-equipment {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.08);
+}
+.eq-card-live-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(22, 101, 52, 0.9);
+  backdrop-filter: blur(4px);
+  color: #bbf7d0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(187, 247, 208, 0.4);
+  letter-spacing: -0.01em;
+}
+.btn-compact-view.btn-view-active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  font-weight: 700 !important;
+}
+.btn-compact-view.btn-view-active:hover {
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+/* 모바일 바닥 내비게이션에 콘텐츠/버튼 가림 방지 */
+@media (max-width: 900px) {
+  .app-container,
+  .main-content,
+  .view,
+  .eq-standby-card {
+    padding-bottom: 96px !important;
+  }
+}
+
+/* 다크모드 심층 보정 (모달, 비품 선택 박스, 프리셋 칩, 대시보드 메트릭) */
+[data-theme="dark"] .eq-compact-card.is-active-equipment {
+  border-color: #2563eb !important;
+  background: #172554 !important;
+}
+[data-theme="dark"] .eq-compact-card.is-active-equipment:hover {
+  border-color: #60a5fa !important;
+}
+[data-theme="dark"] .selected-asset-box {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .selected-asset-title {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .selected-asset-sub {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .selected-asset-badge .asset-id {
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .btn-preset-chip {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .btn-preset-chip:hover {
+  background: #27354f !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+[data-theme="dark"] .btn-preset-chip.preset-recent {
+  background: rgba(37, 99, 235, 0.2) !important;
+  color: #93c5fd !important;
+  border-color: #2563eb !important;
+}
+[data-theme="dark"] .return-date-badge {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .modal-head {
+  border-bottom-color: #232f46 !important;
+}
+[data-theme="dark"] .modal-foot {
+  border-top-color: #232f46 !important;
+}
+[data-theme="dark"] .modal-head h2 {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .icon-btn {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .icon-btn:hover {
+  color: #f8fafc !important;
+  background: #1e293b !important;
+}
+[data-theme="dark"] .metric {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .metric .value {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .metric .label,
+[data-theme="dark"] .metric .foot {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .metrics {
+  background: #232f46 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .chart-panel {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .chart-panel .panel-head {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .chart-panel b {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .empty {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .logbook-standalone-banner {
+  background: #1e1b4b !important;
+  border-color: #312e81 !important;
+  color: #c7d2fe !important;
+}
+[data-theme="dark"] .mobile-bottom-nav {
+  background: rgba(15, 23, 42, 0.96) !important;
+  border-top-color: #1e293b !important;
+}
+[data-theme="dark"] .bottom-nav-tab {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .bottom-nav-tab.active {
+  color: #60a5fa !important;
+}
+
+

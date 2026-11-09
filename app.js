@@ -1002,6 +1002,11 @@ function setAdminUI(){
     adminEls[i].classList.toggle('hidden', !isAdm);
   }
 
+  // 비로그인 사용자는 장비 운영 통계 접근 불가 (카탈로그 목록으로 강제 복귀)
+  if(!isAdm && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
+    switchEquipmentHubView('catalog');
+  }
+
   const activeView = document.querySelector('.view.active');
   if(!isAdm && activeView && activeView.classList.contains('admin-only')){
     showView('inventory');
@@ -3842,79 +3847,32 @@ function toggleEquipmentActive(eqId){
 function renderEquipmentPrimaryHero(){
   const heroContainer = $('eqPrimaryHeroCard');
   if(!heroContainer) return;
-  const xrd = researchEquipments.find(function(e){ return e.type === 'xrd' || e.code === 'XRD'; }) || researchEquipments[0];
-  if(!xrd) return;
-
-  const totalLogs = Array.isArray(xrdLogs) ? xrdLogs.length : 0;
-  const todayStr = today();
-  const todayLogs = Array.isArray(xrdLogs) ? xrdLogs.filter(function(l){ return l.used_on === todayStr; }).length : 0;
-  const activeSession = (xrdLogs.length > 0 && xrdLogs[0].status === 'running') || false;
-
-  let html =
-    '<div class="eq-hero-inner">' +
-      '<div class="eq-hero-topline">' +
-        '<div class="eq-hero-status-group">' +
-          '<span class="eq-hero-live-pill ' + (activeSession ? 'in-use' : 'ready') + '">' +
-            '<span class="pulse-dot"></span> ' + (activeSession ? '측정 가동 중 (In-Use)' : '정상 작동 · 즉시 측정 가능') +
-          '</span>' +
-          '<span class="eq-hero-asset-code">' + safe(xrd.assetNo || 'SESS-AQT-XRD-01') + '</span>' +
-        '</div>' +
-        '<span class="eq-hero-scope-pill">실운영 장비</span>' +
-      '</div>' +
-      '<div class="eq-hero-main">' +
-        '<div class="eq-hero-photo-wrap">' +
-          '<img src="' + safe(xrd.image || 'img/equipment/smartlab_xrd.jpg') + '" alt="' + safe(xrd.name) + '" class="eq-hero-photo" onerror="this.src=\'logo_2dqh.jpg\'">' +
-          '<span class="eq-photo-badge">SmartLab 9 kW 실물</span>' +
-        '</div>' +
-        '<div class="eq-hero-headings">' +
-          '<h2 class="eq-hero-title">' + safe(xrd.name) + '</h2>' +
-          '<p class="eq-hero-sub"><b>' + safe(xrd.model) + '</b> &bull; 📍 ' + safe(xrd.location) + '</p>' +
-          '<div class="eq-hero-spec-tag"><span>핵심 사양</span> ' + safe(xrd.spec) + '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="eq-hero-meta-row">' +
-        '<div class="eq-hero-stat-item"><span class="lbl">누적 측정 기록</span><b>' + totalLogs + '건</b></div>' +
-        '<div class="eq-hero-stat-item"><span class="lbl">오늘 측정 세션</span><b>' + todayLogs + '건</b></div>' +
-        '<div class="eq-hero-stat-item"><span class="lbl">담당 오퍼레이터</span><span>' + safe(xrd.manager) + ' (' + safe(xrd.contact) + ')</span></div>' +
-      '</div>' +
-      '<div class="eq-hero-actions">' +
-        '<button type="button" class="btn primary btn-hero-action" data-quick-action="xrd_start">⚡ 로그북 바로 작성 / 측정 시작</button>' +
-        '<button type="button" class="btn btn-hero-action" data-quick-action="xrd_qr">📷 본체 QR 라벨</button>' +
-        '<button type="button" class="btn btn-hero-action" data-quick-action="xrd_table">📋 전체 측정 이력</button>' +
-      '</div>' +
-    '</div>';
-
-  heroContainer.innerHTML = html;
+  heroContainer.innerHTML = '';
 }
 
 function renderEquipmentPortalGrid(){
-  // 1. 최상단 실운영 장비(HR-XRD) 퀵액션 히어로 렌더링
-  renderEquipmentPrimaryHero();
-
   const grid = $('equipmentPortalGrid');
   if(!grid) return;
 
-  // SESS 8대 공용 연구시설 인프라 분리
-  const secondaryEquips = researchEquipments.filter(function(eq){
-    return eq.code !== 'XRD';
-  });
+  // SESS 9대 전체 연구장비 통합 포털 (XRD 별도 분리/편애 제거)
+  const allEquips = researchEquipments;
 
-  const cntAll = secondaryEquips.length;
-  const cntStructural = secondaryEquips.filter(function(e){ return e.category === 'structural'; }).length;
-  const cntOptical = secondaryEquips.filter(function(e){ return e.category === 'optical'; }).length;
-  const cntDeposition = secondaryEquips.filter(function(e){ return e.category === 'deposition'; }).length;
+  const cntAll = allEquips.length;
+  const cntStructural = allEquips.filter(function(e){ return e.category === 'structural'; }).length;
+  const cntOptical = allEquips.filter(function(e){ return e.category === 'optical'; }).length;
+  const cntDeposition = allEquips.filter(function(e){ return e.category === 'deposition'; }).length;
   if($('catCntAll')) $('catCntAll').textContent = cntAll;
   if($('catCntStructural')) $('catCntStructural').textContent = cntStructural;
   if($('catCntOptical')) $('catCntOptical').textContent = cntOptical;
   if($('catCntDeposition')) $('catCntDeposition').textContent = cntDeposition;
-  if($('eqSecondaryCountBadge')) $('eqSecondaryCountBadge').textContent = cntAll + '대 연동 대기';
+  if($('eqSecondaryCountBadge')) $('eqSecondaryCountBadge').textContent = cntAll + '대 보유';
 
   const searchInput = $('eqSearchInput');
   const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
   const clearBtn = $('btnClearEqSearch');
   if(clearBtn) clearBtn.classList.toggle('hidden', !q);
 
-  const filtered = secondaryEquips.filter(function(eq){
+  const filtered = allEquips.filter(function(eq){
     const matchCat = (selectedEquipmentCategory === 'all' || eq.category === selectedEquipmentCategory);
     if(!matchCat) return false;
     if(!q) return true;
@@ -3930,11 +3888,19 @@ function renderEquipmentPortalGrid(){
   let html = '';
   filtered.forEach(function(eq){
     const serviceSimple = (eq.serviceMode || '직접사용').split('/')[0].trim();
+    const isActive = (eq.status === 'active' || eq.code === 'XRD');
+    const actionBtnHtml = isActive
+      ? '<button type="button" class="btn btn-compact-view btn-view-active" style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;">⚡ HR-XRD 전자로그북 열기</button>'
+      : '<button type="button" class="btn btn-compact-view">🔍 상세 규격 및 LIMS 스키마</button>';
+    const statusBadgeHtml = isActive
+      ? '<span class="eq-card-cat-badge" style="background:rgba(22,101,52,0.85);color:#bbf7d0;border-color:rgba(187,247,208,0.4);">🟢 실운영 (로그북)</span>'
+      : '<span class="eq-card-cat-badge">' + safe(eq.categoryName || '장비') + '</span>';
+
     html +=
-      '<div class="eq-compact-card" data-select-eq="' + safe(eq.id) + '">' +
+      '<div class="eq-compact-card' + (isActive ? ' is-active-equipment' : '') + '" data-select-eq="' + safe(eq.id) + '">' +
         '<div class="eq-card-thumb-wrap">' +
           '<img src="' + safe(eq.image || 'logo_2dqh.jpg') + '" alt="' + safe(eq.name) + '" class="eq-card-photo" loading="lazy" onerror="this.src=\'logo_2dqh.jpg\'">' +
-          '<span class="eq-card-cat-badge">' + safe(eq.categoryName || '장비') + '</span>' +
+          statusBadgeHtml +
           '<span class="eq-card-code-pill">' + safe(eq.code) + '</span>' +
         '</div>' +
         '<div class="eq-card-content">' +
@@ -3946,7 +3912,7 @@ function renderEquipmentPortalGrid(){
             '<span class="eq-compact-loc">📍 ' + safe(eq.location) + '</span>' +
             '<span class="eq-compact-mode-pill">' + safe(serviceSimple) + '</span>' +
           '</div>' +
-          '<button type="button" class="btn btn-compact-view">🔍 상세 규격 및 LIMS 스키마</button>' +
+          actionBtnHtml +
         '</div>' +
       '</div>';
   });
@@ -3960,6 +3926,7 @@ function showEquipmentCatalogHub(){
   if(hub) hub.classList.remove('hidden');
   if(detail) detail.classList.add('hidden');
   switchEquipmentHubView(currentHubView || 'catalog');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ========================================================
@@ -4048,6 +4015,10 @@ function getUnifiedEquipmentSessions(){
 }
 
 function switchEquipmentHubView(mode){
+  if(mode === 'analytics' && !isAdmin()){
+    toast('장비 운영 통계는 관리자 로그인 후 조회 가능합니다.');
+    mode = 'catalog';
+  }
   currentHubView = mode || 'catalog';
   const isCatalog = (currentHubView === 'catalog');
 
@@ -4079,6 +4050,7 @@ function switchEquipmentHubView(mode){
   } else {
     renderEquipmentPortalGrid();
   }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function renderEquipmentAnalyticsDashboard(){
@@ -4454,6 +4426,7 @@ function selectResearchEquipment(eqId){
     renderEquipmentTestSessions(selected.code);
   }
 
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   const viewLogbook = $('view-logbook');
   if(viewLogbook) viewLogbook.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -5537,6 +5510,9 @@ function showView(name, options){
   } else if(name === 'logbook'){
     renderLogbook();
   }
+
+  // 뷰 전환 시 최상단으로 깔끔하게 이동 (모바일/PC 하단 묻힘 현상 방지)
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function scrollToReorderPanel(){
@@ -5569,20 +5545,15 @@ function openBestReorder(){
 }
 
 function closeModal(){
-  $('modalBackdrop').classList.remove('open');
-  if(document.body) document.body.classList.remove('modal-open');
-  $('modalForm').reset();
+  window.__isPromptingReturnBeforeBorrow = false;
+  window.__pendingBorrowAssetId = null;
+  window.__bypass24hPrompt = false;
 
-  if(window.__isPromptingReturnBeforeBorrow){
-    window.__isPromptingReturnBeforeBorrow = false;
-    const targetAssetId = window.__pendingBorrowAssetId;
-    window.__pendingBorrowAssetId = null;
-    window.__bypass24hPrompt = true; // 취소 누르면 대여창으로 바로 이동
-    setTimeout(function(){
-      openModal('borrow', targetAssetId);
-    }, 120);
-    return;
-  }
+  const bd = $('modalBackdrop');
+  if(bd) bd.classList.remove('open');
+  if(document.body) document.body.classList.remove('modal-open');
+  const mf = $('modalForm');
+  if(mf) mf.reset();
 
   if(window.__labstockFromHome){
     window.__labstockFromHome = false;
@@ -5590,7 +5561,7 @@ function closeModal(){
   }
 
   if(lastFocusedElement && typeof lastFocusedElement.focus === 'function'){
-    lastFocusedElement.focus();
+    try { lastFocusedElement.focus(); } catch(_) {}
     lastFocusedElement = null;
   }
 }
@@ -6357,6 +6328,14 @@ function bindEvents(){
     if(!el) return;
     const target = el.closest('button, a, [data-select-eq], [data-select-util-eq], [data-cal-date], [data-timeline-filter], [data-eq-cat], [data-portal-module], [data-lims-nav], [data-main-view], [data-goto], [data-view]') || el;
 
+    // 모달 닫기 / 취소 버튼 최우선 처리 (이벤트 트랩 및 무반응 방지)
+    if(target.id === 'closeModal' || target.id === 'cancelModal' || target.closest('#closeModal') || target.closest('#cancelModal')){
+      e.preventDefault();
+      e.stopPropagation();
+      closeModal();
+      return;
+    }
+
     // 스마트 퀵 프리셋 칩 터치 시 해당 필드 즉시 입력 & 햅틱 시각 피드백
     if(target.classList.contains('btn-preset-chip') || target.dataset.setField){
       const fieldName = target.dataset.setField;
@@ -6955,6 +6934,24 @@ function bindEvents(){
   if(mBackdrop){
     mBackdrop.addEventListener('click', function(e){
       if(e.target === mBackdrop) closeModal();
+    });
+  }
+
+  const btnDirectCloseModal = $('closeModal');
+  if(btnDirectCloseModal){
+    btnDirectCloseModal.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      closeModal();
+    });
+  }
+
+  const btnDirectCancelModal = $('cancelModal');
+  if(btnDirectCancelModal){
+    btnDirectCancelModal.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      closeModal();
     });
   }
 
