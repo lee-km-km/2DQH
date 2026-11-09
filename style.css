@@ -4723,14 +4723,46 @@ tr.row-overdue:hover {
   }
 }
 
-[data-theme="dark"] table th {
-  color: #94a3b8 !important;
-  border-bottom-color: #232f46 !important;
+/* Dark Mode: 2DQH 로고 외곽 투명화 및 조화 */
+[data-theme="dark"] .brand-img-logo {
+  background: transparent !important;
+  filter: brightness(1.1) contrast(1.05);
 }
 
+/* Dark Mode: Tables, Wrappers & Empty States (하얀 구분선 & 하얀 배경 완전 제거) */
+[data-theme="dark"] .table-wrap {
+  background: #0f172a !important;
+  border: 1px solid #232f46 !important;
+}
+[data-theme="dark"] .toolbar {
+  background: #111827 !important;
+  border-bottom: 1px solid #232f46 !important;
+}
+[data-theme="dark"] table {
+  background: transparent !important;
+}
+[data-theme="dark"] table th {
+  background: #162032 !important;
+  color: #94a3b8 !important;
+  border-bottom: 1px solid #232f46 !important;
+}
 [data-theme="dark"] table td {
-  border-bottom-color: #232f46 !important;
+  border-bottom: 1px solid #1e293b !important;
   color: #e2e8f0 !important;
+  background: transparent !important;
+}
+[data-theme="dark"] tbody tr:hover {
+  background: #1a2438 !important;
+}
+[data-theme="dark"] tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+
+/* Dark Mode: Empty State (대여현황/비품 기록 없을 때 하얀 배경 100% 제거) */
+[data-theme="dark"] .empty {
+  background: transparent !important;
+  color: #94a3b8 !important;
+  border: none !important;
 }
 
 [data-theme="dark"] #xrdRows tr {
@@ -4740,36 +4772,46 @@ tr.row-overdue:hover {
 
 /* Dark Mode: Equipment Loan & Supply Table Enhancements */
 [data-theme="dark"] .table-wrap tr.quick-row {
-  background: #151c2e !important;
-  border-color: #232f46 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  background: #131c2e !important;
+  border: 1px solid #232f46 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4) !important;
 }
 [data-theme="dark"] .table-wrap tr.quick-row:active {
-  background: #1a2236 !important;
+  background: #1a253c !important;
 }
 [data-theme="dark"] .table-wrap tr.quick-row.is-borrowed {
-  border-left-color: #475569 !important;
+  border: 1px solid #232f46 !important;
+  border-left: 3px solid #64748b !important;
 }
 [data-theme="dark"] .table-wrap tr.quick-row.is-borrowed.is-my-loan {
-  border-left-color: #22c55e !important;
+  border: 1px solid #232f46 !important;
+  border-left: 3px solid #22c55e !important;
 }
 [data-theme="dark"] .table-wrap tr.quick-row.is-borrowed.is-overdue {
-  border-left-color: #ef4444 !important;
+  border: 1px solid #232f46 !important;
+  border-left: 3px solid #ef4444 !important;
+}
+[data-theme="dark"] .table-wrap tr.quick-row td.col-main,
+[data-theme="dark"] .table-wrap tr.quick-row td.col-action {
+  border-bottom: 0 !important;
 }
 [data-theme="dark"] .asset-thumb-box {
   background: #1a2236 !important;
   border-color: #2a3754 !important;
 }
 [data-theme="dark"] .table-wrap tr:not(.quick-row) {
-  background: #151c2e !important;
-  border-color: #232f46 !important;
+  background: #131c2e !important;
+  border: 1px solid #232f46 !important;
 }
 [data-theme="dark"] .table-wrap td {
-  border-bottom-color: #1e293b !important;
+  border-bottom: 1px solid #1e293b !important;
   color: #e2e8f0 !important;
 }
 [data-theme="dark"] .table-wrap td:first-child {
-  border-bottom-color: #232f46 !important;
+  border-bottom: 1px solid #232f46 !important;
+}
+[data-theme="dark"] .table-wrap tr:not(.quick-row) td:last-child {
+  border-bottom: 0 !important;
 }
 [data-theme="dark"] .status.borrowed {
   color: #94a3b8 !important;
@@ -6528,12 +6570,15 @@ tr.row-overdue:hover {
   background: rgba(59, 130, 246, 0.08) !important;
 }
 [data-theme="dark"] #view-consumables .panel,
-[data-theme="dark"] #view-inventory .panel {
+[data-theme="dark"] #view-inventory .panel,
+[data-theme="dark"] #view-loans .panel,
+[data-theme="dark"] #view-dashboard .panel {
   background: #151c2e !important;
   border-color: #232f46 !important;
 }
 [data-theme="dark"] #view-consumables .search-collapsible-panel,
-[data-theme="dark"] #view-inventory .search-collapsible-panel {
+[data-theme="dark"] #view-inventory .search-collapsible-panel,
+[data-theme="dark"] #view-loans .toolbar {
   border-bottom-color: #232f46 !important;
 }
 

@@ -1872,16 +1872,48 @@ function recordMyLoanId(id){
 
 function isMyLoan(l){
   if(!l) return false;
-  // 1. Supabase 익명 세션 UID 비교 (같은 익명 세션일 때)
+  // 1. Supabase 로그인 세션 UID 대조 (로그인 사용자 본인 계정)
   if(l.user_id && session && session.user && l.user_id === session.user.id) return true;
-  // 2. 브라우저 client_id 비교 (로컬 모드)
-  if(l.client_id && l.client_id === getClientId()) return true;
-  // 3. 이 기기/브라우저에서 대여 신청했던 loan_id 목록 대조
+  // 2. 이 기기/브라우저에서 실제 대여 신청했던 loan_id 목록 대조 (오프라인/익명 대여)
   if(getMyLoanIds().has(String(l.id))) return true;
-  // 4. 이 브라우저에서 마지막으로 입력한 대여자 이름과 일치하는 경우
-  const lastName = localStorage.getItem('labstock_last_borrower_name');
-  if(lastName && l.borrower_name && l.borrower_name.trim().toLowerCase() === lastName.trim().toLowerCase()) return true;
+  // 3. 브라우저 client_id 비교 (동일 기기 브라우저 검증)
+  if(l.client_id && l.client_id === getClientId()) return true;
+  // ⚠️ 단순 이름 일치만으로 다른 기기/계정의 대여를 내 대여로 취급하지 않음 (본인 기기/계정 대여만 인정)
   return false;
+}
+
+// 2DQH JPG 로고의 외곽 흰색 배경을 캔버스에서 투명 알파 채널로 변환하여 다크모드/라이트모드 이질감 완전 제거
+function initTransparentLogo(){
+  try {
+    const logos = document.querySelectorAll('.brand-img-logo');
+    if(!logos.length) return;
+    const img = new Image();
+    img.src = 'logo_2dqh.jpg';
+    img.onload = function(){
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width || 200;
+        canvas.height = img.naturalHeight || img.height || 60;
+        const ctx = canvas.getContext('2d');
+        if(!ctx) return;
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const d = imgData.data;
+        for(let i = 0; i < d.length; i += 4){
+          const r = d[i], g = d[i+1], b = d[i+2];
+          // 흰색 배경(R,G,B 모두 230 이상)을 투명화
+          if(r >= 230 && g >= 230 && b >= 230){
+            d[i+3] = 0;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        const transparentDataUrl = canvas.toDataURL('image/png');
+        logos.forEach(function(el){
+          el.src = transparentDataUrl;
+        });
+      } catch(e){}
+    };
+  } catch(e){}
 }
 
 // 관리자 또는 해당 대여를 등록한 본인(대여한 브라우저)만 반납/수정/연장 가능
@@ -8076,6 +8108,7 @@ function handleUrlFastTrack(){
 
 async function initApp(){
   initTheme();
+  initTransparentLogo();
   bindEvents();
 
   // 2-in-1 연구 포털 모듈 초기화 (기본값: 연구장비 LIMS)
