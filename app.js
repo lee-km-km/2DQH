@@ -197,6 +197,76 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     type: 'placeholder'
   }
 ];
+// [2-in-1 연구 포털 모듈 아키텍처]
+// lims: 성균관대 AQT/SESS 연구장비 & 전자로그북 전문 시스템
+// inventory: IBS 2DQH 연구실 자재·소모품 재고 및 공용 비품 대여 시스템
+let currentPortalModule = 'lims'; // 'lims' | 'inventory'
+
+function setPortalModule(mod, options){
+  options = options || {};
+  if(mod !== 'lims' && mod !== 'inventory') mod = 'lims';
+  currentPortalModule = mod;
+
+  try {
+    localStorage.setItem('labstock_active_portal_module', mod);
+  } catch(_) {}
+
+  // 1. 상단 헤더 모듈 스위처 버튼 상태 동기화
+  document.querySelectorAll('.portal-module-btn').forEach(function(b){
+    const isActive = b.dataset.portalModule === mod;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+
+  // 2. Body 어트리뷰트 & 브랜드 서브텍스트 갱신
+  document.body.setAttribute('data-portal-module', mod);
+  const brandSubText = $('brandSubText');
+  if(brandSubText){
+    brandSubText.textContent = (mod === 'lims') ? '2DQH LIMS' : '2DQH 자재·비품';
+  }
+
+  // 3. 사이드바 메뉴 그룹 전환 (LIMS vs 자재/비품)
+  const groupLims = $('sidebarGroupLims');
+  const groupInventory = $('sidebarGroupInventory');
+  if(groupLims) groupLims.classList.toggle('hidden', mod !== 'lims');
+  if(groupInventory) groupInventory.classList.toggle('hidden', mod !== 'inventory');
+
+  // 4. 사이드바 연구실 안내 카드 정보 갱신
+  const infoBadge = $('sidebarInfoBadge');
+  const infoTitle = $('sidebarInfoTitle');
+  const infoDesc = $('sidebarInfoDesc');
+  if(mod === 'lims'){
+    if(infoBadge) infoBadge.textContent = 'IBS 2DQH';
+    if(infoTitle) infoTitle.textContent = '양자기술첨단기기센터 LIMS';
+    if(infoDesc) infoDesc.textContent = 'SESS 연동 정밀기기 운용 및 로그북';
+  } else {
+    if(infoBadge) infoBadge.textContent = 'IBS 2DQH';
+    if(infoTitle) infoTitle.textContent = '연구자재·비품 관리 시스템';
+    if(infoDesc) infoDesc.textContent = '공용 비품 & 소모품 재고 현황';
+  }
+
+  // 5. 모듈 전환 시 해당 도메인 메인 뷰로 라우팅
+  if(options.switchView !== false){
+    const curView = sessionStorage.getItem('labstock_active_view') || 'logbook';
+    if(mod === 'lims'){
+      if(curView !== 'logbook'){
+        showView('logbook', { updateUrl: true, pushState: true });
+        updateLimsNavActive('catalog');
+      }
+    } else {
+      if(curView === 'logbook'){
+        showView('consumables', { updateUrl: true, pushState: true });
+      }
+    }
+  }
+}
+
+function updateLimsNavActive(type){
+  document.querySelectorAll('[data-lims-nav]').forEach(function(b){
+    b.classList.toggle('active', b.dataset.limsNav === type);
+  });
+}
+
 let selectedEquipmentCategory = 'all';
 let researchEquipments = [];
 let currentSelectedEquipment = 'EQ-XRD-01';
@@ -5321,7 +5391,8 @@ function getViewFromUrl(){
   } catch(e){
     console.warn('URL 뷰 라우팅 파싱 에러:', e);
   }
-  return 'inventory';
+  const defaultMod = localStorage.getItem('labstock_active_portal_module') || 'lims';
+  return (defaultMod === 'lims') ? 'logbook' : 'consumables';
 }
 
 function showView(name, options){
@@ -5359,6 +5430,13 @@ function showView(name, options){
   try {
     sessionStorage.setItem('labstock_active_view', name);
   } catch(e){}
+
+  // 활성 모듈 동기화 (로그북 뷰이면 LIMS 모듈, 아니면 자재/비품 모듈)
+  if(name === 'logbook'){
+    setPortalModule('lims', { switchView: false });
+  } else {
+    setPortalModule('inventory', { switchView: false });
+  }
 
   document.body.classList.toggle('home-active', name === 'home');
 
@@ -6475,6 +6553,43 @@ function bindEvents(){
       return;
     }
 
+    // 2-in-1 연구 포털 모듈 스위처 (LIMS vs 자재·비품)
+    const modBtn = target.dataset.portalModule ? target : target.closest('[data-portal-module]');
+    if(modBtn){
+      setPortalModule(modBtn.dataset.portalModule, { switchView: true });
+      return;
+    }
+
+    // LIMS 전용 사이드바 내비게이션
+    const limsNavBtn = target.dataset.limsNav ? target : target.closest('[data-lims-nav]');
+    if(limsNavBtn){
+      const navType = limsNavBtn.dataset.limsNav;
+      showView('logbook');
+      if(navType === 'catalog'){
+        showEquipmentCatalogHub();
+        switchEquipmentHubView('catalog');
+      } else if(navType === 'xrd'){
+        selectResearchEquipment('EQ-XRD-01');
+      } else if(navType === 'analytics'){
+        showEquipmentCatalogHub();
+        switchEquipmentHubView('analytics');
+      }
+      updateLimsNavActive(navType);
+      return;
+    }
+
+    // 브랜드 로고 클릭 시 홈 뷰 이동
+    if(target.id === 'brandLogoLink' || target.closest('#brandLogoLink')){
+      if(currentPortalModule === 'lims'){
+        showEquipmentCatalogHub();
+        switchEquipmentHubView('catalog');
+        showView('logbook');
+      } else {
+        showView('consumables');
+      }
+      return;
+    }
+
     // Primary Hero Quick Actions (HR-XRD 바로가기 액션)
     const heroActionBtn = target.dataset.quickAction ? target : target.closest('[data-quick-action]');
     if(heroActionBtn){
@@ -7166,8 +7281,13 @@ async function initApp(){
   initTheme();
   bindEvents();
 
-  // URL Hash, 파라미터 및 세션 기반 활성 뷰 해석 (새로고침 시 소모품 등 현재 탭 유지)
+  // 2-in-1 연구 포털 모듈 초기화 (기본값: 연구장비 LIMS)
   const initialView = getViewFromUrl();
+  const isLims = (initialView === 'logbook');
+  const savedMod = localStorage.getItem('labstock_active_portal_module');
+  setPortalModule(isLims ? 'lims' : (savedMod || 'lims'), { switchView: false });
+
+  // URL Hash, 파라미터 및 세션 기반 활성 뷰 해석 (새로고침 시 현재 탭 유지)
   showView(initialView, { updateUrl: true, pushState: false });
   if(document.documentElement) document.documentElement.removeAttribute('data-initial-view');
 

@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_06">
+  <link rel="stylesheet" href="style.css?v=20261109_07">
   <script>
     (function(){
       try {
@@ -35,25 +35,26 @@
 <body>
 
 <header class="topbar">
-  <a class="brand" href="#inventory">
-    <img src="logo_2dqh.jpg" alt="2DQH" class="brand-img-logo">
-    <span class="brand-sep" aria-hidden="true"></span>
-    <span class="brand-sub">2DQH</span>
-  </a>
-  <div class="header-main-tabs" role="tablist" aria-label="주요 보기 전환">
-    <button type="button" class="header-tab active" data-main-view="inventory" role="tab" aria-selected="true">
-      <span class="tab-emoji" aria-hidden="true">🛠️</span>
-      <span class="tab-label">비품 대여</span>
-    </button>
-    <button type="button" class="header-tab" data-main-view="consumables" role="tab" aria-selected="false">
-      <span class="tab-emoji" aria-hidden="true">📦</span>
-      <span class="tab-label">소모품</span>
-    </button>
-    <button type="button" class="header-tab" data-main-view="logbook" role="tab" aria-selected="false">
-      <span class="tab-emoji" aria-hidden="true">🔬</span>
-      <span class="tab-label">연구장비 로그북</span>
-    </button>
+  <div class="topbar-brand-group">
+    <a class="brand" href="#" id="brandLogoLink">
+      <img src="logo_2dqh.jpg" alt="2DQH" class="brand-img-logo">
+      <span class="brand-sep" aria-hidden="true"></span>
+      <span class="brand-sub" id="brandSubText">2DQH LIMS</span>
+    </a>
+
+    <!-- 2-in-1 모듈 스위처: [🔬 연구장비 LIMS] vs [📦 자재·비품 관리] -->
+    <div class="portal-module-switcher" id="portalModuleSwitcher" role="tablist" aria-label="연구 포털 모듈 전환">
+      <button type="button" class="portal-module-btn active" data-portal-module="lims" id="btnModuleLims" role="tab" aria-selected="true" title="성균관대 AQT/SESS 연구장비 및 전자 로그북">
+        <span class="mod-icon">🔬</span>
+        <span class="mod-label">연구장비 LIMS</span>
+      </button>
+      <button type="button" class="portal-module-btn" data-portal-module="inventory" id="btnModuleInventory" role="tab" aria-selected="false" title="연구실 소모품 재고 및 공용 비품 대여 관리">
+        <span class="mod-icon">📦</span>
+        <span class="mod-label">자재·비품 관리</span>
+      </button>
+    </div>
   </div>
+
   <div class="top-actions">
     <button id="btnToggleSearch" class="btn-toggle-search" aria-label="검색 및 카테고리 필터 열기/닫기" type="button" title="검색">
       <span class="search-btn-icon" aria-hidden="true">🔍</span>
@@ -70,35 +71,50 @@
 
 <div class="layout">
   <nav class="sidebar" aria-label="주 메뉴">
-    <button class="nav active" data-view="inventory">
-      <span class="nav-icon" aria-hidden="true">🛠️</span>
-      <span>비품 대여</span>
-    </button>
-    <button class="nav" data-view="consumables">
-      <span class="nav-icon" aria-hidden="true">📦</span>
-      <span>소모품</span>
-    </button>
-    <button class="nav" data-view="logbook" id="navLogbook">
-      <span class="nav-icon" aria-hidden="true">🔬</span>
-      <span>연구장비 & 로그북</span>
-    </button>
-    <button class="nav" data-view="loans">
-      <span class="nav-icon" aria-hidden="true">📋</span>
-      <span>대여 현황</span>
-    </button>
-    <button class="nav admin-only hidden" data-view="dashboard">
-      <span class="nav-icon" aria-hidden="true">📊</span>
-      <span>대시보드</span>
-    </button>
-    <button class="nav admin-only hidden" data-view="history">
-      <span class="nav-icon" aria-hidden="true">📜</span>
-      <span>대여 이력</span>
-    </button>
+    <!-- A. 연구장비 LIMS 모듈 전용 사이드바 메뉴 -->
+    <div class="sidebar-nav-group" id="sidebarGroupLims">
+      <button class="nav active" data-lims-nav="catalog">
+        <span class="nav-icon" aria-hidden="true">🔬</span>
+        <span>연구장비 포털</span>
+      </button>
+      <button class="nav" data-lims-nav="xrd">
+        <span class="nav-icon" aria-hidden="true">⚡</span>
+        <span>HR-XRD 전자 로그북</span>
+      </button>
+      <button class="nav" data-lims-nav="analytics">
+        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span>장비 운영 통계</span>
+      </button>
+    </div>
+
+    <!-- B. 자재·비품 관리 모듈 전용 사이드바 메뉴 -->
+    <div class="sidebar-nav-group hidden" id="sidebarGroupInventory">
+      <button class="nav" data-view="consumables">
+        <span class="nav-icon" aria-hidden="true">📦</span>
+        <span>소모품 재고</span>
+      </button>
+      <button class="nav" data-view="inventory">
+        <span class="nav-icon" aria-hidden="true">🛠️</span>
+        <span>비품 대여</span>
+      </button>
+      <button class="nav" data-view="loans">
+        <span class="nav-icon" aria-hidden="true">📋</span>
+        <span>대여 현황</span>
+      </button>
+      <button class="nav admin-only hidden" data-view="dashboard">
+        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span>자산 대시보드</span>
+      </button>
+      <button class="nav admin-only hidden" data-view="history">
+        <span class="nav-icon" aria-hidden="true">📜</span>
+        <span>대여 이력</span>
+      </button>
+    </div>
 
     <div class="sidebar-info desktop-only">
-      <div class="sidebar-info-badge">IBS 2DQH</div>
-      <div class="sidebar-info-title">이차원양자헤테로구조체연구단</div>
-      <p class="sidebar-info-desc">공용 비품 & 장비 대여 관리</p>
+      <div class="sidebar-info-badge" id="sidebarInfoBadge">IBS 2DQH</div>
+      <div class="sidebar-info-title" id="sidebarInfoTitle">양자기술첨단기기센터 LIMS</div>
+      <p class="sidebar-info-desc" id="sidebarInfoDesc">SESS 연동 정밀기기 운용 및 로그북</p>
     </div>
   </nav>
 
@@ -937,7 +953,7 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<script src="consumables_catalog.js?v=20261109_06"></script>
-<script src="app.js?v=20261109_06"></script>
+<script src="consumables_catalog.js?v=20261109_07"></script>
+<script src="app.js?v=20261109_07"></script>
 </body>
 </html>
