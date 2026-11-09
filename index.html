@@ -220,18 +220,17 @@
       </section>
     </section>
 
-    <!-- 대시보드 뷰 (연구실 종합 통계 분석 센터 - 관리자 전용) -->
-    <section class="view admin-only hidden" id="view-dashboard">
+    <!-- 대시보드 뷰 (연구실 비품 및 자재 대시보드) -->
+    <section class="view" id="view-dashboard">
       <div class="page-head" style="flex-wrap:wrap;gap:10px;">
         <div class="head-title">
-          <h1>📊 연구실 통계 분석 센터</h1>
-          <span class="count-badge" id="statsSubBadge">통합 모니터링</span>
+          <h1>📊 연구실 비품·자재 대시보드</h1>
+          <span class="count-badge" id="statsSubBadge">실시간 모니터링</span>
         </div>
-        <div class="eq-hub-switch-group">
-          <button type="button" class="btn active" id="btnStatsShowAssets">🛠️ 비품 대여 통계</button>
-          <button type="button" class="btn" id="btnStatsShowEquip">🔬 연구장비 가동 통계</button>
+        <div class="head-actions" style="display:flex;gap:8px;align-items:center;">
+          <button type="button" class="btn primary" id="btnDashboardGoLogbook" style="font-weight:600;">⚡ HR-XRD 전자로그북 바로가기</button>
+          <button class="btn desktop-only" id="quickBorrow">＋ 새 비품 대여</button>
         </div>
-        <button class="btn primary desktop-only" id="quickBorrow">＋ 새 대여</button>
       </div>
       
       <!-- 핵심 통계 지표 -->
@@ -325,20 +324,18 @@
             <span class="count-badge" id="equipmentTotalBadge">총 9대 등록</span>
           </div>
           <div class="head-actions">
-            <div class="eq-hub-switch-group admin-only hidden">
+            <div class="eq-hub-switch-group">
               <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
-              <button type="button" class="btn" id="btnHubShowAnalytics">📊 운영 통계</button>
-              <button type="button" class="btn" id="btnHubShowAssetDashboard">🛠️ 비품 통계</button>
+              <button type="button" class="btn" id="btnHubShowAnalytics">📊 장비 운영 통계</button>
             </div>
             <button class="btn admin-only hidden" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 로그 CSV</button>
           </div>
         </div>
 
-        <!-- 모바일 전용 뷰 전환 바 (관리자 전용) -->
-        <div class="mobile-only eq-mobile-view-bar admin-only hidden" style="margin-bottom:12px;display:flex;gap:6px;">
+        <!-- 모바일 전용 뷰 전환 바 -->
+        <div class="mobile-only eq-mobile-view-bar" style="margin-bottom:12px;display:flex;gap:6px;">
           <button type="button" class="btn active" id="btnMobileHubShowGrid" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📇 장비 목록</button>
-          <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 운영 통계</button>
-          <button type="button" class="btn" id="btnMobileHubShowAssetDashboard" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">🛠️ 비품 통계</button>
+          <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 장비 운영 통계</button>
         </div>
 
         <!-- A. 장비 목록 뷰 (Primary Action First & Decluttered LIMS Infrastructure) -->
@@ -858,7 +855,9 @@
       <div id="placeholderEquipmentContainer" class="hidden">
         <div class="eq-standby-card">
           <div class="eq-standby-header-row">
-            <div class="eq-standby-icon" id="placeholderEqIcon">🔬</div>
+            <div class="eq-standby-photo-wrap">
+              <img id="placeholderEqPhoto" src="" alt="장비 실물 사진" class="eq-standby-photo" onerror="this.src='logo_2dqh.jpg'">
+            </div>
             <div class="eq-standby-titles">
               <div class="eq-standby-header">
                 <span class="eq-standby-code" id="placeholderEqCode">AFM</span>

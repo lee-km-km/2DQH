@@ -50,6 +50,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'active',
     statusLabel: '디지털 로그북 가동 중',
     icon: '🔬',
+    image: 'img/equipment/smartlab_xrd.jpg',
     type: 'xrd'
   },
   {
@@ -68,6 +69,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🔭',
+    image: 'img/equipment/jeol_tem.jpg',
     type: 'placeholder'
   },
   {
@@ -86,6 +88,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '📐',
+    image: 'img/equipment/bruker_afm.jpg',
     type: 'placeholder'
   },
   {
@@ -104,6 +107,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🌈',
+    image: 'img/equipment/nanobase_raman.png',
     type: 'placeholder'
   },
   {
@@ -122,6 +126,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '💡',
+    image: 'img/equipment/bruker_ftir.png',
     type: 'placeholder'
   },
   {
@@ -140,6 +145,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '⚡',
+    image: 'img/equipment/ebeam_evap.jpg',
     type: 'placeholder'
   },
   {
@@ -158,6 +164,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '⚛️',
+    image: 'img/equipment/picosun_ald.png',
     type: 'placeholder'
   },
   {
@@ -176,6 +183,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🌀',
+    image: 'img/equipment/sputter_system.jpg',
     type: 'placeholder'
   },
   {
@@ -194,6 +202,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🌌',
+    image: 'img/equipment/uhv_sputter.jpg',
     type: 'placeholder'
   }
 ];
@@ -634,7 +643,7 @@ function loadLocalStorage(forceReset){
     consumables = [...DEFAULT_2DQH_CONSUMABLES];
   }
 
-  const SESS_EQUIP_DATA_VER = '20261109_sess_aqt_v1';
+  const SESS_EQUIP_DATA_VER = '20261109_sess_aqt_v2_photos';
   try {
     const savedVer = localStorage.getItem('labstock_sess_eq_ver');
     const savedEqs = JSON.parse(localStorage.getItem('labstock_research_equipments') || 'null');
@@ -996,11 +1005,6 @@ function setAdminUI(){
   const activeView = document.querySelector('.view.active');
   if(!isAdm && activeView && activeView.classList.contains('admin-only')){
     showView('inventory');
-  }
-
-  // 관리자가 아닌 경우 장비 허브의 운영 통계 뷰에서 일반 카탈로그로 안전 복귀
-  if(!isAdm && currentHubView === 'analytics'){
-    switchEquipmentHubView('catalog');
   }
 }
 
@@ -3858,10 +3862,14 @@ function renderEquipmentPrimaryHero(){
         '<span class="eq-hero-scope-pill">실운영 장비</span>' +
       '</div>' +
       '<div class="eq-hero-main">' +
-        '<div class="eq-hero-icon-wrap">' + (xrd.icon || '🔬') + '</div>' +
+        '<div class="eq-hero-photo-wrap">' +
+          '<img src="' + safe(xrd.image || 'img/equipment/smartlab_xrd.jpg') + '" alt="' + safe(xrd.name) + '" class="eq-hero-photo" onerror="this.src=\'logo_2dqh.jpg\'">' +
+          '<span class="eq-photo-badge">SmartLab 9 kW 실물</span>' +
+        '</div>' +
         '<div class="eq-hero-headings">' +
           '<h2 class="eq-hero-title">' + safe(xrd.name) + '</h2>' +
-          '<p class="eq-hero-sub">' + safe(xrd.model) + ' &bull; 📍 ' + safe(xrd.location) + '</p>' +
+          '<p class="eq-hero-sub"><b>' + safe(xrd.model) + '</b> &bull; 📍 ' + safe(xrd.location) + '</p>' +
+          '<div class="eq-hero-spec-tag"><span>핵심 사양</span> ' + safe(xrd.spec) + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="eq-hero-meta-row">' +
@@ -3924,20 +3932,22 @@ function renderEquipmentPortalGrid(){
     const serviceSimple = (eq.serviceMode || '직접사용').split('/')[0].trim();
     html +=
       '<div class="eq-compact-card" data-select-eq="' + safe(eq.id) + '">' +
-        '<div class="eq-compact-head">' +
-          '<div class="eq-compact-code-group">' +
-            '<span class="eq-compact-code">' + safe(eq.code) + '</span>' +
-            (eq.assetNo ? '<span class="eq-compact-asset">' + safe(eq.assetNo) + '</span>' : '') +
+        '<div class="eq-card-thumb-wrap">' +
+          '<img src="' + safe(eq.image || 'logo_2dqh.jpg') + '" alt="' + safe(eq.name) + '" class="eq-card-photo" loading="lazy" onerror="this.src=\'logo_2dqh.jpg\'">' +
+          '<span class="eq-card-cat-badge">' + safe(eq.categoryName || '장비') + '</span>' +
+          '<span class="eq-card-code-pill">' + safe(eq.code) + '</span>' +
+        '</div>' +
+        '<div class="eq-card-content">' +
+          '<div class="eq-compact-asset-text">' + safe(eq.assetNo || '') + '</div>' +
+          '<h4 class="eq-compact-name">' + safe(eq.name) + '</h4>' +
+          '<p class="eq-compact-model">' + safe(eq.model) + '</p>' +
+          '<p class="eq-compact-spec-line">' + safe(eq.spec) + '</p>' +
+          '<div class="eq-compact-footer">' +
+            '<span class="eq-compact-loc">📍 ' + safe(eq.location) + '</span>' +
+            '<span class="eq-compact-mode-pill">' + safe(serviceSimple) + '</span>' +
           '</div>' +
-          '<span class="eq-compact-cat-pill">' + safe(eq.categoryName || '장비') + '</span>' +
+          '<button type="button" class="btn btn-compact-view">🔍 상세 규격 및 LIMS 스키마</button>' +
         '</div>' +
-        '<h4 class="eq-compact-name">' + safe(eq.name) + '</h4>' +
-        '<p class="eq-compact-model">' + safe(eq.model) + '</p>' +
-        '<div class="eq-compact-footer">' +
-          '<span class="eq-compact-loc">📍 ' + safe(eq.location) + '</span>' +
-          '<span class="eq-compact-mode-pill">' + safe(serviceSimple) + '</span>' +
-        '</div>' +
-        '<button type="button" class="btn btn-compact-view">상세 규격 및 LIMS 스키마</button>' +
       '</div>';
   });
 
@@ -4038,10 +4048,6 @@ function getUnifiedEquipmentSessions(){
 }
 
 function switchEquipmentHubView(mode){
-  if(mode === 'analytics' && !isAdmin()){
-    toast('장비 운영 통계는 관리자 전용 기능입니다. 관리자로 로그인해주세요.');
-    mode = 'catalog';
-  }
   currentHubView = mode || 'catalog';
   const isCatalog = (currentHubView === 'catalog');
 
@@ -4409,6 +4415,7 @@ function selectResearchEquipment(eqId){
   } else {
     // 깡통 장비 (Standby / Placeholder) LIMS 규격 및 정보 안내 렌더링
     const iconEl = $('placeholderEqIcon');
+    const photoEl = $('placeholderEqPhoto');
     const codeEl = $('placeholderEqCode');
     const nameEl = $('placeholderEqName');
     const assetNoEl = $('placeholderEqAssetNo');
@@ -4420,6 +4427,10 @@ function selectResearchEquipment(eqId){
     const mgrEl = $('placeholderEqManager');
     const contactEl = $('placeholderEqContact');
 
+    if(photoEl){
+      photoEl.src = selected.image || 'logo_2dqh.jpg';
+      photoEl.alt = selected.name;
+    }
     if(iconEl) iconEl.textContent = selected.icon || '🔬';
     if(codeEl) codeEl.textContent = selected.code;
     if(nameEl) nameEl.textContent = selected.name;
@@ -6630,32 +6641,10 @@ function bindEvents(){
       return;
     }
 
-    // 통계 분석 센터 듀얼 탭 전환 (비품 대여 통계 vs 연구장비 가동 통계)
-    if(target.id === 'btnStatsShowAssets' || target.closest('#btnStatsShowAssets')){
-      if(!isAdmin()){
-        toast('관리자 전용 기능입니다.');
-        return;
-      }
-      showView('dashboard');
-      return;
-    }
-    if(target.id === 'btnStatsShowEquip' || target.closest('#btnStatsShowEquip')){
-      if(!isAdmin()){
-        toast('관리자 전용 기능입니다.');
-        return;
-      }
-      currentHubView = 'analytics';
+    // 대시보드에서 전자로그북 바로가기 원클릭 버튼
+    if(target.id === 'btnDashboardGoLogbook' || target.closest('#btnDashboardGoLogbook')){
       showView('logbook');
-      showEquipmentCatalogHub();
-      switchEquipmentHubView('analytics');
-      return;
-    }
-    if(target.id === 'btnHubShowAssetDashboard' || target.id === 'btnMobileHubShowAssetDashboard' || target.closest('#btnHubShowAssetDashboard') || target.closest('#btnMobileHubShowAssetDashboard')){
-      if(!isAdmin()){
-        toast('관리자 전용 기능입니다.');
-        return;
-      }
-      showView('dashboard');
+      selectResearchEquipment('EQ-XRD-01');
       return;
     }
 
@@ -6678,10 +6667,6 @@ function bindEvents(){
         showView('logbook');
         selectResearchEquipment('EQ-XRD-01');
       } else if(navType === 'analytics'){
-        if(!isAdmin()){
-          toast('장비 운영 통계는 관리자 전용 기능입니다. 관리자로 로그인해주세요.');
-          return;
-        }
         currentHubView = 'analytics';
         showView('logbook');
         showEquipmentCatalogHub();
