@@ -1330,7 +1330,18 @@ async function loadData(){
     if(ENABLE_EQUIPMENT_LOGBOOK){
       // 1. 범용 연구장비 세션 (equipment_sessions) 동기화
       try {
-        const { data: remoteSessions, error: sessErr } = await db.from('equipment_sessions').select('*').order('used_on', { ascending: false });
+        let remoteSessions = null;
+        let sessErr = null;
+        try {
+          const res = await db.from('view_equipment_sessions').select('*').order('used_on', { ascending: false });
+          remoteSessions = res.data;
+          sessErr = res.error;
+        } catch(_) {}
+        if(!remoteSessions || remoteSessions.length === 0){
+          const res = await db.from('equipment_sessions').select('*').order('used_on', { ascending: false });
+          remoteSessions = res.data;
+          sessErr = res.error;
+        }
         if(!sessErr && Array.isArray(remoteSessions) && remoteSessions.length > 0){
           equipmentSessions = remoteSessions;
           try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
@@ -4220,6 +4231,154 @@ function closeEquipmentTestDrive(){
   if(modal) modal.classList.remove('open');
 }
 
+
+// ==========================================
+// [10대 연구장비 Supabase 독립 테이블 매핑 & 파라미터 빌더]
+// ==========================================
+const EQUIPMENT_TABLE_MAP = {
+  'XRD': 'xrd_logs',
+  'EQ-XRD-01': 'xrd_logs',
+  'TEM': 'tem_logs',
+  'EQ-TEM-01': 'tem_logs',
+  'AFM': 'afm_logs',
+  'EQ-AFM-01': 'afm_logs',
+  'RAMAN': 'raman_logs',
+  'EQ-RAMAN-01': 'raman_logs',
+  'FT-IR': 'ftir_logs',
+  'EQ-FTIR-01': 'ftir_logs',
+  'Ebeamsputter': 'ebeam_logs',
+  'EQ-EBEAM-01': 'ebeam_logs',
+  'ALD': 'ald_logs',
+  'EQ-ALD-01': 'ald_logs',
+  'Co-sputter': 'cosputter_logs',
+  'EQ-COSPUTTER-01': 'cosputter_logs',
+  'UHVsputter': 'uhvsputter_logs',
+  'EQ-UHVSPUTTER-01': 'uhvsputter_logs',
+  'WireBonder': 'wirebonder_logs',
+  'EQ-BONDER-01': 'wirebonder_logs'
+};
+
+function getEquipmentLogTable(codeOrId){
+  return EQUIPMENT_TABLE_MAP[codeOrId] || 'xrd_logs';
+}
+
+function buildEquipmentSpecificPayload(eqTable, s){
+  const p = s.parameters || {};
+  const base = {
+    session_id: s.id ? ('SESS-' + s.id) : ('SESS-' + Date.now()),
+    used_on: s.used_on || today(),
+    start_time: s.start_time || '10:00',
+    end_time: s.end_time || null,
+    duration_min: s.duration_min || 60,
+    status: s.status || 'done',
+    user_name: s.user_name || '연구원',
+    affiliation: s.affiliation || '2DQH',
+    professor: s.professor || '',
+    sample_name: s.sample_name || '',
+    sample_count: s.sample_count || 1,
+    purpose: s.purpose || (s.parameters && s.parameters.mode) || s.scan_type || '',
+    memo: s.memo || ''
+  };
+
+  switch(eqTable){
+    case 'xrd_logs':
+      if(p.chiller_start !== undefined) base.chiller_start = Number(p.chiller_start);
+      if(p.vacuum_start !== undefined) base.vacuum_start = parseInt(p.vacuum_start, 10);
+      if(p.align) base.optical_align = String(p.align);
+      if(s.scan_type) base.scan_type = String(s.scan_type);
+      if(p.xray_max_ok !== undefined) base.xray_max_ok = Boolean(p.xray_max_ok);
+      if(p.position_ok !== undefined) base.position_ok = Boolean(p.position_ok);
+      if(p.xray_min_ok !== undefined) base.xray_min_ok = Boolean(p.xray_min_ok);
+      break;
+
+    case 'tem_logs':
+      if(p.col_vacuum !== undefined) base.col_vacuum = Number(p.col_vacuum);
+      if(p.emission_current !== undefined) base.emission_current_ua = Number(p.emission_current);
+      if(p.acc_voltage) base.acc_voltage = String(p.acc_voltage);
+      if(s.scan_type) base.scan_type = String(s.scan_type);
+      if(p.cold_trap_ok !== undefined) base.cold_trap_ok = Boolean(p.cold_trap_ok);
+      if(p.gun_align_ok !== undefined) base.gun_align_ok = Boolean(p.gun_align_ok);
+      if(p.valves_closed_ok !== undefined) base.valves_closed_ok = Boolean(p.valves_closed_ok);
+      break;
+
+    case 'afm_logs':
+      if(p.laser_sum !== undefined) base.laser_sum = Number(p.laser_sum);
+      if(p.drive_amp !== undefined) base.drive_amp = Number(p.drive_amp);
+      if(p.mode) base.scan_mode = String(p.mode);
+      if(s.scan_type) base.scan_type = String(s.scan_type);
+      if(p.tip_mounted_ok !== undefined) base.tip_mounted_ok = Boolean(p.tip_mounted_ok);
+      if(p.tune_ok !== undefined) base.tune_ok = Boolean(p.tune_ok);
+      if(p.parked_ok !== undefined) base.parked_ok = Boolean(p.parked_ok);
+      break;
+
+    case 'raman_logs':
+      if(p.laser_power !== undefined) base.laser_power_pct = Number(p.laser_power);
+      if(p.int_time !== undefined) base.integration_time_sec = Number(p.int_time);
+      if(p.wavelength) base.laser_wavelength = String(p.wavelength);
+      if(p.objective) base.objective_lens = String(p.objective);
+      if(s.scan_type) base.scan_type = String(s.scan_type);
+      if(p.si_calib_ok !== undefined) base.si_calib_ok = Boolean(p.si_calib_ok);
+      if(p.shutter_ok !== undefined) base.shutter_ok = Boolean(p.shutter_ok);
+      break;
+
+    case 'ftir_logs':
+      if(p.resolution !== undefined) base.resolution = Number(p.resolution);
+      if(p.scans !== undefined) base.accum_scans = parseInt(p.scans, 10);
+      if(p.accessory) base.accessory = String(p.accessory);
+      if(s.scan_type) base.scan_type = String(s.scan_type);
+      if(p.purge_ok !== undefined) base.purge_ok = Boolean(p.purge_ok);
+      if(p.background_ok !== undefined) base.background_ok = Boolean(p.background_ok);
+      if(p.crystal_cleaned_ok !== undefined) base.crystal_cleaned_ok = Boolean(p.crystal_cleaned_ok);
+      break;
+
+    case 'ebeam_logs':
+      if(p.base_press !== undefined) base.base_vacuum_torr = Number(p.base_press);
+      if(p.dep_rate !== undefined) base.dep_rate_angs = Number(p.dep_rate);
+      if(p.source) base.target_source = String(p.source);
+      if(p.cooling_ok !== undefined) base.cooling_ok = Boolean(p.cooling_ok);
+      if(p.pocket_ok !== undefined) base.pocket_ok = Boolean(p.pocket_ok);
+      if(p.shutter_ok !== undefined) base.shutter_ok = Boolean(p.shutter_ok);
+      break;
+
+    case 'ald_logs':
+      if(p.chamber_temp !== undefined) base.chamber_temp_c = Number(p.chamber_temp);
+      if(p.pulse_time !== undefined) base.pulse_time_ms = Number(p.pulse_time);
+      if(p.precursor) base.precursor_type = String(p.precursor);
+      if(p.n2_flow_ok !== undefined) base.n2_flow_ok = Boolean(p.n2_flow_ok);
+      if(p.valves_ok !== undefined) base.valves_ok = Boolean(p.valves_ok);
+      if(p.pump_exhaust_ok !== undefined) base.pump_exhaust_ok = Boolean(p.pump_exhaust_ok);
+      break;
+
+    case 'cosputter_logs':
+      if(p.sputter_power !== undefined) base.sputter_power_w = Number(p.sputter_power);
+      if(p.ar_flow !== undefined) base.ar_flow_sccm = Number(p.ar_flow);
+      if(p.power_type) base.power_type = String(p.power_type);
+      if(p.rotation_ok !== undefined) base.rotation_ok = Boolean(p.rotation_ok);
+      if(p.plasma_ignited_ok !== undefined) base.plasma_ignited_ok = Boolean(p.plasma_ignited_ok);
+      if(p.shutter_closed_ok !== undefined) base.shutter_closed_ok = Boolean(p.shutter_closed_ok);
+      break;
+
+    case 'uhvsputter_logs':
+      if(p.uhv_base !== undefined) base.uhv_base_torr = Number(p.uhv_base);
+      if(p.working_press !== undefined) base.working_pressure_mtorr = Number(p.working_press);
+      if(p.loadlock_transferred_ok !== undefined) base.loadlock_transferred_ok = Boolean(p.loadlock_transferred_ok);
+      if(p.cryo_temp_ok !== undefined) base.cryo_temp_ok = Boolean(p.cryo_temp_ok);
+      if(p.gate_valve_isolated_ok !== undefined) base.gate_valve_isolated_ok = Boolean(p.gate_valve_isolated_ok);
+      break;
+
+    case 'wirebonder_logs':
+      if(p.ultrasonic_power !== undefined) base.ultrasonic_power = Number(p.ultrasonic_power);
+      if(p.bonding_time !== undefined) base.bonding_time_ms = Number(p.bonding_time);
+      if(p.bonding_force !== undefined) base.bonding_force_gf = Number(p.bonding_force);
+      if(p.wire_type) base.wire_type = String(p.wire_type);
+      if(p.feeder_aligned_ok !== undefined) base.feeder_aligned_ok = Boolean(p.feeder_aligned_ok);
+      if(p.flame_off_spark_ok !== undefined) base.flame_off_spark_ok = Boolean(p.flame_off_spark_ok);
+      if(p.pull_test_passed_ok !== undefined) base.pull_test_passed_ok = Boolean(p.pull_test_passed_ok);
+      break;
+  }
+  return base;
+}
+
 async function handleTestDriveFormSubmit(e){
   e.preventDefault();
   const f = $('testDriveForm');
@@ -4304,32 +4463,39 @@ async function handleTestDriveFormSubmit(e){
 
   if(db && !isLocalMode){
     try {
-      const payload = {
-        equipment_id: sessionEntry.equipment_id,
-        equipment_code: sessionEntry.equipment_code || 'EQUIP',
-        used_on: sessionEntry.used_on,
-        start_time: sessionEntry.start_time,
-        end_time: sessionEntry.end_time || null,
-        duration_min: sessionEntry.duration_min,
-        status: sessionEntry.status || 'done',
-        user_name: sessionEntry.user_name,
-        affiliation: sessionEntry.affiliation || '',
-        professor: sessionEntry.professor || '',
-        sample_name: sessionEntry.sample_name || '',
-        sample_count: sessionEntry.sample_count || 1,
-        scan_type: sessionEntry.scan_type || '',
-        parameters: sessionEntry.parameters || {},
-        memo: sessionEntry.memo || ''
-      };
-      const { data: inserted, error: insertErr } = await db.from('equipment_sessions').insert(payload).select();
+      const eqTable = getEquipmentLogTable(sessionEntry.equipment_code || sessionEntry.equipment_id);
+      const specificPayload = buildEquipmentSpecificPayload(eqTable, sessionEntry);
+      
+      const { data: inserted, error: insertErr } = await db.from(eqTable).insert(specificPayload).select();
       if(!insertErr && inserted && inserted[0]){
         sessionEntry.id = inserted[0].id;
+        sessionEntry.session_id = inserted[0].session_id || sessionEntry.session_id;
         try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
-      } else if(insertErr){
-        console.warn('Supabase equipment_sessions insert fallback:', insertErr);
+        console.log('Supabase 전용 테이블(' + eqTable + ') 저장 성공:', inserted[0]);
+      } else {
+        // fallback: equipment_sessions 테이블에도 백업 시도
+        console.warn('Supabase ' + eqTable + ' insert fallback:', insertErr);
+        const legacyPayload = {
+          equipment_id: sessionEntry.equipment_id,
+          equipment_code: sessionEntry.equipment_code || 'EQUIP',
+          used_on: sessionEntry.used_on,
+          start_time: sessionEntry.start_time,
+          end_time: sessionEntry.end_time || null,
+          duration_min: sessionEntry.duration_min,
+          status: sessionEntry.status || 'done',
+          user_name: sessionEntry.user_name,
+          affiliation: sessionEntry.affiliation || '',
+          professor: sessionEntry.professor || '',
+          sample_name: sessionEntry.sample_name || '',
+          sample_count: sessionEntry.sample_count || 1,
+          scan_type: sessionEntry.scan_type || '',
+          parameters: sessionEntry.parameters || {},
+          memo: sessionEntry.memo || ''
+        };
+        await db.from('equipment_sessions').insert(legacyPayload);
       }
     } catch(err){
-      console.warn('Supabase equipment_sessions insert fallback:', err);
+      console.warn('Supabase insert fallback:', err);
     }
   }
 
@@ -4349,6 +4515,11 @@ async function deleteEquipmentSession(id){
 
   if(db && !isLocalMode){
     try {
+      const targetSess = equipmentSessions.find(function(s){ return String(s.id) === String(id) || s.session_id === id; });
+      if(targetSess){
+        const eqTable = getEquipmentLogTable(targetSess.equipment_code || targetSess.equipment_id);
+        await db.from(eqTable).delete().or('id.eq.' + id + ',session_id.eq.' + id);
+      }
       await db.from('equipment_sessions').delete().eq('id', id);
     } catch(err){
       console.warn('Supabase session delete failed:', err);
@@ -9160,6 +9331,15 @@ function subscribeRealtime(){
       .on('postgres_changes', { event: '*', schema: 'public', table: 'consumables' }, debouncedRealtimeReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment_sessions' }, debouncedRealtimeReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'xrd_logs' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tem_logs' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'afm_logs' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'raman_logs' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ftir_logs' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ebeam_logs' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ald_logs' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cosputter_logs' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'uhvsputter_logs' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wirebonder_logs' }, debouncedRealtimeReload)
       .subscribe(function(status){
         if(status === 'SUBSCRIBED'){
           console.log('Supabase Realtime 실시간 동기화 활성화됨 (300ms 디바운스 적용)');
