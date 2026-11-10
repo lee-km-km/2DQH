@@ -117,10 +117,6 @@
         <span class="nav-icon" aria-hidden="true">🔬</span>
         <span>연구장비 포털</span>
       </button>
-      <button class="nav admin-only hidden" data-view="logbook" data-lims-nav="analytics" id="sidebarNavAnalytics">
-        <span class="nav-icon" aria-hidden="true">📊</span>
-        <span>장비 운영 통계</span>
-      </button>
     </div>
 
     <!-- C. 👑 관리자 전용 메뉴 (관리자 로그인 시 언락) -->
@@ -129,6 +125,10 @@
       <span class="sidebar-section-pill" style="background:#fee2e2;color:#991b1b;">Admin</span>
     </div>
     <div class="sidebar-nav-group admin-only hidden" id="sidebarGroupAdmin">
+      <button class="nav" data-view="logbook" data-lims-nav="analytics" id="sidebarNavAnalytics">
+        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span>장비 운영 통계</span>
+      </button>
       <button class="nav" data-view="dashboard" id="sidebarNavDashboard">
         <span class="nav-icon" aria-hidden="true">📈</span>
         <span>자산 관리 대시보드</span>
@@ -330,22 +330,11 @@
       <div id="equipmentCatalogHub">
         <div class="page-head hide-mobile">
           <div class="head-title">
-            <h1>🔬 연구장비 포털 &amp; 전자 로그북</h1>
+            <h1>🔬 연구장비 운영 포털</h1>
             <span class="count-badge" id="equipmentTotalBadge">총 10대 등록</span>
           </div>
           <div class="head-actions" style="display:flex;gap:6px;align-items:center;">
-            <div class="eq-hub-switch-group admin-only hidden">
-              <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
-              <button type="button" class="btn" id="btnHubShowAnalytics">📊 장비 운영 통계</button>
-            </div>
-            <button class="btn admin-only hidden primary" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 엑셀(CSV) 다운로드">📥 통합 세션 엑셀(CSV)</button>
           </div>
-        </div>
-
-        <!-- 모바일 전용 뷰 전환 바 (관리자 전용) -->
-        <div class="mobile-only eq-mobile-view-bar admin-only hidden" style="margin-bottom:12px;display:flex;gap:6px;">
-          <button type="button" class="btn active" id="btnMobileHubShowGrid" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📇 장비 목록</button>
-          <button type="button" class="btn" id="btnMobileHubShowAnalytics" style="flex:1;font-size:12px;padding:8px 0;text-align:center;">📊 장비 운영 통계</button>
         </div>
 
         <!-- A. 장비 목록 뷰 (균형 잡힌 10대 연구장비 통합 포털) -->
@@ -379,7 +368,7 @@
           </div>
         </div>
 
-        <!-- B. Phase 3: 연구단 장비 종합 통계 및 가동 대시보드 (Executive Analytics Hub) -->
+        <!-- B. Phase 3: 연구단 장비 종합 통계 및 가동 대시보드 (Executive Analytics Hub - 관리자 전용) -->
         <div id="equipmentAnalyticsDashboard" class="hidden">
           <!-- 장비별 통계 분리 필터 바 (장비 선택 + 월별/주간/연간 주기 전환) -->
           <div class="eq-analytics-scope-bar" style="margin-bottom:14px;background:var(--card);padding:14px 16px;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
@@ -404,8 +393,11 @@
                 <button type="button" class="btn text-link-sub hidden" id="btnGoSelectedEqWorkstation" style="font-size:12px;padding:6px 12px;border-radius:6px;background:var(--bg);border:1px solid var(--border);font-weight:600;">
                   👉 전자 로그북 열기
                 </button>
-                <button type="button" class="btn primary" id="btnExportAnalyticsCsv" style="font-size:12px;padding:6px 12px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;" title="선택된 장비 및 주기의 통계 데이터를 엑셀 호환 CSV로 다운로드">
-                  📥 통계 엑셀(CSV)
+                <button type="button" class="btn primary" id="btnExportAllUnifiedLogs" style="font-size:12px;padding:6px 12px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;" title="전체 연구장비 통합 세션 로그 엑셀(CSV) 다운로드">
+                  📥 통합 세션 엑셀(CSV)
+                </button>
+                <button type="button" class="btn" id="btnExportAnalyticsCsv" style="font-size:12px;padding:6px 12px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;" title="선택된 장비 및 주기의 통계 데이터를 엑셀 호환 CSV로 다운로드">
+                  📊 집계 요약 엑셀(CSV)
                 </button>
               </div>
             </div>
@@ -452,21 +444,21 @@
             </div>
           </div>
 
-          <!-- 2. 장비별 가동 점유율 & 월간 가동 캘린더 (2-Column Grid) -->
-          <div class="eq-analytics-row">
-            <!-- 좌: 연구장비 운용 관리 오버뷰 또는 장비별 주기별 상세 통계 -->
-            <div class="panel eq-analytics-panel" id="panelAnalyticsMain">
-              <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-                <div>
-                  <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqAnalyticsMainTitle">🔬 연구장비 운용 관리 오버뷰</h3>
-                  <span style="font-size:12px;color:var(--ink-light);" id="eqAnalyticsMainSub">전체 10대 연구장비 운영 상태 및 가동 실적</span>
-                </div>
-                <div id="eqAnalyticsPeriodBadge" style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;">2026년 월별</div>
+          <!-- 2. [전체 너비] 연구장비 운용 관리 오버뷰 & 주기별 상세 통계 (Full-width for readability at a glance) -->
+          <div class="panel eq-analytics-panel" id="panelAnalyticsMain" style="margin-bottom:18px;">
+            <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <div>
+                <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqAnalyticsMainTitle">🔬 연구장비 운용 관리 오버뷰</h3>
+                <span style="font-size:12px;color:var(--ink-light);" id="eqAnalyticsMainSub">전체 10대 연구장비 운영 상태 및 가동 실적</span>
               </div>
-              <div id="eqUtilizationList" class="eq-utilization-list"></div>
+              <div id="eqAnalyticsPeriodBadge" style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;">2026년 11월</div>
             </div>
+            <div id="eqUtilizationList" class="eq-utilization-list"></div>
+          </div>
 
-            <!-- 우: 월간 연구장비 가동 캘린더 (Equipment Activity Calendar) -->
+          <!-- 3. [2-Column Grid] 좌: 월간 가동 캘린더 & 날짜별 상세 | 우: 실시간 통합 가동 피드 -->
+          <div class="eq-analytics-row">
+            <!-- 좌: 월간 연구장비 가동 캘린더 (Equipment Activity Calendar) -->
             <div class="panel eq-analytics-panel">
               <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                 <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqCalendarTitle">📅 장비 가동 캘린더</h3>
@@ -477,26 +469,24 @@
                 </div>
               </div>
               <div id="eqCalendarContainer"></div>
-
-              <!-- 캘린더 날짜 클릭 시 바로 아래 나타나는 '선택 일자 가동 및 사용자 상세' -->
               <div id="eqCalendarDateDetail" class="eq-cal-date-detail"></div>
             </div>
-          </div>
 
-          <!-- 3. 실시간 통합 최근 가동 피드 (Unified Activity Timeline) -->
-          <div class="panel eq-analytics-panel" style="margin-top:16px;">
-            <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-              <div style="display:flex;align-items:center;gap:8px;">
-                <h3 style="margin:0;font-size:15px;color:var(--ink);">🕒 최근 연구장비 가동 타임라인 (전체 통합)</h3>
-                <span id="eqTimelineDateFilterBadge" class="eq-timeline-date-badge hidden"></span>
+            <!-- 우: 실시간 통합 최근 가동 피드 (Unified Activity Timeline) -->
+            <div class="panel eq-analytics-panel">
+              <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <h3 style="margin:0;font-size:15px;color:var(--ink);">🕒 실시간 가동 피드</h3>
+                  <span id="eqTimelineDateFilterBadge" class="eq-timeline-date-badge hidden"></span>
+                </div>
+                <div class="eq-timeline-filters" id="eqTimelineFilters">
+                  <button type="button" class="eq-filter-pill active" data-timeline-filter="all">전체</button>
+                  <button type="button" class="eq-filter-pill" data-timeline-filter="active">실운영</button>
+                  <button type="button" class="eq-filter-pill" data-timeline-filter="test">시험가동</button>
+                </div>
               </div>
-              <div class="eq-timeline-filters" id="eqTimelineFilters">
-                <button type="button" class="eq-filter-pill active" data-timeline-filter="all">전체 내역</button>
-                <button type="button" class="eq-filter-pill" data-timeline-filter="active">실운영 (XRD)</button>
-                <button type="button" class="eq-filter-pill" data-timeline-filter="test">시험 가동 (기타 장비)</button>
-              </div>
+              <div id="eqRecentTimelineList"></div>
             </div>
-            <div id="eqRecentTimelineList"></div>
           </div>
         </div>
       </div>
@@ -1078,6 +1068,6 @@
 </nav>
 
 <script src="consumables_catalog.js?v=20261110_03"></script>
-<script src="app.js?v=20261110_03"></script>
+<script src="app.js?v=20261110_04"></script>
 </body>
 </html>
