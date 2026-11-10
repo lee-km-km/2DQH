@@ -316,6 +316,31 @@ CREATE TABLE IF NOT EXISTS public.wirebonder_logs (
 -- 11. [핵심] 10대 장비 로그 자동 통합 가상 뷰 (view_equipment_sessions)
 --     웹페이지의 캘린더, 실시간 가동 피드, 통계, 통합 CSV에 초고속 연동됩니다.
 -- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 11. [CHEMICAL_LOGS] 특별관리물질(법정 44종) 공용 취급대장 (산안법 제420조 · 30년 영구보존)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.chemical_logs (
+    id BIGSERIAL PRIMARY KEY,
+    session_id TEXT UNIQUE DEFAULT ('CHEM-' || floor(extract(epoch from now()))::text || '-' || floor(random() * 1000)::text),
+    consumable_id TEXT,
+    chemical_name TEXT NOT NULL,
+    cas_number TEXT,
+    handler_name TEXT NOT NULL,
+    affiliation TEXT DEFAULT '2DQH',
+    used_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    quantity NUMERIC(10,2) NOT NULL DEFAULT 1.0,
+    unit TEXT NOT NULL DEFAULT 'mL',
+    work_location TEXT DEFAULT '제1클린룸 습식 흄후드 A',
+    work_description TEXT DEFAULT '시편 세정 및 합성 반응',
+    ppe_checked BOOLEAN DEFAULT true,
+    ventilation_checked BOOLEAN DEFAULT true,
+    initial_stock NUMERIC(10,2) DEFAULT 500.0,
+    remaining_stock NUMERIC(10,2) DEFAULT 450.0,
+    note TEXT DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE OR REPLACE VIEW public.view_equipment_sessions AS
 SELECT 'EQ-XRD-01' AS equipment_id, 'XRD' AS equipment_code, 'HR-XRD (고분해능 X선 회절분석기)' AS equipment_name,
        id, session_id, used_on, start_time, end_time, duration_min, user_name, affiliation, professor, sample_name, sample_count, purpose, memo, created_at
@@ -378,7 +403,7 @@ DECLARE
 BEGIN
     FOR tbl IN SELECT unnest(ARRAY[
         'xrd_logs', 'tem_logs', 'afm_logs', 'raman_logs', 'ftir_logs',
-        'ebeam_logs', 'ald_logs', 'cosputter_logs', 'uhvsputter_logs', 'wirebonder_logs'
+        'ebeam_logs', 'ald_logs', 'cosputter_logs', 'uhvsputter_logs', 'wirebonder_logs', 'chemical_logs', 'chemical_logs'
     ]) LOOP
         EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', tbl || '_all_policy', tbl);
         EXECUTE format('CREATE POLICY %I ON public.%I FOR ALL USING (true) WITH CHECK (true)', tbl || '_all_policy', tbl);
@@ -432,4 +457,17 @@ ON CONFLICT DO NOTHING;
 INSERT INTO public.ebeam_logs (used_on, start_time, end_time, duration_min, user_name, affiliation, sample_name, sample_count, purpose, base_vacuum_torr, dep_rate_angs, target_source)
 VALUES
 ('2026-11-07', '10:00', '11:30', 90, '최동욱 연구원', '성균관대 신소재공학과', 'Si/SiO2 기판 Cr/Au 전극 증착', 3, '소자 컨택 패드 전자빔 박막 증착', 2.10, 1.00, 'Cr/Au')
+ON CONFLICT DO NOTHING;
+
+
+-- ============================================================================
+-- 15. [특별관리물질 공용 취급대장 초기 샘플 데이터]
+-- ============================================================================
+INSERT INTO public.chemical_logs (session_id, chemical_name, cas_number, handler_name, affiliation, used_at, quantity, unit, work_location, work_description, initial_stock, remaining_stock, note)
+VALUES
+('CHEM-20261110-01', '클로로포름 (Chloroform)', '67-66-3', '신현석 교수님', '2DQH 연구단', '2026-11-10 11:20:00+09', 50, 'mL', '제1클린룸 습식 흄후드 A', '2D 페로브스카이트 전구체 용액 제조 및 시편 세정', 500, 450, '작업 후 밀봉 보관 완료, 잔여 450mL'),
+('CHEM-20261109-02', '디메틸포름아미드 (DMF)', '68-12-2', '박서준 연구원', '성균관대 양자기술연구소', '2026-11-09 16:45:00+09', 25, 'mL', '제1클린룸 유기용매 흄후드 B', 'CsPbBr3 용액 스핀코팅 전구체 교반', 500, 475, '질소 퍼지 후 냉장 시약장 보관'),
+('CHEM-20261109-01', '하이드라진 수화물 (Hydrazine monohydrate)', '7803-57-8', '이강민 연구원', '2DQH 페로브스카이트팀', '2026-11-09 10:15:00+09', 10, 'mL', '화학합성실 특수 가스 배기 후드', '그래핀 옥사이드 환원 촉매 합성 반응', 250, 240, '방독마스크 착용, 전용 차광병 보관'),
+('CHEM-20261108-01', '불산 (Hydrofluoric acid 49%)', '7664-39-3', '정민호 연구원', '2DQH 연구단', '2026-11-08 14:30:00+09', 5, 'mL', '산 세척 전용 테프론 흄후드', 'SiO2 기판 산화막 에칭 및 패턴 클리닝', 500, 495, '칼슘 글루코네이트 젤 비치 확인, 중화처리 완료'),
+('CHEM-20261107-01', '황산 (Sulfuric acid 98%)', '7664-93-9', '김유진 연구원', 'IBS 나노구조물리연구단', '2026-11-07 15:20:00+09', 30, 'mL', '제1클린룸 피라냐 용액 제조대', '피라냐 용액(H2SO4:H2O2 = 3:1) 조제 및 기판 전처리', 1000, 970, '발열 반응 냉각 후 세척 완료')
 ON CONFLICT DO NOTHING;

@@ -7839,3 +7839,49 @@ body:not(.is-admin) .admin-only {
   border-color: #2563eb !important;
   color: #ffffff !important;
 }
+
+
+/* ==========================================================================
+   특별관리물질 & 시약 공용 취급 포털 (다크모드 & 반응형 스타일)
+   ========================================================================== */
+#view-chemicals .panel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+[data-theme="dark"] #chemicalQuickCard {
+  background: #1e293b !important;
+  border-color: #059669 !important;
+}
+
+[data-theme="dark"] #quickChemStockAlert {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] #quickChemSelect,
+[data-theme="dark"] #quickChemHandler,
+[data-theme="dark"] #quickChemAffiliation,
+[data-theme="dark"] #quickChemDate,
+[data-theme="dark"] #quickChemQty,
+[data-theme="dark"] #quickChemUnit,
+[data-theme="dark"] #quickChemLocation,
+[data-theme="dark"] #quickChemDesc,
+[data-theme="dark"] #chemicalLedgerSearchInput {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] #chemicalMainSummaryBar,
+[data-theme="dark"] #chemicalLedgerFilterChips {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] #chemicalQrPrintArea {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
