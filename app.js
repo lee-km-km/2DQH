@@ -5717,13 +5717,27 @@ function renderEquipmentRecentTimeline(allSessions){
   }
 
   if(timelineDateFilter){
-    filtered = filtered.filter(function(s){ return s.used_on === timelineDateFilter; });
+    filtered = filtered.filter(function(s){
+      return normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : '')) === timelineDateFilter;
+    });
     if(badgeEl){
       badgeEl.classList.remove('hidden');
-      badgeEl.innerHTML = '📅 ' + safe(timelineDateFilter) + ' 필터 중 <button type="button" id="btnClearTimelineDateFilter" title="필터 해제">✕</button>';
+      badgeEl.innerHTML = '📅 <b>' + safe(timelineDateFilter) + '</b> 필터 중 <button type="button" id="btnClearTimelineDateFilter" class="btn-clear-date-filter" title="필터 해제">✕</button>';
+      if(!badgeEl.__boundClick){
+        badgeEl.__boundClick = true;
+        badgeEl.addEventListener('click', function(e){
+          e.preventDefault();
+          e.stopPropagation();
+          timelineDateFilter = null;
+          renderEquipmentAnalyticsDashboard();
+        });
+      }
     }
   } else {
-    if(badgeEl) badgeEl.classList.add('hidden');
+    if(badgeEl){
+      badgeEl.classList.add('hidden');
+      badgeEl.innerHTML = '';
+    }
   }
 
   const filterBtns = document.querySelectorAll('#eqTimelineFilters [data-timeline-filter]');
@@ -7806,6 +7820,17 @@ function bindEvents(){
       e.preventDefault();
       e.stopPropagation();
       closeModal();
+      return;
+    }
+
+    // 캘린더 / 타임라인 날짜 필터 해제 (최우선 처리: ✕ 버튼 또는 뱃지 클릭 시 즉시 필터 해제)
+    if(target.id === 'btnClearTimelineDateFilter' || target.closest('#btnClearTimelineDateFilter') ||
+       target.id === 'btnClearCalDateDetail' || target.closest('#btnClearCalDateDetail') ||
+       target.id === 'eqTimelineDateFilterBadge' || target.closest('#eqTimelineDateFilterBadge')){
+      e.preventDefault();
+      e.stopPropagation();
+      timelineDateFilter = null;
+      renderEquipmentAnalyticsDashboard();
       return;
     }
 
