@@ -26,7 +26,7 @@
     })();
   </script>
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-  <link rel="stylesheet" href="style.css?v=20261110_1845_fix">
+  <link rel="stylesheet" href="style.css?v=20261110_1900_calfix">
   <script>
     (function(){
       try {
@@ -393,6 +393,19 @@
 
       <!-- 2. 재고현황 뷰 (기본 활성) -->
       <div id="chemInventoryViewArea">
+        <!-- 시약 카테고리 원클릭 필터 탭 (특별관리물질 vs 일반 시약 vs 전체 통합) -->
+        <div class="chem-quick-scope-bar" role="tablist">
+          <button type="button" class="btn-chem-scope active" data-chem-scope="special" id="btnScopeSpecial">
+            ⭐ 특별관리물질 (291호 10품목)
+          </button>
+          <button type="button" class="btn-chem-scope" data-chem-scope="general" id="btnScopeGeneral">
+            🧪 일반 시약·유해물질
+          </button>
+          <button type="button" class="btn-chem-scope" data-chem-scope="all" id="btnScopeAll">
+            📦 전체 화학물질 (통합 검색)
+          </button>
+        </div>
+
         <!-- 검색 필터 박스 (291호 시스템 규격) -->
         <div class="panel chem-search-box">
           <div class="chem-search-row">
@@ -423,8 +436,7 @@
               <label for="chemFilterHandler">담당자</label>
               <select id="chemFilterHandler">
                 <option value="">-- 선택 --</option>
-                <option value="김은지">김은지</option>
-                <option value="이강민">이강민</option>
+                <option value="이강민">이강민 (책임)</option>
                 <option value="신현석">신현석</option>
               </select>
             </div>
@@ -538,27 +550,65 @@
       <!-- 5. 📅 월별 취급 캘린더 뷰 (월별 사용량 & 일자별 사용자/잔여량 확인) -->
       <div id="chemCalendarViewArea" class="hidden">
         <div class="panel chem-calendar-panel" style="border-radius:10px;padding:20px;">
-          <div class="chem-cal-head">
-            <div class="chem-cal-nav">
-              <button type="button" class="btn btn-sm" id="btnChemCalPrevMonth">◀ 이전달</button>
-              <h2 class="chem-cal-month-title" id="chemCalCurrentMonthText">2026년 3월</h2>
-              <button type="button" class="btn btn-sm" id="btnChemCalNextMonth">다음달 ▶</button>
-              <button type="button" class="btn btn-sm" id="btnChemCalToday">오늘</button>
+          <!-- 캘린더 / 월별통계 / 연간통계 서브 탭 바 -->
+          <div class="chem-cal-subtabs-bar">
+            <button type="button" class="btn-cal-subtab active" id="btnChemSubTabCalendar">📅 캘린더 달력 뷰</button>
+            <button type="button" class="btn-cal-subtab" id="btnChemSubTabMonthly">📊 월별 취급 통계</button>
+            <button type="button" class="btn-cal-subtab" id="btnChemSubTabYearly">📈 2026 연간 통계</button>
+          </div>
+
+          <!-- 서브뷰 1: 캘린더 달력 뷰 -->
+          <div id="chemSubViewCalendar" class="chem-subview">
+            <div class="chem-cal-head">
+              <div class="chem-cal-nav">
+                <button type="button" class="btn btn-sm" id="btnChemCalPrevMonth">◀ 이전달</button>
+                <h2 class="chem-cal-month-title" id="chemCalCurrentMonthText">2026년 3월</h2>
+                <button type="button" class="btn btn-sm" id="btnChemCalNextMonth">다음달 ▶</button>
+                <button type="button" class="btn btn-sm" id="btnChemCalToday">오늘</button>
+              </div>
+              <div class="chem-cal-summary-text" id="chemCalSummaryText">
+                총 취급 5건 · 황산, 벤젠, DMF, 요오드화납 등
+              </div>
             </div>
-            <div class="chem-cal-summary-text" id="chemCalSummaryText">
-              총 취급 5건 · 황산, 벤젠, DMF, 요오드화납 등
+
+            <!-- 7열 정규 달력 그리드 -->
+            <div class="chem-calendar-grid" id="chemCalendarGrid">
+              <!-- Days rendered via JavaScript -->
             </div>
           </div>
 
-          <!-- 캘린더 그리드 -->
-          <div class="chem-calendar-grid" id="chemCalendarGrid">
-            <!-- Days rendered via JavaScript -->
+          <!-- 서브뷰 2: 월별 취급 통계 뷰 -->
+          <div id="chemSubViewMonthly" class="chem-subview hidden">
+            <div class="cal-stat-header">
+              <h3 id="monthlyStatTitle" style="margin:0 0 4px;font-size:17px;font-weight:800;color:var(--ink);">2026년 3월 특별관리물질 취급 통계</h3>
+              <p style="margin:0;font-size:13px;color:var(--ink-light);">월간 총 사용량, 물질별 비중 및 연구원 취급 실적</p>
+            </div>
+            <div class="cal-stat-cards-grid" id="monthlyStatCardsGrid">
+              <!-- Cards rendered via JS -->
+            </div>
+            <div class="cal-stat-table-wrap" id="monthlyStatTableWrap" style="margin-top:20px;">
+              <!-- Table rendered via JS -->
+            </div>
+          </div>
+
+          <!-- 서브뷰 3: 연간 통계 뷰 -->
+          <div id="chemSubViewYearly" class="chem-subview hidden">
+            <div class="cal-stat-header">
+              <h3 style="margin:0 0 4px;font-size:17px;font-weight:800;color:var(--ink);">2026 연간 누적 특별관리물질 현황</h3>
+              <p style="margin:0;font-size:13px;color:var(--ink-light);">N센터 291호 연간 누적 취급 실적 및 시약별 잔여율 모니터링</p>
+            </div>
+            <div class="cal-stat-cards-grid" id="yearlyStatCardsGrid">
+              <!-- Cards rendered via JS -->
+            </div>
+            <div class="cal-stat-table-wrap" id="yearlyStatTableWrap" style="margin-top:20px;">
+              <!-- Table rendered via JS -->
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 6. 특별관리물질 고지 A4 인쇄 / PDF 생성 모달 (Image 2 서식 100% 동일) -->
-      <div id="modalChemNoticeBackdrop" class="backdrop">
+      <div  class="backdrop">
         <section class="modal chem-notice-modal" role="dialog" aria-modal="true" style="max-width:860px;width:min(860px,96vw);border-radius:10px;overflow:hidden;background:#fff;color:#000;">
           <div class="modal-head" style="border-bottom:1px solid #cbd5e1;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
             <h3 style="margin:0;font-size:16px;font-weight:800;color:#0f172a;">특별관리물질 고지 (관계자 외 출입금지) 출력 양식</h3>
@@ -662,7 +712,7 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
               <div>
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급자 성명 *</label>
-                <input type="text" id="modalChemHandler" class="form-control" placeholder="성명 (예: 김은지, 이강민)" required style="width:100%;padding:8px 10px;">
+                <input type="text" id="modalChemHandler" class="form-control" placeholder="성명 (예: 이강민)" value="이강민" required style="width:100%;padding:8px 10px;">
               </div>
               <div>
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급 일시 *</label>
@@ -1757,7 +1807,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261110_1845_fix"></script>
-<script src="app.js?v=20261110_1845_fix"></script>
+<script src="consumables_catalog.js?v=20261110_1900_calfix"></script>
+<script src="app.js?v=20261110_1900_calfix"></script>
 </body>
 </html>
