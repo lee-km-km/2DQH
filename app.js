@@ -2754,6 +2754,113 @@ function renderConsumables(){
 }
 
 // 특별관리물질 취급일지 법정 서식(산업안전보건기준에 관한 규칙 제439조) CSV 다운로드 (월간 / 연간 분리 지원)
+
+// ==========================================
+// [특별관리물질 공용 취급대장 렌더링 모듈]
+// ==========================================
+function renderChemicalLedgerTable(){
+  const wrap = $('chemicalLedgerTableWrap');
+  const summaryEl = $('chemicalLedgerSummary');
+  const countBadge = $('chemicalLogTotalCountBadge');
+  if(!wrap) return;
+
+  let logs = [];
+  try {
+    logs = JSON.parse(localStorage.getItem('labstock_chemical_logs') || '[]');
+  } catch(e){
+    logs = [];
+  }
+
+  if(countBadge){
+    countBadge.textContent = '총 ' + logs.length + '건';
+  }
+
+  if(logs.length === 0){
+    if(summaryEl){
+      summaryEl.innerHTML = '<span>📋 등록된 특별관리물질 취급일지가 없습니다. 시약 카드의 <b>[📝 취급일지 작성]</b>을 통해 첫 일지를 작성할 수 있습니다.</span>';
+    }
+    wrap.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--ink-light);font-size:13px;">작성된 특별관리물질 취급일지가 없습니다.</div>';
+    return;
+  }
+
+  // 최신 순 정렬
+  logs.sort(function(a, b){
+    const tA = a.used_at || a.created_at || '';
+    const tB = b.used_at || b.created_at || '';
+    return tB.localeCompare(tA);
+  });
+
+  // 이번 달 사용량 집계 및 직전 사용자 사용량 파악
+  const curMonthStr = today().slice(0, 7);
+  let curMonthCount = 0;
+  const curMonthUsageMap = {}; // { '시약명': { qty: number, unit: string } }
+  
+  logs.forEach(function(l){
+    const d = (l.used_at || l.created_at || '').slice(0, 7);
+    if(d === curMonthStr){
+      curMonthCount++;
+      const chem = l.chemical_name || '특별관리시약';
+      const q = Number(l.quantity) || 0;
+      const u = l.unit || 'mL';
+      if(!curMonthUsageMap[chem]){
+        curMonthUsageMap[chem] = { qty: 0, unit: u };
+      }
+      curMonthUsageMap[chem].qty += q;
+    }
+  });
+
+  const latestLog = logs[0];
+  const latestDesc = latestLog ? (safe(latestLog.handler_name) + ' (' + safe(latestLog.chemical_name) + ' ' + (latestLog.quantity || 0) + safe(latestLog.unit || 'mL') + ' 사용)') : '-';
+
+  let usageSummaryStr = '';
+  const usageKeys = Object.keys(curMonthUsageMap);
+  if(usageKeys.length > 0){
+    usageSummaryStr = usageKeys.slice(0, 3).map(function(k){
+      return safe(k) + ': <b>' + curMonthUsageMap[k].qty + safe(curMonthUsageMap[k].unit) + '</b>';
+    }).join(' · ');
+  } else {
+    usageSummaryStr = '이번 달 취급 내역 없음';
+  }
+
+  if(summaryEl){
+    summaryEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+      '<div>📅 <b>' + curMonthStr + '월 취급 현황:</b> ' + curMonthCount + '건 (' + usageSummaryStr + ')</div>' +
+      '<div style="color:var(--primary);font-weight:600;">⚡ 직전 취급자: ' + latestDesc + '</div>' +
+      '</div>';
+  }
+
+  let tableHtml = '<table aria-label="특별관리물질 공용 취급대장" style="width:100%;font-size:12.5px;">';
+  tableHtml += '<thead><tr>';
+  tableHtml += '<th scope="col" style="white-space:nowrap;">취급 일시</th>';
+  tableHtml += '<th scope="col">시약명 (CAS No.)</th>';
+  tableHtml += '<th scope="col" style="white-space:nowrap;">취급자</th>';
+  tableHtml += '<th scope="col" style="white-space:nowrap;">취급량</th>';
+  tableHtml += '<th scope="col">작업 장소</th>';
+  tableHtml += '<th scope="col">작업 내용 및 잔여량</th>';
+  tableHtml += '<th scope="col" style="white-space:nowrap;">안전 점검</th>';
+  tableHtml += '</tr></thead><tbody>';
+
+  logs.forEach(function(l){
+    const dateStr = (l.used_at || l.created_at || '').replace('T', ' ').slice(0, 16);
+    const casStr = l.cas_number ? ' <span style="font-family:monospace;font-size:11px;color:var(--ink-light);">[' + safe(l.cas_number) + ']</span>' : '';
+    const qtyStr = (l.quantity !== undefined ? l.quantity : '') + ' ' + safe(l.unit || 'mL');
+    const noteStr = l.note ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px;">📝 잔여량: ' + safe(l.note) + '</div>' : '';
+
+    tableHtml += '<tr>';
+    tableHtml += '<td style="white-space:nowrap;font-weight:600;">' + safe(dateStr) + '</td>';
+    tableHtml += '<td><b style="color:var(--ink);">' + safe(l.chemical_name || '특별관리물질') + '</b>' + casStr + '</td>';
+    tableHtml += '<td style="white-space:nowrap;font-weight:600;">👤 ' + safe(l.handler_name || '연구원') + '</td>';
+    tableHtml += '<td style="white-space:nowrap;font-weight:700;color:var(--primary);">' + safe(qtyStr) + '</td>';
+    tableHtml += '<td>📍 ' + safe(l.work_location || '화학실') + '</td>';
+    tableHtml += '<td>' + safe(l.work_description || '-') + noteStr + '</td>';
+    tableHtml += '<td style="white-space:nowrap;"><span style="color:#16a34a;font-weight:700;">✓ 보호구/배기 완료</span></td>';
+    tableHtml += '</tr>';
+  });
+
+  tableHtml += '</tbody></table>';
+  wrap.innerHTML = tableHtml;
+}
+
 function exportChemicalLogsCsv(period){
   let logs = [];
   try {
@@ -4685,7 +4792,7 @@ function renderEquipmentAnalyticsDashboard(){
   }
 
   // 3. 관리 오버뷰 / 주기별 상세 통계 콘텐츠 렌더링
-  renderEquipmentAnalyticsOverview(targetSessions, allSessions);
+  renderEquipmentAnalyticsOverview(periodSessions, targetSessions, allSessions);
 
   // 4. 월간 가동 캘린더 렌더링 (선택된 스코프의 세션 전달)
   renderEquipmentCalendar(targetSessions);
@@ -4694,7 +4801,8 @@ function renderEquipmentAnalyticsDashboard(){
   renderEquipmentRecentTimeline(targetSessions);
 }
 
-function renderEquipmentAnalyticsOverview(targetSessions, allSessions){
+function renderEquipmentAnalyticsOverview(periodSessions, targetSessions, allSessions){
+  periodSessions = periodSessions || targetSessions;
   const container = $('eqUtilizationList');
   if(!container) return;
 
@@ -4716,8 +4824,13 @@ function renderEquipmentAnalyticsOverview(targetSessions, allSessions){
   // ----------------------------------------------------
   const affilCounts = {};
   const sampleCounts = {};
-  targetSessions.forEach(function(s){
-    const aff = s.affiliation || '2DQH';
+  const activeSessionsForStats = (periodSessions && periodSessions.length > 0) ? periodSessions : [];
+  
+  activeSessionsForStats.forEach(function(s){
+    let aff = s.affiliation || '2DQH 페로브스카이트팀';
+    if(!aff || aff === '1' || /^\d+$/.test(aff)){
+      aff = '2DQH 연구단';
+    }
     affilCounts[aff] = (affilCounts[aff] || 0) + (s.sample_count || 1);
     if(s.sample_name){
       sampleCounts[s.sample_name] = (sampleCounts[s.sample_name] || 0) + (s.sample_count || 1);
@@ -4726,7 +4839,7 @@ function renderEquipmentAnalyticsOverview(targetSessions, allSessions){
 
   const sortedAffils = Object.keys(affilCounts).sort(function(a, b){ return affilCounts[b] - affilCounts[a]; });
   const sortedSamples = Object.keys(sampleCounts).sort(function(a, b){ return sampleCounts[b] - sampleCounts[a]; });
-  const totalSamplesAll = targetSessions.reduce(function(a, c){ return a + (c.sample_count || 1); }, 0);
+  const totalSamplesAll = activeSessionsForStats.reduce(function(a, c){ return a + (c.sample_count || 1); }, 0);
 
   let topSummaryHtml = '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:12.5px;">';
   topSummaryHtml += '  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
@@ -5644,7 +5757,7 @@ function renderEquipmentCalendarDateDetail(dateStr, allSessions){
     html += '    <span>📅 <b>' + currentCalendarYear + '년 ' + currentCalendarMonth + '월 가동 현황 요약</b></span>';
     html += '    <span style="font-size:12px;font-weight:700;color:var(--primary);">' + monthSessions.length + '건 · ' + (mTotalMins / 60).toFixed(1) + 'h (' + mTotalMins + '분)</span>';
     html += '  </div>';
-    html += '  <div style="font-size:11.5px;color:var(--ink-light);margin-top:4px;">💡 달력에서 특정 일자(배지가 있는 날짜)를 클릭하면 해당 일자의 사용자 및 상세 측정 내역을 바로 확인할 수 있습니다.</div>';
+    html += '';
     html += '</div>';
     detailEl.innerHTML = html;
     return;
@@ -7422,7 +7535,8 @@ async function saveForm(e){
       }
 
       closeModal();
-      toast('✓ 특별관리물질 취급일지가 성공적으로 등록되었습니다.');
+      renderChemicalLedgerTable();
+    toast('✓ 특별관리물질 취급일지가 성공적으로 등록되었습니다.');
       renderConsumables();
     } catch(logErr){
       console.error('취급일지 등록 실패:', logErr);
@@ -7899,6 +8013,46 @@ function closeMobileDrawer(){
 }
 
 function bindEvents(){
+  // 캘린더 월 이동 직접 바인딩
+  addEvt('btnPrevMonth', 'click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    currentCalendarMonth--;
+    if(currentCalendarMonth < 1){
+      currentCalendarMonth = 12;
+      currentCalendarYear--;
+    }
+    timelineDateFilter = null;
+    renderEquipmentAnalyticsDashboard();
+  });
+  addEvt('btnNextMonth', 'click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    currentCalendarMonth++;
+    if(currentCalendarMonth > 12){
+      currentCalendarMonth = 1;
+      currentCalendarYear++;
+    }
+    timelineDateFilter = null;
+    renderEquipmentAnalyticsDashboard();
+  });
+
+  // 비품 대여 신청 버튼 직접 바인딩
+  addEvt('loanAdd', 'click', function(e){
+    e.preventDefault();
+    openModal('borrow');
+  });
+
+  // 도움말 대시보드 역할 전환 탭
+  addEvt('btnHelpTabUser', 'click', function(e){
+    e.preventDefault();
+    switchHelpTab('user');
+  });
+  addEvt('btnHelpTabAdmin', 'click', function(e){
+    e.preventDefault();
+    switchHelpTab('admin');
+  });
+
   window.addEventListener('online', function(){
     toast('네트워크가 복구되었습니다. 최신 데이터를 동기화합니다.');
     loadData();
@@ -9150,3 +9304,26 @@ async function initApp(){
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
+
+
+function switchHelpTab(tabRole){
+  const userBtn = $('btnHelpTabUser');
+  const adminBtn = $('btnHelpTabAdmin');
+  const userContent = $('helpContentUser');
+  const adminContent = $('helpContentAdmin');
+  const roleBadge = $('helpCurrentRoleBadge');
+  const authWarn = $('helpAdminAuthWarning');
+
+  const isAdminTab = (tabRole === 'admin');
+  if(userBtn) userBtn.classList.toggle('active', !isAdminTab);
+  if(adminBtn) adminBtn.classList.toggle('active', isAdminTab);
+  if(userContent) userContent.classList.toggle('hidden', isAdminTab);
+  if(adminContent) adminContent.classList.toggle('hidden', !isAdminTab);
+  
+  if(roleBadge){
+    roleBadge.textContent = isAdminTab ? '관리자 매뉴얼 모드' : '연구원 안내 모드';
+  }
+  if(authWarn){
+    authWarn.classList.toggle('hidden', isAdmin());
+  }
+}

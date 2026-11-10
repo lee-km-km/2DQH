@@ -147,6 +147,18 @@
       </button>
     </div>
 
+    <!-- D. 시스템 이용 안내 및 도움말 센터 -->
+    <div class="sidebar-section-header" style="margin-top:16px;">
+      <span class="sidebar-section-title">시스템 안내</span>
+      <span class="sidebar-section-pill">도움말</span>
+    </div>
+    <div class="sidebar-nav-group" id="sidebarGroupHelp">
+      <button class="nav" data-view="help" id="sidebarNavHelp">
+        <span class="nav-icon" aria-hidden="true">📖</span>
+        <span>도움말 대시보드</span>
+      </button>
+    </div>
+
     <!-- D. 사이드바 하단 관리자 로그인/로그아웃 바 (모바일 및 데스크톱 공통) -->
     <div class="sidebar-auth-box" style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
       <button id="sidebarLoginBtn" class="btn btn-sidebar-login" type="button" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;font-size:12.5px;font-weight:600;border-radius:8px;background:var(--bg-subtle);border:1px solid var(--border);color:var(--ink);">
@@ -208,7 +220,7 @@
           <h1>대여 현황</h1>
           <span class="count-badge" id="activeLoansCountBadge">0</span>
         </div>
-        <button class="btn primary" id="loanAdd">대여 신청</button>
+        <button type="button" class="btn primary" id="loanAdd" style="display:inline-flex;align-items:center;gap:6px;">⚡ 비품 대여 신청</button>
       </div>
       <section class="panel">
         <div class="toolbar">
@@ -329,6 +341,25 @@
           <div id="consumablesResultSummary" class="consumables-result-summary" aria-live="polite"></div>
         </div>
         <div id="consumableRows" class="consumables-container"></div>
+      </section>
+      <!-- 🚨 특별관리물질 공용 취급대장 (법정 보존 일지 및 월간 사용량 대장) -->
+      <section class="panel" id="chemicalLedgerPanel" style="margin-top:20px;">
+        <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <h3 style="margin:0;font-size:16px;color:var(--ink);">🚨 특별관리물질 공용 취급대장</h3>
+            <span class="count-badge" id="chemicalLogTotalCountBadge" style="background:#fee2e2;color:#991b1b;font-weight:700;">총 0건</span>
+          </div>
+          <div class="head-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button type="button" class="btn btn-export-log-csv" id="btnExportChemicalLogsMonth" title="이번 달 취급일지 엑셀 다운로드" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
+              📥 이번 달 취급대장 엑셀 (CSV)
+            </button>
+            <button type="button" class="btn btn-export-log-csv" id="btnExportChemicalLogsYear" title="연간 전체 취급일지 엑셀 다운로드" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
+              📆 연간 전체 취급대장 엑셀 (CSV)
+            </button>
+          </div>
+        </div>
+        <div id="chemicalLedgerSummary" style="padding:12px 16px;background:var(--bg-subtle);border-bottom:1px solid var(--border);font-size:12.5px;color:var(--ink);"></div>
+        <div id="chemicalLedgerTableWrap" class="table-wrap" style="max-height:420px;overflow-y:auto;"></div>
       </section>
     </section>
 
@@ -970,6 +1001,100 @@
   </section>
 
   <!-- Phase 2 범용 장비 시험 가동 모달 -->
+  <!-- 📖 도움말 & 매뉴얼 대시보드 뷰 -->
+  <section class="view hidden" id="view-help">
+    <div class="page-head hide-mobile">
+      <div class="head-title">
+        <h1>📖 연구포털 &amp; 전자로그북 이용 안내</h1>
+        <span class="count-badge" id="helpCurrentRoleBadge">연구원 안내 모드</span>
+      </div>
+    </div>
+
+    <!-- 도움말 역할 전환 탭 (연구원 vs 관리자) -->
+    <div class="help-tabs-bar" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <button type="button" class="btn help-tab-btn active" id="btnHelpTabUser" data-help-tab="user" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-weight:700;">
+        <span>👤</span> 연구원 / 사용자 가이드
+      </button>
+      <button type="button" class="btn help-tab-btn" id="btnHelpTabAdmin" data-help-tab="admin" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-weight:700;">
+        <span>👑</span> 관리자 운영 매뉴얼
+      </button>
+    </div>
+
+    <!-- 1. 연구원 / 일반 사용자 가이드 섹션 -->
+    <div id="helpContentUser" class="help-content-section">
+      <div class="panel" style="margin-bottom:16px;">
+        <h3 style="margin:0 0 12px;font-size:16px;color:var(--primary);display:flex;align-items:center;gap:8px;">
+          <span>🔬</span> 1. 연구장비 포털 &amp; 디지털 로그북 이용법
+        </h3>
+        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
+          <p>• <b>장비 목록 및 상태 확인</b>: 연구장비 포털 탭에서 10대 장비(XRD, Bonder, Evaporator, PPMS 등)의 실시간 가동 상태, 설치 위치, 사양 및 담당자를 확인할 수 있습니다.</p>
+          <p>• <b>장비 가동 세션 등록</b>: 개별 장비 페이지의 <code>[📝 장비 사용 기록 작성]</code> 버튼을 눌러 시료명, 시작·종료 시간, 주요 파라미터를 입력하고 저장하면 전자로그북에 즉시 반영됩니다.</p>
+          <p>• <b>가동 캘린더 및 일자별 상세</b>: 월간 달력에서 일자를 클릭하면 해당 일자에 누가, 어떤 시료를, 몇 분 동안 측정했는지 사용자 상세 목록을 한눈에 볼 수 있습니다.</p>
+          <p>• <b>실시간 가동 피드</b>: 최근 사용 기록을 실시간으로 확인하며, 검색창(🔍)에 연구원명이나 장비명을 입력해 빠르게 찾을 수 있습니다. <code>[더보기]</code>를 누르면 과거 기록을 순차적으로 탐색할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h3 style="margin:0 0 12px;font-size:16px;color:var(--primary);display:flex;align-items:center;gap:8px;">
+          <span>🛠️</span> 2. 연구실 비품 대여 및 간편 반납
+        </h3>
+        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
+          <p>• <b>비품 대여 신청</b>: 비품 목록에서 원하는 공구/측정기의 <code>[⚡ 대여 신청]</code>을 누르고 본인 이름을 입력하면 1인당 최대 3개까지 즉시 대여됩니다.</p>
+          <p>• <b>간편 반납 및 위치 안내</b>: 대여 현황 탭 또는 비품 카드의 <code>[✓ 반납]</code>을 누르면 해당 비품의 원래 보관 위치가 안내되며 원클릭으로 반납 완료됩니다.</p>
+          <p>• <b>24시간 연장</b>: 반납 예정일 연장이 필요한 경우 원터치 <code>[+24시간 연장]</code> 칩을 활용하세요.</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h3 style="margin:0 0 12px;font-size:16px;color:var(--primary);display:flex;align-items:center;gap:8px;">
+          <span>🚨</span> 3. 특별관리물질(법정 44종) 필수 취급일지 작성
+        </h3>
+        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
+          <p>• <b>법적 보존 의무</b>: 산업안전보건법 제420조에 따라 지정된 특별관리물질(Chloroform, Formamide, Hydrazine 등)은 취급 시 반드시 <code>[📝 취급일지 작성]</code>을 완료해야 하며, 기록은 <b>30년간 전산 보존</b>됩니다.</p>
+          <p>• <b>공용 취급대장 열람</b>: 소모품 탭 하단의 <b>공용 취급대장</b>에서 직전 사용자가 언제 얼마만큼 사용했는지, 현재 잔여량이 얼마나 남았는지 상시 투명하게 확인할 수 있습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 관리자 운영 가이드 섹션 -->
+    <div id="helpContentAdmin" class="help-content-section hidden">
+      <div id="helpAdminAuthWarning" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#991b1b;font-size:13px;display:flex;align-items:center;gap:8px;">
+        <span>🔒</span> <b>안내:</b> 관리자 전용 기능(데이터 수정/삭제, CSV 감사 출력, Supabase 연동)을 실제로 조작하시려면 우측 상단의 <b>[관리자 로그인]</b>이 필요합니다.
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h3 style="margin:0 0 12px;font-size:16px;color:#991b1b;display:flex;align-items:center;gap:8px;">
+          <span>📊</span> 1. 장비운영통계 및 주기별 실적 CSV 감사 출력
+        </h3>
+        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
+          <p>• <b>통계 집계 분석</b>: <code>주간 통계</code>(당월 1~5주차), <code>월별 통계</code>(1~12월), <code>연간 통계</code> 탭을 통해 장비별 총 가동 시간, 가동률, 세션 건수, 시료 수량을 실시간 확인합니다.</p>
+          <p>• <b>소속별 비중(어디에서 가장 많이 찍었는지)</b>: 해당 기간에 측정한 연구실별 비중(1위, 2위)과 최다 시편이 자동으로 계산되어 표시됩니다.</p>
+          <p>• <b>감사용 통합 CSV 다운로드</b>: <code>[📥 장비운영통계 CSV 다운로드]</code> 버튼을 누르면 10대 장비 전체 요약 및 개별 세션 로그가 포함된 공인 엑셀 CSV 파일이 즉시 생성됩니다.</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h3 style="margin:0 0 12px;font-size:16px;color:#991b1b;display:flex;align-items:center;gap:8px;">
+          <span>⚡</span> 2. 세션 수정·삭제 및 마스터 데이터 관리
+        </h3>
+        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
+          <p>• <b>잘못 등록된 세션 삭제</b>: 관리자 로그인 상태에서는 장비 상세 페이지 및 타임라인에 <code>[🗑️ 삭제]</code> 버튼이 활성화되어 오등록된 데이터를 즉시 정정할 수 있습니다.</p>
+          <p>• <b>비품 및 소모품 마스터 등록</b>: 신규 비품(식별번호, 보관위치 지정) 등록, 소모품 수량 입고(재고 증가) 처리가 가능합니다.</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <h3 style="margin:0 0 12px;font-size:16px;color:#991b1b;display:flex;align-items:center;gap:8px;">
+          <span>☁️</span> 3. Supabase 클라우드 동기화 및 백업
+        </h3>
+        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
+          <p>• 웹앱에서 저장된 모든 장비 가동 세션은 로컬 브라우저뿐만 아니라 연동된 Supabase 데이터베이스에 자동 동기화됩니다.</p>
+          <p>• Supabase 콘솔(Table Editor)에서 장비별 테이블(예: <code>xrd_logs</code>, <code>equipment_sessions</code>)을 열어 직접 대량의 로그를 검토하거나 내보낼 수 있습니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div id="modalTestDriveBackdrop" class="backdrop">
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="testDriveModalTitle" style="max-width:620px;width:min(620px,94vw);">
       <div class="modal-head">
@@ -1069,7 +1194,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261110_14"></script>
-<script src="app.js?v=20261110_14"></script>
+<script src="consumables_catalog.js?v=20261110_15"></script>
+<script src="app.js?v=20261110_15"></script>
 </body>
 </html>

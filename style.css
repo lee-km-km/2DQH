@@ -7745,3 +7745,97 @@ html:not(.is-admin) .admin-only,
 body:not(.is-admin) .admin-only {
   display: none !important;
 }
+
+/* ========================================================
+   [다크 모드] 특별관리물질 취급일지 작성 폼 & 입력 필드 완벽 다크화
+   ======================================================== */
+[data-theme="dark"] .chem-form-grid input,
+[data-theme="dark"] .chem-form-grid input[type="datetime-local"],
+[data-theme="dark"] .chem-form-grid input[type="text"],
+[data-theme="dark"] .chem-form-grid input[type="number"],
+[data-theme="dark"] .compound-input-group,
+[data-theme="dark"] .compound-input,
+[data-theme="dark"] .compound-unit-input,
+[data-theme="dark"] .compound-select {
+  background: #111827 !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .compound-input-group {
+  background: #111827 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .compound-unit-input {
+  background: #1e293b !important;
+  border-left-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .compound-unit-input:focus {
+  background: #111827 !important;
+  color: #38bdf8 !important;
+}
+[data-theme="dark"] .btn-preset-chip {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .btn-preset-chip:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .btn-preset-chip.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] #chemicalLedgerPanel {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] #chemicalLedgerSummary {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] #chemicalLedgerTableWrap th {
+  background: #111827 !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #232f46 !important;
+}
+[data-theme="dark"] #chemicalLedgerTableWrap td {
+  border-bottom-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+/* 도움말 탭 & 컨텐츠 스타일 */
+.help-tab-btn {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--ink-light);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.help-tab-btn:hover {
+  border-color: var(--primary);
+  color: var(--ink);
+}
+.help-tab-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff !important;
+}
+[data-theme="dark"] .help-tab-btn {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+[data-theme="dark"] .help-tab-btn:hover {
+  color: #f8fafc;
+  border-color: #3b82f6;
+}
+[data-theme="dark"] .help-tab-btn.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
