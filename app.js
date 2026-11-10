@@ -1071,6 +1071,16 @@ function fmtName(id){
 
 function setAdminUI(){
   const isAdm = isAdmin();
+  try {
+    if(isAdm){
+      localStorage.setItem('labstock_is_admin', 'true');
+      if(document.documentElement) document.documentElement.classList.add('is-admin');
+    } else {
+      localStorage.removeItem('labstock_is_admin');
+      if(document.documentElement) document.documentElement.classList.remove('is-admin');
+    }
+  } catch(_){}
+
   if(document.body) document.body.classList.toggle('is-admin', isAdm);
   if($('loginBtn')) $('loginBtn').classList.toggle('hidden', isAdm);
   if($('logoutBtn')) $('logoutBtn').classList.toggle('hidden', !isAdm);
@@ -3885,7 +3895,7 @@ function openEquipmentTestDrive(code){
   if(!modal) return;
 
   const titleEl = $('testDriveModalTitle');
-  if(titleEl) titleEl.textContent = '⚡ ' + currentEq.name + ' 세션 시험 가동 (Test-Drive)';
+  if(titleEl) titleEl.textContent = '📝 ' + currentEq.name + ' 사용 기록 작성';
 
   const container = $('testDriveFormDynamicContent');
   if(!container) return;
@@ -4079,7 +4089,7 @@ async function handleTestDriveFormSubmit(e){
   }
 
   closeEquipmentTestDrive();
-  toast('✓ ' + currentEq.name + ' 시험 가동 기록이 저장되었습니다.');
+  toast('✓ ' + currentEq.name + ' 사용 기록이 저장되었습니다.');
   renderEquipmentTestSessions(code);
 }
 
@@ -4088,7 +4098,7 @@ async function deleteEquipmentSession(id){
     toast('가동 기록 삭제 권한은 관리자에게만 있습니다.');
     return;
   }
-  if(!confirm('이 시험 가동 기록을 삭제하시겠습니까?')) return;
+  if(!confirm('이 사용 기록을 삭제하시겠습니까?')) return;
   equipmentSessions = equipmentSessions.filter(function(s){ return String(s.id) !== String(id); });
   try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
 
@@ -4099,27 +4109,9 @@ async function deleteEquipmentSession(id){
       console.warn('Supabase session delete failed:', err);
     }
   }
-  toast('✓ 시험 기록이 삭제되었습니다.');
+  toast('✓ 가동 기록이 삭제되었습니다.');
   const currentEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
   if(currentEq) renderEquipmentTestSessions(currentEq.code);
-}
-
-function toggleEquipmentActive(eqId){
-  eqId = eqId || currentSelectedEquipment;
-  const eq = researchEquipments.find(function(e){ return e.id === eqId; });
-  if(!eq) return;
-
-  const willBeActive = (eq.status !== 'active');
-  eq.status = willBeActive ? 'active' : 'standby';
-  eq.statusLabel = willBeActive ? '디지털 로그북 운영 중' : '연동 준비 중 (Standby)';
-
-  try {
-    localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
-  } catch(_) {}
-
-  toast(willBeActive ? ('🟢 ' + eq.name + ' 실운영 모드로 활성화되었습니다.') : ('⚪ ' + eq.name + ' 대기(Standby) 모드로 전환되었습니다.'));
-  selectResearchEquipment(eqId);
-  renderEquipmentPortalGrid();
 }
 
 function renderEquipmentPortalGrid(){
@@ -4164,19 +4156,17 @@ function renderEquipmentPortalGrid(){
     const isBonder = (eq.code === 'WireBonder');
     const isActive = (eq.status === 'active' || isXrd || isBonder);
 
-    let actionBtnText = '🔍 상세 규격 및 시험가동';
+    let actionBtnText = '📖 전자 로그북 열기';
     if(isXrd){
-      actionBtnText = '⚡ HR-XRD 전자로그북 열기';
+      actionBtnText = '📖 HR-XRD 전자 로그북 열기';
     } else if(isBonder){
-      actionBtnText = '⚡ Wire Bonder 전자 로그북 열기';
+      actionBtnText = '📖 Wire Bonder 전자 로그북 열기';
     } else if(isActive){
-      actionBtnText = '⚡ ' + safe(eq.code) + ' 전자로그북 열기';
+      actionBtnText = '📖 ' + safe(eq.code) + ' 전자 로그북 열기';
     }
 
     const actionBtnHtml = '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;"' : '') + '>' + actionBtnText + '</button>';
-    const statusBadgeHtml = isActive
-      ? '<span class="eq-card-cat-badge" style="background:rgba(22,101,52,0.85);color:#bbf7d0;border-color:rgba(187,247,208,0.4);">🟢 실운영 (로그북)</span>'
-      : '<span class="eq-card-cat-badge">' + safe(eq.categoryName || '장비') + '</span>';
+    const statusBadgeHtml = '<span class="eq-card-cat-badge">' + safe(eq.categoryName || '장비') + '</span>';
 
     html +=
       '<div class="eq-compact-card' + (isActive ? ' is-active-equipment' : '') + '" data-select-eq="' + safe(eq.id) + '">' +
@@ -4406,19 +4396,10 @@ function renderEquipmentAnalyticsScopeChips(){
   const isAll = (selectedAnalyticsEquipmentId === 'all');
   if(isAll){
     if(descEl) descEl.textContent = '전체 10대 연구장비 통합 운영 관리 오버뷰';
-    if(goBtn) goBtn.classList.add('hidden');
   } else {
     const selectedEq = researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
     if(descEl && selectedEq) {
       descEl.textContent = selectedEq.name + ' [' + selectedEq.code + '] 독립 세션 및 ' + periodName;
-    }
-    if(goBtn && selectedEq){
-      goBtn.classList.remove('hidden');
-      goBtn.innerHTML = '👉 ' + safe(selectedEq.code || selectedEq.name) + ' 전자 로그북 열기';
-      goBtn.onclick = function(){
-        showView('logbook');
-        selectResearchEquipment(selectedEq.id);
-      };
     }
   }
 }
@@ -5513,7 +5494,7 @@ function renderEquipmentCalendarDateDetail(dateStr, allSessions){
     const sample = s.sample_name || '시료 미지정';
     const sampleCnt = s.sample_count || 1;
     const timeRange = (s.start_time || '') + (s.end_time ? ' ~ ' + s.end_time : '');
-    const purpose = s.purpose || (s.parameters && s.parameters.mode) || (s.type === 'active' ? '실운영 로그' : '시험 가동');
+    const purpose = s.purpose || (s.parameters && s.parameters.mode) || '장비 가동';
 
     html += '<div class="eq-cal-user-card">';
     html += '  <div class="user-top">';
@@ -5593,7 +5574,7 @@ function renderEquipmentRecentTimeline(allSessions){
     html += '  <div class="eq-timeline-content">';
     html += '    <div class="eq-timeline-title">';
     html += '      <span>' + (s.icon || '🔬') + ' ' + safe(s.equipment_name) + '</span>';
-    html += '      <span class="eq-util-tag ' + (s.type === 'active' ? 'active' : 'standby') + '">' + (s.type === 'active' ? '실운영 로그' : '시험 가동') + '</span>';
+    
     html += '    </div>';
     html += '    <div style="font-weight:600;color:var(--ink);margin-bottom:4px;font-size:13px;">' + safe(s.sample_name || '시료 미지정') + ' <span style="font-weight:400;color:var(--ink-light);font-size:12px;">(' + (s.sample_count || 1) + '개)</span></div>';
     html += '    <div style="margin-bottom:4px;"><span class="eq-timeline-param-tag">⚡ ' + safe(paramStr) + '</span></div>';
@@ -5737,7 +5718,7 @@ function exportUnifiedSessionsCsv(){
       const prof = s.professor || '';
       const sample = s.sample_name || '시료 미지정';
       const sampleCnt = s.sample_count || 1;
-      const purpose = s.purpose || (s.parameters && s.parameters.mode) || (s.type === 'active' ? '실운영' : '시험가동');
+      const purpose = s.purpose || (s.parameters && s.parameters.mode) || '장비 가동';
       const memo = String(s.memo || '').replace(/[\r\n]+/g, ' ').trim();
 
       lines.push([
@@ -5841,16 +5822,10 @@ function selectResearchEquipment(eqId){
     const noticeEl = $('eqStandbyNoticeText');
     if(noticeEl){
       if(isActive){
-        noticeEl.innerHTML = '<b>디지털 전자 로그북 운영 중:</b><br>하단의 <b>[⚡ 시험 가동 (Test-Drive)]</b> 버튼을 눌러 소자 본딩/패키징 파라미터 및 세션 가동 일지를 즉시 기록할 수 있습니다.';
+        noticeEl.innerHTML = '<b>장비 운영 안내:</b><br>하단의 <b>[📝 장비 사용 기록 작성]</b> 버튼을 통해 측정 파라미터 및 세션 일지를 전산으로 등록할 수 있습니다.';
       } else {
         noticeEl.innerHTML = '<b>장비 사용 및 수기 일지 안내:</b><br>현재 오프라인 현장 일지로 운영되고 있습니다. 장비 사용 예약, 트레이닝 교육 이수 및 로그북 전산화 요청은 담당 오퍼레이터에게 문의 바랍니다.';
       }
-    }
-
-    const toggleBtn = $('btnToggleEqActive');
-    if(toggleBtn){
-      toggleBtn.textContent = isActive ? '⚪ 대기(Standby)로 전환' : '🟢 실운영 활성화';
-      toggleBtn.title = isActive ? '이 장비를 대기 상태로 변경합니다.' : '이 장비를 실운영 디지털 로그북으로 활성화합니다.';
     }
 
     renderEquipmentSchemaPreview(selected.code);
@@ -8038,11 +8013,6 @@ function bindEvents(){
 
     if(target.id === 'closeTestDriveModal' || target.id === 'btnCancelTestDrive' || target.closest('#closeTestDriveModal')){
       closeEquipmentTestDrive();
-      return;
-    }
-
-    if(target.id === 'btnToggleEqActive' || target.closest('#btnToggleEqActive')){
-      toggleEquipmentActive(currentSelectedEquipment);
       return;
     }
 

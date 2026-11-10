@@ -7462,3 +7462,28 @@ body:not(.is-admin) [data-delete-eq-session] {
 
 
 
+
+
+/* ========================================================
+   [Instant Admin Status Sync - Eliminates FOUC on page refresh]
+   ======================================================== */
+html.is-admin #loginBtn,
+html.is-admin #sidebarLoginBtn {
+  display: none !important;
+}
+html.is-admin #logoutBtn {
+  display: inline-flex !important;
+}
+html.is-admin #sidebarAdminProfile {
+  display: flex !important;
+}
+html.is-admin .admin-only {
+  display: block;
+}
+
+html:not(.is-admin) #logoutBtn,
+html:not(.is-admin) #sidebarAdminProfile,
+html:not(.is-admin) .admin-only,
+body:not(.is-admin) .admin-only {
+  display: none !important;
+}
