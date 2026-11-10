@@ -8621,3 +8621,502 @@ body:not(.is-admin) .admin-only {
   line-height: 1.6;
   color: var(--ink);
 }
+
+
+/* ==========================================================================
+   N센터 291호 연구실 안전관리시스템 규격 스타일 (Image 1, 2, 3 완벽 구현)
+   ========================================================================== */
+
+/* 1. 상단 메인 탭 */
+.chem-portal-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 2px solid #0f172a;
+  margin-bottom: 16px;
+  padding-bottom: 0;
+}
+.chem-main-tabs {
+  display: flex;
+  gap: 2px;
+}
+.chem-main-tab {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: var(--bg-subtle);
+  color: var(--ink-light);
+  cursor: pointer;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  transition: all 0.15s ease;
+}
+.chem-main-tab:hover {
+  color: var(--ink);
+}
+.chem-main-tab.active {
+  background: var(--bg);
+  border-color: #0f172a;
+  border-top: 3px solid #0f172a;
+  color: var(--ink);
+  font-weight: 800;
+}
+[data-theme="dark"] .chem-portal-nav-bar {
+  border-bottom-color: #3b82f6;
+}
+[data-theme="dark"] .chem-main-tab.active {
+  border-color: #3b82f6;
+  border-top: 3px solid #3b82f6;
+}
+
+.btn-guide-dl {
+  background: #334155;
+  color: #ffffff;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+.btn-guide-dl:hover {
+  background: #1e293b;
+}
+
+/* 2. 291호 검색 필터 박스 (Image 1 규격) */
+.chem-search-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  font-size: 12.5px;
+}
+.chem-search-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.search-field label {
+  width: 60px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: right;
+  flex-shrink: 0;
+}
+.search-field input, .search-field select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.chem-search-row-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 0;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+.filter-check-group, .filter-radio-group, .filter-cond-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.filter-group-title {
+  font-weight: 700;
+  color: var(--ink);
+}
+.filter-check-group label, .filter-radio-group label, .filter-cond-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.chem-search-actions {
+  display: flex;
+  gap: 6px;
+}
+.btn-chem-search {
+  background: #1e293b;
+  color: #ffffff;
+  border: 1px solid #1e293b;
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-chem-reset {
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+/* 3. 테이블 상단 액션 툴바 (공식 버튼 바) */
+.chem-table-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.chem-total-count-box {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.chem-total-count-box b {
+  color: #2563eb;
+}
+.sort-radio-box {
+  display: inline-flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-light);
+}
+
+.chem-action-buttons-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.btn-korea-action {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-korea-action:hover {
+  filter: brightness(0.95);
+}
+.btn-korea-action.red {
+  background: #b91c1c;
+  color: #ffffff;
+  border-color: #b91c1c;
+}
+.btn-korea-action.blue {
+  background: #1e3a8a;
+  color: #ffffff;
+  border-color: #1e3a8a;
+}
+.btn-korea-action.green {
+  background: #15803d;
+  color: #ffffff;
+  border-color: #15803d;
+}
+.btn-korea-action.dark {
+  background: #334155;
+  color: #ffffff;
+  border-color: #334155;
+}
+
+/* 4. 재고 테이블 (Image 1 규격) */
+.chem-inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.chem-inventory-table th {
+  background: #f1f5f9;
+  color: #1e293b;
+  font-weight: 700;
+  padding: 8px 6px;
+  border: 1px solid #cbd5e1;
+  white-space: nowrap;
+}
+[data-theme="dark"] .chem-inventory-table th {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: #334155;
+}
+.chem-inventory-table td {
+  padding: 7px 6px;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+}
+.chem-inventory-table tbody tr:hover {
+  background: rgba(37,99,235,0.03);
+}
+
+.chem-badge-hazard {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 11px;
+}
+.chem-badge-hazard.hazard-f {
+  background: #4ade80;
+  color: #064e3b;
+}
+.chem-badge-hazard.hazard-d {
+  background: #fde047;
+  color: #713f12;
+}
+
+.btn-table-action {
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 3px;
+  border: 1px solid #94a3b8;
+  background: #f8fafc;
+  color: #0f172a;
+  cursor: pointer;
+  margin-right: 2px;
+}
+.btn-table-action.dark {
+  background: #475569;
+  color: #ffffff;
+  border-color: #475569;
+}
+.btn-table-action.danger {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+/* 5. 특별관리물질 고지 A4 서식 (Image 2 서식 1:1 완벽 구현) */
+.chem-notice-official-card {
+  width: 100%;
+  max-width: 720px;
+  border: 4px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  padding: 20px 30px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  font-family: "Malgun Gothic", "Pretendard", -apple-system, sans-serif;
+}
+.notice-top-banner {
+  background: #fef9c3;
+  border: 2px solid #000000;
+  padding: 8px 10px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.notice-title-main {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: #000000;
+}
+.notice-restricted-title {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+  color: #000000;
+}
+.notice-substance-name-red {
+  text-align: center;
+  font-size: 26px;
+  font-weight: 900;
+  color: #dc2626;
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+.notice-substance-sub-red {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #dc2626;
+  margin-bottom: 28px;
+}
+
+.notice-bottom-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 2px solid #000000;
+  padding-top: 20px;
+}
+.notice-hazard-table-box {
+  width: 48%;
+}
+.notice-hazard-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #000000;
+}
+.notice-hazard-table td {
+  border: 1px solid #000000;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 800;
+}
+.td-hazard-label {
+  color: #dc2626;
+  width: 70%;
+}
+.td-hazard-check {
+  color: #dc2626;
+  text-align: center;
+  width: 30%;
+  font-size: 18px;
+}
+
+.notice-rules-box {
+  width: 48%;
+  text-align: left;
+  padding-left: 20px;
+}
+.rule-line {
+  font-size: 22px;
+  font-weight: 900;
+  color: #000000;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+.rule-line:last-child { margin-bottom: 0; }
+
+/* 6. 월별 캘린더 */
+.chem-cal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.chem-cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.chem-cal-month-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+  min-width: 110px;
+  text-align: center;
+}
+.chem-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.chem-cal-day-cell {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-height: 90px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+}
+.chem-cal-day-cell.other-month {
+  opacity: 0.35;
+  background: var(--bg-subtle);
+}
+.chem-cal-day-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.chem-cal-day-cell.has-logs {
+  background: rgba(37,99,235,0.04);
+  border-color: #93c5fd;
+  cursor: pointer;
+}
+.chem-cal-badge {
+  display: block;
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 7. 도움말 라이트모드 텍스트 가독성 강화 */
+.help-hero-banner {
+  background: var(--bg) !important;
+  color: var(--ink) !important;
+}
+.help-hero-title {
+  color: #0f172a !important;
+}
+[data-theme="dark"] .help-hero-title {
+  color: #f8fafc !important;
+}
+.help-hero-desc {
+  color: #475569 !important;
+}
+[data-theme="dark"] .help-hero-desc {
+  color: #94a3b8 !important;
+}
+
+.help-tab-btn {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+.help-tab-btn:hover {
+  background: #e2e8f0 !important;
+}
+.help-tab-btn.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+[data-theme="dark"] .help-tab-btn {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .help-tab-btn.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.help-card-list li {
+  color: #1e293b !important;
+}
+[data-theme="dark"] .help-card-list li {
+  color: #e2e8f0 !important;
+}
