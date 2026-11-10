@@ -476,12 +476,18 @@
 
             <!-- 우: 실시간 통합 최근 가동 피드 (Unified Activity Timeline) -->
             <div class="panel eq-analytics-panel">
-              <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-                <div style="display:flex;align-items:center;gap:8px;">
+              <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                   <h3 style="margin:0;font-size:15px;color:var(--ink);">🕒 실시간 가동 피드</h3>
                   <span id="eqTimelineDateFilterBadge" class="eq-timeline-date-badge hidden"></span>
+                  <span id="eqTimelineCountBadge" class="eq-timeline-count-badge">0건</span>
                 </div>
+                <div class="eq-timeline-search-box">
+                  <span class="search-icon" style="font-size:12px;opacity:0.6;">🔍</span>
+                  <input type="text" id="eqTimelineSearchInput" placeholder="연구원/장비/시료 검색..." autocomplete="off">
+                  <button type="button" id="btnTimelineSearchClear" class="btn-clear-search hidden" title="검색어 지우기">✕</button>
                 </div>
+              </div>
               <div id="eqRecentTimelineList"></div>
             </div>
           </div>
@@ -1063,7 +1069,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261110_12"></script>
-<script src="app.js?v=20261110_12"></script>
+<script src="consumables_catalog.js?v=20261110_14"></script>
+<script src="app.js?v=20261110_14"></script>
 </body>
 </html>

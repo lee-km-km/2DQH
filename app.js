@@ -306,6 +306,9 @@ let currentCalendarYear = new Date().getFullYear();
 let currentCalendarMonth = new Date().getMonth() + 1;
 let timelineFilter = 'all'; // 'all' | 'active' | 'test'
 let timelineDateFilter = null; // 'YYYY-MM-DD' | null
+let timelineDisplayLimit = 6; // 타임라인 페이징 기본 표시 건수
+let timelineSearchQuery = ''; // 실시간 가동 피드 검색어
+let lastTimelineSessions = null; // 최근 렌더링된 세션 목록 캐시
 
 // [연구장비 범용 파라미터 규격 스키마 (전 기종 표준)]
 const EQUIPMENT_SCHEMAS = {
@@ -5731,20 +5734,61 @@ function renderEquipmentCalendarDateDetail(dateStr, allSessions){
   }
 }
 
+function initEquipmentTimelineControls(){
+  const searchInput = $('eqTimelineSearchInput');
+  const clearBtn = $('btnTimelineSearchClear');
+  if(searchInput && !searchInput.__bound){
+    searchInput.__bound = true;
+    searchInput.addEventListener('input', function(){
+      timelineSearchQuery = (this.value || '').trim();
+      if(clearBtn){
+        clearBtn.classList.toggle('hidden', !timelineSearchQuery);
+      }
+      timelineDisplayLimit = 6;
+      renderEquipmentRecentTimeline();
+    });
+  }
+  if(clearBtn && !clearBtn.__bound){
+    clearBtn.__bound = true;
+    clearBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      if(searchInput){
+        searchInput.value = '';
+      }
+      timelineSearchQuery = '';
+      clearBtn.classList.add('hidden');
+      timelineDisplayLimit = 6;
+      renderEquipmentRecentTimeline();
+      if(searchInput) searchInput.focus();
+    });
+  }
+}
+
 function renderEquipmentRecentTimeline(allSessions){
   const container = $('eqRecentTimelineList');
   const badgeEl = $('eqTimelineDateFilterBadge');
+  const countBadgeEl = $('eqTimelineCountBadge');
   if(!container) return;
 
-  allSessions = allSessions || getUnifiedEquipmentSessions();
+  // 실시간 검색 컨트롤 초기화
+  initEquipmentTimelineControls();
 
-  let filtered = allSessions;
+  if(allSessions){
+    lastTimelineSessions = allSessions;
+  } else {
+    allSessions = lastTimelineSessions || getUnifiedEquipmentSessions();
+  }
+
+  let filtered = allSessions.slice();
+
+  // 1. 타임라인 필터 (active / test)
   if(timelineFilter === 'active'){
     filtered = filtered.filter(function(s){ return s.type === 'active' || s.is_live; });
   } else if(timelineFilter === 'test'){
     filtered = filtered.filter(function(s){ return s.type === 'test'; });
   }
 
+  // 2. 캘린더 날짜 필터 (특정 일자 선택)
   if(timelineDateFilter){
     filtered = filtered.filter(function(s){
       return normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : '')) === timelineDateFilter;
@@ -5758,6 +5802,7 @@ function renderEquipmentRecentTimeline(allSessions){
           e.preventDefault();
           e.stopPropagation();
           timelineDateFilter = null;
+          timelineDisplayLimit = 6;
           renderEquipmentAnalyticsDashboard();
         });
       }
@@ -5769,57 +5814,176 @@ function renderEquipmentRecentTimeline(allSessions){
     }
   }
 
-  const filterBtns = document.querySelectorAll('#eqTimelineFilters [data-timeline-filter]');
-  filterBtns.forEach(function(b){
-    b.classList.toggle('active', b.dataset.timelineFilter === timelineFilter);
-  });
+  // 3. 실시간 텍스트 검색 필터
+  if(timelineSearchQuery){
+    const q = timelineSearchQuery.toLowerCase();
+    filtered = filtered.filter(function(s){
+      const name = (s.user_name || '').toLowerCase();
+      const eq = (s.equipment_name || '').toLowerCase();
+      const affil = (s.affiliation || '').toLowerCase();
+      const sample = (s.sample_name || '').toLowerCase();
+      const memo = (s.memo || '').toLowerCase();
+      const purpose = (s.purpose || '').toLowerCase();
+      return name.includes(q) || eq.includes(q) || affil.includes(q) || sample.includes(q) || memo.includes(q) || purpose.includes(q);
+    });
+  }
 
+  // 4. 총 건수 뱃지 갱신
+  if(countBadgeEl){
+    countBadgeEl.textContent = '총 ' + filtered.length + '건';
+  }
+
+  // 5. 검색 결과 부재 시 안내
   if(filtered.length === 0){
-    container.innerHTML = '<div style="text-align:center;padding:32px 16px;color:#64748b;font-size:13.5px;">해당 조건의 연구장비 가동 기록이 없습니다.</div>';
+    container.innerHTML = '<div style="text-align:center;padding:36px 16px;color:var(--ink-light);font-size:13px;background:var(--bg);border:1px dashed var(--border);border-radius:8px;">' +
+      (timelineSearchQuery ? '🔍 "<b>' + safe(timelineSearchQuery) + '</b>" 검색 조건과 일치하는 가동 로그가 없습니다.' : '해당 조건의 연구장비 가동 기록이 없습니다.') +
+      '</div>';
     return;
   }
 
+  // 6. 최신 순 정렬 (used_on 내림차순, start_time 내림차순)
+  filtered.sort(function(a, b){
+    const dateA = normalizeExportDate(a.used_on || (a.created_at ? a.created_at.slice(0, 10) : '')) || '';
+    const dateB = normalizeExportDate(b.used_on || (b.created_at ? b.created_at.slice(0, 10) : '')) || '';
+    if(dateA !== dateB) return dateB.localeCompare(dateA);
+    const timeA = a.start_time || '';
+    const timeB = b.start_time || '';
+    return timeB.localeCompare(timeA);
+  });
+
+  const totalCount = filtered.length;
+  const currentLimit = Math.min(timelineDisplayLimit, totalCount);
+  const visibleItems = filtered.slice(0, currentLimit);
+
+  // 7. 일자별 그룹화 (Date Grouping)
+  const todayStr = today();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+
+  const groups = {};
+  visibleItems.forEach(function(s){
+    const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : '')) || '기타 일자';
+    if(!groups[d]) groups[d] = [];
+    groups[d].push(s);
+  });
+
   let html = '<div class="eq-timeline-feed">';
-  filtered.slice(0, 30).forEach(function(s){
-    let paramSummary = [];
-    if(s.parameters){
-      for(const k in s.parameters){
-        const val = s.parameters[k];
-        if(val !== undefined && val !== null && val !== false && val !== ''){
-          paramSummary.push(k + ': ' + val);
-        }
+
+  for(const dateKey in groups){
+    const sessionsInDate = groups[dateKey];
+    let dateLabel = dateKey;
+    if(dateKey === todayStr){
+      dateLabel = '오늘 · ' + dateKey;
+    } else if(dateKey === yesterdayStr){
+      dateLabel = '어제 · ' + dateKey;
+    } else if(dateKey.length === 10){
+      const dObj = new Date(dateKey + 'T00:00:00');
+      const dayIdx = dObj.getDay();
+      if(!isNaN(dayIdx)){
+        dateLabel = dateKey + ' (' + days[dayIdx] + ')';
       }
     }
-    const paramStr = paramSummary.length ? paramSummary.slice(0, 3).join(', ') : '기본 운영 파라미터';
 
-    html += '<div class="eq-timeline-entry ' + (s.type === 'test' ? 'test' : '') + '">';
-    html += '  <div class="eq-timeline-time-col">';
-    html += '    <b>' + safe(s.used_on || '') + '</b>';
-    html += '    <span>' + safe(s.start_time || '') + (s.end_time ? ' ~ ' + safe(s.end_time) : '') + '</span>';
-    html += '    <span style="color:var(--primary);font-weight:600;">⏱️ ' + (s.duration_min || 0) + '분</span>';
+    html += '<div class="eq-timeline-date-group">';
+    html += '  <div class="eq-timeline-date-header">';
+    html += '    <span class="date-badge">📅 <b>' + safe(dateLabel) + '</b></span>';
+    html += '    <span class="date-count">' + sessionsInDate.length + '건 가동</span>';
     html += '  </div>';
-    html += '  <div class="eq-timeline-content">';
-    html += '    <div class="eq-timeline-title">';
-    html += '      <span>' + (s.icon || '🔬') + ' ' + safe(s.equipment_name) + '</span>';
-    
-    html += '    </div>';
-    html += '    <div style="font-weight:600;color:var(--ink);margin-bottom:4px;font-size:13px;">' + safe(s.sample_name || '시료 미지정') + ' <span style="font-weight:400;color:var(--ink-light);font-size:12px;">(' + (s.sample_count || 1) + '개)</span></div>';
-    html += '    <div style="margin-bottom:4px;"><span class="eq-timeline-param-tag">⚡ ' + safe(paramStr) + '</span></div>';
-    html += '    <div style="font-size:12px;color:var(--ink-light);display:flex;justify-content:space-between;align-items:center;">';
-    html += '      <span>👤 ' + safe(s.user_name || '연구원') + ' (' + safe(s.affiliation || '2DQH') + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span>';
-    html += '      <button type="button" class="text-link" data-select-util-eq="' + safe(s.equipment_id) + '" style="font-size:12px;color:var(--primary);background:none;border:0;cursor:pointer;text-decoration:underline;">장비 페이지 →</button>';
-    html += '    </div>';
-    if(s.memo){
-      html += '    <div style="font-size:12px;color:var(--ink-light);margin-top:4px;">📝 ' + safe(s.memo) + '</div>';
-    }
-    html += '  </div>';
+
+    sessionsInDate.forEach(function(s){
+      let paramSummary = [];
+      if(s.parameters){
+        for(const k in s.parameters){
+          const val = s.parameters[k];
+          if(val !== undefined && val !== null && val !== false && val !== ''){
+            paramSummary.push(k + ': ' + val);
+          }
+        }
+      }
+      const paramStr = paramSummary.length ? paramSummary.slice(0, 3).join(', ') : '기본 운영 파라미터';
+      const timeStr = (s.start_time || '') + (s.end_time ? ' ~ ' + s.end_time : '');
+      const durMins = s.duration_min || 0;
+
+      html += '<div class="eq-timeline-entry ' + (s.type === 'test' ? 'test' : '') + '">';
+      html += '  <div class="eq-timeline-time-col">';
+      if(timeStr){
+        html += '    <b>' + safe(timeStr) + '</b>';
+      }
+      html += '    <span style="color:var(--primary);font-weight:700;">⏱️ ' + durMins + '분</span>';
+      html += '  </div>';
+      html += '  <div class="eq-timeline-content">';
+      html += '    <div class="eq-timeline-title">';
+      html += '      <span>' + (s.icon || '🔬') + ' ' + safe(s.equipment_name) + '</span>';
+      html += '    </div>';
+      html += '    <div style="font-weight:600;color:var(--ink);margin-bottom:3px;font-size:12.5px;">' + safe(s.sample_name || '시료 미지정') + ' <span style="font-weight:400;color:var(--ink-light);font-size:11.5px;">(' + (s.sample_count || 1) + '개)</span></div>';
+      html += '    <div style="margin-bottom:4px;"><span class="eq-timeline-param-tag">⚡ ' + safe(paramStr) + '</span></div>';
+      html += '    <div style="font-size:11.5px;color:var(--ink-light);display:flex;justify-content:space-between;align-items:center;">';
+      html += '      <span>👤 ' + safe(s.user_name || '연구원') + ' (' + safe(s.affiliation || '2DQH') + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span>';
+      html += '      <button type="button" class="text-link" data-select-util-eq="' + safe(s.equipment_id) + '" style="font-size:11.5px;color:var(--primary);background:none;border:0;cursor:pointer;text-decoration:underline;">장비 상세 →</button>';
+      html += '    </div>';
+      if(s.memo){
+        html += '    <div style="font-size:11.5px;color:var(--ink-light);margin-top:3px;background:rgba(0,0,0,0.02);padding:3px 6px;border-radius:4px;">📝 ' + safe(s.memo) + '</div>';
+      }
+      html += '  </div>';
+      html += '</div>';
+    });
+
+    html += '</div>'; // end eq-timeline-date-group
+  }
+
+  // 8. 페이징 더보기 / 접기 컨트롤
+  if(totalCount > currentLimit){
+    const remaining = totalCount - currentLimit;
+    const nextBatch = Math.min(6, remaining);
+    html += '<div class="eq-timeline-load-more-bar">';
+    html += '  <button type="button" id="btnTimelineLoadMore" class="btn-timeline-load-more">';
+    html += '    <span>▼ 최근 가동 로그 더보기</span>';
+    html += '    <span class="load-more-count">(' + currentLimit + ' / ' + totalCount + '건 표시 중 · +' + nextBatch + '건)</span>';
+    html += '  </button>';
+    html += '  <button type="button" id="btnTimelineShowAll" class="btn-timeline-show-all" title="전체 로그 한 번에 보기">';
+    html += '    전체 펼치기';
+    html += '  </button>';
     html += '</div>';
-  });
-  html += '</div>';
+  } else if(totalCount > 6){
+    html += '<div class="eq-timeline-end-msg">';
+    html += '  <span>✓ 총 ' + totalCount + '건의 최근 가동 로그가 모두 표시되었습니다.</span>';
+    html += '  <button type="button" id="btnTimelineCollapse" class="btn-timeline-collapse">처음 6건으로 접기</button>';
+    html += '</div>';
+  }
 
+  html += '</div>'; // end eq-timeline-feed
   container.innerHTML = html;
-}
 
+  // 9. 더보기 / 접기 이벤트 바인딩
+  const loadMoreBtn = $('btnTimelineLoadMore');
+  if(loadMoreBtn){
+    loadMoreBtn.onclick = function(e){
+      e.preventDefault();
+      timelineDisplayLimit += 6;
+      renderEquipmentRecentTimeline();
+    };
+  }
+  const showAllBtn = $('btnTimelineShowAll');
+  if(showAllBtn){
+    showAllBtn.onclick = function(e){
+      e.preventDefault();
+      timelineDisplayLimit = totalCount;
+      renderEquipmentRecentTimeline();
+    };
+  }
+  const collapseBtn = $('btnTimelineCollapse');
+  if(collapseBtn){
+    collapseBtn.onclick = function(e){
+      e.preventDefault();
+      timelineDisplayLimit = 6;
+      renderEquipmentRecentTimeline();
+      const feed = container.querySelector('.eq-timeline-feed');
+      if(feed) feed.scrollTop = 0;
+    };
+  }
+}
 function exportUnifiedSessionsCsv(){
   const allSessions = getUnifiedEquipmentSessions();
   if(allSessions.length === 0){
