@@ -25,7 +25,7 @@ function addEvt(id, evt, handler){
 // ==========================================
 // [기능 스위치 & 로컬 Mock 데이터 스토리지]
 // ==========================================
-// 소모품 위치 안내 도감 기능 활성화
+// 소모품 위치 안내 기능 활성화
 const ENABLE_CONSUMABLES = true;
 // 연구장비 전자 로그북(사용일지) 기능 활성화 (독립 모듈 스위치 / 백도어 플래그)
 const ENABLE_EQUIPMENT_LOGBOOK = true;
@@ -227,7 +227,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
 ];
 // [2-in-1 연구 포털 모듈 아키텍처]
 // lims: 성균관대 AQT/SESS 연구장비 & 전자로그북 전문 시스템
-// inventory: IBS 2DQH 연구실 자재·소모품 재고 및 공용 비품 대여 시스템
+// inventory: IBS 2DQH 연구실 비품 및 소모품 재고와 대여 시스템
 let currentPortalModule = 'lims'; // 'lims' | 'inventory'
 
 function setPortalModule(mod, options){
@@ -265,7 +265,7 @@ function setPortalModule(mod, options){
   const infoDesc = $('sidebarInfoDesc');
   if(mod === 'lims'){
     if(infoBadge) infoBadge.textContent = 'IBS 2DQH';
-    if(infoTitle) infoTitle.textContent = '양자기술첨단기기센터 LIMS';
+    if(infoTitle) infoTitle.textContent = '성균관대 양자기술첨단기기센터';
     if(infoDesc) infoDesc.textContent = 'SESS 연동 정밀기기 운용 및 로그북';
   } else {
     if(infoBadge) infoBadge.textContent = 'IBS 2DQH';
@@ -307,7 +307,7 @@ let currentCalendarMonth = new Date().getMonth() + 1;
 let timelineFilter = 'all'; // 'all' | 'active' | 'test'
 let timelineDateFilter = null; // 'YYYY-MM-DD' | null
 
-// [Phase 2: LIMS 범용 장비 파라미터 스키마 레지스트리 (9대 전 기종 표준)]
+// [연구장비 범용 파라미터 규격 스키마 (전 기종 표준)]
 const EQUIPMENT_SCHEMAS = {
   'XRD': {
     name: 'HR-XRD (고분해능 X선 회절분석기)',
@@ -624,7 +624,7 @@ const DEFAULT_2DQH_ASSETS = [
 
 const DEFAULT_MOCK_ASSETS = DEFAULT_2DQH_ASSETS;
 
-// 2DQH 이차원양자헤테로구조체연구단 시약 도감 표준 카탈로그 (외부 consumables_catalog.js 연동)
+// 2DQH 이차원양자헤테로구조체연구단 시약 표준 카탈로그 (외부 consumables_catalog.js 연동)
 const DEFAULT_2DQH_CONSUMABLES = (typeof window !== 'undefined' && Array.isArray(window.DEFAULT_2DQH_CONSUMABLES) && window.DEFAULT_2DQH_CONSUMABLES.length > 0)
   ? window.DEFAULT_2DQH_CONSUMABLES
   : [];
@@ -1292,7 +1292,6 @@ function applyFeatureToggles(){
 
 function render(){
   applyFeatureToggles();
-  renderHome();
   renderMetrics();
   renderDashboard();
   renderInventory();
@@ -2067,7 +2066,7 @@ function renderLoans(){
 }
 
 // ==========================================
-// [소모품 및 시약 도감 모듈]
+// [소모품 및 시약 목록 모듈]
 // ==========================================
 const CONSUMABLE_CATEGORIES = [
   '자주찾는 소모품',
@@ -2856,10 +2855,7 @@ function initXrdControls(){
     });
   }
 
-  const btnExportXrd = $('btnExportXrdCsv');
-  if(btnExportXrd){
-    btnExportXrd.addEventListener('click', exportXrdLogsCsv);
-  }
+
 
   // 2DQH-XRD_log 공식 상단 주의사항 바로가기 스크롤
   const openNotice = $('xrdOpenNotice');
@@ -3634,12 +3630,7 @@ function applyTheme(theme){
   document.documentElement.setAttribute('data-theme', theme);
   const isDark = (theme === 'dark');
   const icon = $('themeToggleIcon');
-  const text = $('themeToggleText');
-  const logbookBtn = $('btnLogbookThemeToggle');
-
   if(icon) icon.textContent = isDark ? '☀️' : '🌙';
-  if(text) text.textContent = isDark ? '라이트' : '다크';
-  if(logbookBtn) logbookBtn.textContent = isDark ? '☀️ 일반 모드' : '🌙 암실 모드';
 }
 
 function toggleTheme(){
@@ -3738,7 +3729,7 @@ function downloadEquipmentQrImage(){
 }
 
 // ========================================================
-// [Phase 2: LIMS 파라미터 엔진 & 시험 가동(Test-Drive) 관리]
+// [연구장비 파라미터 규격 & 시험 가동 관리]
 // ========================================================
 function renderEquipmentSchemaPreview(code){
   const container = $('eqSchemaContent');
@@ -3916,7 +3907,7 @@ function openEquipmentTestDrive(code){
   formHtml += '  <label class="xrd-mini">가동 시간(분)<input name="duration_min" type="number" min="5" step="5" value="60" required></label>';
   formHtml += '</div>';
   formHtml += '<div class="xrd-grid xrd-c3">';
-  formHtml += '  <label class="xrd-mini">사용자 이름<input name="user_name" value="' + safe(storedUser) + '" placeholder="연구원 성명" required></label>';
+  formHtml += '  <label class="xrd-mini">사용자 이름<input name="user_name" value="' + safe(storedUser) + '" placeholder="사용자 성명" required></label>';
   formHtml += '  <label class="xrd-mini">소속 연구실<input name="affiliation" value="' + safe(storedAffil) + '" placeholder="e.g. 2DQH"></label>';
   formHtml += '  <label class="xrd-mini">지도교수<input name="professor" value="' + safe(storedProf) + '" placeholder="e.g. 신현석 교수님"></label>';
   formHtml += '</div>';
@@ -4368,16 +4359,10 @@ function getMonthWeeks(year, month){
   return weeks;
 }
 
-function getRecent8Weeks(){
-  return getMonthWeeks(currentCalendarYear, currentCalendarMonth);
-}
-
 function renderEquipmentAnalyticsScopeChips(){
-  const container = $('eqAnalyticsScopeChips');
   const selEl = $('eqAnalyticsSelect');
   const descEl = $('eqAnalyticsScopeDesc');
   const periodDescEl = $('eqAnalyticsPeriodDesc');
-  const goBtn = $('btnGoSelectedEqWorkstation');
 
   const allSessions = getUnifiedEquipmentSessions();
 
@@ -4404,13 +4389,7 @@ function renderEquipmentAnalyticsScopeChips(){
     }
   }
 
-  // 2. 상단 퀵 선택 칩 (중복 제거 및 UI 통합: 컨테이너 존재 시 숨김 처리)
-  if(container){
-    container.innerHTML = '';
-    container.style.display = 'none';
-  }
-
-  // 3. 주기 전환 탭 활성화 상태 동기화
+  // 2. 주기 전환 탭 활성화 상태 동기화
   const periodSwitcher = $('eqPeriodSwitcher');
   if(periodSwitcher){
     const tabs = periodSwitcher.querySelectorAll('.eq-period-tab');
@@ -4736,7 +4715,7 @@ function renderEquipmentAnalyticsOverview(targetSessions, allSessions){
               '<th style="text-align:center;">세션수</th>' +
               '<th style="text-align:center;">시료수</th>' +
               '<th>최다 측정처</th>' +
-              '<th>주요 연구원</th>' +
+              '<th>주요 사용자</th>' +
               '<th class="col-gauge">주간 비중</th>' +
             '</tr>' +
           '</thead>' +
@@ -4847,7 +4826,7 @@ function renderEquipmentAnalyticsOverview(targetSessions, allSessions){
               '<th style="text-align:center;">세션수</th>' +
               '<th style="text-align:center;">시료수</th>' +
               '<th>최다 측정처</th>' +
-              '<th>주요 연구원</th>' +
+              '<th>주요 사용자</th>' +
               '<th class="col-gauge">가동 비중</th>' +
             '</tr>' +
           '</thead>' +
@@ -4954,7 +4933,7 @@ function renderEquipmentAnalyticsOverview(targetSessions, allSessions){
               '<th style="text-align:center;">총 세션수</th>' +
               '<th style="text-align:center;">총 시료수</th>' +
               '<th>최다 측정처</th>' +
-              '<th>참여 연구원</th>' +
+              '<th>참여 사용자</th>' +
               '<th class="col-gauge">연도별 비중</th>' +
             '</tr>' +
           '</thead>' +
@@ -5180,7 +5159,7 @@ function exportAnalyticsSummaryCsv(){
     lines.push('""');
 
     lines.push('"[1. 연구장비별 기간 실적 및 최다 측정처 (어디에서 많이 찍었는지)]"');
-    lines.push(['장비명', '장비코드', '설치위치', '운영상태', '기간가동시간(h)', '기간가동(분)', '기간세션수', '기간시료수', '최다측정 연구실/소속 (비중)', '최다사용 연구원', '누적가동(h)', '누적세션수'].map(c => '"' + c + '"').join(','));
+    lines.push(['장비명', '장비코드', '설치위치', '운영상태', '기간가동시간(h)', '기간가동(분)', '기간세션수', '기간시료수', '최다측정 연구실/소속 (비중)', '최다사용자', '누적가동(h)', '누적세션수'].map(c => '"' + c + '"').join(','));
 
     let grandPeriodMins = 0;
     let grandPeriodSessions = 0;
@@ -5328,7 +5307,7 @@ function exportAnalyticsSummaryCsv(){
     lines.push('"[2. ' + selectedEq.code + ' ' + periodLabel + ' 세부 실적 내역]"');
 
     if(selectedAnalyticsPeriod === 'week'){
-      lines.push(['주차', '시작일', '종료일', '가동시간(시간)', '가동시간(분)', '세션건수', '측정시료수', '주요연구원'].map(c => '"' + c + '"').join(','));
+      lines.push(['주차', '시작일', '종료일', '가동시간(시간)', '가동시간(분)', '세션건수', '측정시료수', '주요사용자'].map(c => '"' + c + '"').join(','));
       const weeks = getMonthWeeks(currentCalendarYear, currentCalendarMonth);
       weeks.forEach(function(w){
         const wSessions = eqSessions.filter(function(s){
@@ -5354,7 +5333,7 @@ function exportAnalyticsSummaryCsv(){
         ].map(formatCsvCell).join(','));
       });
     } else if(selectedAnalyticsPeriod === 'month'){
-      lines.push(['연월', '가동시간(시간)', '가동시간(분)', '세션건수', '측정시료수', '주요연구원'].map(c => '"' + c + '"').join(','));
+      lines.push(['연월', '가동시간(시간)', '가동시간(분)', '세션건수', '측정시료수', '주요사용자'].map(c => '"' + c + '"').join(','));
       for(let m = 1; m <= 12; m++){
         const mStr = currentCalendarYear + '-' + pad(m);
         const mSessions = eqSessions.filter(function(s){ return (s.used_on || '').startsWith(mStr); });
@@ -5376,7 +5355,7 @@ function exportAnalyticsSummaryCsv(){
         ].map(formatCsvCell).join(','));
       }
     } else {
-      lines.push(['연도', '총가동시간(시간)', '총세션건수', '총시료수', '참여연구원수'].map(c => '"' + c + '"').join(','));
+      lines.push(['연도', '총가동시간(시간)', '총세션건수', '총시료수', '참여사용자수'].map(c => '"' + c + '"').join(','));
       const years = [2024, 2025, 2026, 2027];
       years.forEach(function(yr){
         const ySessions = eqSessions.filter(function(s){ return (s.used_on || '').startsWith(String(yr)); });
@@ -5649,7 +5628,7 @@ function exportUnifiedSessionsCsv(){
 
   // 2. [섹션 1: 장비별 가동 실적 및 최다 측정처 요약 (어디에서 많이 찍었는지)]
   lines.push('"[1. 연구장비별 가동 실적 및 최다 측정처 요약 (어디에서 많이 찍었는지)]"');
-  lines.push(['연구장비명', '장비코드', '설치위치', '가동상태', '총가동시간(시간)', '총가동시간(분)', '세션건수', '시료수량', '최다측정 소속/연구실(비중)', '최다사용 연구원'].map(c => '"' + c + '"').join(','));
+  lines.push(['연구장비명', '장비코드', '설치위치', '가동상태', '총가동시간(시간)', '총가동시간(분)', '세션건수', '시료수량', '최다측정 소속/연구실(비중)', '최다사용자'].map(c => '"' + c + '"').join(','));
 
   let grandTotalMins = 0;
   let grandTotalSessions = 0;
@@ -5746,7 +5725,7 @@ function exportUnifiedSessionsCsv(){
     });
 
     lines.push('"[그룹: ' + eq.name + ' (' + eq.code + ') | 설치: ' + (eq.location || '연구실') + ' | 총 ' + eqSessions.length + '건 · ' + (eqMins / 60).toFixed(1) + '시간 (' + eqMins + '분) · ' + eqSamples + '개 시료]"');
-    lines.push(['측정일자', '시작시간', '종료시간', '가동시간(분)', '사용자(연구원)', '소속/학과', '지도교수', '시료명', '시료수량', '측정모드/목적', '특이사항/메모'].map(c => '"' + c + '"').join(','));
+    lines.push(['측정일자', '시작시간', '종료시간', '가동시간(분)', '사용자', '소속/학과', '지도교수', '시료명', '시료수량', '측정모드/목적', '특이사항/메모'].map(c => '"' + c + '"').join(','));
 
     eqSessions.forEach(function(s){
       const dateStr = normalizeExportDate(s.used_on || '');
@@ -5830,8 +5809,7 @@ function selectResearchEquipment(eqId){
     resetXrdForm();
     renderXrdLogs();
   } else {
-    // 깡통 장비 (Standby / Placeholder) LIMS 규격 및 정보 안내 렌더링
-    const iconEl = $('placeholderEqIcon');
+    // 대기 연구장비 (Standby) 표준 규격 및 정보 안내 렌더링
     const photoEl = $('placeholderEqPhoto');
     const codeEl = $('placeholderEqCode');
     const nameEl = $('placeholderEqName');
@@ -6051,22 +6029,6 @@ function exportEquipmentLogsCsv(){
   }
 }
 
-function fallbackCopyText(text, name){
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.select();
-  try {
-    document.execCommand('copy');
-    toast("✓ '" + (name || '소모품') + "' 보관 위치가 복사되었습니다!");
-  } catch(e){
-    toast('위치: ' + text, 5000);
-  }
-  document.body.removeChild(ta);
-}
-
 function consumableFor(id){
   return consumables.find(function(c){
     return String(c.id) === String(id);
@@ -6253,7 +6215,7 @@ function openModal(mode, id){
     const activeLoans = lastBorrower ? getMyActiveLoans(lastBorrower) : [];
     if(lastBorrower && activeLoans.length > 0){
       parts.push('<div style="background:var(--bg-subtle,#f8fafc);border:1px solid var(--border,#e2e8f0);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;color:var(--muted,#64748b);">');
-      parts.push('💡 <b>' + safe(lastBorrower) + '</b>님은 현재 ' + activeLoans.length + '개의 비품을 대여 중입니다. (다른 연구원이 대여하는 경우 아래 대여자 이름을 변경해주세요)');
+      parts.push('💡 <b>' + safe(lastBorrower) + '</b>님은 현재 ' + activeLoans.length + '개의 비품을 대여 중입니다. (다른 사용자가 대여하는 경우 아래 대여자 이름을 변경해주세요)');
       parts.push('</div>');
     }
 
@@ -6571,7 +6533,7 @@ function openModal(mode, id){
     parts.push('  </div>');
     parts.push('  <div class="field">');
     parts.push('    <label for="inpEqManager">장비 책임자 / 연락처</label>');
-    parts.push('    <input id="inpEqManager" name="manager" placeholder="예: 홍길동 (연구원)">');
+    parts.push('    <input id="inpEqManager" name="manager" placeholder="예: 홍길동 (담당자)">');
     parts.push('  </div>');
     parts.push('  <div class="field">');
     parts.push('    <label for="inpEqType">로그북 운영 양식</label>');
@@ -6995,7 +6957,7 @@ function showView(name, options){
     sessionStorage.setItem('labstock_active_view', name);
   } catch(e){}
 
-  // 활성 모듈 동기화 (로그북 뷰이면 LIMS 모듈, 아니면 자재/비품 모듈)
+  // 활성 모듈 동기화 (로그북 뷰이면 연구장비 모듈, 아니면 비품·소모품 모듈)
   if(name === 'logbook'){
     setPortalModule('lims', { switchView: false });
   } else {
@@ -7032,10 +6994,6 @@ function showView(name, options){
   });
 
   // 모바일 하단 대여/반납 바: 소모품, 관리자 화면, 로그북 화면에서는 숨겨서 화면 영역 확보
-  const mobileBar = $('mobileBar');
-  if(mobileBar){
-    mobileBar.classList.toggle('hidden', name === 'consumables' || name === 'dashboard' || name === 'history' || name === 'logbook');
-  }
 
   // 모바일 돋보기 버튼 상태 동기화
   const btnToggleSearch = $('btnToggleSearch');
@@ -7845,7 +7803,7 @@ function bindEvents(){
 
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
     el.addEventListener('click', function(){
-      if(el.dataset.limsNav) return; // LIMS 서브 내비게이션은 LIMS 전용 핸들러에서 라우팅
+      if(el.dataset.limsNav) return; // 연구장비 서브 내비게이션은 연구장비 전용 핸들러에서 라우팅
       showView(el.dataset.view, { pushState: true });
       loadData(); // 탭 클릭 시 최신 DB 데이터 즉시 동기화 새로고침
     });
@@ -7929,23 +7887,6 @@ function bindEvents(){
     });
   }
 
-  // 장비 로그북 검색창 및 필터 실시간 바인딩
-  const logbookSearch = $('logbookSearch');
-  const btnClearLogbookSearch = $('btnClearLogbookSearch');
-  if(logbookSearch && btnClearLogbookSearch){
-    logbookSearch.addEventListener('input', function(){
-      btnClearLogbookSearch.classList.toggle('hidden', logbookSearch.value.trim().length === 0);
-      renderLogbook();
-    });
-    btnClearLogbookSearch.addEventListener('click', function(){
-      logbookSearch.value = '';
-      btnClearLogbookSearch.classList.add('hidden');
-      logbookSearch.focus();
-      renderLogbook();
-    });
-  }
-  addEvt('logbookEquipmentFilter', 'change', renderLogbook);
-  addEvt('logbookStatusFilter', 'change', renderLogbook);
 
   document.addEventListener('click', function(e){
     const el = e.target;
@@ -8268,14 +8209,14 @@ function bindEvents(){
       return;
     }
 
-    // 2-in-1 연구 포털 모듈 스위처 (LIMS vs 자재·비품)
+    // 2-in-1 연구 포털 모듈 스위처 (연구장비 vs 비품·소모품)
     const modBtn = target.dataset.portalModule ? target : target.closest('[data-portal-module]');
     if(modBtn){
       setPortalModule(modBtn.dataset.portalModule, { switchView: true });
       return;
     }
 
-    // LIMS 전용 사이드바 내비게이션
+    // 연구장비 전용 사이드바 내비게이션
     const limsNavBtn = target.dataset.limsNav ? target : target.closest('[data-lims-nav]');
     if(limsNavBtn){
       const navType = limsNavBtn.dataset.limsNav;
@@ -8300,7 +8241,7 @@ function bindEvents(){
       return;
     }
 
-    // 브랜드 로고 클릭 시 홈 뷰 이동 (자재·비품 모드에서는 비품 대여 직행)
+    // 브랜드 로고 클릭 시 홈 뷰 이동 (비품·소모품 모드에서는 비품 대여 직행)
     if(target.id === 'brandLogoLink' || target.closest('#brandLogoLink')){
       if(currentPortalModule === 'lims'){
         showEquipmentCatalogHub();
@@ -8462,19 +8403,7 @@ function bindEvents(){
 
     // 장비 운영 통계: 분석 스코프 선택 칩 (전체 10대 장비 통합 vs 개별 장비 독립 세션 통계)
     const scopeChip = target.dataset.analyticsEq ? target : target.closest('[data-analytics-eq]');
-    if(scopeChip){
-      selectedAnalyticsEquipmentId = scopeChip.dataset.analyticsEq;
-      renderEquipmentAnalyticsDashboard();
-      return;
-    }
 
-    if(target.id === 'btnGoSelectedEqWorkstation' || target.closest('#btnGoSelectedEqWorkstation')){
-      if(selectedAnalyticsEquipmentId && selectedAnalyticsEquipmentId !== 'all'){
-        showView('logbook');
-        selectResearchEquipment(selectedAnalyticsEquipmentId);
-      }
-      return;
-    }
 
     // Phase 3: 점유율 바 또는 타임라인에서 장비 바로가기 / 독립 통계 조회
     const utilEq = target.dataset.selectUtilEq ? target : target.closest('[data-select-util-eq]');
@@ -8574,16 +8503,7 @@ function bindEvents(){
         openBestReorder();
         break;
 
-      case 'topQrScan':
-      case 'btnInventoryQr':
-      case 'btnHomeQr':
-      case 'mobileQrScan':
-        startQrScanner();
-        break;
 
-      case 'closeQrModal':
-        closeQrScanner();
-        break;
 
       case 'closeModal':
       case 'cancelModal':
@@ -8660,12 +8580,6 @@ function bindEvents(){
     });
   }
 
-  const qrBackdrop = $('qrModalBackdrop');
-  if(qrBackdrop){
-    qrBackdrop.addEventListener('click', function(e){
-      if(e.target === qrBackdrop) closeQrScanner();
-    });
-  }
 
   const eqQrBackdrop = $('modalEquipmentQrBackdrop');
   if(eqQrBackdrop){
@@ -8784,12 +8698,6 @@ function bindEvents(){
         closeEquipmentQrModal();
         return;
       }
-      const qrB = $('qrModalBackdrop');
-      if(qrB && qrB.classList.contains('open')){
-        e.preventDefault();
-        closeQrScanner();
-        return;
-      }
       const backdrop = $('modalBackdrop');
       if(backdrop && backdrop.classList.contains('open')){
         e.preventDefault();
@@ -8818,7 +8726,7 @@ function bindEvents(){
     }
   });
 
-  // LIMS 서브 내비게이션 & 통계 허브 원클릭 즉시 연결
+  // 연구장비 서브 내비게이션 & 통계 허브 원클릭 즉시 연결
   const navCatalog = $('sidebarNavCatalog');
   if(navCatalog){
     navCatalog.addEventListener('click', function(e){
@@ -8847,153 +8755,6 @@ function bindEvents(){
     });
   }
 
-  const bHubAnalytics = $('btnHubShowAnalytics');
-  if(bHubAnalytics){
-    bHubAnalytics.addEventListener('click', function(e){
-      e.preventDefault();
-      switchEquipmentHubView('analytics');
-    });
-  }
-
-  const bMobileHubAnalytics = $('btnMobileHubShowAnalytics');
-  if(bMobileHubAnalytics){
-    bMobileHubAnalytics.addEventListener('click', function(e){
-      e.preventDefault();
-      switchEquipmentHubView('analytics');
-    });
-  }
-
-  const bHubGrid = $('btnHubShowGrid');
-  if(bHubGrid){
-    bHubGrid.addEventListener('click', function(e){
-      e.preventDefault();
-      switchEquipmentHubView('catalog');
-    });
-  }
-
-  const bMobileHubGrid = $('btnMobileHubShowGrid');
-  if(bMobileHubGrid){
-    bMobileHubGrid.addEventListener('click', function(e){
-      e.preventDefault();
-      switchEquipmentHubView('catalog');
-    });
-  }
-
-  const bExpEqLogs = $('btnExportEquipmentLogs');
-  if(bExpEqLogs){
-    bExpEqLogs.addEventListener('click', function(e){
-      e.preventDefault();
-      exportEquipmentLogsCsv();
-    });
-  }
-
-  const bExpUnified = $('btnExportAllUnifiedLogs');
-  if(bExpUnified){
-    bExpUnified.addEventListener('click', function(e){
-      e.preventDefault();
-      exportUnifiedSessionsCsv();
-    });
-  }
-
-  const bExpAnalyticsCsv = $('btnExportAnalyticsCsv');
-  if(bExpAnalyticsCsv){
-    bExpAnalyticsCsv.addEventListener('click', function(e){
-      e.preventDefault();
-      exportAnalyticsSummaryCsv();
-    });
-  }
-}
-
-// ==========================================
-// [QR 코드 카메라 스캐너 컴포넌트]
-// ==========================================
-let html5QrScanner = null;
-
-async function startQrScanner(){
-  const backdrop = $('qrModalBackdrop');
-  if(!backdrop) return;
-  backdrop.classList.add('open');
-
-  try {
-    if(!html5QrScanner && window.Html5Qrcode){
-      html5QrScanner = new Html5Qrcode("qrReader");
-    }
-
-    if(!html5QrScanner){
-      toast('QR 스캐너 모듈을 초기화하는 중입니다.');
-      closeQrScanner();
-      return;
-    }
-
-    const config = {
-      fps: 10,
-      qrbox: { width: 220, height: 220 },
-      aspectRatio: 1.0
-    };
-
-    await html5QrScanner.start(
-      { facingMode: "environment" },
-      config,
-      onQrCodeSuccess,
-      function(err){ /* 무시 */ }
-    );
-  } catch(err){
-    console.error('카메라 시작 실패:', err);
-    closeQrScanner();
-    toast('카메라 접근 권한이 필요합니다.');
-  }
-}
-
-async function closeQrScanner(){
-  const backdrop = $('qrModalBackdrop');
-  if(backdrop) backdrop.classList.remove('open');
-
-  if(html5QrScanner && html5QrScanner.isScanning){
-    try {
-      await html5QrScanner.stop();
-    } catch(e){
-      console.warn('QR 스캐너 정지 경고:', e);
-    }
-  }
-}
-
-function onQrCodeSuccess(decodedText){
-  if(navigator.vibrate) navigator.vibrate(100);
-
-  closeQrScanner();
-
-  const lower = decodedText.toLowerCase();
-  if(lower.includes('eq-xrd') || lower.includes('xrd') || lower.includes('logbook')){
-    showView('logbook', { pushState: true });
-    selectResearchEquipment('EQ-XRD-01');
-    showXrdMode('start');
-    toast('🔬 HR-XRD 본체 QR이 인식되어 세션 시작 화면으로 직행했습니다.');
-    return;
-  }
-
-  let assetId = decodedText.trim();
-  if(assetId.includes('=')) assetId = assetId.split('=').pop();
-  else if(assetId.includes('#')) assetId = assetId.split('#').pop();
-
-  const a = assets.find(function(x){
-    return String(x.id).toLowerCase() === assetId.toLowerCase();
-  });
-
-  if(!a){
-    toast('인식된 비품[' + assetId + ']을 목록에서 찾을 수 없습니다.');
-    return;
-  }
-
-  const l = activeLoanFor(a.id);
-  if(l){
-    toast("'" + a.name + "' 반납 화면으로 이동합니다.");
-    openModal('return', l.id);
-  } else if(a.status === 'maintenance'){
-    toast("'" + a.name + "'은(는) 현재 수리 중인 비품입니다.");
-  } else {
-    toast("'" + a.name + "' 대여를 진행합니다.");
-    openModal('borrow', a.id);
-  }
 }
 
 // ==========================================
@@ -9230,7 +8991,7 @@ async function initApp(){
   initTransparentLogo();
   bindEvents();
 
-  // 2-in-1 연구 포털 모듈 초기화 (기본값: 연구장비 LIMS)
+  // 2-in-1 연구 포털 모듈 초기화 (기본값: 연구장비 포털)
   const initialView = getViewFromUrl();
   const isLims = (initialView === 'logbook');
   const savedMod = localStorage.getItem('labstock_active_portal_module');
