@@ -1325,17 +1325,26 @@ async function loadData(){
     }
 
     if(ENABLE_EQUIPMENT_LOGBOOK){
+      // 1. 범용 연구장비 세션 (equipment_sessions) 동기화
       try {
-        const { data: remoteLogs, error: logErr } = await db.from('equipment_logs').select('*').order('created_at', { ascending: false });
-        if(!logErr && Array.isArray(remoteLogs)){
-          equipmentLogs = remoteLogs;
-          localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
-  localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
-  localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs));
-  localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions));
+        const { data: remoteSessions, error: sessErr } = await db.from('equipment_sessions').select('*').order('used_on', { ascending: false });
+        if(!sessErr && Array.isArray(remoteSessions) && remoteSessions.length > 0){
+          equipmentSessions = remoteSessions;
+          try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
         }
       } catch(e){
-        console.warn('Supabase equipment_logs 로드 건너뜀 (로컬 스토리지 유지):', e);
+        console.warn('Supabase equipment_sessions 로드 건너뜀 (로컬 캐시 사용):', e);
+      }
+
+      // 2. HR-XRD 일지 (xrd_logs) 동기화
+      try {
+        const { data: remoteXrd, error: xrdErr } = await db.from('xrd_logs').select('*').order('used_on', { ascending: false });
+        if(!xrdErr && Array.isArray(remoteXrd) && remoteXrd.length > 0){
+          xrdLogs = remoteXrd;
+          try { localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs)); } catch(_) {}
+        }
+      } catch(e){
+        console.warn('Supabase xrd_logs 로드 건너뜀 (로컬 캐시 사용):', e);
       }
     }
 
@@ -4185,9 +4194,29 @@ async function handleTestDriveFormSubmit(e){
 
   if(db && !isLocalMode){
     try {
-      const { data: inserted, error: insertErr } = await db.from('equipment_sessions').insert(sessionEntry).select();
+      const payload = {
+        equipment_id: sessionEntry.equipment_id,
+        equipment_code: sessionEntry.equipment_code || 'EQUIP',
+        used_on: sessionEntry.used_on,
+        start_time: sessionEntry.start_time,
+        end_time: sessionEntry.end_time || null,
+        duration_min: sessionEntry.duration_min,
+        status: sessionEntry.status || 'done',
+        user_name: sessionEntry.user_name,
+        affiliation: sessionEntry.affiliation || '',
+        professor: sessionEntry.professor || '',
+        sample_name: sessionEntry.sample_name || '',
+        sample_count: sessionEntry.sample_count || 1,
+        scan_type: sessionEntry.scan_type || '',
+        parameters: sessionEntry.parameters || {},
+        memo: sessionEntry.memo || ''
+      };
+      const { data: inserted, error: insertErr } = await db.from('equipment_sessions').insert(payload).select();
       if(!insertErr && inserted && inserted[0]){
         sessionEntry.id = inserted[0].id;
+        try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
+      } else if(insertErr){
+        console.warn('Supabase equipment_sessions insert fallback:', insertErr);
       }
     } catch(err){
       console.warn('Supabase equipment_sessions insert fallback:', err);
@@ -8811,6 +8840,8 @@ function subscribeRealtime(){
       .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, debouncedRealtimeReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'assets' }, debouncedRealtimeReload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'consumables' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment_sessions' }, debouncedRealtimeReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'xrd_logs' }, debouncedRealtimeReload)
       .subscribe(function(status){
         if(status === 'SUBSCRIBED'){
           console.log('Supabase Realtime 실시간 동기화 활성화됨 (300ms 디바운스 적용)');
