@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261110_01">
+  <link rel="stylesheet" href="style.css?v=20261110_02">
   <script>
     (function(){
       try {
@@ -338,8 +338,7 @@
               <button type="button" class="btn active" id="btnHubShowGrid">📇 장비 목록</button>
               <button type="button" class="btn" id="btnHubShowAnalytics">📊 장비 운영 통계</button>
             </div>
-            <button class="btn admin-only hidden" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 CSV 다운로드">📥 통합 세션 CSV</button>
-            <button class="btn admin-only hidden primary" id="btnExportAllUnifiedLogsXls" title="전체 연구장비 통합 세션 엑셀(.XLS) 다운로드">📊 통합 세션 엑셀</button>
+            <button class="btn admin-only hidden primary" id="btnExportAllUnifiedLogs" title="전체 연구장비 통합 세션 로그 엑셀(CSV) 다운로드">📥 통합 세션 엑셀(CSV)</button>
           </div>
         </div>
 
@@ -394,11 +393,11 @@
                 </select>
               </div>
 
-              <!-- 주기 전환 탭 (월별 / 주간 / 연간) -->
+              <!-- 주기 전환 탭 (주간 / 월별 / 연간 순서 정렬) -->
               <div class="eq-period-switcher" id="eqPeriodSwitcher" style="display:inline-flex;background:var(--bg);padding:3px;border-radius:8px;border:1px solid var(--border);gap:2px;">
-                <button type="button" class="eq-period-tab active" data-analytics-period="month" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📅 월별 통계</button>
-                <button type="button" class="eq-period-tab" data-analytics-period="week" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📆 주간 통계</button>
-                <button type="button" class="eq-period-tab" data-analytics-period="year" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📈 연간 통계</button>
+                <button type="button" class="eq-period-tab active" data-analytics-period="week" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📈 주간 통계</button>
+                <button type="button" class="eq-period-tab" data-analytics-period="month" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📅 월별 통계</button>
+                <button type="button" class="eq-period-tab" data-analytics-period="year" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📆 연간 통계</button>
               </div>
 
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -413,10 +412,8 @@
 
             <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-light);border-top:1px dashed var(--border);padding-top:8px;">
               <span id="eqAnalyticsScopeDesc">전체 연구장비 통합 누적 현황 및 운용 관리 오버뷰</span>
-              <span id="eqAnalyticsPeriodDesc" style="font-weight:600;color:var(--primary);">월별 가동 실적 분석 모드</span>
+              <span id="eqAnalyticsPeriodDesc" style="font-weight:600;color:var(--primary);">주간 가동 추이 분석 모드</span>
             </div>
-
-            <div id="eqAnalyticsScopeChips" class="preset-chips-wrap" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;"></div>
           </div>
 
           <!-- 1. 핵심 KPI 요약 카드 그리드 (4-card metrics) -->
@@ -480,6 +477,9 @@
                 </div>
               </div>
               <div id="eqCalendarContainer"></div>
+
+              <!-- 캘린더 날짜 클릭 시 바로 아래 나타나는 '선택 일자 가동 및 사용자 상세' -->
+              <div id="eqCalendarDateDetail" class="eq-cal-date-detail"></div>
             </div>
           </div>
 
@@ -521,8 +521,7 @@
           </div>
           <div class="head-actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
             <button class="btn admin-only hidden" id="btnShowEquipmentQr" title="장비 본체 부착용 QR 코드 생성 및 라벨 인쇄" style="display:inline-flex;align-items:center;gap:4px;">📷 본체 부착용 QR</button>
-            <button class="btn admin-only hidden" id="btnExportEquipmentLogs" title="표준 CSV 포맷으로 로그북 다운로드">📥 CSV 다운로드</button>
-            <button class="btn primary admin-only hidden" id="btnExportEquipmentLogsXls" title="날짜 오류 없이 즉시 열리는 엑셀(.XLS) 보고서 서식 다운로드" style="display:inline-flex;align-items:center;gap:4px;">📊 엑셀(.XLS) 다운로드</button>
+            <button class="btn primary admin-only hidden" id="btnExportEquipmentLogs" title="현재 장비 로그북 엑셀(CSV) 다운로드" style="display:inline-flex;align-items:center;gap:4px;">📥 로그북 엑셀(CSV)</button>
           </div>
         </div>
 
@@ -1078,7 +1077,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261110_01"></script>
-<script src="app.js?v=20261110_01"></script>
+<script src="consumables_catalog.js?v=20261110_02"></script>
+<script src="app.js?v=20261110_02"></script>
 </body>
 </html>
