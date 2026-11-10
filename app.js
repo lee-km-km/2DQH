@@ -250,7 +250,7 @@ function setPortalModule(mod, options){
   document.body.setAttribute('data-portal-module', mod);
   const brandSubText = $('brandSubText');
   if(brandSubText){
-    brandSubText.textContent = (mod === 'lims') ? '2DQH LIMS' : '2DQH 자재·비품';
+    brandSubText.textContent = (mod === 'lims') ? '연구장비 포털' : '비품·소모품 관리';
   }
 
   // 3. 사이드바 메뉴 그룹 가시성: 통합 메뉴로 상시 접근 가능
@@ -269,8 +269,8 @@ function setPortalModule(mod, options){
     if(infoDesc) infoDesc.textContent = 'SESS 연동 정밀기기 운용 및 로그북';
   } else {
     if(infoBadge) infoBadge.textContent = 'IBS 2DQH';
-    if(infoTitle) infoTitle.textContent = '연구자재·비품 관리 시스템';
-    if(infoDesc) infoDesc.textContent = '공용 비품 & 소모품 재고 현황';
+    if(infoTitle) infoTitle.textContent = '비품 및 소모품 관리';
+    if(infoDesc) infoDesc.textContent = '공용 비품 & 소모품 실시간 현황';
   }
 
   // 5. 모듈 전환 시 해당 도메인 메인 뷰로 라우팅
@@ -948,11 +948,6 @@ function calcSmartDueDateFor(baseDateStr, days = 1){
   return y + '-' + m + '-' + d;
 }
 
-// 사용자 요청에 따라 짜치는 D-Day / 기한 압박 배지 표기를 완전히 제거
-function getDDayBadge(){
-  return '';
-}
-
 // 대여 기한 및 24시간 미만 잔여 여부 판정 함수
 function getLoanDeadlineInfo(l){
   if(!l) return { isOverdue: false, canExtend: false, hoursLeft: 0, text: '' };
@@ -1307,25 +1302,6 @@ function render(){
   setAdminUI();
 }
 
-function renderHome(){
-  const loanEl = $('homeLoanCount');
-  const lowEl = $('homeLowCount');
-  if(!loanEl || !lowEl) return;
-
-  const active = loans.filter(function(l){
-    return !l.returned_at;
-  }).length;
-
-  loanEl.textContent = active + '건 대여 중';
-
-  const low = consumables.filter(function(c){
-    return Number(c.quantity) <= Number(c.min_quantity);
-  }).length;
-
-  lowEl.textContent = isAdmin() && low ? ('최소 보유량 이하 ' + low + '개') : '';
-  lowEl.classList.toggle('warn', isAdmin() && low > 0);
-}
-
 function renderMetrics(){
   const active = loans.filter(function(l){
     return !l.returned_at;
@@ -1469,14 +1445,6 @@ function topLevelCategory(asset){
   if(TOP_LEVEL_CATEGORIES.includes(raw)) return raw;
 
   return '기타';
-}
-
-function isEquipmentForLogbook(asset){
-  if(!asset) return false;
-  const cat = topLevelCategory(asset);
-  if(cat === '실험장비' || cat === '측정공구') return true;
-  const text = (String(asset.name || '') + ' ' + String(asset.category || '')).toLowerCase();
-  return /장비|현미경|측정|스코프|스테이션|chamber|glovebox|chiller|oven|balance|analyzer|tester|펌프|laser|레이저|오실로스코프|전원|source|meter/i.test(text);
 }
 
 function categoryTabsHtml(selected, actionAttr){
@@ -2007,25 +1975,6 @@ function getMyActiveLoans(borrowerName = null){
       return true;
     }
     return false;
-  });
-}
-
-// 24시간 이상 경과한 미반납 비품 목록 조회 (오래된 순 정렬)
-function getMy24hOverdueLoans(borrowerName = null){
-  const active = getMyActiveLoans(borrowerName);
-  const now = Date.now();
-  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-
-  return active.filter(function(l){
-    const dateStr = l.borrowed_at || l.created_at;
-    if(!dateStr) return false;
-    const bTime = new Date(dateStr).getTime();
-    if(isNaN(bTime)) return false;
-    return (now - bTime) >= ONE_DAY_MS;
-  }).sort(function(a, b){
-    const tA = new Date(a.borrowed_at || a.created_at).getTime() || 0;
-    const tB = new Date(b.borrowed_at || b.created_at).getTime() || 0;
-    return tA - tB;
   });
 }
 
@@ -2674,36 +2623,6 @@ function renderConsumables(){
         (isAdmin() ? '<button class="btn primary" id="btnEmptyAddConsumable">＋ 새 소모품 위치 등록하기</button>' : '') +
       '</div>' +
     '</div>';
-  }
-}
-
-function copyConsumableLocation(id, btnEl){
-  const c = consumableFor(id);
-  if(!c) return;
-  const text = '[' + (c.location || '연구실') + '] ' + (c.sub_location || '') + ' · ' + c.name;
-
-  function triggerButtonFeedback(){
-    if(!btnEl) return;
-    const originalHtml = btnEl.innerHTML;
-    btnEl.classList.add('copied');
-    btnEl.innerHTML = '<span aria-hidden="true">✓</span> <span>복사 완료!</span>';
-    setTimeout(function(){
-      btnEl.classList.remove('copied');
-      btnEl.innerHTML = originalHtml;
-    }, 1500);
-  }
-
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(function(){
-      triggerButtonFeedback();
-      toast("✓ '" + c.name + "' 보관 위치가 복사되었습니다!");
-    }).catch(function(){
-      fallbackCopyText(text, c.name);
-      triggerButtonFeedback();
-    });
-  } else {
-    fallbackCopyText(text, c.name);
-    triggerButtonFeedback();
   }
 }
 
@@ -3530,33 +3449,6 @@ function normalizeExportDate(val){
   return s;
 }
 
-function normalizeExportDateTime(val){
-  if(!val) return '';
-  if(val instanceof Date){
-    const y = val.getFullYear();
-    const m = String(val.getMonth() + 1).padStart(2, '0');
-    const d = String(val.getDate()).padStart(2, '0');
-    const hh = String(val.getHours()).padStart(2, '0');
-    const mm = String(val.getMinutes()).padStart(2, '0');
-    const ss = String(val.getSeconds()).padStart(2, '0');
-    return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss;
-  }
-  const s = String(val).trim();
-  if(s.includes('T')){
-    const dt = new Date(s);
-    if(!isNaN(dt.getTime())){
-      const y = dt.getFullYear();
-      const m = String(dt.getMonth() + 1).padStart(2, '0');
-      const d = String(dt.getDate()).padStart(2, '0');
-      const hh = String(dt.getHours()).padStart(2, '0');
-      const mm = String(dt.getMinutes()).padStart(2, '0');
-      const ss = String(dt.getSeconds()).padStart(2, '0');
-      return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss;
-    }
-  }
-  return s.replace('T', ' ').replace(/\.\d+Z?$/, '');
-}
-
 function formatCsvCell(val, type){
   if(val === null || val === undefined || val === '') return '""';
   if(type === 'date'){
@@ -3582,54 +3474,6 @@ function formatCsvCell(val, type){
     str = "'" + str;
   }
   return '"' + str.replace(/"/g, '""') + '"';
-}
-
-function exportToExcelFile(filename, sheetName, headers, rows, colWidths){
-  let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
-  html += '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>' + sheetName + '</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>';
-  html += 'table { border-collapse: collapse; font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif; font-size: 10pt; }';
-  html += 'th { background-color: #1e3a8a; color: #ffffff; font-weight: bold; border: 1px solid #0f172a; padding: 10px 14px; text-align: center; white-space: nowrap; }';
-  html += 'td { border: 1px solid #cbd5e1; padding: 7px 12px; color: #1e293b; vertical-align: middle; }';
-  html += 'tr:nth-child(even) td { background-color: #f8fafc; }';
-  html += '.cell-text { mso-number-format:"\\@"; text-align: left; }';
-  html += '.cell-center { mso-number-format:"\\@"; text-align: center; }';
-  html += '.cell-date { mso-number-format:"yyyy-mm-dd"; text-align: center; }';
-  html += '.cell-time { mso-number-format:"hh:mm"; text-align: center; }';
-  html += '.cell-datetime { mso-number-format:"yyyy-mm-dd hh:mm:ss"; text-align: center; }';
-  html += '.cell-num { mso-number-format:"#,##0"; text-align: right; }';
-  html += '.cell-dec { mso-number-format:"#,##0.0"; text-align: right; }';
-  html += '</style></head><body>';
-  html += '<table>';
-  if(Array.isArray(colWidths)){
-    html += '<colgroup>';
-    colWidths.forEach(function(w){ html += '<col width="' + w + '">'; });
-    html += '</colgroup>';
-  }
-  html += '<thead><tr>';
-  headers.forEach(function(h){ html += '<th>' + h + '</th>'; });
-  html += '</tr></thead><tbody>';
-  rows.forEach(function(r){
-    html += '<tr>';
-    r.forEach(function(cell){
-      const cls = cell.cls || 'cell-text';
-      const val = (cell.val !== undefined && cell.val !== null) ? cell.val : '';
-      const safeText = String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      html += '<td class="' + cls + '">' + safeText + '</td>';
-    });
-    html += '</tr>';
-  });
-  html += '</tbody></table></body></html>';
-
-  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-  const blob = new Blob([bom, html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 function getXrdExportData(){
@@ -4285,12 +4129,6 @@ function toggleEquipmentActive(eqId){
   toast(willBeActive ? ('🟢 ' + eq.name + ' 실운영 모드로 활성화되었습니다.') : ('⚪ ' + eq.name + ' 대기(Standby) 모드로 전환되었습니다.'));
   selectResearchEquipment(eqId);
   renderEquipmentPortalGrid();
-}
-
-function renderEquipmentPrimaryHero(){
-  const heroContainer = $('eqPrimaryHeroCard');
-  if(!heroContainer) return;
-  heroContainer.innerHTML = '';
 }
 
 function renderEquipmentPortalGrid(){
@@ -5793,75 +5631,6 @@ function renderEquipmentRecentTimeline(allSessions){
   html += '</div>';
 
   container.innerHTML = html;
-}
-
-function getUnifiedSessionsExportData(){
-  const allSessions = getUnifiedEquipmentSessions();
-  const headers = [
-    '측정일자 (Date)',
-    '장비코드 (Code)',
-    '장비명 (Equipment)',
-    '사용자 (User)',
-    '소속 (Affiliation)',
-    '지도교수 (Adviser)',
-    '시작시간 (Start)',
-    '종료시간 (End)',
-    '가동시간_분 (min)',
-    '시료정보 (Sample)',
-    '운영구분 (Mode)',
-    '특이사항_메모 (Memo)'
-  ];
-
-  const csvRows = [];
-  const excelRows = [];
-
-  allSessions.forEach(function(s){
-    const eqCode = s.equipment_code || '';
-    const eqName = s.equipment_name || '';
-    const dateStr = normalizeExportDate(s.used_on || '');
-    const startTm = s.start_time ? String(s.start_time).slice(0, 5) : '';
-    const endTm = s.end_time ? String(s.end_time).slice(0, 5) : '';
-    const durMin = s.duration_min != null ? Number(s.duration_min) : 0;
-    const modeText = s.type === 'active' ? '실운영(Active)' : '시험가동(Test)';
-    const userName = s.user_name || '';
-    const affil = s.affiliation || '';
-    const prof = s.professor || '';
-    const sample = (s.sample_name || '') + (s.sample_count > 1 ? ' (' + s.sample_count + '개)' : '');
-    const memo = String(s.memo || '').replace(/[\r\n]+/g, ' ').trim();
-
-    csvRows.push([
-      formatCsvCell(dateStr, 'date'),
-      formatCsvCell(eqCode, 'text'),
-      formatCsvCell(eqName, 'text'),
-      formatCsvCell(userName, 'text'),
-      formatCsvCell(affil, 'text'),
-      formatCsvCell(prof, 'text'),
-      formatCsvCell(startTm, 'time'),
-      formatCsvCell(endTm, 'time'),
-      formatCsvCell(durMin, 'number'),
-      formatCsvCell(sample, 'text'),
-      formatCsvCell(modeText, 'text'),
-      formatCsvCell(memo, 'text')
-    ].join(','));
-
-    excelRows.push([
-      { val: dateStr, cls: 'cell-date' },
-      { val: eqCode, cls: 'cell-center' },
-      { val: eqName, cls: 'cell-text' },
-      { val: userName, cls: 'cell-text' },
-      { val: affil, cls: 'cell-center' },
-      { val: prof, cls: 'cell-text' },
-      { val: startTm, cls: 'cell-time' },
-      { val: endTm, cls: 'cell-time' },
-      { val: durMin, cls: 'cell-num' },
-      { val: sample, cls: 'cell-text' },
-      { val: modeText, cls: 'cell-center' },
-      { val: memo, cls: 'cell-text' }
-    ]);
-  });
-
-  const colWidths = [110, 90, 200, 100, 110, 110, 85, 85, 95, 180, 110, 200];
-  return { allSessions, headers, csvRows, excelRows, colWidths };
 }
 
 function exportUnifiedSessionsCsv(){

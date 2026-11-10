@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
-  <title>2DQH 비품 — 비품 대여 관리</title>
+  <title>IBS 2DQH 연구지원 포털</title>
   <script>
     (function(){
       try {
@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261110_03">
+  <link rel="stylesheet" href="style.css?v=20261110_05">
   <script>
     (function(){
       try {
@@ -47,7 +47,7 @@
   </div>
 
   <div class="topbar-center">
-    <!-- 2-in-1 모듈 스위처: [🔬 연구장비 LIMS] vs [📦 연구자재·비품] -->
+    <!-- 2-in-1 모듈 스위처: [🔬 연구장비 포털] vs [📦 비품 및 소모품] -->
     <div class="portal-module-switcher" id="portalModuleSwitcher" role="tablist" aria-label="연구 포털 모듈 전환">
       <button type="button" class="portal-module-btn active" data-portal-module="lims" id="btnModuleLims" role="tab" aria-selected="true" title="성균관대 AQT/SESS 연구장비 및 전자 로그북">
         <span class="mod-icon">🔬</span>
@@ -55,7 +55,7 @@
       </button>
       <button type="button" class="portal-module-btn" data-portal-module="inventory" id="btnModuleInventory" role="tab" aria-selected="false" title="연구실 소모품 재고 및 공용 비품 대여 관리">
         <span class="mod-icon">📦</span>
-        <span class="mod-label">비품·자재</span>
+        <span class="mod-label">비품·소모품</span>
       </button>
     </div>
   </div>
@@ -87,10 +87,10 @@
       <button id="btnCloseMobileDrawer" class="btn-close-drawer" type="button" aria-label="메뉴 닫기">✕</button>
     </div>
 
-    <!-- A. 연구자재·비품 관리 메뉴 (일반 연구원 기본) -->
+    <!-- A. 비품 및 소모품 관리 메뉴 (일반 연구원 기본) -->
     <div class="sidebar-section-header">
-      <span class="sidebar-section-title">연구자재 관리</span>
-      <span class="sidebar-section-pill">자재·비품</span>
+      <span class="sidebar-section-title">비품 및 소모품</span>
+      <span class="sidebar-section-pill">비품·소모품</span>
     </div>
     <div class="sidebar-nav-group" id="sidebarGroupInventory">
       <button class="nav active" data-view="inventory" id="sidebarNavInventory">
@@ -109,7 +109,7 @@
 
     <!-- B. 연구장비 LIMS 모듈 메뉴 (일반 연구원 기본) -->
     <div class="sidebar-section-header" style="margin-top:16px;">
-      <span class="sidebar-section-title">연구장비 LIMS</span>
+      <span class="sidebar-section-title">연구장비 포털</span>
       <span class="sidebar-section-pill">SESS AQT</span>
     </div>
     <div class="sidebar-nav-group" id="sidebarGroupLims">
@@ -215,11 +215,11 @@
       </section>
     </section>
 
-    <!-- 대시보드 뷰 (연구실 비품 및 자재 대시보드) -->
+    <!-- 대시보드 뷰 (연구실 비품 및 소모품 대시보드) -->
     <section class="view" id="view-dashboard">
       <div class="page-head" style="flex-wrap:wrap;gap:10px;">
         <div class="head-title">
-          <h1>📊 연구실 비품·자재 대시보드</h1>
+          <h1>📊 연구실 비품 및 소모품 대시보드</h1>
           <span class="count-badge" id="statsSubBadge">실시간 모니터링</span>
         </div>
         <div class="head-actions" style="display:flex;gap:8px;align-items:center;">
@@ -293,7 +293,7 @@
       </section>
     </section>
 
-    <!-- 소모품 및 시약 도감 뷰 -->
+    <!-- 소모품 및 시약 목록 뷰 -->
     <section class="view" id="view-consumables">
       <div class="page-head hide-mobile">
         <div class="head-title">
@@ -1047,7 +1047,7 @@
 <nav class="mobile-bottom-nav mobile-only" aria-label="모바일 하단 내비게이션">
   <button type="button" class="bottom-nav-tab active" data-view="inventory" id="bottomTabInventory">
     <span class="bottom-tab-icon">🛠️</span>
-    <span class="bottom-tab-label">비품대여</span>
+    <span class="bottom-tab-label">비품목록</span>
   </button>
   <button type="button" class="bottom-nav-tab" data-view="consumables" id="bottomTabConsumables">
     <span class="bottom-tab-icon">📦</span>
@@ -1067,7 +1067,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261110_03"></script>
-<script src="app.js?v=20261110_04"></script>
+<script src="consumables_catalog.js?v=20261110_05"></script>
+<script src="app.js?v=20261110_05"></script>
 </body>
 </html>

@@ -6527,30 +6527,6 @@ tr.row-overdue:hover {
 /* ========================================================
    Phase 3: 연구단 장비 종합 통계 및 가동 대시보드 스타일
    ======================================================== */
-.eq-hub-switch-group {
-  display: inline-flex;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 2px;
-  gap: 2px;
-}
-.eq-hub-switch-group .btn {
-  border: 0;
-  background: transparent;
-  color: var(--ink-light);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.eq-hub-switch-group .btn.active {
-  background: var(--card);
-  color: var(--primary);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
 
 .eq-kpi-grid {
   display: grid;
@@ -7054,14 +7030,6 @@ tr.row-overdue:hover {
 }
 
 /* Phase 3 다크모드 오버라이드 */
-[data-theme="dark"] .eq-hub-switch-group {
-  background: #111827 !important;
-  border-color: #232f46 !important;
-}
-[data-theme="dark"] .eq-hub-switch-group .btn.active {
-  background: #1e293b !important;
-  color: #60a5fa !important;
-}
 [data-theme="dark"] .eq-kpi-card {
   background: #151c2e !important;
   border-color: #232f46 !important;
