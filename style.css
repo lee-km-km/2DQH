@@ -536,8 +536,8 @@ main {
   width: 100%;
   margin: 0;
 }
-.view { display: none; }
-.view.active { display: block; }
+.view { display: none !important; }
+.view.active { display: block !important; }
 
 @media (min-width: 1400px) {
   .layout {
@@ -7476,9 +7476,6 @@ html.is-admin #logoutBtn {
 }
 html.is-admin #sidebarAdminProfile {
   display: flex !important;
-}
-html.is-admin .admin-only {
-  display: block;
 }
 
 html:not(.is-admin) #logoutBtn,

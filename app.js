@@ -1088,13 +1088,13 @@ function setAdminUI(){
   if($('sidebarLoginBtn')) $('sidebarLoginBtn').classList.toggle('hidden', isAdm);
   if($('sidebarAdminProfile')) $('sidebarAdminProfile').classList.toggle('hidden', !isAdm);
 
-  const adminEls = document.querySelectorAll('.admin-only');
+  const adminEls = document.querySelectorAll('.admin-only:not(.view)');
   for(let i=0; i<adminEls.length; i++){
     adminEls[i].classList.toggle('hidden', !isAdm);
   }
 
   const activeView = document.querySelector('.view.active');
-  if(!isAdm && activeView && activeView.classList.contains('admin-only')){
+  if(!isAdm && activeView && (activeView.id === 'view-history' || activeView.id === 'view-dashboard' || activeView.classList.contains('admin-only'))){
     showView('inventory');
   }
 
@@ -6799,7 +6799,7 @@ function showView(name, options){
   document.querySelectorAll('.view').forEach(function(el){
     const isActive = el.id === 'view-' + name;
     el.classList.toggle('active', isActive);
-    if(isActive) el.classList.remove('hidden');
+    el.classList.toggle('hidden', !isActive);
   });
 
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
@@ -7478,8 +7478,8 @@ async function handleLogout(){
 
     setAdminUI();
     // 관리자 전용 화면에 머물고 있을 경우 즉시 비품 현황으로 복귀
-    const currentView = document.querySelector('.view:not(.hidden)');
-    if(currentView && currentView.classList.contains('admin-only')){
+    const currentView = document.querySelector('.view.active');
+    if(currentView && (currentView.id === 'view-history' || currentView.id === 'view-dashboard' || currentView.classList.contains('admin-only'))){
       showView('inventory');
     }
     closeMobileDrawer();
