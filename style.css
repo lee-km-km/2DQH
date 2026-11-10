@@ -42,7 +42,7 @@ html, body {
 body {
   background: #f8fafc;
   color: var(--ink);
-  font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   font-size: 13px;
   line-height: 1.5;
   letter-spacing: -0.01em;
@@ -5153,11 +5153,37 @@ tr.row-overdue:hover {
   body * {
     visibility: hidden !important;
   }
-  #equipmentQrPrintArea,
-  #equipmentQrPrintArea * {
+
+  /* 1. 특별관리물질 고지문 인쇄 (A4 규격 공식 고지문 Image 2 서식) */
+  #modalChemNoticeBackdrop.open #chemNoticePrintArea,
+  #modalChemNoticeBackdrop.open #chemNoticePrintArea * {
     visibility: visible !important;
   }
-  #equipmentQrPrintArea {
+  #modalChemNoticeBackdrop.open #chemNoticePrintArea {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 90vw !important;
+    max-width: 260mm !important;
+    border: 4px solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    padding: 25px 35px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 2. 장비 및 시약 부착용 QR 라벨 인쇄 */
+  #modalEquipmentQrBackdrop.open #equipmentQrPrintArea,
+  #modalEquipmentQrBackdrop.open #equipmentQrPrintArea *,
+  #modalChemicalQrBackdrop.open #chemicalQrPrintArea,
+  #modalChemicalQrBackdrop.open #chemicalQrPrintArea * {
+    visibility: visible !important;
+  }
+  #modalEquipmentQrBackdrop.open #equipmentQrPrintArea,
+  #modalChemicalQrBackdrop.open #chemicalQrPrintArea {
     position: fixed !important;
     left: 50% !important;
     top: 50% !important;
@@ -5169,6 +5195,8 @@ tr.row-overdue:hover {
     box-shadow: none !important;
     background: #ffffff !important;
     color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   .qr-label-badge {
     background: #000000 !important;
@@ -9119,4 +9147,225 @@ body:not(.is-admin) .admin-only {
 }
 [data-theme="dark"] .help-card-list li {
   color: #e2e8f0 !important;
+}
+
+
+/* ========================================================================== */
+/* [UI Designer Typography & Interactive FAQ Accordion & Transparent Product Card] */
+/* ========================================================================== */
+
+body, button, input, select, textarea, optgroup {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 1. 연구장비 투명 배경(PNG) 제품 썸네일 쇼케이스 래퍼 */
+.eq-card-thumb-wrap {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  background: radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%) !important;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-theme="dark"] .eq-card-thumb-wrap {
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%) !important;
+}
+
+.eq-card-photo {
+  max-width: 90% !important;
+  max-height: 85% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block;
+  margin: auto;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), filter 0.28s ease !important;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.12));
+}
+.eq-compact-card:hover .eq-card-photo {
+  transform: scale(1.08) translateY(-2px) !important;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.2)) !important;
+}
+
+/* 2. 인터랙티브 FAQ 아코디언 컴포넌트 */
+.faq-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.faq-accordion-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+.faq-accordion-item:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+.faq-accordion-item.open {
+  border-color: #3b82f6;
+  box-shadow: 0 3px 12px rgba(37, 99, 235, 0.12);
+}
+
+.faq-accordion-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--bg);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  outline: none;
+  transition: background 0.15s ease;
+}
+.faq-accordion-question:hover {
+  background: rgba(37, 99, 235, 0.04);
+}
+[data-theme="dark"] .faq-accordion-question:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.faq-q-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 6px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 11.5px;
+  font-weight: 800;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+[data-theme="dark"] .faq-q-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.faq-q-text {
+  flex: 1;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.faq-accordion-chevron {
+  font-size: 11px;
+  color: #94a3b8;
+  transition: transform 0.25s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+.faq-accordion-item.open .faq-accordion-chevron {
+  transform: rotate(180deg);
+  color: #2563eb;
+}
+
+.faq-accordion-answer {
+  display: none;
+  padding: 14px 20px 18px 62px;
+  background: var(--bg-subtle);
+  border-top: 1px dashed var(--border);
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink);
+  animation: faqFadeIn 0.2s ease-out;
+}
+.faq-accordion-item.open .faq-accordion-answer {
+  display: block;
+}
+.faq-accordion-answer p {
+  margin: 0 0 8px;
+}
+.faq-accordion-answer p:last-child {
+  margin-bottom: 0;
+}
+.faq-accordion-answer code {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+[data-theme="dark"] .faq-accordion-answer code {
+  background: rgba(59, 130, 246, 0.25);
+  color: #93c5fd;
+}
+
+@keyframes faqFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .faq-accordion-question { padding: 12px 14px; gap: 8px; }
+  .faq-q-text { font-size: 13px; }
+  .faq-accordion-answer { padding: 12px 14px 14px 14px; font-size: 12.5px; }
+}
+
+
+/* ========================================================================== */
+/* [도움말 라이트 모드 가독성 및 관리자 모드 격리 강화] */
+/* ========================================================================== */
+.help-hero-banner {
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+}
+.help-badge {
+  background: #dbeafe !important;
+  color: #1e3a8a !important;
+  border: 1px solid #bfdbfe !important;
+  font-weight: 800 !important;
+}
+.help-tab-btn {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+.help-tab-btn span {
+  color: inherit !important;
+}
+.help-tab-btn.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+.help-tab-btn.active span {
+  color: #ffffff !important;
+}
+[data-theme="dark"] .help-badge {
+  background: #1e3a8a !important;
+  color: #93c5fd !important;
+  border-color: #1e40af !important;
+}
+[data-theme="dark"] .help-tab-btn {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .help-tab-btn.active {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* 비로그인 시 관리자 매뉴얼 버튼 완전 은닉 */
+body:not(.is-admin) #btnHelpTabAdmin,
+html:not(.is-admin) #btnHelpTabAdmin {
+  display: none !important;
 }

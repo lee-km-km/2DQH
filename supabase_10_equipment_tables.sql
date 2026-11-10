@@ -1,5 +1,5 @@
 -- ============================================================================
--- [IBS 2DQH & SESS AQT] 10대 첨단 연구장비 전용 개별 로그 테이블 및 통합 뷰 셋업 스크립트
+-- [IBS 2DQH & SESS AQT] 첨단 연구장비 목록 (HR-XRD, Wire Bonder, XPS 등) 전용 개별 로그 테이블 및 통합 뷰 셋업 스크립트
 -- Supabase Dashboard -> SQL Editor -> 'New query' 에 전체 복사 후 'Run' 클릭!
 -- ============================================================================
 
@@ -380,7 +380,22 @@ FROM public.uhvsputter_logs
 UNION ALL
 SELECT 'EQ-BONDER-01' AS equipment_id, 'WireBonder' AS equipment_code, 'Wire Bonder (초음파 와이어본더)' AS equipment_name,
        id, session_id, used_on, start_time, end_time, duration_min, user_name, affiliation, professor, sample_name, sample_count, purpose, memo, created_at
-FROM public.wirebonder_logs;
+FROM public.wirebonder_logs
+UNION ALL
+SELECT
+    id, session_id, 'EQ-XPS-01' AS equipment_id, 'XPS' AS equipment_code,
+    'XPS (X선 광전자 분광기)' AS equipment_name,
+    used_on, start_time, end_time, duration_min, status,
+    user_name, affiliation, professor, sample_name, sample_count, purpose, memo,
+    jsonb_build_object(
+        'base_vacuum_mbar', base_vacuum_mbar, 'chiller_temp_c', chiller_temp_c,
+        'xray_power_w', xray_power_w, 'pass_energy_ev', pass_energy_ev,
+        'xray_spot_size', xray_spot_size, 'analyzer_mode', analyzer_mode,
+        'vacuum_interlock_ok', vacuum_interlock_ok, 'flood_gun_ok', flood_gun_ok, 'sample_ground_ok', sample_ground_ok
+    ) AS parameters,
+    created_at
+FROM public.xps_logs
+;
 
 -- ============================================================================
 -- 12. RLS (Row Level Security) 설정 및 조회/수정/삭제 권한 부여
@@ -403,7 +418,7 @@ DECLARE
 BEGIN
     FOR tbl IN SELECT unnest(ARRAY[
         'xrd_logs', 'tem_logs', 'afm_logs', 'raman_logs', 'ftir_logs',
-        'ebeam_logs', 'ald_logs', 'cosputter_logs', 'uhvsputter_logs', 'wirebonder_logs', 'chemical_logs', 'chemical_logs'
+        'ebeam_logs', 'ald_logs', 'cosputter_logs', 'uhvsputter_logs', 'wirebonder_logs', 'xps_logs', 'xps_logs', 'chemical_logs', 'chemical_logs'
     ]) LOOP
         EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', tbl || '_all_policy', tbl);
         EXECUTE format('CREATE POLICY %I ON public.%I FOR ALL USING (true) WITH CHECK (true)', tbl || '_all_policy', tbl);

@@ -50,7 +50,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'active',
     statusLabel: '디지털 로그북 가동 중',
     icon: '🔬',
-    image: 'img/equipment/smartlab_xrd.jpg',
+    image: 'img/equipment/smartlab_xrd.png',
     type: 'xrd'
   },
   {
@@ -69,7 +69,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🔭',
-    image: 'img/equipment/jeol_tem.jpg',
+    image: 'img/equipment/jeol_tem.png',
     type: 'placeholder'
   },
   {
@@ -88,7 +88,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '📐',
-    image: 'img/equipment/bruker_afm.jpg',
+    image: 'img/equipment/bruker_afm.png',
     type: 'placeholder'
   },
   {
@@ -145,7 +145,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '⚡',
-    image: 'img/equipment/ebeam_evap.jpg',
+    image: 'img/equipment/ebeam_evap.png',
     type: 'placeholder'
   },
   {
@@ -183,7 +183,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🌀',
-    image: 'img/equipment/sputter_system.jpg',
+    image: 'img/equipment/sputter_system.png',
     type: 'placeholder'
   },
   {
@@ -202,7 +202,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'standby',
     statusLabel: '로그북 연동 준비 중 (SESS 규격 대기)',
     icon: '🌌',
-    image: 'img/equipment/uhv_sputter.jpg',
+    image: 'img/equipment/uhv_sputter.png',
     type: 'placeholder'
   },
   {
@@ -221,7 +221,26 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     status: 'active',
     statusLabel: '디지털 로그북 가동 중',
     icon: '🪡',
-    image: 'img/equipment/wire_bonder.jpg',
+    image: 'img/equipment/wire_bonder.png',
+    type: 'placeholder'
+  },
+  {
+    id: 'EQ-XPS-01',
+    assetNo: 'SESS-AQT-XPS-01',
+    code: 'XPS',
+    name: 'XPS (X선 광전자 분광기)',
+    category: 'optical',
+    categoryName: '표면·전자구조',
+    model: 'ESCALAB 250Xi (Thermo Fisher Scientific, UK/USA)',
+    location: 'N센터 C동 86275호 (표면분석실 / AQT 첨단기기센터)',
+    serviceMode: '직접사용 / 측정지원 (SESS 연동, 교육 이수자)',
+    spec: 'Micro-focused Monochromated Al-Kα, 0.45 eV FWHM 분해능, Dual flood gun 전하중화, XPS/UPS/ARXPS/Depth profiling, 원자 백분율 및 화학 결합 상태 분석',
+    manager: 'SESS 표면분석 엔지니어 / AQT 첨단기기센터',
+    contact: '031-299-6512 (AQT 행정실/표면분석지원)',
+    status: 'active',
+    statusLabel: '디지털 로그북 가동 중',
+    icon: '⚡',
+    image: 'img/equipment/thermo_xps.png',
     type: 'placeholder'
   }
 ];
@@ -473,7 +492,26 @@ const EQUIPMENT_SCHEMAS = {
       { key: 'bonding_mode', label: '본딩 모드', choices: ['Ultrasonic Wedge (웨지 본딩)', 'Thermosonic Ball (볼 본딩)', 'Deep Access Ribbon'], default: 'Ultrasonic Wedge (웨지 본딩)' }
     ],
     scanTypes: ['Chamber 16-ch 패드', '양자홀바(Hall-bar) 전극', '2D 이종접합 전극', 'RF 고주파 패키징', 'PCB 헤더 리드 본딩', '기타 특수 전극']
-  }
+  },
+  'XPS': {
+    name: 'XPS (X선 광전자 분광기)',
+    readings: [
+      { key: 'base_vacuum', label: '분석실 기본 진공도', unit: '×10⁻¹⁰ mbar', step: 0.1, placeholder: '1.2', warnMax: 5.0 },
+      { key: 'chiller_temp', label: '칠러 냉각수 온도', unit: '°C', step: 0.1, placeholder: '20.5', warnMin: 18, warnMax: 23 },
+      { key: 'xray_power', label: 'X선 소스 파워', unit: 'W', step: 10, placeholder: '150' },
+      { key: 'pass_energy', label: '통과 에너지 (Pass Energy)', unit: 'eV', step: 5, placeholder: '20' }
+    ],
+    checks: [
+      { key: 'vacuum_interlock_ok', label: '진공 인터록 및 진입 게이트 밸브 확인 (Vacuum Interlock OK)' },
+      { key: 'flood_gun_ok', label: '전하 중화 듀얼 플러드 건(Dual Flood Gun) 작동 확인' },
+      { key: 'sample_ground_ok', label: '시료 홀더 접지 및 전기적 도통 상태 검증 (Ground OK)' }
+    ],
+    options: [
+      { key: 'xray_spot', label: 'X선 빔 스팟 크기', choices: ['400 ㎛ (Standard)', '200 ㎛', '100 ㎛ (Micro-focus)', '50 ㎛'], default: '400 ㎛ (Standard)' },
+      { key: 'analyzer_mode', label: '분석 모드 (Analyzer Mode)', choices: ['CAE (Constant Analyzer Energy)', 'CRR (Constant Retard Ratio)', 'Snapshot Mapping'], default: 'CAE (Constant Analyzer Energy)' }
+    ],
+    scanTypes: ['Survey Scan (전원소 와이드)', 'Narrow / Core Level Scan (C 1s, O 1s 등)', 'Valence Band (UPS)', 'Depth Profile (Ar+ 에칭)', 'ARXPS (각도분해)']
+  },
 };
 
 // [공통 유틸리티] 숫자 2자리 패딩
@@ -685,7 +723,7 @@ function loadLocalStorage(forceReset){
     consumables = [...DEFAULT_2DQH_CONSUMABLES];
   }
 
-  const SESS_EQUIP_DATA_VER = '20261109_sess_aqt_v5_bonder_img';
+  const SESS_EQUIP_DATA_VER = '20261110_sess_aqt_v6_xps_png';
   try {
     const savedVer = localStorage.getItem('labstock_sess_eq_ver');
     const savedEqs = JSON.parse(localStorage.getItem('labstock_research_equipments') || 'null');
@@ -4233,7 +4271,7 @@ function closeEquipmentTestDrive(){
 
 
 // ==========================================
-// [10대 연구장비 Supabase 독립 테이블 매핑 & 파라미터 빌더]
+// [연구장비 Supabase 독립 테이블 매핑 & 파라미터 빌더]
 // ==========================================
 const EQUIPMENT_TABLE_MAP = {
   'XRD': 'xrd_logs',
@@ -4255,7 +4293,9 @@ const EQUIPMENT_TABLE_MAP = {
   'UHVsputter': 'uhvsputter_logs',
   'EQ-UHVSPUTTER-01': 'uhvsputter_logs',
   'WireBonder': 'wirebonder_logs',
-  'EQ-BONDER-01': 'wirebonder_logs'
+  'EQ-BONDER-01': 'wirebonder_logs',
+  'XPS': 'xps_logs',
+  'EQ-XPS-01': 'xps_logs'
 };
 
 function getEquipmentLogTable(codeOrId){
@@ -4364,6 +4404,19 @@ function buildEquipmentSpecificPayload(eqTable, s){
       if(p.loadlock_transferred_ok !== undefined) base.loadlock_transferred_ok = Boolean(p.loadlock_transferred_ok);
       if(p.cryo_temp_ok !== undefined) base.cryo_temp_ok = Boolean(p.cryo_temp_ok);
       if(p.gate_valve_isolated_ok !== undefined) base.gate_valve_isolated_ok = Boolean(p.gate_valve_isolated_ok);
+      break;
+
+    case 'xps_logs':
+      if(p.base_vacuum !== undefined) base.base_vacuum_mbar = Number(p.base_vacuum);
+      if(p.chiller_temp !== undefined) base.chiller_temp_c = Number(p.chiller_temp);
+      if(p.xray_power !== undefined) base.xray_power_w = Number(p.xray_power);
+      if(p.pass_energy !== undefined) base.pass_energy_ev = Number(p.pass_energy);
+      if(p.xray_spot) base.xray_spot_size = String(p.xray_spot);
+      if(p.analyzer_mode) base.analyzer_mode = String(p.analyzer_mode);
+      if(s.scan_type) base.scan_type = String(s.scan_type);
+      if(p.vacuum_interlock_ok !== undefined) base.vacuum_interlock_ok = Boolean(p.vacuum_interlock_ok);
+      if(p.flood_gun_ok !== undefined) base.flood_gun_ok = Boolean(p.flood_gun_ok);
+      if(p.sample_ground_ok !== undefined) base.sample_ground_ok = Boolean(p.sample_ground_ok);
       break;
 
     case 'wirebonder_logs':
@@ -4570,7 +4623,8 @@ function renderEquipmentPortalGrid(){
     const serviceSimple = (eq.serviceMode || '직접사용').split('/')[0].trim();
     const isXrd = (eq.code === 'XRD');
     const isBonder = (eq.code === 'WireBonder');
-    const isActive = (eq.status === 'active' || isXrd || isBonder);
+    const isXps = (eq.code === 'XPS');
+    const isActive = (eq.status === 'active' || isXrd || isBonder || isXps);
 
     let actionBtnText = '📖 전자 로그북 열기';
     if(isXrd){
@@ -5382,7 +5436,7 @@ function renderEquipmentAnalyticsOverview(periodSessions, targetSessions, allSes
   }
 
   // ----------------------------------------------------
-  // 2. [전체 연구장비 통합 모드]: 전체 10대 장비 운용 관리 오버뷰 테이블
+  // 2. [전체 연구장비 통합 모드]: 전체 연구장비 운용 관리 오버뷰 테이블
   // ----------------------------------------------------
   const currentMonthStr = currentCalendarYear + '-' + pad(currentCalendarMonth);
   const currentYearStr = String(currentCalendarYear);
@@ -5521,7 +5575,7 @@ function renderEquipmentAnalyticsOverview(periodSessions, targetSessions, allSes
   const eqOverviewTableHtml = '<div style="margin-top:24px;">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
       '<h4 style="margin:0;font-size:14px;font-weight:700;color:var(--ink);">🔬 연구장비별 운용 관리 현황 (' + safe(periodColName) + ')</h4>' +
-      '<span style="font-size:12px;color:var(--ink-light);">전체 10대 장비 기간 실적 및 최다 측정처 요약</span>' +
+      '<span style="font-size:12px;color:var(--ink-light);">전체 연구장비 기간 실적 및 최다 측정처 요약</span>' +
     '</div>' +
     '<div class="table-wrap" style="overflow-x:auto;border:1px solid var(--border);border-radius:10px;">' +
       '<table class="eq-overview-table">' +
@@ -5541,7 +5595,7 @@ function renderEquipmentAnalyticsOverview(periodSessions, targetSessions, allSes
         '<tbody>' + rowsHtml + '</tbody>' +
         '<tfoot>' +
           '<tr style="background:var(--bg);font-weight:700;border-top:2px solid var(--border);">' +
-            '<td colspan="2">전체 10대 장비 기간 합계</td>' +
+            '<td colspan="2">전체 연구장비 기간 합계</td>' +
             '<td style="text-align:right;color:var(--primary);font-size:13.5px;">' + grandHours + 'h <span style="font-size:11px;color:#64748b;">(' + grandPMins + '분)</span></td>' +
             '<td><div class="gauge-bar-wrap"><div class="gauge-bar-fill" style="width:100%;"></div></div></td>' +
             '<td style="text-align:center;">' + grandPSessions + '건</td>' +
@@ -6349,7 +6403,7 @@ function exportUnifiedSessionsCsv(){
   });
 
   lines.push([
-    '[전체 10대 장비 종합 합계]',
+    '[전체 연구장비 종합 합계]',
     'ALL',
     '연구동 전체',
     '운영 중',
@@ -6444,7 +6498,8 @@ function selectResearchEquipment(eqId){
 
   const isXrd = (selected.type === 'xrd' || selected.code === 'XRD');
   const isBonder = (selected.code === 'WireBonder');
-  const isActive = (selected.status === 'active' || isXrd || isBonder);
+  const isXps = (selected.code === 'XPS');
+  const isActive = (selected.status === 'active' || isXrd || isBonder || isXps);
 
   if(catBadge) catBadge.textContent = selected.categoryName || '연구장비';
   if(statusBadge){
@@ -6482,6 +6537,7 @@ function selectResearchEquipment(eqId){
       photoEl.src = selected.image || 'logo_2dqh.jpg';
       photoEl.alt = selected.name;
     }
+    const iconEl = $('placeholderEqIcon');
     if(iconEl) iconEl.textContent = selected.icon || '🔬';
     if(codeEl) codeEl.textContent = selected.code;
     if(nameEl) nameEl.textContent = selected.name;
@@ -8218,6 +8274,8 @@ function bindEvents(){
   });
 
   // 비품 대여 신청 버튼 직접 바인딩
+  bindChemicalsEvents();
+
   addEvt('loanAdd', 'click', function(e){
     e.preventDefault();
     openModal('borrow');
@@ -8340,6 +8398,23 @@ function bindEvents(){
   document.addEventListener('click', function(e){
     const el = e.target;
     if(!el) return;
+
+    // 도움말(#view-help) 뷰 내부 클릭 보호: FAQ 아코디언 토글 및 외부 뷰 이동 차단
+    if(el.closest('#view-help')){
+      const faqQ = el.closest('.faq-accordion-question');
+      if(faqQ){
+        e.preventDefault();
+        e.stopPropagation();
+        const item = faqQ.closest('.faq-accordion-item');
+        if(item){
+          item.classList.toggle('open');
+        }
+        return;
+      }
+      if(!el.closest('button, a, [data-view], [data-goto]')){
+        return;
+      }
+    }
     const target = el.closest('button, a, [data-select-eq], [data-select-util-eq], [data-analytics-eq], [data-analytics-period], [data-cal-date], [data-timeline-filter], [data-eq-cat], [data-portal-module], [data-lims-nav], [data-main-view], [data-goto], [data-view]') || el;
 
     // 모달 닫기 / 취소 버튼 최우선 처리 (이벤트 트랩 및 무반응 방지)
@@ -8844,7 +8919,7 @@ function bindEvents(){
       return;
     }
 
-    // 장비 운영 통계: 분석 스코프 선택 칩 (전체 10대 장비 통합 vs 개별 장비 독립 세션 통계)
+    // 장비 운영 통계: 분석 스코프 선택 칩 (전체 연구장비 통합 vs 개별 장비 독립 세션 통계)
     const scopeChip = target.dataset.analyticsEq ? target : target.closest('[data-analytics-eq]');
 
 
@@ -9440,12 +9515,12 @@ function handleUrlFastTrack(){
   }
 }
 
-async 
 // ============================================================================
-// [IBS 2DQH N센터 291호 연구실 안전관리시스템 엔진 (Image 1, 2, 3 규격)]
+// [IBS 2DQH N센터 291호 연구실 안전관리시스템 엔진 (Image 1, 2, 3 규격 100% 일치)]
 // ============================================================================
 
 const LAB_291_CHEMICALS_MASTER = [
+  // --- A. 291호 연구실 실제 보유 특별관리물질 10개 품목 (Image 3 공식 취급일지 데이터) ---
   {
     id: 'CHEM-291-01',
     name: 'Sulfuric acid(ACS reagent, 95.0-98.0%)',
@@ -9467,7 +9542,8 @@ const LAB_291_CHEMICALS_MASTER = [
     isSpecial: true,
     carcinogen: true,
     mutagen: false,
-    reprotoxic: false
+    reprotoxic: false,
+    specialNoticeSub: '(Sulfuric acid 95.0-98.0% 함유)'
   },
   {
     id: 'CHEM-291-02',
@@ -9489,8 +9565,9 @@ const LAB_291_CHEMICALS_MASTER = [
     expDate: '2028.03.12',
     isSpecial: true,
     carcinogen: true,
-    mutagen: false,
-    reprotoxic: false
+    mutagen: true,
+    reprotoxic: false,
+    specialNoticeSub: '(Chromium(VI) trioxide complex 98% 함유)'
   },
   {
     id: 'CHEM-291-03',
@@ -9513,7 +9590,8 @@ const LAB_291_CHEMICALS_MASTER = [
     isSpecial: true,
     carcinogen: true,
     mutagen: false,
-    reprotoxic: false
+    reprotoxic: false,
+    specialNoticeSub: '(Tetrachloroethylene ≥99.0% 함유)'
   },
   {
     id: 'CHEM-291-04',
@@ -9536,7 +9614,8 @@ const LAB_291_CHEMICALS_MASTER = [
     isSpecial: true,
     carcinogen: false,
     mutagen: false,
-    reprotoxic: true
+    reprotoxic: true,
+    specialNoticeSub: '(N,N-Dimethylformamide ≥99.5% 함유)'
   },
   {
     id: 'CHEM-291-05',
@@ -9558,8 +9637,9 @@ const LAB_291_CHEMICALS_MASTER = [
     expDate: '2028.03.16',
     isSpecial: true,
     carcinogen: true,
-    mutagen: false,
-    reprotoxic: false
+    mutagen: true,
+    reprotoxic: true,
+    specialNoticeSub: '(Cadmium acetate 0.1% 이상 함유)'
   },
   {
     id: 'CHEM-291-06',
@@ -9582,7 +9662,8 @@ const LAB_291_CHEMICALS_MASTER = [
     isSpecial: true,
     carcinogen: false,
     mutagen: false,
-    reprotoxic: true
+    reprotoxic: true,
+    specialNoticeSub: '(Lead(II) iodide 0.3% 이상 함유)'
   },
   {
     id: 'CHEM-291-07',
@@ -9605,7 +9686,8 @@ const LAB_291_CHEMICALS_MASTER = [
     isSpecial: true,
     carcinogen: false,
     mutagen: false,
-    reprotoxic: true
+    reprotoxic: true,
+    specialNoticeSub: '(Lead(II) iodide 0.3% 이상 함유)'
   },
   {
     id: 'CHEM-291-08',
@@ -9628,7 +9710,8 @@ const LAB_291_CHEMICALS_MASTER = [
     isSpecial: true,
     carcinogen: false,
     mutagen: true,
-    reprotoxic: false
+    reprotoxic: false,
+    specialNoticeSub: '(Chromium(III) chloride 1.0% 이상 함유)'
   },
   {
     id: 'CHEM-291-09',
@@ -9651,7 +9734,8 @@ const LAB_291_CHEMICALS_MASTER = [
     isSpecial: true,
     carcinogen: true,
     mutagen: true,
-    reprotoxic: true
+    reprotoxic: true,
+    specialNoticeSub: '(Benzene, for HPLC, ≥99.9% 0.1% 이상 함유)'
   },
   {
     id: 'CHEM-291-10',
@@ -9673,9 +9757,12 @@ const LAB_291_CHEMICALS_MASTER = [
     expDate: '2028.03.17',
     isSpecial: true,
     carcinogen: true,
-    mutagen: false,
-    reprotoxic: false
+    mutagen: true,
+    reprotoxic: true,
+    specialNoticeSub: '(Nickel(II) nitrate hexahydrate 0.1% 이상 함유)'
   },
+
+  // --- B. 일반 유해물질 및 연구 시약 (Image 1 포털 재고현황 데이터) ---
   {
     id: 'CHEM-291-11',
     name: 'Selenium powder, 100 mesh, 99.5%',
@@ -9698,19 +9785,19 @@ const LAB_291_CHEMICALS_MASTER = [
   },
   {
     id: 'CHEM-291-12',
-    name: 'Tellurium powder, -200 mesh, 99.999%',
-    nameKo: '텔루륨 분말 (고순도)',
-    mfg: 'Alfa Aesar',
-    catNo: '011075.18',
-    cas: '13494-80-9',
+    name: '1,2,3,4,5,6,7-Heptaphenylcyclohepta-2,4,6-trien-1-ylium bromide',
+    nameKo: '헵타페닐 시클로헵타트리엔 브로마이드',
+    mfg: 'Sigma-Aldrich',
+    catNo: 'T299332',
+    cas: 'N/A',
     code: 'P-12',
-    hazard: 'D',
-    hazardDesc: '독성 유해물질',
+    hazard: 'F',
+    hazardDesc: '유기 양이온 염 시약',
     qty: '1/1',
-    stock: 50.0,
-    unit: 'g',
+    stock: 100.0,
+    unit: 'mg',
     handler: '김은지',
-    location: 'N센터 291호 선반 B-02',
+    location: 'N센터 291호 냉장시약고 R-01',
     status: '입고',
     inDate: '2026.03.02',
     expDate: '2028.03.02',
@@ -9725,12 +9812,12 @@ const LAB_291_CHEMICALS_MASTER = [
     cas: '13494-80-9',
     code: 'P-13',
     hazard: 'F',
-    hazardDesc: '유해물질',
+    hazardDesc: '독성 유해물질',
     qty: '1/1',
     stock: 25.0,
     unit: 'g',
     handler: '김은지',
-    location: 'N센터 291호 선반 B-03',
+    location: 'N센터 291호 선반 B-02',
     status: '입고',
     inDate: '2026.03.02',
     expDate: '2028.03.02',
@@ -9738,59 +9825,99 @@ const LAB_291_CHEMICALS_MASTER = [
   },
   {
     id: 'CHEM-291-14',
+    name: '1-(2-Aminoethyl)maleimide hydrochloride',
+    nameKo: '아미노에틸 말레이미드 염산염',
+    mfg: 'Sigma-Aldrich',
+    catNo: '809322',
+    cas: '134272-64-3',
+    code: 'P-14',
+    hazard: 'F',
+    hazardDesc: '바이오 가교 시약',
+    qty: '1/1',
+    stock: 100.0,
+    unit: 'mg',
+    handler: '김은지',
+    location: 'N센터 291호 냉동시약고 F-02',
+    status: '입고',
+    inDate: '2026.03.02',
+    expDate: '2028.03.02',
+    isSpecial: false
+  },
+  {
+    id: 'CHEM-291-15',
     name: 'Sodium tellurite (IV)',
-    nameKo: '아텔루르산나트륨',
+    nameKo: '아텔루르산나트륨 (IV)',
     mfg: 'Thermo Scientific',
     catNo: '41778',
     cas: '10102-20-2',
-    code: 'P-14',
+    code: 'P-15',
     hazard: 'F',
-    hazardDesc: '유해물질',
+    hazardDesc: '무기 텔루륨 산화물',
     qty: '1/1',
     stock: 10.0,
     unit: 'g',
     handler: '김은지',
-    location: 'N센터 291호 선반 C-01',
+    location: 'N센터 291호 선반 B-03',
     status: '입고',
     inDate: '2026.04.01',
     expDate: '2028.03.02',
     isSpecial: false
   },
   {
-    id: 'CHEM-291-15',
-    name: 'Magnesium iodide, anhydrous',
+    id: 'CHEM-291-16',
+    name: 'Magnesium iodide',
     nameKo: '요오드화마그네슘',
     mfg: 'Sigma-Aldrich',
     catNo: '394599-5G',
     cas: '10377-58-9',
-    code: 'P-15',
+    code: 'P-16',
     hazard: 'F',
-    hazardDesc: '화학시약',
+    hazardDesc: '할로겐화물 시약',
     qty: '1/1',
     stock: 5.0,
     unit: 'g',
     handler: '김은지',
-    location: 'N센터 291호 글러브박스 G-02',
+    location: 'N센터 291호 데시케이터 D-02',
     status: '입고',
     inDate: '2026.03.02',
     expDate: '2028.03.02',
     isSpecial: false
   },
   {
-    id: 'CHEM-291-16',
+    id: 'CHEM-291-17',
     name: 'Ammonium tetrathiotungstate',
-    nameKo: '암모늄 테트라티오텅스테이트',
+    nameKo: '암모늄 테트라티오텅스텐산염',
     mfg: 'Sigma-Aldrich',
     catNo: '336734-5G',
     cas: '13862-78-7',
-    code: 'P-16',
+    code: 'P-17',
     hazard: 'D',
-    hazardDesc: '화학시약',
-    qty: '1/2',
+    hazardDesc: '2D 전구체 황화물 시약',
+    qty: '2/2',
     stock: 5.0,
     unit: 'g',
     handler: '김은지',
-    location: 'N센터 291호 선반 C-02',
+    location: 'N센터 291호 특별보관함 S-01',
+    status: '입고',
+    inDate: '2026.03.02',
+    expDate: '2028.03.02',
+    isSpecial: false
+  },
+  {
+    id: 'CHEM-291-18',
+    name: 'Tellurium powder, -200 mesh, 99.999% (metals basis)',
+    nameKo: '텔루륨 분말 (고순도 전자급)',
+    mfg: 'Alfa Aesar',
+    catNo: '011075.18',
+    cas: '13494-80-9',
+    code: 'P-18',
+    hazard: 'D',
+    hazardDesc: '초고순도 무기 분말',
+    qty: '1/1',
+    stock: 50.0,
+    unit: 'g',
+    handler: '김은지',
+    location: 'N센터 291호 선반 B-02',
     status: '입고',
     inDate: '2026.03.02',
     expDate: '2028.03.02',
@@ -9798,130 +9925,248 @@ const LAB_291_CHEMICALS_MASTER = [
   }
 ];
 
-// 초기 시약별 취급 이력 (Image 3 양식 규격 데이터)
-const DEFAULT_291_USAGE_LOGS = [
+// --- 291호 연구실 공식 특별관리물질 취급일지 초기 데이터 (Image 3 공식 양식 1:1) ---
+const LAB_291_USAGE_LOGS_DEFAULT = [
   {
-    id: 'LOG-291-01',
+    id: 'LOG-291-001',
     chemId: 'CHEM-291-01',
     materialName: 'Sulfuric acid(ACS reagent, 95.0-98.0%)',
     date: '2026.03.12',
-    time: '10:30',
-    usedQty: 50.0,
+    time: '10:00',
+    usedQty: 0,
     unit: 'mL',
-    remainingStock: 450.0,
-    workDesc: '피라냐 용액 조제 및 2D 헤테로구조 기판 전처리 세정',
-    worker: '이강민',
-    affiliation: '이차원양자헤테로구조체연구단',
-    ppe: '방독마스크, 내화학장갑, 보안경, 실험복',
-    incident: '이상 없음',
-    signature: '이강민'
-  },
-  {
-    id: 'LOG-291-02',
-    chemId: 'CHEM-291-04',
-    materialName: 'N,N-Dimethylformamide',
-    date: '2026.03.12',
-    time: '14:20',
-    usedQty: 0.1,
-    unit: 'L',
-    remainingStock: 0.9,
-    workDesc: '페로브스카이트 전구체 용액 용해 교반',
-    worker: '박서준',
-    affiliation: '성균관대 양자기술연구소',
-    ppe: '방독마스크(유기용제), 니트릴장갑, 보안경',
-    incident: '이상 없음',
-    signature: '박서준'
-  },
-  {
-    id: 'LOG-291-03',
-    chemId: 'CHEM-291-06',
-    materialName: 'Lead(II) iodide',
-    date: '2026.03.16',
-    time: '11:00',
-    usedQty: 5.0,
-    unit: 'g',
-    remainingStock: 45.0,
-    workDesc: 'PbI2 2D 결정 박막 성장 소스 준비',
+    remainingStock: 500.0,
+    workDesc: '신규 입고 검수 및 산시약장 격리 보관',
     worker: '김은지',
-    affiliation: '이차원 소재 합성 실험실',
-    ppe: '글러브박스 밀폐 조작, 방진마스크',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '방독마스크, 내화학장갑, 보안경',
     incident: '이상 없음',
     signature: '김은지'
   },
   {
-    id: 'LOG-291-04',
+    id: 'LOG-291-002',
+    chemId: 'CHEM-291-02',
+    materialName: 'Pyridinium chlorochromate, 98%',
+    date: '2026.03.12',
+    time: '10:30',
+    usedQty: 0,
+    unit: 'g',
+    remainingStock: 25.0,
+    workDesc: '신규 입고 검수 및 특별시약장 격리 보관',
+    worker: '김은지',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '방독마스크, 내화학장갑, 보안경',
+    incident: '이상 없음',
+    signature: '김은지'
+  },
+  {
+    id: 'LOG-291-003',
+    chemId: 'CHEM-291-03',
+    materialName: 'Tetrachloroethylene',
+    date: '2026.03.12',
+    time: '11:00',
+    usedQty: 0,
+    unit: 'L',
+    remainingStock: 1.0,
+    workDesc: '신규 입고 검수 및 유기용매장 C-01 격리',
+    worker: '김은지',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '유기용매용 방독마스크, 보호장갑',
+    incident: '이상 없음',
+    signature: '김은지'
+  },
+  {
+    id: 'LOG-291-004',
+    chemId: 'CHEM-291-04',
+    materialName: 'N,N-Dimethylformamide',
+    date: '2026.03.12',
+    time: '11:30',
+    usedQty: 0,
+    unit: 'L',
+    remainingStock: 1.0,
+    workDesc: '신규 입고 검수 및 환기 상태 점검',
+    worker: '김은지',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '방독마스크, 내화학장갑',
+    incident: '이상 없음',
+    signature: '김은지'
+  },
+  {
+    id: 'LOG-291-005',
+    chemId: 'CHEM-291-05',
+    materialName: 'Cadmium(II) acetate',
+    date: '2026.03.16',
+    time: '14:00',
+    usedQty: 0,
+    unit: 'g',
+    remainingStock: 5.0,
+    workDesc: '독극물 시약함 이중 잠금 보관 및 재고 실사',
+    worker: '김은지',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '방진마스크, 보호의, 보안경',
+    incident: '이상 없음',
+    signature: '김은지'
+  },
+  {
+    id: 'LOG-291-006',
+    chemId: 'CHEM-291-06',
+    materialName: 'Lead(II) iodide',
+    date: '2026.03.16',
+    time: '14:30',
+    usedQty: 0,
+    unit: 'g',
+    remainingStock: 50.0,
+    workDesc: '페로브스카이트 합성용 글러브박스 반입',
+    worker: '김은지',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '글러브박스 내 취급, 마스크',
+    incident: '이상 없음',
+    signature: '김은지'
+  },
+  {
+    id: 'LOG-291-007',
+    chemId: 'CHEM-291-07',
+    materialName: 'Lead(II) iodide',
+    date: '2026.03.16',
+    time: '14:40',
+    usedQty: 0,
+    unit: 'g',
+    remainingStock: 50.0,
+    workDesc: '예비 시약 보관 확인 (글러브박스 G-01)',
+    worker: '김은지',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '글러브박스 내 취급, 마스크',
+    incident: '이상 없음',
+    signature: '김은지'
+  },
+  {
+    id: 'LOG-291-008',
+    chemId: 'CHEM-291-08',
+    materialName: 'Chromium(III) chloride',
+    date: '2026.03.17',
+    time: '09:30',
+    usedQty: 0,
+    unit: 'g',
+    remainingStock: 25.0,
+    workDesc: '크롬 화합물 밀폐 용기 점검 및 시약장 보관',
+    worker: '김은지',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '내화학장갑, 방독마스크',
+    incident: '이상 없음',
+    signature: '김은지'
+  },
+  {
+    id: 'LOG-291-009',
     chemId: 'CHEM-291-09',
     materialName: 'Benzene, for HPLC, ≥99.9%',
     date: '2026.03.17',
-    time: '15:40',
-    usedQty: 10.0,
+    time: '10:00',
+    usedQty: 0,
     unit: 'mL',
-    remainingStock: 90.0,
-    workDesc: '비극성 분자 결정 세정 및 HPLC 표준용액 조제',
-    worker: '신현석',
+    remainingStock: 100.0,
+    workDesc: 'HPLC 전용 벤젠 인화성 시약장 F-01 입고',
+    worker: '김은지',
     affiliation: '이차원양자헤테로구조체연구단',
-    ppe: '방독마스크(A형 정화통), 내화학장갑, 보안경',
+    ppe: '유기방독마스크, 보안경',
     incident: '이상 없음',
-    signature: '신현석'
+    signature: '김은지'
   },
   {
-    id: 'LOG-291-05',
-    chemId: 'CHEM-291-02',
-    materialName: 'Pyridinium chlorochromate, 98%',
+    id: 'LOG-291-010',
+    chemId: 'CHEM-291-10',
+    materialName: 'Nickel(II) nitrate hexahydrate',
     date: '2026.03.17',
-    time: '16:30',
-    usedQty: 2.0,
+    time: '10:30',
+    usedQty: 0,
     unit: 'g',
-    remainingStock: 23.0,
-    workDesc: '알코올 산화 반응 촉매 조제',
-    worker: '정민호',
-    affiliation: '이차원 소재 합성 실험실',
-    ppe: '방독마스크, 내화학장갑, 실험복',
+    remainingStock: 20.0,
+    workDesc: '질산니켈 전구체 칭량 준비 및 보관함 점검',
+    worker: '김은지',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '니트릴장갑, 마스크',
     incident: '이상 없음',
-    signature: '정민호'
+    signature: '김은지'
+  },
+  // 실제 연구원 사용 기록 (잔여량 차감 및 캘린더 연동 데모)
+  {
+    id: 'LOG-291-USE-01',
+    chemId: 'CHEM-291-09',
+    materialName: 'Benzene, for HPLC, ≥99.9%',
+    date: '2026.03.20',
+    time: '15:20',
+    usedQty: 5.0,
+    unit: 'mL',
+    remainingStock: 95.0,
+    workDesc: '페로브스카이트 시편 세정 및 표면처리',
+    worker: '김은지',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '방독마스크, 내화학장갑, 보안경',
+    incident: '이상 없음',
+    signature: '김은지'
+  },
+  {
+    id: 'LOG-291-USE-02',
+    chemId: 'CHEM-291-01',
+    materialName: 'Sulfuric acid(ACS reagent, 95.0-98.0%)',
+    date: '2026.03.22',
+    time: '16:00',
+    usedQty: 10.0,
+    unit: 'mL',
+    remainingStock: 490.0,
+    workDesc: '기판 에칭 및 초음파 세척 공정',
+    worker: '이강민',
+    affiliation: '이차원양자헤테로구조체연구단',
+    ppe: '내산장갑, 방독마스크, 보안경',
+    incident: '이상 없음',
+    signature: '이강민'
   }
 ];
 
+let currentChemCalYear = 2026;
+let currentChemCalMonth = 3;
+
 function get291ChemicalsMaster(){
   try {
-    const raw = localStorage.getItem('lab291_chemicals_master');
-    if(raw && raw !== '[]'){
+    const raw = localStorage.getItem('lab291_chemicals_master_v3');
+    if(raw){
       const parsed = JSON.parse(raw);
       if(Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch(e){}
-  try { localStorage.setItem('lab291_chemicals_master', JSON.stringify(LAB_291_CHEMICALS_MASTER)); } catch(_){}
-  return LAB_291_CHEMICALS_MASTER.slice();
+  return LAB_291_CHEMICALS_MASTER;
 }
 
-function save291ChemicalsMaster(list){
-  try { localStorage.setItem('lab291_chemicals_master', JSON.stringify(list)); } catch(e){}
+function save291ChemicalsMaster(data){
+  try {
+    localStorage.setItem('lab291_chemicals_master_v3', JSON.stringify(data));
+  } catch(e){}
 }
 
 function get291UsageLogs(){
   try {
-    const raw = localStorage.getItem('lab291_usage_logs');
-    if(raw && raw !== '[]'){
+    const raw = localStorage.getItem('lab291_usage_logs_v3');
+    if(raw){
       const parsed = JSON.parse(raw);
       if(Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch(e){}
-  try { localStorage.setItem('lab291_usage_logs', JSON.stringify(DEFAULT_291_USAGE_LOGS)); } catch(_){}
-  return DEFAULT_291_USAGE_LOGS.slice();
+  return LAB_291_USAGE_LOGS_DEFAULT;
 }
 
-function save291UsageLogs(list){
-  try { localStorage.setItem('lab291_usage_logs', JSON.stringify(list)); } catch(e){}
+function save291UsageLogs(logs){
+  try {
+    localStorage.setItem('lab291_usage_logs_v3', JSON.stringify(logs));
+  } catch(e){}
 }
-
-let chemCalYear = 2026;
-let chemCalMonth = 3;
 
 function renderChemicalsView(){
   render291InventoryTable();
   render291Calendar();
 }
 
+// -------------------------------------------------------------
+// 1. 재고현황 테이블 렌더링 (Image 1 포털 규격)
+// -------------------------------------------------------------
 function render291InventoryTable(){
   const tbody = $('chemInventoryTableBody');
   const countBadge = $('chemTotalCountBadge');
@@ -9951,6 +10196,7 @@ function render291InventoryTable(){
     if(handlerQuery && c.handler !== handlerQuery) return false;
     if(locQuery && !c.location.includes(locQuery)) return false;
 
+    // 특별관리물질만 체크 시 291호 10대 품목만 노출
     if(condSpecial && !c.isSpecial) return false;
     if(dangerType === 'danger' && (!c.hazard || c.hazard === 'safe')) return false;
     if(dangerType === 'safe' && c.hazard && c.hazard !== 'safe') return false;
@@ -9965,7 +10211,7 @@ function render291InventoryTable(){
   if(countBadge) countBadge.textContent = filtered.length;
 
   if(filtered.length === 0){
-    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:32px;color:var(--ink-light);">일치하는 화학물질/시약이 없습니다.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:36px;color:var(--ink-light);font-size:13.5px;">일치하는 화학물질/시약이 없습니다. 검색 필터를 확인해주세요.</td></tr>';
     return;
   }
 
@@ -9973,6 +10219,7 @@ function render291InventoryTable(){
 
   let html = '';
   filtered.forEach(function(c){
+    // 잔여량 실시간 계산
     const chemLogs = logs.filter(function(l){ return l.chemId === c.id || l.materialName.includes(c.name.split('(')[0].trim()); });
     let currentStock = c.stock;
     if(chemLogs.length > 0){
@@ -9984,130 +10231,406 @@ function render291InventoryTable(){
 
     html += '<tr data-chem-id="' + safe(c.id) + '">';
     html += '<td style="text-align:center;"><input type="checkbox" class="chem-row-checkbox" value="' + safe(c.id) + '"></td>';
-    html += '<td><b style="color:var(--ink);">' + safe(c.name) + '</b></td>';
+    html += '<td><b style="color:var(--ink);">' + safe(c.name) + '</b>' + (c.isSpecial ? ' <span style="font-size:10px;padding:1px 5px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;font-weight:700;">특별관리</span>' : '') + '</td>';
     html += '<td style="white-space:nowrap;color:var(--ink-light);">' + safe(c.mfg) + '</td>';
-    html += '<td style="white-space:nowrap;font-family:monospace;">' + safe(c.catNo) + '</td>';
-    html += '<td style="white-space:nowrap;font-family:monospace;font-weight:600;">' + safe(c.cas) + '</td>';
-    html += '<td style="text-align:center;"><button type="button" class="btn-table-action" onclick="alert(\'' + safe(c.name) + ' MSDS를 조회합니다.\')">📄</button></td>';
+    html += '<td style="white-space:nowrap;font-family:monospace;font-size:11.5px;">' + safe(c.catNo) + '</td>';
+    html += '<td style="white-space:nowrap;font-family:monospace;font-weight:600;font-size:11.5px;">' + safe(c.cas) + '</td>';
+    html += '<td style="text-align:center;"><button type="button" class="btn-table-action" onclick="alert(\'[' + safe(c.name) + '] 안전보건공단 공식 MSDS 요약 정보를 새 창으로 조회합니다.\')" title="MSDS 요약 보기">📄</button></td>';
     html += '<td style="text-align:center;">' + hazardBadge + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">' + safe(c.qty) + '</td>';
-    html += '<td style="text-align:right;white-space:nowrap;font-weight:700;color:#059669;">' + currentStock + ' ' + safe(c.unit) + '</td>';
+    html += '<td style="text-align:right;white-space:nowrap;font-weight:800;color:#059669;font-size:13px;">' + currentStock + ' ' + safe(c.unit) + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">' + safe(c.handler) + '</td>';
-    html += '<td style="white-space:nowrap;font-size:11.5px;">' + safe(c.location) + '</td>';
-    html += '<td style="text-align:center;white-space:nowrap;"><span style="color:#15803d;font-weight:700;">' + safe(c.status) + '</span></td>';
-    html += '<td style="white-space:nowrap;font-size:11px;">' + safe(c.inDate) + '</td>';
-    html += '<td style="white-space:nowrap;font-size:11px;">' + safe(c.expDate) + '</td>';
+    html += '<td style="white-space:nowrap;font-size:11.5px;color:var(--ink-light);">' + safe(c.location) + '</td>';
+    html += '<td style="text-align:center;white-space:nowrap;"><span style="color:#15803d;font-weight:700;font-size:11px;">' + safe(c.status) + '</span></td>';
+    html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.inDate) + '</td>';
+    html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.expDate) + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">';
-    html += '<button type="button" class="btn-table-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '">이력</button>';
+    html += '<button type="button" class="btn-table-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '" style="font-weight:700;color:#2563eb;">이력</button>';
     if(isAdmin()){
-      html += '<button type="button" class="btn-table-action dark btn-chem-discard" data-chem-id="' + safe(c.id) + '">폐기</button>';
-      html += '<button type="button" class="btn-table-action danger btn-chem-delete" data-chem-id="' + safe(c.id) + '">삭제</button>';
+      html += '<button type="button" class="btn-table-action btn-chem-row-qr" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;" title="QR 라벨">QR</button>';
+      html += '<button type="button" class="btn-table-action danger btn-chem-delete" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#dc2626;">삭제</button>';
     }
     html += '</td>';
     html += '</tr>';
   });
 
   tbody.innerHTML = html;
+
+  // 전체 선택 체크박스 상태 동기화
+  const allBox = $('chemSelectAllCheckbox');
+  if(allBox) allBox.checked = false;
+
+  // 이력 및 액션 버튼 이벤트 위임
+  tbody.querySelectorAll('.btn-chem-view-history').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      openChemHistoryModal(btn.dataset.chemId);
+    });
+  });
+
+  tbody.querySelectorAll('.btn-chem-row-qr').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      openChemQrModalForSingle(btn.dataset.chemId);
+    });
+  });
+
+  tbody.querySelectorAll('.btn-chem-delete').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(!isAdmin()){ toast('관리자 권한이 필요합니다.'); return; }
+      if(confirm('정말 이 화학물질을 목록에서 삭제하시겠습니까?')){
+        const chems = get291ChemicalsMaster().filter(function(item){ return item.id !== btn.dataset.chemId; });
+        save291ChemicalsMaster(chems);
+        toast('화학물질이 삭제되었습니다.');
+        render291InventoryTable();
+      }
+    });
+  });
 }
 
+// -------------------------------------------------------------
+// 2. 특별관리물질 고지서 모달 (Image 2 서식 1:1 완벽 일치)
+// -------------------------------------------------------------
+function openChemNoticeModal(){
+  const checkedBoxes = document.querySelectorAll('.chem-row-checkbox:checked');
+  const chemicals = get291ChemicalsMaster();
+
+  let targetChem = null;
+  if(checkedBoxes.length > 0){
+    const selectedId = checkedBoxes[0].value;
+    targetChem = chemicals.find(function(c){ return c.id === selectedId; });
+  }
+
+  // 선택된 것이 없으면 벤젠 또는 첫 번째 특별관리물질 기본 선택
+  if(!targetChem){
+    targetChem = chemicals.find(function(c){ return c.isSpecial && c.name.includes('Benzene'); }) ||
+                 chemicals.find(function(c){ return c.isSpecial; }) ||
+                 chemicals[0];
+  }
+
+  const modal = $('modalChemNoticeBackdrop');
+  if(!modal) return;
+
+  const nameDisplay = $('noticeSubstanceNameDisplay');
+  const subDisplay = $('noticeSubstanceSubDisplay');
+  const carcCheck = $('noticeCarcinogenCheck');
+  const mutaCheck = $('noticeMutagenCheck');
+  const reproCheck = $('noticeReproCheck');
+
+  if(nameDisplay) nameDisplay.textContent = targetChem.name;
+  if(subDisplay){
+    subDisplay.textContent = targetChem.specialNoticeSub || '(' + targetChem.name + ' 0.1% 이상 함유)';
+  }
+  if(carcCheck) carcCheck.textContent = targetChem.carcinogen ? 'X' : '-';
+  if(mutaCheck) mutaCheck.textContent = targetChem.mutagen ? 'X' : '-';
+  if(reproCheck) reproCheck.textContent = targetChem.reprotoxic ? 'X' : '-';
+
+  modal.classList.add('open');
+}
+
+function closeChemNoticeModal(){
+  const modal = $('modalChemNoticeBackdrop');
+  if(modal) modal.classList.remove('open');
+}
+
+function printChemNoticeA4(){
+  window.print();
+}
+
+// -------------------------------------------------------------
+// 3. 특별관리물질 취급일지 공식 양식 엑셀(.xlsx) 생성 (Image 3 서식 1:1)
+// -------------------------------------------------------------
+function exportOfficial291LedgerExcel(){
+  const logs = get291UsageLogs();
+  const fileName = 'N센터291호_특별관리물질_취급일지_공식양식_' + today() + '.xlsx';
+
+  if(typeof XLSX !== 'undefined'){
+    // SheetJS를 사용하여 공식 서식과 완벽히 동일한 워크시트 생성
+    const wsData = [
+      ['특별관리물질 취급일지'],
+      [],
+      ['· 건 물 명 : N센터', '', '', '', '· 연구실책임자 : 신현석 (서명)'],
+      ['· 소    속 : 이차원양자헤테로구조체연구단'],
+      ['· 연구실명 : 이차원 소재 합성 실험실 (291호)'],
+      [],
+      ['취급일자', '물질명', '사용량', '재고량', '작업내용', '작업자', '착용한 보호구', '사고 발생 시, 피해내용 및 조치사항']
+    ];
+
+    logs.forEach(function(l){
+      wsData.push([
+        l.date || '',
+        l.materialName || '',
+        (l.usedQty !== undefined ? l.usedQty + ' ' + (l.unit || '') : '0 mL'),
+        (l.remainingStock !== undefined ? l.remainingStock + ' ' + (l.unit || '') : ''),
+        l.workDesc || '',
+        l.worker || '',
+        l.ppe || '',
+        l.incident || '이상 없음'
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // 열 너비 설정
+    ws['!cols'] = [
+      { wch: 14 }, // 취급일자
+      { wch: 38 }, // 물질명
+      { wch: 12 }, // 사용량
+      { wch: 12 }, // 재고량
+      { wch: 32 }, // 작업내용
+      { wch: 12 }, // 작업자
+      { wch: 28 }, // 착용한 보호구
+      { wch: 28 }  // 조치사항
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '취급일지');
+    XLSX.writeFile(wb, fileName);
+    toast('✓ N센터 291호 특별관리물질 취급일지 공식 엑셀(.xlsx)이 다운로드되었습니다.');
+    return;
+  }
+
+  // 폴백 CSV 다운로드
+  exportOfficial291LedgerCsv();
+}
+
+function exportOfficial291LedgerCsv(){
+  const logs = get291UsageLogs();
+  let csv = '\uFEFF';
+  csv += '특별관리물질 취급일지\r\n';
+  csv += '· 건 물 명 : N센터\r\n';
+  csv += '· 소    속 : 이차원양자헤테로구조체연구단\r\n';
+  csv += '· 연구실명 : 이차원 소재 합성 실험실 (291호)\r\n';
+  csv += '· 연구실책임자 : 신현석 (서명)\r\n\r\n';
+  csv += '취급일자,물질명,사용량,재고량,작업내용,작업자,착용한 보호구,사고 발생 시 피해내용 및 조치사항\r\n';
+
+  logs.forEach(function(l){
+    csv += [
+      '"' + l.date + '"',
+      '"' + l.materialName.replace(/"/g, '""') + '"',
+      '"' + l.usedQty + ' ' + l.unit + '"',
+      '"' + l.remainingStock + ' ' + l.unit + '"',
+      '"' + (l.workDesc || '').replace(/"/g, '""') + '"',
+      '"' + (l.worker || '').replace(/"/g, '""') + '"',
+      '"' + (l.ppe || '').replace(/"/g, '""') + '"',
+      '"' + (l.incident || '이상 없음').replace(/"/g, '""') + '"'
+    ].join(',') + '\r\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'N센터291호_특별관리물질_취급일지_' + today() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('✓ N센터 291호 특별관리물질 취급일지 CSV가 다운로드되었습니다.');
+}
+
+function exportAllChemicalsExcel(){
+  const chemicals = get291ChemicalsMaster();
+  const logs = get291UsageLogs();
+  const fileName = 'N센터291호_화학물질_재고현황_' + today() + '.xlsx';
+
+  if(typeof XLSX !== 'undefined'){
+    const wsData = [
+      ['제품명', '제조사', 'CAT No.', 'CAS No.', '유해위험성', '수량', '잔량', '담당자', '보관위치', '상태', '입고일', '유효기간']
+    ];
+
+    chemicals.forEach(function(c){
+      const chemLogs = logs.filter(function(l){ return l.chemId === c.id; });
+      let curStock = c.stock;
+      if(chemLogs.length > 0){
+        chemLogs.sort(function(a, b){ return (b.date + ' ' + b.time).localeCompare(a.date + ' ' + a.time); });
+        curStock = chemLogs[0].remainingStock;
+      }
+
+      wsData.push([
+        c.name,
+        c.mfg,
+        c.catNo,
+        c.cas,
+        c.hazard || '-',
+        c.qty,
+        curStock + ' ' + c.unit,
+        c.handler,
+        c.location,
+        c.status,
+        c.inDate,
+        c.expDate
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [
+      { wch: 38 }, { wch: 20 }, { wch: 14 }, { wch: 14 },
+      { wch: 10 }, { wch: 8 }, { wch: 14 }, { wch: 10 },
+      { wch: 28 }, { wch: 8 }, { wch: 12 }, { wch: 12 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '재고현황');
+    XLSX.writeFile(wb, fileName);
+    toast('✓ N센터 291호 화학물질 재고현황 엑셀(.xlsx)이 다운로드되었습니다.');
+    return;
+  }
+
+  // 폴백 CSV
+  let csv = '\uFEFF';
+  csv += '제품명,제조사,CAT No.,CAS No.,유해위험성,수량,잔량,담당자,보관위치,상태,입고일,유효기간\r\n';
+  chemicals.forEach(function(c){
+    csv += [
+      '"' + c.name.replace(/"/g, '""') + '"',
+      '"' + c.mfg.replace(/"/g, '""') + '"',
+      '"' + c.catNo + '"',
+      '"' + c.cas + '"',
+      '"' + (c.hazard || '-') + '"',
+      '"' + c.qty + '"',
+      '"' + c.stock + ' ' + c.unit + '"',
+      '"' + c.handler + '"',
+      '"' + c.location.replace(/"/g, '""') + '"',
+      '"' + c.status + '"',
+      '"' + c.inDate + '"',
+      '"' + c.expDate + '"'
+    ].join(',') + '\r\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'N센터291호_화학물질_재고현황_' + today() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('✓ N센터 291호 화학물질 재고현황 CSV가 다운로드되었습니다.');
+}
+
+// -------------------------------------------------------------
+// 4. 월별 취급 캘린더 인터랙티브 뷰 (월간 사용량 & 일자별 취급 내역)
+// -------------------------------------------------------------
 function render291Calendar(){
   const grid = $('chemCalendarGrid');
-  const titleEl = $('chemCalCurrentMonthText');
-  const summaryEl = $('chemCalSummaryText');
+  const monthText = $('chemCalCurrentMonthText');
+  const summaryText = $('chemCalSummaryText');
   if(!grid) return;
 
-  if(titleEl) titleEl.textContent = chemCalYear + '년 ' + chemCalMonth + '월';
+  if(monthText){
+    monthText.textContent = currentChemCalYear + '년 ' + currentChemCalMonth + '월';
+  }
 
   const logs = get291UsageLogs();
-  const monthStr = chemCalYear + '.' + String(chemCalMonth).padStart(2, '0');
+  const yStr = String(currentChemCalYear);
+  const mStr = String(currentChemCalMonth).padStart(2, '0');
+  const prefix = yStr + '.' + mStr;
 
   const monthLogs = logs.filter(function(l){
-    return l.date.startsWith(monthStr);
+    return l.date && l.date.startsWith(prefix);
   });
 
-  if(summaryEl){
-    summaryEl.textContent = '총 취급 ' + monthLogs.length + '건 · 연구실 책임자: 신현석 교수 (N센터 291호)';
+  if(summaryText){
+    summaryText.innerHTML = '총 <b>' + monthLogs.length + '</b>건의 취급 및 잔여량 이력 기록됨';
   }
 
-  const firstDay = new Date(chemCalYear, chemCalMonth - 1, 1).getDay();
-  const lastDate = new Date(chemCalYear, chemCalMonth, 0).getDate();
+  const firstDay = new Date(currentChemCalYear, currentChemCalMonth - 1, 1).getDay();
+  const lastDate = new Date(currentChemCalYear, currentChemCalMonth, 0).getDate();
 
-  let html = '';
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
-  days.forEach(function(d){
-    html += '<div style="text-align:center;font-size:12px;font-weight:700;padding:6px;background:var(--bg-subtle);border-radius:4px;color:var(--ink);">' + d + '</div>';
+  let html = '<div class="chem-cal-weekdays">';
+  ['일', '월', '화', '수', '목', '금', '토'].forEach(function(day){
+    html += '<div class="cal-day-label">' + day + '</div>';
   });
+  html += '</div><div class="chem-cal-days-grid">';
 
   for(let i = 0; i < firstDay; i++){
-    html += '<div class="chem-cal-day-cell other-month"></div>';
+    html += '<div class="chem-cal-cell empty"></div>';
   }
 
-  for(let day = 1; day <= lastDate; day++){
-    const curDateStr = monthStr + '.' + String(day).padStart(2, '0');
-    const dayLogs = monthLogs.filter(function(l){ return l.date === curDateStr; });
-    const hasLogs = dayLogs.length > 0;
+  for(let d = 1; d <= lastDate; d++){
+    const dStr = String(d).padStart(2, '0');
+    const fullDate = prefix + '.' + dStr;
+    const dayLogs = monthLogs.filter(function(l){ return l.date === fullDate; });
 
-    html += '<div class="chem-cal-day-cell ' + (hasLogs ? 'has-logs' : '') + '" data-cal-date="' + curDateStr + '">';
-    html += '<span class="chem-cal-day-num">' + day + '</span>';
-    if(hasLogs){
-      dayLogs.forEach(function(dl){
-        const shortName = dl.materialName.split('(')[0].split(',')[0].slice(0, 10);
-        html += '<span class="chem-cal-badge" title="' + safe(dl.materialName) + ' ' + dl.usedQty + safe(dl.unit) + ' (' + safe(dl.worker) + ')">' + safe(shortName) + ' ' + dl.usedQty + safe(dl.unit) + '</span>';
+    let cellContent = '<div class="cal-date-num">' + d + '</div>';
+    if(dayLogs.length > 0){
+      cellContent += '<div class="cal-badge-box">';
+      dayLogs.slice(0, 3).forEach(function(l){
+        const shortName = l.materialName.split(',')[0].split('(')[0].trim();
+        const actionType = l.usedQty > 0 ? ('-' + l.usedQty + l.unit) : '입고';
+        const badgeColor = l.usedQty > 0 ? '#dc2626' : '#2563eb';
+        cellContent += '<div class="cal-mini-badge" style="background:' + badgeColor + '15;color:' + badgeColor + ';border:1px solid ' + badgeColor + '30;" title="' + safe(l.materialName) + ' (' + actionType + ')">' + safe(shortName) + ' ' + actionType + '</div>';
       });
+      if(dayLogs.length > 3){
+        cellContent += '<div class="cal-more-text">+' + (dayLogs.length - 3) + '건 더보기</div>';
+      }
+      cellContent += '</div>';
     }
-    html += '</div>';
+
+    const hasLogClass = dayLogs.length > 0 ? ' has-log' : '';
+    html += '<div class="chem-cal-cell' + hasLogClass + '" data-cal-date="' + fullDate + '">' + cellContent + '</div>';
   }
 
+  html += '</div>';
   grid.innerHTML = html;
+
+  // 일자 클릭 시 해당 일자의 취급 기록 팝업
+  grid.querySelectorAll('.chem-cal-cell.has-log').forEach(function(cell){
+    cell.addEventListener('click', function(){
+      showChemDayLogsModal(cell.dataset.calDate);
+    });
+  });
 }
 
-function openChemHistoryModal(chemId){
-  const chemicals = get291ChemicalsMaster();
-  const c = chemicals.find(function(item){ return item.id === chemId; }) || chemicals[0];
-  if(!c) return;
+function showChemDayLogsModal(dateStr){
+  const logs = get291UsageLogs().filter(function(l){ return l.date === dateStr; });
+  if(logs.length === 0) return;
 
+  let msg = '📅 ' + dateStr + ' 특별관리물질 취급 내역 (' + logs.length + '건)\n\n';
+  logs.forEach(function(l, idx){
+    msg += (idx + 1) + '. ' + l.materialName + '\n';
+    msg += '   - 작업자: ' + l.worker + ' (' + l.affiliation + ')\n';
+    msg += '   - 사용량: ' + (l.usedQty > 0 ? (l.usedQty + ' ' + l.unit) : '0 (입고/점검)') + ' (잔여: ' + l.remainingStock + ' ' + l.unit + ')\n';
+    msg += '   - 작업내용: ' + l.workDesc + '\n';
+    msg += '   - 착용보호구: ' + l.ppe + '\n\n';
+  });
+
+  alert(msg);
+}
+
+// -------------------------------------------------------------
+// 5. 시약별 상세 이력 / 취급대장 모달 (연구원/사용자용)
+// -------------------------------------------------------------
+function openChemHistoryModal(chemId){
   const modal = $('modalChemHistoryBackdrop');
   if(!modal) return;
 
-  const titleEl = $('chemHistoryModalTitle');
-  const subEl = $('chemHistoryModalSub');
-  const initEl = $('histInitialStock');
-  const curEl = $('histCurrentStock');
-  const wrap = $('chemHistoryTableWrap');
-  const btnWrite = $('btnHistWriteLog');
-
-  if(titleEl) titleEl.textContent = c.name + ' [' + c.cas + ']';
-  if(subEl) subEl.textContent = '제조사: ' + c.mfg + ' | 보관위치: ' + c.location + ' | 관리담당: ' + c.handler;
-  if(initEl) initEl.textContent = c.stock + ' ' + c.unit;
-
+  const chemicals = get291ChemicalsMaster();
+  const c = chemicals.find(function(item){ return item.id === chemId; }) || chemicals[0];
   const logs = get291UsageLogs();
-  const matched = logs.filter(function(l){
-    return l.chemId === c.id || l.materialName.includes(c.name.split('(')[0].trim());
-  });
+  const matched = logs.filter(function(l){ return l.chemId === c.id || l.materialName.includes(c.name.split('(')[0].trim()); });
 
-  matched.sort(function(a, b){ return (b.date + ' ' + b.time).localeCompare(a.date + ' ' + a.time); });
+  const title = $('modalChemHistoryTitle');
+  const meta = $('modalChemHistoryMeta');
+  const wrap = $('modalChemHistoryTableWrap');
+  const btnWrite = $('btnChemOpenWriteLogFromHistory');
 
-  let curStock = c.stock;
-  if(matched.length > 0){
-    curStock = matched[0].remainingStock;
-  }
-  if(curEl) curEl.textContent = curStock + ' ' + c.unit;
+  if(title) title.textContent = c.name + ' [' + c.cas + ']';
+  if(meta) meta.innerHTML = '제조사: <b>' + safe(c.mfg) + '</b> · 보관: <b>' + safe(c.location) + '</b> · 관리책임: <b>' + safe(c.handler) + '</b> · 초기입고: ' + c.stock + ' ' + c.unit;
 
   if(wrap){
     if(matched.length === 0){
-      wrap.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink-light);font-size:13px;">아직 작성된 취급 이력이 없습니다.</div>';
+      wrap.innerHTML = '<div style="text-align:center;padding:36px;color:var(--ink-light);font-size:13px;">아직 작성된 취급 이력이 없습니다. [＋ 취급일지 작성]을 눌러 사용량을 기록하세요.</div>';
     } else {
       let tbl = '<table class="chem-inventory-table" style="width:100%;font-size:12px;">';
-      tbl += '<thead><tr><th>취급일자</th><th>사용자 (소속)</th><th>사용량</th><th>사용 후 잔여량</th><th>작업 내용</th><th>보호구</th><th>사고유무</th></tr></thead><tbody>';
+      tbl += '<thead><tr><th>취급일자</th><th>사용자 (소속)</th><th>사용량</th><th>사용 후 잔여량</th><th>작업 내용</th><th>착용 보호구</th><th>사고 유무</th></tr></thead><tbody>';
       matched.forEach(function(m){
         tbl += '<tr>';
-        tbl += '<td style="white-space:nowrap;font-weight:700;">' + safe(m.date + ' ' + m.time) + '</td>';
+        tbl += '<td style="white-space:nowrap;font-weight:700;">' + safe(m.date + ' ' + (m.time || '')) + '</td>';
         tbl += '<td style="white-space:nowrap;"><b>' + safe(m.worker) + '</b> (' + safe(m.affiliation) + ')</td>';
-        tbl += '<td style="white-space:nowrap;color:#dc2626;font-weight:800;">-' + m.usedQty + ' ' + safe(m.unit) + '</td>';
+        tbl += '<td style="white-space:nowrap;color:#dc2626;font-weight:800;">' + (m.usedQty > 0 ? ('-' + m.usedQty + ' ' + safe(m.unit)) : '0 ' + safe(m.unit)) + '</td>';
         tbl += '<td style="white-space:nowrap;color:#059669;font-weight:800;">' + m.remainingStock + ' ' + safe(m.unit) + '</td>';
         tbl += '<td>' + safe(m.workDesc) + '</td>';
-        tbl += '<td style="white-space:nowrap;"><span style="color:#15803d;font-weight:700;">✓ ' + safe(m.ppe) + '</span></td>';
-        tbl += '<td style="white-space:nowrap;"><span style="color:#2563eb;font-weight:700;">' + safe(m.incident) + '</span></td>';
+        tbl += '<td style="white-space:nowrap;color:#15803d;font-weight:600;">✓ ' + safe(m.ppe) + '</td>';
+        tbl += '<td style="white-space:nowrap;color:#2563eb;font-weight:600;">' + safe(m.incident) + '</td>';
         tbl += '</tr>';
       });
       tbl += '</tbody></table>';
@@ -10130,6 +10653,9 @@ function closeChemHistoryModal(){
   if(modal) modal.classList.remove('open');
 }
 
+// -------------------------------------------------------------
+// 6. 취급일지 작성 모달 & 서브밋 핸들러
+// -------------------------------------------------------------
 function openChemWriteLogModal(chemId){
   const modal = $('modalChemWriteLogBackdrop');
   if(!modal) return;
@@ -10280,110 +10806,175 @@ async function handleModalChemLogSubmit(e){
   renderChemicalsView();
 }
 
-function openChemNoticeModal(){
-  const checkedBoxes = document.querySelectorAll('.chem-row-checkbox:checked');
+// -------------------------------------------------------------
+// 7. 관리자 전용 QR 라벨 모달
+// -------------------------------------------------------------
+function openChemQrModalForSingle(chemId){
+  if(!isAdmin()){ toast('관리자 권한이 필요합니다.'); return; }
   const chemicals = get291ChemicalsMaster();
+  const c = chemicals.find(function(item){ return item.id === chemId; });
+  if(!c) return;
 
-  let targetChem = chemicals.find(function(c){ return c.name.includes('Benzene'); }) || chemicals[0];
-  if(checkedBoxes.length > 0){
-    const selectedId = checkedBoxes[0].value;
-    targetChem = chemicals.find(function(c){ return c.id === selectedId; }) || targetChem;
-  }
-
-  const modal = $('modalChemNoticeBackdrop');
+  const modal = $('modalChemicalQrBackdrop');
   if(!modal) return;
 
-  const nameDisplay = $('noticeSubstanceNameDisplay');
-  const subDisplay = $('noticeSubstanceSubDisplay');
-  const carcCheck = $('noticeCarcinogenCheck');
-  const mutaCheck = $('noticeMutagenCheck');
-  const reproCheck = $('noticeReproCheck');
+  const titleEl = document.querySelector('.qr-label-title');
+  const locEl = document.querySelector('.qr-label-loc');
+  const qrBox = $('chemicalQrCodeBox');
 
-  if(nameDisplay) nameDisplay.textContent = targetChem.name;
-  if(subDisplay) subDisplay.textContent = '(' + targetChem.name + ' 0.1% 이상 함유)';
-  if(carcCheck) carcCheck.textContent = targetChem.carcinogen ? 'X' : '-';
-  if(mutaCheck) mutaCheck.textContent = targetChem.mutagen ? 'X' : '-';
-  if(reproCheck) reproCheck.textContent = targetChem.reprotoxic ? 'X' : '-';
+  if(titleEl) titleEl.textContent = c.name + ' 직통 QR';
+  if(locEl) locEl.textContent = '보관: ' + c.location + ' · 담당: ' + c.handler;
+
+  if(qrBox && typeof QRCode !== 'undefined'){
+    qrBox.innerHTML = '';
+    const targetUrl = window.location.origin + window.location.pathname + '#chemicals?chem=' + encodeURIComponent(c.id);
+    new QRCode(qrBox, {
+      text: targetUrl,
+      width: 140,
+      height: 140,
+      colorDark: '#0f172a',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
 
   modal.classList.add('open');
 }
 
-function closeChemNoticeModal(){
-  const modal = $('modalChemNoticeBackdrop');
-  if(modal) modal.classList.remove('open');
-}
-
-function exportOfficial291LedgerCsv(){
-  const logs = get291UsageLogs();
-  let csv = '\uFEFF';
-  csv += '특별관리물질 취급일지\r\n';
-  csv += '· 건 물 명 : N센터\r\n';
-  csv += '· 소    속 : 이차원양자헤테로구조체연구단\r\n';
-  csv += '· 연구실명 : 이차원 소재 합성 실험실 (291호)\r\n';
-  csv += '· 연구실책임자 : 신현석 (서명)\r\n\r\n';
-  csv += '취급일자,물질명,사용량,재고량,작업내용,작업자,착용한 보호구,사고 발생 시 피해내용 및 조치사항\r\n';
-
-  logs.forEach(function(l){
-    csv += [
-      '"' + l.date + '"',
-      '"' + l.materialName.replace(/"/g, '""') + '"',
-      '"' + l.usedQty + ' ' + l.unit + '"',
-      '"' + l.remainingStock + ' ' + l.unit + '"',
-      '"' + (l.workDesc || '').replace(/"/g, '""') + '"',
-      '"' + (l.worker || '').replace(/"/g, '""') + '"',
-      '"' + (l.ppe || '').replace(/"/g, '""') + '"',
-      '"' + (l.incident || '이상 없음').replace(/"/g, '""') + '"'
-    ].join(',') + '\r\n';
+// -------------------------------------------------------------
+// 8. 화학물질 포털 이벤트 바인딩 전용 함수 (bindEvents에서 호출)
+// -------------------------------------------------------------
+function bindChemicalsEvents(){
+  // A. 상단 탭 전환: [재고현황] vs [📅 월별 취급 캘린더]
+  addEvt('btnChemTabInventory', 'click', function(e){
+    e.preventDefault();
+    $('btnChemTabInventory').classList.add('active');
+    $('btnChemTabCalendar').classList.remove('active');
+    $('chemInventoryViewArea').classList.remove('hidden');
+    $('chemCalendarViewArea').classList.add('hidden');
+    render291InventoryTable();
   });
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'N센터291호_특별관리물질_취급일지_' + today() + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  toast('✓ N센터 291호 특별관리물질 취급일지 CSV가 다운로드되었습니다.');
-}
+  addEvt('btnChemTabCalendar', 'click', function(e){
+    e.preventDefault();
+    $('btnChemTabCalendar').classList.add('active');
+    $('btnChemTabInventory').classList.remove('active');
+    $('chemInventoryViewArea').classList.add('hidden');
+    $('chemCalendarViewArea').classList.remove('hidden');
+    render291Calendar();
+  });
 
-function exportAllChemicalsExcel(){
-  const chemicals = get291ChemicalsMaster();
-  const logs = get291UsageLogs();
-  let csv = '\uFEFF';
-  csv += '제품명,제조사,CAT No.,CAS No.,유해위험성,수량,잔량,담당자,보관위치,상태,입고일,유효기간\r\n';
+  // B. 캘린더 네비게이션
+  addEvt('btnChemCalPrevMonth', 'click', function(e){
+    e.preventDefault();
+    currentChemCalMonth--;
+    if(currentChemCalMonth < 1){ currentChemCalMonth = 12; currentChemCalYear--; }
+    render291Calendar();
+  });
+  addEvt('btnChemCalNextMonth', 'click', function(e){
+    e.preventDefault();
+    currentChemCalMonth++;
+    if(currentChemCalMonth > 12){ currentChemCalMonth = 1; currentChemCalYear++; }
+    render291Calendar();
+  });
+  addEvt('btnChemCalToday', 'click', function(e){
+    e.preventDefault();
+    currentChemCalYear = 2026;
+    currentChemCalMonth = 3;
+    render291Calendar();
+  });
 
-  chemicals.forEach(function(c){
-    const chemLogs = logs.filter(function(l){ return l.chemId === c.id; });
-    let curStock = c.stock;
-    if(chemLogs.length > 0){
-      chemLogs.sort(function(a, b){ return (b.date + ' ' + b.time).localeCompare(a.date + ' ' + a.time); });
-      curStock = chemLogs[0].remainingStock;
+  // C. 검색 필터 액션
+  addEvt('btnChemSearchSubmit', 'click', function(e){
+    e.preventDefault();
+    render291InventoryTable();
+  });
+  addEvt('btnChemSearchReset', 'click', function(e){
+    e.preventDefault();
+    if($('chemFilterName')) $('chemFilterName').value = '';
+    if($('chemFilterCas')) $('chemFilterCas').value = '';
+    if($('chemFilterCat')) $('chemFilterCat').value = '';
+    if($('chemFilterCode')) $('chemFilterCode').value = '';
+    if($('chemFilterMfg')) $('chemFilterMfg').value = '';
+    if($('chemFilterHandler')) $('chemFilterHandler').value = '';
+    if($('chemFilterLoc')) $('chemFilterLoc').value = '';
+    if($('chemFilterManageNo')) $('chemFilterManageNo').value = '';
+    if($('chemCondSpecial')) $('chemCondSpecial').checked = true;
+    render291InventoryTable();
+  });
+
+  // 검색 인풋 엔터키 지원
+  ['chemFilterName', 'chemFilterCas', 'chemFilterCat', 'chemFilterMfg', 'chemFilterCode'].forEach(function(id){
+    const el = $(id);
+    if(el){
+      el.addEventListener('keydown', function(ev){
+        if(ev.key === 'Enter'){
+          ev.preventDefault();
+          render291InventoryTable();
+        }
+      });
     }
-
-    csv += [
-      '"' + c.name.replace(/"/g, '""') + '"',
-      '"' + c.mfg.replace(/"/g, '""') + '"',
-      '"' + c.catNo + '"',
-      '"' + c.cas + '"',
-      '"' + (c.hazard || '-') + '"',
-      '"' + c.qty + '"',
-      '"' + curStock + ' ' + c.unit + '"',
-      '"' + c.handler + '"',
-      '"' + c.location.replace(/"/g, '""') + '"',
-      '"' + c.status + '"',
-      '"' + c.inDate + '"',
-      '"' + c.expDate + '"'
-    ].join(',') + '\r\n';
   });
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'N센터291호_화학물질_재고현황_' + today() + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  toast('✓ N센터 291호 화학물질 재고현황 CSV가 다운로드되었습니다.');
+  // D. 전체 선택 체크박스
+  addEvt('chemSelectAllCheckbox', 'change', function(e){
+    const checked = e.target.checked;
+    document.querySelectorAll('.chem-row-checkbox').forEach(function(box){
+      box.checked = checked;
+    });
+  });
+
+  // E. 상단 관리자 액션 버튼들 (Image 1, 2, 3 지원)
+  addEvt('btnChemNoticeExtract', 'click', function(e){
+    e.preventDefault();
+    openChemNoticeModal();
+  });
+  addEvt('btnChemOfficialLedgerCsv', 'click', function(e){
+    e.preventDefault();
+    exportOfficial291LedgerExcel();
+  });
+  addEvt('btnChemProductExcel', 'click', function(e){
+    e.preventDefault();
+    exportAllChemicalsExcel();
+  });
+
+  // F. 고지서 모달 조작 (인쇄 & 닫기)
+  addEvt('btnPrintNoticeA4', 'click', function(e){
+    e.preventDefault();
+    printChemNoticeA4();
+  });
+  addEvt('btnCloseChemNotice', 'click', function(e){
+    e.preventDefault();
+    closeChemNoticeModal();
+  });
+
+  // G. 취급 이력 모달 닫기
+  addEvt('btnCloseChemHistoryModal', 'click', function(e){
+    e.preventDefault();
+    closeChemHistoryModal();
+  });
+
+  // H. 취급일지 작성 모달 조작
+  addEvt('btnCloseChemWriteLogModal', 'click', function(e){
+    e.preventDefault();
+    closeChemWriteLogModal();
+  });
+  addEvt('modalChemSelect', 'change', updateModalChemStockPreview);
+  addEvt('formChemWriteLog', 'submit', handleModalChemLogSubmit);
+
+  // I. QR 모달 닫기
+  addEvt('btnCloseChemicalQr', 'click', function(e){
+    e.preventDefault();
+    const modal = $('modalChemicalQrBackdrop');
+    if(modal) modal.classList.remove('open');
+  });
+}
+
+
+function initFaqAccordion(){
+  const list = $('faqAccordionList');
+  if(!list) return;
+  // Event delegation is handled in click guard
 }
 
 function switchHelpTab(tabRole){
@@ -10412,6 +11003,7 @@ function switchHelpTab(tabRole){
 async function initApp(){
   initTheme();
   initTransparentLogo();
+  initFaqAccordion();
   bindEvents();
 
   // 2-in-1 연구 포털 모듈 초기화 (기본값: 연구장비 포털)
