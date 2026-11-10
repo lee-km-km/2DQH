@@ -300,6 +300,7 @@ let researchEquipments = [];
 let currentSelectedEquipment = 'EQ-XRD-01';
 let equipmentSessions = [];
 let selectedAnalyticsEquipmentId = 'all'; // 'all' | 'EQ-XRD-01' | 'EQ-BONDER-01' ... 장비별 통계 분리 스코프
+let selectedAnalyticsPeriod = 'month'; // 'month' | 'week' | 'year' (월별 / 주간 / 연간 통계 주기)
 let currentHubView = 'catalog'; // 'catalog' | 'analytics'
 let currentCalendarYear = new Date().getFullYear();
 let currentCalendarMonth = new Date().getMonth() + 1;
@@ -3538,7 +3539,7 @@ function formatCsvCell(val, type){
 
 function exportToExcelFile(filename, sheetName, headers, rows, colWidths){
   let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
-  html += '<head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>' + sheetName + '</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>';
+  html += '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>' + sheetName + '</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>';
   html += 'table { border-collapse: collapse; font-family: "Malgun Gothic", "Segoe UI", Arial, sans-serif; font-size: 10pt; }';
   html += 'th { background-color: #1e3a8a; color: #ffffff; font-weight: bold; border: 1px solid #0f172a; padding: 10px 14px; text-align: center; white-space: nowrap; }';
   html += 'td { border: 1px solid #cbd5e1; padding: 7px 12px; color: #1e293b; vertical-align: middle; }';
@@ -3572,7 +3573,8 @@ function exportToExcelFile(filename, sheetName, headers, rows, colWidths){
   });
   html += '</tbody></table></body></html>';
 
-  const blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const blob = new Blob([bom, html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -3585,128 +3587,75 @@ function exportToExcelFile(filename, sheetName, headers, rows, colWidths){
 
 function getXrdExportData(){
   const headers = [
-    '예약번호 (No)',
-    '장비명 (Equipment)',
     '측정일자 (Date)',
-    '시작시간 (Start)',
-    '종료시간 (End)',
-    '가동구간 (Period)',
-    '가동시간_분 (min)',
-    '가동시간_시간 (hrs)',
-    '진행상태 (Status)',
+    '장비명 (Equipment)',
+    '예약번호 (No)',
     '사용자 (User)',
     '소속 (Affiliation)',
     '지도교수 (Adviser)',
+    '시작시간 (Start)',
+    '종료시간 (End)',
+    '가동시간_분 (min)',
     '시료명 (Sample)',
-    '시료수량 (Qty)',
-    '스캔타입 (Scan Mode)',
-    '광학계정렬 (Align)',
-    '냉각수_시작(°C)',
-    '냉각수_종료(°C)',
-    '진공도_시작(mV)',
-    '진공도_종료(mV)',
-    'X선최대점검 (Max)',
-    'X선최저점검 (Min)',
-    '위치초기화점검 (Init)',
-    '측정정보 (Details)',
-    '특이사항_메모 (Memo)',
-    '등록일시 (Created At)'
+    '스캔타입 (Scan)',
+    '진행상태 (Status)',
+    '특이사항_메모 (Memo)'
   ];
 
   const csvRows = [];
   const excelRows = [];
 
   xrdLogs.forEach(function(l){
-    const resNo = l.reservation_no || '';
-    const eqName = 'HR-XRD (고분해능 X선 회절분석기)';
     const dateStr = normalizeExportDate(l.used_on || '');
-    const startTm = l.start_time ? String(l.start_time).slice(0, 5) : '';
-    const endTm = l.end_time ? String(l.end_time).slice(0, 5) : '';
-    const period = dateStr + ' ' + (startTm || '??:??') + ' ~ ' + (endTm || (l.status === 'active' ? '측정진행중' : '??:??'));
-    const durMin = l.duration_min != null ? Number(l.duration_min) : 0;
-    const durHrs = durMin > 0 ? Number((durMin / 60).toFixed(1)) : 0;
-    const statusText = l.status === 'active' ? '측정진행중' : '측정완료';
+    const eqName = 'HR-XRD (고분해능 X선 회절분석기)';
+    const resNo = l.reservation_no || '';
     const userName = l.user_name || '';
     const affil = l.affiliation || '2DQH';
     const prof = l.professor || '';
-    const sample = l.sample_name || '';
-    const qty = l.sample_count || 1;
+    const startTm = l.start_time ? String(l.start_time).slice(0, 5) : '';
+    const endTm = l.end_time ? String(l.end_time).slice(0, 5) : '';
+    const durMin = l.duration_min != null ? Number(l.duration_min) : 0;
+    const sample = l.sample_name ? (l.sample_name + (l.sample_count > 1 ? ' (' + l.sample_count + '개)' : '')) : '';
     const scan = l.scan_type || '';
-    const align = l.align || 'PB';
-    const chStart = l.chiller_start != null ? Number(l.chiller_start) : '';
-    const chEnd = l.chiller_end != null ? Number(l.chiller_end) : '';
-    const vacStart = l.vacuum_start != null ? Number(l.vacuum_start) : '';
-    const vacEnd = l.vacuum_end != null ? Number(l.vacuum_end) : '';
-    const xMax = l.xray_max_ok ? '정상(OK)' : '미체크';
-    const xMin = l.xray_min_ok ? '정상(OK)' : '미체크';
-    const pos = l.position_ok ? '초기화완료' : '미완료';
-    const details = l.meas_info || '';
-    const memo = l.memo || '';
-    const createdAt = normalizeExportDateTime(l.created_at || '');
+    const statusText = l.status === 'active' ? '측정진행중' : '측정완료';
+    const memo = String(l.memo || '').replace(/[\r\n]+/g, ' ').trim();
 
     // CSV Row
     csvRows.push([
-      formatCsvCell(resNo, 'text'),
-      formatCsvCell(eqName, 'text'),
       formatCsvCell(dateStr, 'date'),
-      formatCsvCell(startTm, 'time'),
-      formatCsvCell(endTm, 'time'),
-      formatCsvCell(period, 'text'),
-      formatCsvCell(durMin, 'number'),
-      formatCsvCell(durHrs, 'number'),
-      formatCsvCell(statusText, 'text'),
+      formatCsvCell(eqName, 'text'),
+      formatCsvCell(resNo, 'text'),
       formatCsvCell(userName, 'text'),
       formatCsvCell(affil, 'text'),
       formatCsvCell(prof, 'text'),
+      formatCsvCell(startTm, 'time'),
+      formatCsvCell(endTm, 'time'),
+      formatCsvCell(durMin, 'number'),
       formatCsvCell(sample, 'text'),
-      formatCsvCell(qty, 'number'),
       formatCsvCell(scan, 'text'),
-      formatCsvCell(align, 'text'),
-      formatCsvCell(chStart, 'number'),
-      formatCsvCell(chEnd, 'number'),
-      formatCsvCell(vacStart, 'number'),
-      formatCsvCell(vacEnd, 'number'),
-      formatCsvCell(xMax, 'text'),
-      formatCsvCell(xMin, 'text'),
-      formatCsvCell(pos, 'text'),
-      formatCsvCell(details, 'text'),
-      formatCsvCell(memo, 'text'),
-      formatCsvCell(createdAt, 'text')
+      formatCsvCell(statusText, 'text'),
+      formatCsvCell(memo, 'text')
     ].join(','));
 
     // Excel Row with styles
     excelRows.push([
-      { val: resNo, cls: 'cell-center' },
-      { val: eqName, cls: 'cell-text' },
       { val: dateStr, cls: 'cell-date' },
-      { val: startTm, cls: 'cell-time' },
-      { val: endTm, cls: 'cell-time' },
-      { val: period, cls: 'cell-text' },
-      { val: durMin, cls: 'cell-num' },
-      { val: durHrs, cls: 'cell-dec' },
-      { val: statusText, cls: 'cell-center' },
+      { val: eqName, cls: 'cell-text' },
+      { val: resNo, cls: 'cell-center' },
       { val: userName, cls: 'cell-text' },
       { val: affil, cls: 'cell-center' },
       { val: prof, cls: 'cell-text' },
+      { val: startTm, cls: 'cell-time' },
+      { val: endTm, cls: 'cell-time' },
+      { val: durMin, cls: 'cell-num' },
       { val: sample, cls: 'cell-text' },
-      { val: qty, cls: 'cell-num' },
       { val: scan, cls: 'cell-text' },
-      { val: align, cls: 'cell-center' },
-      { val: chStart, cls: 'cell-dec' },
-      { val: chEnd, cls: 'cell-dec' },
-      { val: vacStart, cls: 'cell-num' },
-      { val: vacEnd, cls: 'cell-num' },
-      { val: xMax, cls: 'cell-center' },
-      { val: xMin, cls: 'cell-center' },
-      { val: pos, cls: 'cell-center' },
-      { val: details, cls: 'cell-text' },
-      { val: memo, cls: 'cell-text' },
-      { val: createdAt, cls: 'cell-datetime' }
+      { val: statusText, cls: 'cell-center' },
+      { val: memo, cls: 'cell-text' }
     ]);
   });
 
-  const colWidths = [100, 210, 110, 80, 80, 190, 85, 85, 90, 100, 100, 110, 180, 70, 120, 90, 95, 95, 95, 95, 95, 95, 95, 180, 180, 160];
-
+  const colWidths = [110, 220, 100, 100, 110, 110, 85, 85, 95, 180, 110, 95, 200];
   return { headers, csvRows, excelRows, colWidths };
 }
 
@@ -3716,8 +3665,9 @@ function exportXrdLogsCsv(){
     return;
   }
   const data = getXrdExportData();
-  const csvContent = '\uFEFF' + data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const csvContent = data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
+  const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -3726,7 +3676,7 @@ function exportXrdLogsCsv(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ HR-XRD 전체 로그(' + xrdLogs.length + '건)가 정돈된 CSV로 다운로드되었습니다.');
+  toast('✓ HR-XRD 로그(' + xrdLogs.length + '건)가 엑셀 호환 CSV로 다운로드되었습니다.');
 }
 
 function exportXrdLogsExcel(){
@@ -4482,47 +4432,105 @@ function switchEquipmentHubView(mode){
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function getRecent8Weeks(){
+  const weeks = [];
+  const now = new Date();
+  const currentDay = now.getDay();
+  const diffToMon = (currentDay === 0 ? -6 : 1) - currentDay;
+  const thisMon = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon);
+
+  for(let i = 0; i < 8; i++){
+    const mon = new Date(thisMon.getTime() - i * 7 * 86400000);
+    const sun = new Date(mon.getTime() + 6 * 86400000);
+    const startStr = mon.getFullYear() + '-' + pad(mon.getMonth() + 1) + '-' + pad(mon.getDate());
+    const endStr = sun.getFullYear() + '-' + pad(sun.getMonth() + 1) + '-' + pad(sun.getDate());
+    const weekNum = Math.ceil(mon.getDate() / 7);
+    const label = (mon.getMonth() + 1) + '월 ' + weekNum + '주차 (' + (mon.getMonth() + 1) + '.' + pad(mon.getDate()) + '~' + (sun.getMonth() + 1) + '.' + pad(sun.getDate()) + ')';
+    weeks.push({
+      label: label,
+      startDate: startStr,
+      endDate: endStr
+    });
+  }
+  return weeks;
+}
+
 function renderEquipmentAnalyticsScopeChips(){
   const container = $('eqAnalyticsScopeChips');
+  const selEl = $('eqAnalyticsSelect');
   const descEl = $('eqAnalyticsScopeDesc');
+  const periodDescEl = $('eqAnalyticsPeriodDesc');
   const goBtn = $('btnGoSelectedEqWorkstation');
-  if(!container) return;
 
   const allSessions = getUnifiedEquipmentSessions();
 
-  let html = '';
-  // 1. 전체 장비 통합 칩
-  const isAll = (selectedAnalyticsEquipmentId === 'all');
-  html += '<button type="button" class="btn-preset-chip ' + (isAll ? 'active' : '') + '" data-analytics-eq="all">';
-  html += '🌐 전체 연구장비 통합 (' + researchEquipments.length + '대 · ' + allSessions.length + '건)';
-  html += '</button>';
+  // 1. 드롭다운 <select id="eqAnalyticsSelect"> 옵션 갱신 및 체인지 이벤트 바인딩
+  if(selEl){
+    let optHtml = '<option value="all">🌐 전체 연구장비 통합 개요</option>';
+    researchEquipments.forEach(function(eq){
+      const isSel = (selectedAnalyticsEquipmentId === eq.id);
+      optHtml += '<option value="' + safe(eq.id) + '" ' + (isSel ? 'selected' : '') + '>' + (eq.icon || '🔬') + ' ' + safe(eq.code) + ' - ' + safe(eq.name.split('(')[0].trim()) + '</option>';
+    });
+    selEl.innerHTML = optHtml;
+    selEl.value = selectedAnalyticsEquipmentId;
 
-  // 2. 개별 장비 칩들 (세션이 있거나 가동 중인 장비 강조)
-  researchEquipments.forEach(function(eq){
-    const isSelected = (selectedAnalyticsEquipmentId === eq.id);
-    const count = allSessions.filter(function(s){ return s.equipment_id === eq.id || s.equipment_code === eq.code; }).length;
-    const durMins = allSessions.filter(function(s){ return s.equipment_id === eq.id || s.equipment_code === eq.code; })
-                               .reduce(function(acc, cur){ return acc + (cur.duration_min || 0); }, 0);
-    const durHours = durMins > 0 ? (durMins / 60).toFixed(1) + 'h' : '0h';
+    if(!selEl.__boundChange){
+      selEl.__boundChange = true;
+      selEl.addEventListener('change', function(){
+        selectedAnalyticsEquipmentId = selEl.value;
+        renderEquipmentAnalyticsDashboard();
+      });
+    }
+  }
 
-    html += '<button type="button" class="btn-preset-chip ' + (isSelected ? 'active' : '') + '" data-analytics-eq="' + safe(eq.id) + '">';
-    html += (eq.icon || '🔬') + ' ' + safe(eq.name.split(' ')[0]) + ' <span style="font-size:11px;opacity:0.85;">(' + count + '건 · ' + durHours + ')</span>';
+  // 2. 상단 퀵 선택 칩
+  if(container){
+    let html = '';
+    const isAll = (selectedAnalyticsEquipmentId === 'all');
+    html += '<button type="button" class="btn-preset-chip ' + (isAll ? 'active' : '') + '" data-analytics-eq="all">';
+    html += '🌐 전체 연구장비 통합 (' + researchEquipments.length + '대 · ' + allSessions.length + '건)';
     html += '</button>';
-  });
 
-  container.innerHTML = html;
+    researchEquipments.forEach(function(eq){
+      const isSelected = (selectedAnalyticsEquipmentId === eq.id);
+      const count = allSessions.filter(function(s){ return s.equipment_id === eq.id || s.equipment_code === eq.code; }).length;
+      const durMins = allSessions.filter(function(s){ return s.equipment_id === eq.id || s.equipment_code === eq.code; })
+                                 .reduce(function(acc, cur){ return acc + (cur.duration_min || 0); }, 0);
+      const durHours = durMins > 0 ? (durMins / 60).toFixed(1) + 'h' : '0h';
 
+      html += '<button type="button" class="btn-preset-chip ' + (isSelected ? 'active' : '') + '" data-analytics-eq="' + safe(eq.id) + '">';
+      html += (eq.icon || '🔬') + ' ' + safe(eq.code || eq.name.split(' ')[0]) + ' <span style="font-size:11px;opacity:0.85;">(' + count + '건 · ' + durHours + ')</span>';
+      html += '</button>';
+    });
+    container.innerHTML = html;
+  }
+
+  // 3. 주기 전환 탭 활성화 상태 동기화
+  const periodSwitcher = $('eqPeriodSwitcher');
+  if(periodSwitcher){
+    const tabs = periodSwitcher.querySelectorAll('.eq-period-tab');
+    tabs.forEach(function(tab){
+      tab.classList.toggle('active', tab.dataset.analyticsPeriod === selectedAnalyticsPeriod);
+    });
+  }
+
+  const periodName = selectedAnalyticsPeriod === 'month' ? '월별 가동 실적 분석' : (selectedAnalyticsPeriod === 'week' ? '주간 가동 추이 분석' : '연간 가동 실적 분석');
+  if(periodDescEl){
+    periodDescEl.textContent = currentCalendarYear + '년 ' + periodName;
+  }
+
+  const isAll = (selectedAnalyticsEquipmentId === 'all');
   if(isAll){
-    if(descEl) descEl.textContent = '10대 전체 연구장비 통합 누적 현황 및 가동 점유율';
+    if(descEl) descEl.textContent = '전체 10대 연구장비 통합 운영 관리 오버뷰';
     if(goBtn) goBtn.classList.add('hidden');
   } else {
     const selectedEq = researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
     if(descEl && selectedEq) {
-      descEl.textContent = selectedEq.name + ' [' + selectedEq.code + '] 독립 세션 및 개별 누적 통계';
+      descEl.textContent = selectedEq.name + ' [' + selectedEq.code + '] 독립 세션 및 ' + periodName;
     }
     if(goBtn && selectedEq){
       goBtn.classList.remove('hidden');
-      goBtn.innerHTML = '👉 ' + safe(selectedEq.code || selectedEq.name) + ' 워크스테이션 바로가기';
+      goBtn.innerHTML = '👉 ' + safe(selectedEq.code || selectedEq.name) + ' 전자 로그북 열기';
       goBtn.onclick = function(){
         showView('logbook');
         selectResearchEquipment(selectedEq.id);
@@ -4544,30 +4552,50 @@ function renderEquipmentAnalyticsDashboard(){
     return s.equipment_id === selectedAnalyticsEquipmentId || (selectedEq && s.equipment_code === selectedEq.code);
   });
 
-  // 1. KPI 지표 계산
-  const totalEq = researchEquipments.length;
-  const activeEq = researchEquipments.filter(function(e){ return e.status === 'active'; }).length;
-  const totalSessions = targetSessions.length;
-
+  // 1. KPI 지표 계산 (선택 주기: month / week / year 반영)
   const currentMonthStr = currentCalendarYear + '-' + pad(currentCalendarMonth);
-  const thisMonthSessions = targetSessions.filter(function(s){
-    return (s.used_on || '').startsWith(currentMonthStr);
-  });
+  let periodSessions = [];
 
-  let totalMins = 0;
+  if(selectedAnalyticsPeriod === 'month'){
+    periodSessions = targetSessions.filter(function(s){
+      return (s.used_on || '').startsWith(currentMonthStr);
+    });
+  } else if(selectedAnalyticsPeriod === 'week'){
+    const weeks = getRecent8Weeks();
+    const curWeek = weeks[0];
+    periodSessions = targetSessions.filter(function(s){
+      return (s.used_on || '') >= curWeek.startDate && (s.used_on || '') <= curWeek.endDate;
+    });
+  } else {
+    // year
+    const yrStr = String(currentCalendarYear);
+    periodSessions = targetSessions.filter(function(s){
+      return (s.used_on || '').startsWith(yrStr);
+    });
+  }
+
+  let totalPeriodMins = 0;
+  let totalPeriodSamples = 0;
   const userSet = new Set();
   const affilSet = new Set();
 
-  targetSessions.forEach(function(s){
-    totalMins += (s.duration_min || 0);
+  periodSessions.forEach(function(s){
+    totalPeriodMins += (s.duration_min || 0);
+    totalPeriodSamples += (s.sample_count || 1);
     if(s.user_name) userSet.add(s.user_name);
     if(s.affiliation) affilSet.add(s.affiliation);
   });
 
-  const totalHours = (totalMins / 60).toFixed(1);
-  const avgMins = totalSessions > 0 ? Math.round(totalMins / totalSessions) : 0;
+  const totalPeriodHours = (totalPeriodMins / 60).toFixed(1);
+  const avgMins = periodSessions.length > 0 ? Math.round(totalPeriodMins / periodSessions.length) : 0;
+
+  // 전체 누적 수치 계산
+  let allTargetMins = 0;
+  targetSessions.forEach(function(s){ allTargetMins += (s.duration_min || 0); });
+  const allTargetHours = (allTargetMins / 60).toFixed(1);
 
   // KPI UI 반영
+  const kpiEqLabel = $('kpiEqLabel');
   const kpiEqTotal = $('kpiEqTotal');
   const kpiEqSub = $('kpiEqSub');
   const kpiSessionsTotal = $('kpiSessionsTotal');
@@ -4577,84 +4605,554 @@ function renderEquipmentAnalyticsDashboard(){
   const kpiUsersTotal = $('kpiUsersTotal');
   const kpiAffilSub = $('kpiAffilSub');
 
+  const periodTag = selectedAnalyticsPeriod === 'month' ? (currentCalendarMonth + '월') : (selectedAnalyticsPeriod === 'week' ? '이번 주' : (currentCalendarYear + '년'));
+
   if(isAll){
-    if(kpiEqTotal) kpiEqTotal.textContent = totalEq + '대 (가동 ' + activeEq + '대)';
+    if(kpiEqLabel) kpiEqLabel.textContent = '대상 연구장비';
+    if(kpiEqTotal) kpiEqTotal.textContent = researchEquipments.length + '대 통합 운영';
     if(kpiEqSub) kpiEqSub.textContent = '구조 2 · 광학 3 · 증착 4 · 공정 1';
-    if(kpiSessionsTotal) kpiSessionsTotal.textContent = totalSessions + '건';
-    if(kpiSessionsSub) kpiSessionsSub.textContent = currentCalendarMonth + '월 ' + thisMonthSessions.length + '건 누적';
-    if(kpiRuntimeTotal) kpiRuntimeTotal.textContent = totalHours + '시간';
-    if(kpiRuntimeSub) kpiRuntimeSub.textContent = '장비당 평균 ' + avgMins + '분 / 세션';
-    if(kpiUsersTotal) kpiUsersTotal.textContent = userSet.size + '명';
-    if(kpiAffilSub) kpiAffilSub.textContent = affilSet.size + '개 연구실 참여';
+    if(kpiSessionsTotal) kpiSessionsTotal.textContent = periodSessions.length + '건';
+    if(kpiSessionsSub) kpiSessionsSub.textContent = periodTag + ' 가동 (누적 ' + targetSessions.length + '건)';
+    if(kpiRuntimeTotal) kpiRuntimeTotal.textContent = totalPeriodHours + '시간';
+    if(kpiRuntimeSub) kpiRuntimeSub.textContent = periodTag + ' 가동 (누적 ' + allTargetHours + 'h)';
+    if(kpiUsersTotal) kpiUsersTotal.textContent = totalPeriodSamples + '개 시료';
+    if(kpiAffilSub) kpiAffilSub.textContent = periodTag + ' 참여 ' + userSet.size + '명';
   } else if(selectedEq) {
-    if(kpiEqTotal) kpiEqTotal.textContent = selectedEq.code || selectedEq.name;
-    if(kpiEqSub) kpiEqSub.textContent = (selectedEq.categoryName || '연구장비') + ' · ' + (selectedEq.status === 'active' ? '🟢 가동중' : '⚪ 준비중');
-    if(kpiSessionsTotal) kpiSessionsTotal.textContent = totalSessions + '건';
-    if(kpiSessionsSub) kpiSessionsSub.textContent = '이번 달 ' + thisMonthSessions.length + '건 측정';
-    if(kpiRuntimeTotal) kpiRuntimeTotal.textContent = totalHours + '시간';
-    if(kpiRuntimeSub) kpiRuntimeSub.textContent = totalSessions > 0 ? ('평균 세션 ' + avgMins + '분') : '가동 대기 중';
-    if(kpiUsersTotal) kpiUsersTotal.textContent = Array.from(userSet).join(', ') || '기록 없음';
-    if(kpiAffilSub) kpiAffilSub.textContent = Array.from(affilSet).join(', ') || selectedEq.location;
+    if(kpiEqLabel) kpiEqLabel.textContent = selectedEq.code;
+    if(kpiEqTotal) kpiEqTotal.textContent = selectedEq.name.split('(')[0].trim();
+    if(kpiEqSub) kpiEqSub.textContent = (selectedEq.categoryName || '연구장비') + ' · ' + (selectedEq.status === 'active' ? '🟢 정상 가동' : '⚪ 준비 중');
+    if(kpiSessionsTotal) kpiSessionsTotal.textContent = periodSessions.length + '건';
+    if(kpiSessionsSub) kpiSessionsSub.textContent = periodTag + ' 가동 (누적 ' + targetSessions.length + '건)';
+    if(kpiRuntimeTotal) kpiRuntimeTotal.textContent = totalPeriodHours + '시간';
+    if(kpiRuntimeSub) kpiRuntimeSub.textContent = periodSessions.length > 0 ? ('평균 세션 ' + avgMins + '분') : (allTargetHours + 'h 누적');
+    if(kpiUsersTotal) kpiUsersTotal.textContent = totalPeriodSamples + '개 시료';
+    const userNames = Array.from(userSet).slice(0, 3).join(', ');
+    if(kpiAffilSub) kpiAffilSub.textContent = userNames ? (userNames + (userSet.size > 3 ? ' 외 ' + (userSet.size - 3) + '명' : '')) : (selectedEq.location || '연구실');
   }
 
-  // 2. 장비별 가동 점유율 차트 렌더링 (전체 랭킹)
-  renderEquipmentUtilizationBars(allSessions);
+  // 2. 메인 패널 제목 및 배지 갱신
+  const mainTitleEl = $('eqAnalyticsMainTitle');
+  const mainSubEl = $('eqAnalyticsMainSub');
+  const periodBadgeEl = $('eqAnalyticsPeriodBadge');
 
-  // 3. 월간 가동 캘린더 렌더링 (선택된 스코프의 세션 전달)
+  if(mainTitleEl){
+    if(isAll){
+      mainTitleEl.textContent = '🔬 연구장비 운용 관리 오버뷰';
+    } else if(selectedEq){
+      mainTitleEl.textContent = '📊 ' + selectedEq.name + ' 가동 통계';
+    }
+  }
+
+  if(mainSubEl){
+    if(isAll){
+      mainSubEl.textContent = '전체 10대 연구장비 운영 상태, 누적 가동시간 및 최근 운영 실적';
+    } else if(selectedEq){
+      mainSubEl.textContent = '[' + selectedEq.code + '] ' + (selectedAnalyticsPeriod === 'month' ? '1월~12월 월별 가동 실적' : (selectedAnalyticsPeriod === 'week' ? '최근 8주 주간 가동 추이' : '연도별 누적 가동 실적'));
+    }
+  }
+
+  if(periodBadgeEl){
+    periodBadgeEl.textContent = currentCalendarYear + '년 ' + (selectedAnalyticsPeriod === 'month' ? '월별' : (selectedAnalyticsPeriod === 'week' ? '주간' : '연간'));
+  }
+
+  // 3. 관리 오버뷰 / 주기별 상세 통계 콘텐츠 렌더링
+  renderEquipmentAnalyticsOverview(targetSessions, allSessions);
+
+  // 4. 월간 가동 캘린더 렌더링 (선택된 스코프의 세션 전달)
   renderEquipmentCalendar(targetSessions);
 
-  // 4. 최근 통합 타임라인 피드 렌더링 (선택된 스코프의 세션 전달)
+  // 5. 최근 통합 타임라인 피드 렌더링 (선택된 스코프의 세션 전달)
   renderEquipmentRecentTimeline(targetSessions);
 }
 
-function renderEquipmentUtilizationBars(allSessions){
+function renderEquipmentAnalyticsOverview(targetSessions, allSessions){
   const container = $('eqUtilizationList');
   if(!container) return;
 
-  const stats = researchEquipments.map(function(eq){
-    const eqSessions = allSessions.filter(function(s){
-      return s.equipment_id === eq.id || s.equipment_code === eq.code;
+  const isAll = (selectedAnalyticsEquipmentId === 'all');
+  const selectedEq = isAll ? null : researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
+
+  // ----------------------------------------------------
+  // A. [전체 연구장비 통합 모드]: 운용 관리 오버뷰 테이블 (랭킹X, 관리 지표 중심)
+  // ----------------------------------------------------
+  if(isAll){
+    const rowsHtml = researchEquipments.map(function(eq){
+      const eqSessions = allSessions.filter(function(s){
+        return s.equipment_id === eq.id || s.equipment_code === eq.code;
+      });
+      let durMins = 0;
+      let sampleCount = 0;
+      eqSessions.forEach(function(s){
+        durMins += (s.duration_min || 0);
+        sampleCount += (s.sample_count || 1);
+      });
+      const durHours = (durMins / 60).toFixed(1);
+      const isActive = (eq.status === 'active');
+      const lastSession = eqSessions[0];
+      const lastRunStr = lastSession ? (lastSession.used_on + (lastSession.user_name ? ' (' + lastSession.user_name + ')' : '')) : '<span style="color:#94a3b8;">미가동</span>';
+
+      let statusBadge = '<span class="status available">정상 가동</span>';
+      if(!isActive){
+        statusBadge = '<span class="status-chip borrowed-chip" style="background:#f1f5f9;color:#64748b;">대기 중</span>';
+      }
+
+      return '<tr>' +
+        '<td>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<span style="font-size:16px;">' + (eq.icon || '🔬') + '</span>' +
+            '<div>' +
+              '<b style="font-size:13px;color:var(--ink);">' + safe(eq.code) + '</b> ' +
+              '<span style="font-size:12px;color:var(--ink-light);">' + safe(eq.name.split('(')[0].trim()) + '</span>' +
+              '<div style="font-size:11px;color:#94a3b8;">' + safe(eq.location || '연구실') + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</td>' +
+        '<td style="text-align:center;">' + statusBadge + '</td>' +
+        '<td style="text-align:right;"><b style="color:var(--primary);font-size:13.5px;">' + durHours + 'h</b> <span style="font-size:11px;color:#94a3b8;">(' + durMins + '분)</span></td>' +
+        '<td style="text-align:center;font-weight:600;">' + eqSessions.length + '건</td>' +
+        '<td style="text-align:center;">' + sampleCount + '개</td>' +
+        '<td style="font-size:12px;color:var(--ink-light);">' + lastRunStr + '</td>' +
+        '<td style="text-align:center;">' +
+          '<button type="button" class="btn" style="padding:4px 8px;font-size:11.5px;font-weight:600;border-radius:6px;" data-analytics-eq="' + safe(eq.id) + '">' +
+            '📊 상세 분석' +
+          '</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    container.innerHTML = '<div class="table-wrap" style="overflow-x:auto;border:1px solid var(--border);border-radius:10px;">' +
+      '<table class="eq-overview-table">' +
+        '<thead>' +
+          '<tr>' +
+            '<th>연구장비 명칭 / 위치</th>' +
+            '<th style="text-align:center;">운영 상태</th>' +
+            '<th style="text-align:right;">가동 시간</th>' +
+            '<th style="text-align:center;">세션 수</th>' +
+            '<th style="text-align:center;">측정 시료</th>' +
+            '<th>최근 가동 실적</th>' +
+            '<th style="text-align:center;">장비별 관리</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+      '</table>' +
+    '</div>';
+    return;
+  }
+
+  // ----------------------------------------------------
+  // B. [개별 장비 선택 모드]: 주기별(월별 / 주간 / 연간) 상세 통계표 및 비중 바
+  // ----------------------------------------------------
+  if(selectedAnalyticsPeriod === 'month'){
+    // 월별 통계: currentCalendarYear의 1월~12월 12개 행
+    let maxMonthMins = 1;
+    const monthStats = [];
+    let yearTotalMins = 0;
+    let yearTotalSessions = 0;
+    let yearTotalSamples = 0;
+    const allUsers = new Set();
+
+    for(let m = 1; m <= 12; m++){
+      const mStr = currentCalendarYear + '-' + pad(m);
+      const mSessions = targetSessions.filter(function(s){ return (s.used_on || '').startsWith(mStr); });
+      let mins = 0;
+      let samples = 0;
+      const users = new Set();
+
+      mSessions.forEach(function(s){
+        mins += (s.duration_min || 0);
+        samples += (s.sample_count || 1);
+        if(s.user_name) { users.add(s.user_name); allUsers.add(s.user_name); }
+      });
+
+      if(mins > maxMonthMins) maxMonthMins = mins;
+      yearTotalMins += mins;
+      yearTotalSessions += mSessions.length;
+      yearTotalSamples += samples;
+
+      monthStats.push({
+        month: m,
+        mStr: mStr,
+        mins: mins,
+        hours: (mins / 60).toFixed(1),
+        sessions: mSessions.length,
+        samples: samples,
+        users: Array.from(users)
+      });
+    }
+
+    const currentM = currentCalendarMonth;
+    const rowsHtml = monthStats.map(function(item){
+      const isCur = (item.month === currentM);
+      const pct = maxMonthMins > 0 ? Math.min(100, Math.round((item.mins / maxMonthMins) * 100)) : 0;
+      const usersStr = item.users.slice(0, 3).join(', ') + (item.users.length > 3 ? ' 외 ' + (item.users.length - 3) + '명' : '');
+
+      return '<tr class="' + (isCur ? 'period-current' : '') + '">' +
+        '<td><b>' + item.month + '월</b> ' + (isCur ? '<span class="status return-pending" style="font-size:10px;padding:1px 5px;">당월</span>' : '') + '</td>' +
+        '<td style="text-align:right;"><b style="color:var(--primary);">' + item.hours + 'h</b></td>' +
+        '<td style="text-align:right;color:#64748b;">' + item.mins + '분</td>' +
+        '<td style="text-align:center;font-weight:600;">' + item.sessions + '건</td>' +
+        '<td style="text-align:center;">' + item.samples + '개</td>' +
+        '<td style="font-size:12px;color:var(--ink-light);">' + (usersStr || '-') + '</td>' +
+        '<td class="col-gauge">' +
+          '<div style="display:flex;align-items:center;gap:6px;">' +
+            '<div class="gauge-bar-wrap"><div class="gauge-bar-fill" style="width:' + pct + '%;"></div></div>' +
+            '<span style="font-size:10.5px;color:#64748b;min-width:26px;">' + pct + '%</span>' +
+          '</div>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    const yearTotalHours = (yearTotalMins / 60).toFixed(1);
+
+    container.innerHTML = '<div class="table-wrap" style="overflow-x:auto;border:1px solid var(--border);border-radius:10px;">' +
+      '<table class="eq-period-table">' +
+        '<thead>' +
+          '<tr>' +
+            '<th>월별 (1~12월)</th>' +
+            '<th style="text-align:right;">가동시간(h)</th>' +
+            '<th style="text-align:right;">가동(분)</th>' +
+            '<th style="text-align:center;">세션수</th>' +
+            '<th style="text-align:center;">시료수</th>' +
+            '<th>주요 연구원</th>' +
+            '<th class="col-gauge">가동 비중</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+        '<tfoot>' +
+          '<tr style="background:var(--bg);font-weight:700;border-top:2px solid var(--border);">' +
+            '<td>' + currentCalendarYear + '년 연간 총계</td>' +
+            '<td style="text-align:right;color:var(--primary);">' + yearTotalHours + 'h</td>' +
+            '<td style="text-align:right;">' + yearTotalMins + '분</td>' +
+            '<td style="text-align:center;">' + yearTotalSessions + '건</td>' +
+            '<td style="text-align:center;">' + yearTotalSamples + '개</td>' +
+            '<td style="font-size:12px;">총 ' + allUsers.size + '명 참여</td>' +
+            '<td>100%</td>' +
+          '</tr>' +
+        '</tfoot>' +
+      '</table>' +
+    '</div>';
+    return;
+  }
+
+  if(selectedAnalyticsPeriod === 'week'){
+    // 주간 통계: 최근 8주
+    const weeks = getRecent8Weeks();
+    let maxWeekMins = 1;
+    let totalWeekMins = 0;
+    let totalWeekSessions = 0;
+    let totalWeekSamples = 0;
+
+    const weekStats = weeks.map(function(w){
+      const wSessions = targetSessions.filter(function(s){
+        return (s.used_on || '') >= w.startDate && (s.used_on || '') <= w.endDate;
+      });
+      let mins = 0;
+      let samples = 0;
+      const users = new Set();
+
+      wSessions.forEach(function(s){
+        mins += (s.duration_min || 0);
+        samples += (s.sample_count || 1);
+        if(s.user_name) users.add(s.user_name);
+      });
+
+      if(mins > maxWeekMins) maxWeekMins = mins;
+      totalWeekMins += mins;
+      totalWeekSessions += wSessions.length;
+      totalWeekSamples += samples;
+
+      return {
+        label: w.label,
+        mins: mins,
+        hours: (mins / 60).toFixed(1),
+        sessions: wSessions.length,
+        samples: samples,
+        users: Array.from(users)
+      };
     });
-    let durMins = 0;
-    eqSessions.forEach(function(s){ durMins += (s.duration_min || 0); });
-    return {
-      eq: eq,
-      count: eqSessions.length,
-      hours: (durMins / 60).toFixed(1),
-      durMins: durMins
-    };
-  });
 
-  stats.sort(function(a, b){
-    if(b.durMins !== a.durMins) return b.durMins - a.durMins;
-    return b.count - a.count;
-  });
+    const rowsHtml = weekStats.map(function(item, idx){
+      const isCur = (idx === 0);
+      const pct = maxWeekMins > 0 ? Math.min(100, Math.round((item.mins / maxWeekMins) * 100)) : 0;
+      const usersStr = item.users.slice(0, 3).join(', ') + (item.users.length > 3 ? ' 외 ' + (item.users.length - 3) + '명' : '');
 
-  const maxHours = Math.max.apply(null, stats.map(function(s){ return parseFloat(s.hours) || 0; })) || 1;
+      return '<tr class="' + (isCur ? 'period-current' : '') + '">' +
+        '<td><b>' + safe(item.label) + '</b> ' + (isCur ? '<span class="status return-pending" style="font-size:10px;padding:1px 5px;">이번 주</span>' : '') + '</td>' +
+        '<td style="text-align:right;"><b style="color:var(--primary);">' + item.hours + 'h</b></td>' +
+        '<td style="text-align:right;color:#64748b;">' + item.mins + '분</td>' +
+        '<td style="text-align:center;font-weight:600;">' + item.sessions + '건</td>' +
+        '<td style="text-align:center;">' + item.samples + '개</td>' +
+        '<td style="font-size:12px;color:var(--ink-light);">' + (usersStr || '-') + '</td>' +
+        '<td class="col-gauge">' +
+          '<div style="display:flex;align-items:center;gap:6px;">' +
+            '<div class="gauge-bar-wrap"><div class="gauge-bar-fill" style="width:' + pct + '%;"></div></div>' +
+            '<span style="font-size:10.5px;color:#64748b;min-width:26px;">' + pct + '%</span>' +
+          '</div>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
 
-  let html = '';
-  stats.forEach(function(item){
-    const eq = item.eq;
-    const isActive = (eq.status === 'active');
-    const pct = Math.min(100, Math.max(item.count > 0 ? 12 : 3, Math.round(((parseFloat(item.hours) || 0) / maxHours) * 100)));
+    const totalWeekHours = (totalWeekMins / 60).toFixed(1);
 
-    html += '<div class="eq-util-row" data-select-util-eq="' + safe(eq.id) + '" title="' + safe(eq.name) + ' 바로가기">';
-    html += '  <div class="eq-util-header">';
-    html += '    <div class="eq-util-title">';
-    html += '      <span>' + (eq.icon || '🔬') + '</span>';
-    html += '      <span>' + safe(eq.code) + '</span>';
-    html += '      <span style="font-size:11.5px;color:var(--ink-light);font-weight:400;">' + safe(eq.name.split('(')[0].trim()) + '</span>';
-    html += '      <span class="eq-util-tag ' + (isActive ? 'active' : 'standby') + '">' + (isActive ? '운영 중' : '대기') + '</span>';
-    html += '    </div>';
-    html += '    <div class="eq-util-stats">' + item.count + '건 <span style="font-weight:400;color:var(--ink-light);font-size:11.5px;">(' + item.hours + 'h)</span></div>';
-    html += '  </div>';
-    html += '  <div class="eq-util-track">';
-    html += '    <div class="eq-util-fill" style="width:' + pct + '%;' + (isActive ? '' : 'background:linear-gradient(90deg, #94a3b8 0%, #64748b 100%);') + '"></div>';
-    html += '  </div>';
-    html += '</div>';
-  });
+    container.innerHTML = '<div class="table-wrap" style="overflow-x:auto;border:1px solid var(--border);border-radius:10px;">' +
+      '<table class="eq-period-table">' +
+        '<thead>' +
+          '<tr>' +
+            '<th>주차 (기간)</th>' +
+            '<th style="text-align:right;">가동시간(h)</th>' +
+            '<th style="text-align:right;">가동(분)</th>' +
+            '<th style="text-align:center;">세션수</th>' +
+            '<th style="text-align:center;">시료수</th>' +
+            '<th>주요 연구원</th>' +
+            '<th class="col-gauge">주간 비중</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+        '<tfoot>' +
+          '<tr style="background:var(--bg);font-weight:700;border-top:2px solid var(--border);">' +
+            '<td>최근 8주 합계</td>' +
+            '<td style="text-align:right;color:var(--primary);">' + totalWeekHours + 'h</td>' +
+            '<td style="text-align:right;">' + totalWeekMins + '분</td>' +
+            '<td style="text-align:center;">' + totalWeekSessions + '건</td>' +
+            '<td style="text-align:center;">' + totalWeekSamples + '개</td>' +
+            '<td>-</td>' +
+            '<td>100%</td>' +
+          '</tr>' +
+        '</tfoot>' +
+      '</table>' +
+    '</div>';
+    return;
+  }
 
-  container.innerHTML = html;
+  // selectedAnalyticsPeriod === 'year'
+  {
+    const years = [2024, 2025, 2026, 2027];
+    let maxYearMins = 1;
+    let grandTotalMins = 0;
+    let grandTotalSessions = 0;
+    let grandTotalSamples = 0;
+
+    const yearStats = years.map(function(yr){
+      const yStr = String(yr);
+      const ySessions = targetSessions.filter(function(s){ return (s.used_on || '').startsWith(yStr); });
+      let mins = 0;
+      let samples = 0;
+      const users = new Set();
+
+      ySessions.forEach(function(s){
+        mins += (s.duration_min || 0);
+        samples += (s.sample_count || 1);
+        if(s.user_name) users.add(s.user_name);
+      });
+
+      if(mins > maxYearMins) maxYearMins = mins;
+      grandTotalMins += mins;
+      grandTotalSessions += ySessions.length;
+      grandTotalSamples += samples;
+
+      return {
+        year: yr,
+        mins: mins,
+        hours: (mins / 60).toFixed(1),
+        sessions: ySessions.length,
+        samples: samples,
+        userCount: users.size
+      };
+    });
+
+    const rowsHtml = yearStats.map(function(item){
+      const isCur = (item.year === currentCalendarYear);
+      const pct = maxYearMins > 0 ? Math.min(100, Math.round((item.mins / maxYearMins) * 100)) : 0;
+
+      return '<tr class="' + (isCur ? 'period-current' : '') + '">' +
+        '<td><b>' + item.year + '년</b> ' + (isCur ? '<span class="status return-pending" style="font-size:10px;padding:1px 5px;">현재년도</span>' : '') + '</td>' +
+        '<td style="text-align:right;"><b style="color:var(--primary);font-size:14px;">' + item.hours + 'h</b></td>' +
+        '<td style="text-align:right;color:#64748b;">' + item.mins + '분</td>' +
+        '<td style="text-align:center;font-weight:600;">' + item.sessions + '건</td>' +
+        '<td style="text-align:center;">' + item.samples + '개</td>' +
+        '<td style="font-size:12px;color:var(--ink-light);">' + item.userCount + '명 참여</td>' +
+        '<td class="col-gauge">' +
+          '<div style="display:flex;align-items:center;gap:6px;">' +
+            '<div class="gauge-bar-wrap"><div class="gauge-bar-fill" style="width:' + pct + '%;"></div></div>' +
+            '<span style="font-size:10.5px;color:#64748b;min-width:26px;">' + pct + '%</span>' +
+          '</div>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+
+    const grandTotalHours = (grandTotalMins / 60).toFixed(1);
+
+    container.innerHTML = '<div class="table-wrap" style="overflow-x:auto;border:1px solid var(--border);border-radius:10px;">' +
+      '<table class="eq-period-table">' +
+        '<thead>' +
+          '<tr>' +
+            '<th>연도 (Year)</th>' +
+            '<th style="text-align:right;">총 가동시간(h)</th>' +
+            '<th style="text-align:right;">총 가동(분)</th>' +
+            '<th style="text-align:center;">총 세션수</th>' +
+            '<th style="text-align:center;">총 시료수</th>' +
+            '<th>참여 연구원</th>' +
+            '<th class="col-gauge">연도별 비중</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+        '<tfoot>' +
+          '<tr style="background:var(--bg);font-weight:700;border-top:2px solid var(--border);">' +
+            '<td>전체 누적 총계</td>' +
+            '<td style="text-align:right;color:var(--primary);">' + grandTotalHours + 'h</td>' +
+            '<td style="text-align:right;">' + grandTotalMins + '분</td>' +
+            '<td style="text-align:center;">' + grandTotalSessions + '건</td>' +
+            '<td style="text-align:center;">' + grandTotalSamples + '개</td>' +
+            '<td>-</td>' +
+            '<td>100%</td>' +
+          '</tr>' +
+        '</tfoot>' +
+      '</table>' +
+    '</div>';
+  }
+}
+
+function exportAnalyticsSummaryCsv(){
+  const allSessions = getUnifiedEquipmentSessions();
+  const isAll = (selectedAnalyticsEquipmentId === 'all');
+  const selectedEq = isAll ? null : researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
+
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  let headers = [];
+  let rows = [];
+  let filename = '2DQH_장비통계_' + today() + '.csv';
+
+  if(isAll){
+    filename = '2DQH_연구장비_전체운용관리_오버뷰_' + today() + '.csv';
+    headers = ['장비코드', '장비명', '분류', '운영상태', '가동시간_h', '가동세션수', '측정시료수', '최근가동일', '담당자', '설치위치'];
+    researchEquipments.forEach(function(eq){
+      const eqSessions = allSessions.filter(function(s){ return s.equipment_id === eq.id || s.equipment_code === eq.code; });
+      let mins = 0;
+      let samples = 0;
+      eqSessions.forEach(function(s){
+        mins += (s.duration_min || 0);
+        samples += (s.sample_count || 1);
+      });
+      const lastSession = eqSessions[0];
+      const lastRun = lastSession ? (lastSession.used_on + (lastSession.user_name ? ' (' + lastSession.user_name + ')' : '')) : '미가동';
+      rows.push([
+        eq.code,
+        eq.name,
+        eq.categoryName || '',
+        eq.status === 'active' ? '정상 가동' : '대기 중',
+        (mins / 60).toFixed(1),
+        eqSessions.length,
+        samples,
+        lastRun,
+        eq.manager || '',
+        eq.location || ''
+      ]);
+    });
+  } else if(selectedEq){
+    const eqSessions = allSessions.filter(function(s){ return s.equipment_id === selectedEq.id || s.equipment_code === selectedEq.code; });
+    const code = selectedEq.code || 'EQUIP';
+
+    if(selectedAnalyticsPeriod === 'month'){
+      filename = '2DQH_' + code + '_월별가동통계_' + currentCalendarYear + '.csv';
+      headers = ['연월', '장비코드', '장비명', '가동시간_시간', '가동시간_분', '세션건수', '측정시료수', '주요연구원'];
+      for(let m = 1; m <= 12; m++){
+        const mStr = currentCalendarYear + '-' + pad(m);
+        const mSessions = eqSessions.filter(function(s){ return (s.used_on || '').startsWith(mStr); });
+        let mins = 0;
+        let samples = 0;
+        const users = new Set();
+        mSessions.forEach(function(s){
+          mins += (s.duration_min || 0);
+          samples += (s.sample_count || 1);
+          if(s.user_name) users.add(s.user_name);
+        });
+        rows.push([
+          mStr,
+          selectedEq.code,
+          selectedEq.name,
+          (mins / 60).toFixed(1),
+          mins,
+          mSessions.length,
+          samples,
+          Array.from(users).join('; ')
+        ]);
+      }
+    } else if(selectedAnalyticsPeriod === 'week'){
+      filename = '2DQH_' + code + '_주간가동통계_' + today() + '.csv';
+      headers = ['주차', '시작일', '종료일', '장비코드', '장비명', '가동시간_시간', '가동시간_분', '세션건수', '측정시료수', '주요연구원'];
+      const weeks = getRecent8Weeks();
+      weeks.forEach(function(w){
+        const wSessions = eqSessions.filter(function(s){
+          return (s.used_on || '') >= w.startDate && (s.used_on || '') <= w.endDate;
+        });
+        let mins = 0;
+        let samples = 0;
+        const users = new Set();
+        wSessions.forEach(function(s){
+          mins += (s.duration_min || 0);
+          samples += (s.sample_count || 1);
+          if(s.user_name) users.add(s.user_name);
+        });
+        rows.push([
+          w.label,
+          w.startDate,
+          w.endDate,
+          selectedEq.code,
+          selectedEq.name,
+          (mins / 60).toFixed(1),
+          mins,
+          wSessions.length,
+          samples,
+          Array.from(users).join('; ')
+        ]);
+      });
+    } else {
+      filename = '2DQH_' + code + '_연간가동통계_' + today() + '.csv';
+      headers = ['연도', '장비코드', '장비명', '총가동시간_시간', '총세션건수', '총시료수', '참여연구원수'];
+      const years = [2024, 2025, 2026, 2027];
+      years.forEach(function(yr){
+        const ySessions = eqSessions.filter(function(s){ return (s.used_on || '').startsWith(String(yr)); });
+        let mins = 0;
+        let samples = 0;
+        const users = new Set();
+        ySessions.forEach(function(s){
+          mins += (s.duration_min || 0);
+          samples += (s.sample_count || 1);
+          if(s.user_name) users.add(s.user_name);
+        });
+        rows.push([
+          yr + '년',
+          selectedEq.code,
+          selectedEq.name,
+          (mins / 60).toFixed(1),
+          ySessions.length,
+          samples,
+          users.size
+        ]);
+      });
+    }
+  }
+
+  const cell = function(v){
+    let t = String(v == null ? '' : v).replace(/[\r\n]+/g, ' ').trim();
+    if(/^[=+\-@\t\r]/.test(t)) t = "'" + t;
+    return '"' + t.replace(/"/g, '""') + '"';
+  };
+
+  const csvContent = [headers].concat(rows).map(function(r){
+    return r.map(cell).join(',');
+  }).join('\r\n');
+
+  const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✓ ' + filename + ' (' + rows.length + '행) 파일이 엑셀 호환 CSV로 다운로드되었습니다.');
 }
 
 function renderEquipmentCalendar(allSessions){
@@ -4791,102 +5289,69 @@ function renderEquipmentRecentTimeline(allSessions){
 function getUnifiedSessionsExportData(){
   const allSessions = getUnifiedEquipmentSessions();
   const headers = [
-    '장비ID (ID)',
+    '측정일자 (Date)',
     '장비코드 (Code)',
     '장비명 (Equipment)',
-    '측정일자 (Date)',
-    '시작시간 (Start)',
-    '종료시간 (End)',
-    '가동구간 (Period)',
-    '가동시간_분 (min)',
-    '가동시간_시간 (hrs)',
-    '운영모드 (Mode)',
     '사용자 (User)',
     '소속 (Affiliation)',
     '지도교수 (Adviser)',
-    '측정시료 (Sample)',
-    '시료수량 (Qty)',
-    '스캔/파라미터 (Parameters)',
-    '특이사항_메모 (Memo)',
-    '등록일시 (Created At)'
+    '시작시간 (Start)',
+    '종료시간 (End)',
+    '가동시간_분 (min)',
+    '시료정보 (Sample)',
+    '운영구분 (Mode)',
+    '특이사항_메모 (Memo)'
   ];
 
   const csvRows = [];
   const excelRows = [];
 
   allSessions.forEach(function(s){
-    let paramSummary = [];
-    if(s.parameters){
-      for(const k in s.parameters){
-        const val = s.parameters[k];
-        if(val !== undefined && val !== null && val !== false && val !== ''){
-          paramSummary.push(k + '=' + val);
-        }
-      }
-    }
-    const eqId = s.equipment_id || '';
     const eqCode = s.equipment_code || '';
     const eqName = s.equipment_name || '';
     const dateStr = normalizeExportDate(s.used_on || '');
     const startTm = s.start_time ? String(s.start_time).slice(0, 5) : '';
     const endTm = s.end_time ? String(s.end_time).slice(0, 5) : '';
-    const period = dateStr + ' ' + (startTm || '??:??') + ' ~ ' + (endTm || '??:??');
     const durMin = s.duration_min != null ? Number(s.duration_min) : 0;
-    const durHrs = durMin > 0 ? Number((durMin / 60).toFixed(1)) : 0;
-    const modeText = s.type === 'active' ? '실운영(Operational)' : '테스트드라이브(Test)';
+    const modeText = s.type === 'active' ? '실운영(Active)' : '시험가동(Test)';
     const userName = s.user_name || '';
     const affil = s.affiliation || '';
     const prof = s.professor || '';
-    const sample = s.sample_name || '';
-    const qty = s.sample_count || 1;
-    const params = (s.scan_type ? s.scan_type + (paramSummary.length ? '; ' : '') : '') + paramSummary.join('; ');
-    const memo = s.memo || '';
-    const createdAt = normalizeExportDateTime(s.created_at || '');
+    const sample = (s.sample_name || '') + (s.sample_count > 1 ? ' (' + s.sample_count + '개)' : '');
+    const memo = String(s.memo || '').replace(/[\r\n]+/g, ' ').trim();
 
     csvRows.push([
-      formatCsvCell(eqId, 'text'),
+      formatCsvCell(dateStr, 'date'),
       formatCsvCell(eqCode, 'text'),
       formatCsvCell(eqName, 'text'),
-      formatCsvCell(dateStr, 'date'),
-      formatCsvCell(startTm, 'time'),
-      formatCsvCell(endTm, 'time'),
-      formatCsvCell(period, 'text'),
-      formatCsvCell(durMin, 'number'),
-      formatCsvCell(durHrs, 'number'),
-      formatCsvCell(modeText, 'text'),
       formatCsvCell(userName, 'text'),
       formatCsvCell(affil, 'text'),
       formatCsvCell(prof, 'text'),
+      formatCsvCell(startTm, 'time'),
+      formatCsvCell(endTm, 'time'),
+      formatCsvCell(durMin, 'number'),
       formatCsvCell(sample, 'text'),
-      formatCsvCell(qty, 'number'),
-      formatCsvCell(params, 'text'),
-      formatCsvCell(memo, 'text'),
-      formatCsvCell(createdAt, 'text')
+      formatCsvCell(modeText, 'text'),
+      formatCsvCell(memo, 'text')
     ].join(','));
 
     excelRows.push([
-      { val: eqId, cls: 'cell-center' },
+      { val: dateStr, cls: 'cell-date' },
       { val: eqCode, cls: 'cell-center' },
       { val: eqName, cls: 'cell-text' },
-      { val: dateStr, cls: 'cell-date' },
-      { val: startTm, cls: 'cell-time' },
-      { val: endTm, cls: 'cell-time' },
-      { val: period, cls: 'cell-text' },
-      { val: durMin, cls: 'cell-num' },
-      { val: durHrs, cls: 'cell-dec' },
-      { val: modeText, cls: 'cell-center' },
       { val: userName, cls: 'cell-text' },
       { val: affil, cls: 'cell-center' },
       { val: prof, cls: 'cell-text' },
+      { val: startTm, cls: 'cell-time' },
+      { val: endTm, cls: 'cell-time' },
+      { val: durMin, cls: 'cell-num' },
       { val: sample, cls: 'cell-text' },
-      { val: qty, cls: 'cell-num' },
-      { val: params, cls: 'cell-text' },
-      { val: memo, cls: 'cell-text' },
-      { val: createdAt, cls: 'cell-datetime' }
+      { val: modeText, cls: 'cell-center' },
+      { val: memo, cls: 'cell-text' }
     ]);
   });
 
-  const colWidths = [100, 90, 180, 110, 80, 80, 190, 85, 85, 120, 100, 100, 110, 180, 70, 180, 180, 160];
+  const colWidths = [110, 90, 200, 100, 110, 110, 85, 85, 95, 180, 110, 200];
   return { allSessions, headers, csvRows, excelRows, colWidths };
 }
 
@@ -4896,8 +5361,9 @@ function exportUnifiedSessionsCsv(){
     toast('내보낼 연구장비 세션 데이터가 없습니다.');
     return;
   }
-  const csvContent = '\uFEFF' + data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const csvContent = data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
+  const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -4906,7 +5372,7 @@ function exportUnifiedSessionsCsv(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ 전체 연구장비 통합 세션 로그(' + data.allSessions.length + '건)가 정돈된 CSV로 다운로드되었습니다.');
+  toast('✓ 전체 연구장비 통합 세션 로그(' + data.allSessions.length + '건)가 엑셀 호환 CSV로 다운로드되었습니다.');
 }
 
 function exportUnifiedSessionsExcel(){
@@ -5055,105 +5521,65 @@ function getGeneralEquipmentExportData(){
   });
 
   const headers = [
-    '연번 (No)',
-    '세션ID (Session ID)',
+    '작업일자 (Date)',
     '장비코드 (Code)',
     '장비명 (Equipment)',
-    '작업일자 (Date)',
-    '시작시간 (Start)',
-    '종료시간 (End)',
-    '가동구간 (Period)',
-    '가동시간_분 (min)',
-    '가동시간_시간 (hrs)',
     '사용자 (Operator)',
     '소속 (Affiliation)',
     '지도교수 (Adviser)',
+    '시작시간 (Start)',
+    '종료시간 (End)',
+    '가동시간_분 (min)',
     '시료/작업명 (Sample)',
-    '시료수량 (Qty)',
-    '공정모드/스캔 (Mode)',
-    '세부파라미터 (Parameters)',
-    '특이사항_메모 (Notes)',
-    '등록일시 (Created At)'
+    '특이사항_메모 (Notes)'
   ];
 
   const csvRows = [];
   const excelRows = [];
 
   sourceList.forEach(function(s, idx){
-    let paramSummary = [];
-    if(s.parameters){
-      for(const k in s.parameters){
-        const val = s.parameters[k];
-        if(val !== undefined && val !== null && val !== false && val !== ''){
-          paramSummary.push(k + '=' + val);
-        }
-      }
-    }
-    const id = s.id || ('sess_' + (idx + 1));
     const code = s.equipment_code || curEq.code || '';
     const name = s.equipment_name || curEq.name || '';
     const dateStr = normalizeExportDate(s.used_on || s.start_time || '');
     const startTm = s.start_time ? String(s.start_time).replace(/.*T/, '').slice(0, 5) : '';
     const endTm = s.end_time ? String(s.end_time).replace(/.*T/, '').slice(0, 5) : '';
-    const period = dateStr + ' ' + (startTm || '??:??') + ' ~ ' + (endTm || '??:??');
     const durMin = s.duration_min != null ? Number(s.duration_min) : (Number(s.run_hours) ? Math.round(Number(s.run_hours) * 60) : 60);
-    const durHrs = durMin > 0 ? Number((durMin / 60).toFixed(1)) : 1.0;
     const operator = s.user_name || s.operator_name || '연구원';
     const affil = s.affiliation || '2DQH';
     const prof = s.professor || '신현석 교수님';
-    const sample = s.sample_name || s.sample_info || s.project_name || '연구 시료';
-    const qty = s.sample_count || 1;
-    const mode = s.scan_type || '표준 공정';
-    const params = paramSummary.join('; ') || '기본 공정 규격';
-    const notes = s.memo || s.notes || '';
-    const createdAt = normalizeExportDateTime(s.created_at || '');
+    const sample = (s.sample_name || s.sample_info || s.project_name || '연구 시료') + (s.sample_count > 1 ? ' (' + s.sample_count + '개)' : '');
+    const notes = String(s.memo || s.notes || '').replace(/[\r\n]+/g, ' ').trim();
 
     csvRows.push([
-      formatCsvCell(idx + 1, 'number'),
-      formatCsvCell(id, 'text'),
+      formatCsvCell(dateStr, 'date'),
       formatCsvCell(code, 'text'),
       formatCsvCell(name, 'text'),
-      formatCsvCell(dateStr, 'date'),
-      formatCsvCell(startTm, 'time'),
-      formatCsvCell(endTm, 'time'),
-      formatCsvCell(period, 'text'),
-      formatCsvCell(durMin, 'number'),
-      formatCsvCell(durHrs, 'number'),
       formatCsvCell(operator, 'text'),
       formatCsvCell(affil, 'text'),
       formatCsvCell(prof, 'text'),
+      formatCsvCell(startTm, 'time'),
+      formatCsvCell(endTm, 'time'),
+      formatCsvCell(durMin, 'number'),
       formatCsvCell(sample, 'text'),
-      formatCsvCell(qty, 'number'),
-      formatCsvCell(mode, 'text'),
-      formatCsvCell(params, 'text'),
-      formatCsvCell(notes, 'text'),
-      formatCsvCell(createdAt, 'text')
+      formatCsvCell(notes, 'text')
     ].join(','));
 
     excelRows.push([
-      { val: idx + 1, cls: 'cell-num' },
-      { val: id, cls: 'cell-center' },
+      { val: dateStr, cls: 'cell-date' },
       { val: code, cls: 'cell-center' },
       { val: name, cls: 'cell-text' },
-      { val: dateStr, cls: 'cell-date' },
-      { val: startTm, cls: 'cell-time' },
-      { val: endTm, cls: 'cell-time' },
-      { val: period, cls: 'cell-text' },
-      { val: durMin, cls: 'cell-num' },
-      { val: durHrs, cls: 'cell-dec' },
       { val: operator, cls: 'cell-text' },
       { val: affil, cls: 'cell-center' },
       { val: prof, cls: 'cell-text' },
+      { val: startTm, cls: 'cell-time' },
+      { val: endTm, cls: 'cell-time' },
+      { val: durMin, cls: 'cell-num' },
       { val: sample, cls: 'cell-text' },
-      { val: qty, cls: 'cell-num' },
-      { val: mode, cls: 'cell-text' },
-      { val: params, cls: 'cell-text' },
-      { val: notes, cls: 'cell-text' },
-      { val: createdAt, cls: 'cell-datetime' }
+      { val: notes, cls: 'cell-text' }
     ]);
   });
 
-  const colWidths = [60, 100, 100, 180, 110, 80, 80, 190, 85, 85, 100, 100, 110, 180, 70, 120, 180, 180, 160];
+  const colWidths = [110, 90, 200, 100, 110, 110, 85, 85, 95, 180, 200];
   return { curEq, count: sourceList.length, headers, csvRows, excelRows, colWidths };
 }
 
@@ -5163,8 +5589,9 @@ function exportGeneralEquipmentLogsCsv(){
     toast('내보낼 ' + (data.curEq.name || '장비') + ' 로그북 세션 데이터가 없습니다.');
     return;
   }
-  const csvContent = '\uFEFF' + data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const csvContent = data.headers.join(',') + '\r\n' + data.csvRows.join('\r\n');
+  const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -5173,7 +5600,7 @@ function exportGeneralEquipmentLogsCsv(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ ' + (data.curEq.name || '장비') + ' 세션 로그(' + data.count + '건)가 CSV로 다운로드되었습니다.');
+  toast('✓ ' + (data.curEq.name || '장비') + ' 세션 로그(' + data.count + '건)가 엑셀 호환 CSV로 다운로드되었습니다.');
 }
 
 function exportGeneralEquipmentLogsExcel(){
@@ -6895,17 +7322,18 @@ function exportHistoryCsv(){
 
   const rows = sourceLoans.map(function(l){
     const statText = l.returned_at ? '반납 완료' : '대여 중';
-    return [l.asset_id, fmtName(l.asset_id), l.borrower_name, l.borrowed_at, l.due_date, l.returned_at || '', statText, l.memo || ''];
+    const memoClean = String(l.memo || '').replace(/[\r\n]+/g, ' ').trim();
+    return [l.asset_id, fmtName(l.asset_id), l.borrower_name, l.borrowed_at, l.due_date, l.returned_at || '', statText, memoClean];
   });
 
   // 대여자 이름/메모는 누구나 입력할 수 있으므로 =,+,-,@ 로 시작하면 엑셀 수식으로 실행되지 않게 막는다
   const cell = function(v){
-    let t = String(v == null ? '' : v);
+    let t = String(v == null ? '' : v).replace(/[\r\n]+/g, ' ').trim();
     if(/^[=+\-@\t\r]/.test(t)) t = "'" + t;
     return '"' + t.replace(/"/g, '""') + '"';
   };
 
-  const csv = '\ufeff' + [headers].concat(rows).map(function(r){
+  const csvContent = [headers].concat(rows).map(function(r){
     return r.map(cell).join(',');
   }).join('\r\n');
 
@@ -6917,15 +7345,18 @@ function exportHistoryCsv(){
   let fileSuffix = monthVal ? monthVal : today();
   if(assetVal && assetVal !== 'all') fileSuffix += '-' + assetVal;
 
-  const url = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
 
   a.href = url;
-  a.download = 'labstock-history-' + fileSuffix + '.csv';
+  a.download = '2DQH_비품대여이력_' + fileSuffix + '.csv';
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+  toast('✓ 비품 대여 이력(' + rows.length + '건)이 엑셀 호환 CSV로 다운로드되었습니다.');
 }
 
 // ==========================================
@@ -7107,7 +7538,7 @@ function bindEvents(){
   document.addEventListener('click', function(e){
     const el = e.target;
     if(!el) return;
-    const target = el.closest('button, a, [data-select-eq], [data-select-util-eq], [data-analytics-eq], [data-cal-date], [data-timeline-filter], [data-eq-cat], [data-portal-module], [data-lims-nav], [data-main-view], [data-goto], [data-view]') || el;
+    const target = el.closest('button, a, [data-select-eq], [data-select-util-eq], [data-analytics-eq], [data-analytics-period], [data-cal-date], [data-timeline-filter], [data-eq-cat], [data-portal-module], [data-lims-nav], [data-main-view], [data-goto], [data-view]') || el;
 
     // 모달 닫기 / 취소 버튼 최우선 처리 (이벤트 트랩 및 무반응 방지)
     if(target.id === 'closeModal' || target.id === 'cancelModal' || target.closest('#closeModal') || target.closest('#cancelModal')){
@@ -7596,6 +8027,21 @@ function bindEvents(){
       return;
     }
 
+    // 장비 운영 통계: 주기 전환 탭 (월별 / 주간 / 연간)
+    const periodTab = target.dataset.analyticsPeriod ? target : target.closest('[data-analytics-period]');
+    if(periodTab){
+      selectedAnalyticsPeriod = periodTab.dataset.analyticsPeriod || 'month';
+      renderEquipmentAnalyticsDashboard();
+      return;
+    }
+
+    // 장비 운영 통계: 주기별 실적 CSV 내보내기
+    if(target.id === 'btnExportAnalyticsCsv' || target.closest('#btnExportAnalyticsCsv')){
+      e.preventDefault();
+      exportAnalyticsSummaryCsv();
+      return;
+    }
+
     // 장비 운영 통계: 분석 스코프 선택 칩 (전체 10대 장비 통합 vs 개별 장비 독립 세션 통계)
     const scopeChip = target.dataset.analyticsEq ? target : target.closest('[data-analytics-eq]');
     if(scopeChip){
@@ -8040,6 +8486,14 @@ function bindEvents(){
     bExpUnifiedXls.addEventListener('click', function(e){
       e.preventDefault();
       exportUnifiedSessionsExcel();
+    });
+  }
+
+  const bExpAnalyticsCsv = $('btnExportAnalyticsCsv');
+  if(bExpAnalyticsCsv){
+    bExpAnalyticsCsv.addEventListener('click', function(e){
+      e.preventDefault();
+      exportAnalyticsSummaryCsv();
     });
   }
 }

@@ -17,7 +17,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261109_22">
+  <link rel="stylesheet" href="style.css?v=20261110_01">
   <script>
     (function(){
       try {
@@ -382,18 +382,41 @@
 
         <!-- B. Phase 3: 연구단 장비 종합 통계 및 가동 대시보드 (Executive Analytics Hub) -->
         <div id="equipmentAnalyticsDashboard" class="hidden">
-          <!-- 장비별 통계 분리 필터 바 (전체 통합 vs 개별 장비 독립 누적 통계) -->
-          <div class="eq-analytics-scope-bar" style="margin-bottom:14px;background:var(--card);padding:12px 16px;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-              <span style="font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px;">
-                <span>📊 분석 스코프 선택:</span>
-                <span id="eqAnalyticsScopeDesc" style="font-weight:400;color:var(--ink-light);font-size:12px;">전체 연구장비 통합 누적 현황</span>
-              </span>
-              <button type="button" class="btn text-link-sub hidden" id="btnGoSelectedEqWorkstation" style="font-size:12px;padding:4px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--border);">
-                👉 선택 장비 워크스테이션 바로가기
-              </button>
+          <!-- 장비별 통계 분리 필터 바 (장비 선택 + 월별/주간/연간 주기 전환) -->
+          <div class="eq-analytics-scope-bar" style="margin-bottom:14px;background:var(--card);padding:14px 16px;border-radius:10px;border:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <label for="eqAnalyticsSelect" style="font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px;">
+                  <span>🔬 분석 대상 장비:</span>
+                </label>
+                <select id="eqAnalyticsSelect" class="eq-analytics-select" style="height:36px;font-size:13px;font-weight:600;padding:0 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--ink);cursor:pointer;min-width:180px;">
+                  <option value="all">🌐 전체 연구장비 통합 개요</option>
+                </select>
+              </div>
+
+              <!-- 주기 전환 탭 (월별 / 주간 / 연간) -->
+              <div class="eq-period-switcher" id="eqPeriodSwitcher" style="display:inline-flex;background:var(--bg);padding:3px;border-radius:8px;border:1px solid var(--border);gap:2px;">
+                <button type="button" class="eq-period-tab active" data-analytics-period="month" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📅 월별 통계</button>
+                <button type="button" class="eq-period-tab" data-analytics-period="week" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📆 주간 통계</button>
+                <button type="button" class="eq-period-tab" data-analytics-period="year" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📈 연간 통계</button>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="btn text-link-sub hidden" id="btnGoSelectedEqWorkstation" style="font-size:12px;padding:6px 12px;border-radius:6px;background:var(--bg);border:1px solid var(--border);font-weight:600;">
+                  👉 전자 로그북 열기
+                </button>
+                <button type="button" class="btn primary" id="btnExportAnalyticsCsv" style="font-size:12px;padding:6px 12px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;" title="선택된 장비 및 주기의 통계 데이터를 엑셀 호환 CSV로 다운로드">
+                  📥 통계 엑셀(CSV)
+                </button>
+              </div>
             </div>
-            <div id="eqAnalyticsScopeChips" class="preset-chips-wrap" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-light);border-top:1px dashed var(--border);padding-top:8px;">
+              <span id="eqAnalyticsScopeDesc">전체 연구장비 통합 누적 현황 및 운용 관리 오버뷰</span>
+              <span id="eqAnalyticsPeriodDesc" style="font-weight:600;color:var(--primary);">월별 가동 실적 분석 모드</span>
+            </div>
+
+            <div id="eqAnalyticsScopeChips" class="preset-chips-wrap" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;"></div>
           </div>
 
           <!-- 1. 핵심 KPI 요약 카드 그리드 (4-card metrics) -->
@@ -401,23 +424,23 @@
             <div class="eq-kpi-card">
               <div class="kpi-icon-wrap" style="background:#eff6ff;color:#2563eb;">🔬</div>
               <div class="kpi-info">
-                <span class="kpi-label">보유 연구장비</span>
-                <div class="kpi-num" id="kpiEqTotal">9대</div>
-                <span class="kpi-sub" id="kpiEqSub">분석 5 · 증착 4</span>
+                <span class="kpi-label" id="kpiEqLabel">대상 연구장비</span>
+                <div class="kpi-num" id="kpiEqTotal">10대 통합</div>
+                <span class="kpi-sub" id="kpiEqSub">분석 5 · 증착 4 · 공정 1</span>
               </div>
             </div>
             <div class="eq-kpi-card">
               <div class="kpi-icon-wrap" style="background:#ecfdf5;color:#059669;">⚡</div>
               <div class="kpi-info">
-                <span class="kpi-label">누적 가동 세션</span>
+                <span class="kpi-label">가동 세션 수</span>
                 <div class="kpi-num" id="kpiSessionsTotal">0건</div>
-                <span class="kpi-sub" id="kpiSessionsSub">이번 달 0건</span>
+                <span class="kpi-sub" id="kpiSessionsSub">선택 기간 0건</span>
               </div>
             </div>
             <div class="eq-kpi-card">
               <div class="kpi-icon-wrap" style="background:#fef3c7;color:#d97706;">⏱️</div>
               <div class="kpi-info">
-                <span class="kpi-label">누적 연구 가동시간</span>
+                <span class="kpi-label">누적 가동시간</span>
                 <div class="kpi-num" id="kpiRuntimeTotal">0시간</div>
                 <span class="kpi-sub" id="kpiRuntimeSub">평균 세션 0분</span>
               </div>
@@ -425,20 +448,23 @@
             <div class="eq-kpi-card">
               <div class="kpi-icon-wrap" style="background:#f3e8ff;color:#7c3aed;">👥</div>
               <div class="kpi-info">
-                <span class="kpi-label">참여 연구원 / 연구실</span>
-                <div class="kpi-num" id="kpiUsersTotal">0명</div>
-                <span class="kpi-sub" id="kpiAffilSub">IBS 2DQH</span>
+                <span class="kpi-label">측정 시료 / 연구원</span>
+                <div class="kpi-num" id="kpiUsersTotal">0개</div>
+                <span class="kpi-sub" id="kpiAffilSub">참여 0명</span>
               </div>
             </div>
           </div>
 
           <!-- 2. 장비별 가동 점유율 & 월간 가동 캘린더 (2-Column Grid) -->
           <div class="eq-analytics-row">
-            <!-- 좌: 9대 장비별 가동 점유율 및 누적 시간 (Utilization Ranking) -->
-            <div class="panel eq-analytics-panel">
-              <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <h3 style="margin:0;font-size:15px;color:var(--ink);">📊 장비별 가동률 및 점유 랭킹</h3>
-                <span style="font-size:12px;color:var(--ink-light);">누적 시간 &amp; 세션 기준</span>
+            <!-- 좌: 연구장비 운용 관리 오버뷰 또는 장비별 주기별 상세 통계 -->
+            <div class="panel eq-analytics-panel" id="panelAnalyticsMain">
+              <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqAnalyticsMainTitle">🔬 연구장비 운용 관리 오버뷰</h3>
+                  <span style="font-size:12px;color:var(--ink-light);" id="eqAnalyticsMainSub">전체 10대 연구장비 운영 상태 및 가동 실적</span>
+                </div>
+                <div id="eqAnalyticsPeriodBadge" style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;">2026년 월별</div>
               </div>
               <div id="eqUtilizationList" class="eq-utilization-list"></div>
             </div>
@@ -446,7 +472,7 @@
             <!-- 우: 월간 연구장비 가동 캘린더 (Equipment Activity Calendar) -->
             <div class="panel eq-analytics-panel">
               <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqCalendarTitle">📅 이달의 장비 가동 캘린더</h3>
+                <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqCalendarTitle">📅 장비 가동 캘린더</h3>
                 <div class="eq-calendar-nav" style="display:flex;align-items:center;gap:6px;">
                   <button type="button" class="btn-calendar-nav" id="btnPrevMonth" title="이전 달">‹</button>
                   <span id="eqCurrentMonthLabel" style="font-weight:700;font-size:13px;color:var(--ink);min-width:70px;text-align:center;"></span>
@@ -1052,7 +1078,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261109_22"></script>
-<script src="app.js?v=20261109_22"></script>
+<script src="consumables_catalog.js?v=20261110_01"></script>
+<script src="app.js?v=20261110_01"></script>
 </body>
 </html>
