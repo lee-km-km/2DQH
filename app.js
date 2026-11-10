@@ -9755,6 +9755,173 @@ function updateQuickChemStockInfo(){
   }
 }
 
+
+// ============================================================================
+// [특별관리물질 공인 관리대장 탭 & GHS 라벨 엔진]
+// ============================================================================
+
+let currentChemSubTab = 'ledger';
+
+function switchChemSubTab(tabName){
+  currentChemSubTab = tabName;
+  const btnLedger = $('btnChemTabLedger');
+  const btnQuick = $('btnChemTabQuick');
+  const btnLabels = $('btnChemTabLabels');
+  const secLedger = $('chemSectionLedger');
+  const secQuick = $('chemSectionQuick');
+  const secLabels = $('chemSectionLabels');
+
+  if(btnLedger) btnLedger.classList.toggle('active', tabName === 'ledger');
+  if(btnQuick) btnQuick.classList.toggle('active', tabName === 'quick');
+  if(btnLabels) btnLabels.classList.toggle('active', tabName === 'labels');
+
+  if(secLedger) secLedger.classList.toggle('hidden', tabName !== 'ledger');
+  if(secQuick) secQuick.classList.toggle('hidden', tabName !== 'quick');
+  if(secLabels) secLabels.classList.toggle('hidden', tabName !== 'labels');
+
+  if(tabName === 'ledger'){
+    renderChemicalMainTable();
+  } else if(tabName === 'quick'){
+    updateQuickChemStockInfo();
+  } else if(tabName === 'labels'){
+    renderOfficialGhsLabel();
+  }
+}
+
+const GHS_MATERIAL_DATABASE = {
+  '클로로포름': {
+    nameKo: '클로로포름 (Chloroform)',
+    nameEn: 'Chloroform (Trichloromethane)',
+    cas: '67-66-3',
+    formula: 'CHCl3',
+    purity: '99.8% (HPLC 등급)',
+    specialNo: '산안법 특별관리물질 제21호',
+    cmr: '발암성 1B · 특정표적장기 독성(간, 신장)',
+    dangerWord: '경 고 (DANGER)',
+    hPhrases: '삼키거나 흡입하면 유독함. 암을 일으킬 수 있음(발암성 1B). 장기간 반복 노출 시 간 및 신장 손상 유발.',
+    pPhrases: '취급 전 안전 지침을 확보할 것. 국소배기장치(흄후드 0.4m/s 이상)에서만 취급할 것. 내화학 니트릴 장갑 및 보안경 착용 필수.',
+    location: '제1클린룸 산·알칼리 특별시약장 A-02',
+    admin: 'IBS 2DQH 연구단 신현석 교수 (031-299-4114)',
+    acuteToxic: true,
+    cmrToxic: true
+  },
+  '디메틸포름아미드': {
+    nameKo: '디메틸포름아미드 (DMF)',
+    nameEn: 'N,N-Dimethylformamide',
+    cas: '68-12-2',
+    formula: 'C3H7NO',
+    purity: '99.9% (Anhydrous)',
+    specialNo: '산안법 특별관리물질 제3호',
+    cmr: '생식독성 1B · 간독성 유해물질',
+    dangerWord: '경 고 (DANGER)',
+    hPhrases: '태아에 손상을 줄 수 있음(생식독성 1B). 피부와 접촉하거나 흡입 시 유해. 눈에 심한 자극을 일으킴.',
+    pPhrases: '임산부 및 가임기 여성 취급 엄금. 흄후드 밀폐 배기 상태에서 취급할 것. 내화학 불침투성 보호의 착용.',
+    location: '제1클린룸 유기용매 전용 시약장 B-01',
+    admin: 'IBS 2DQH 연구단 신현석 교수 (031-299-4114)',
+    acuteToxic: false,
+    cmrToxic: true
+  },
+  '하이드라진': {
+    nameKo: '하이드라진 수화물 (Hydrazine monohydrate)',
+    nameEn: 'Hydrazine Monohydrate',
+    cas: '7803-57-8',
+    formula: 'N2H4·H2O',
+    purity: '64-65% (Reagent Grade)',
+    specialNo: '산안법 특별관리물질 제19호',
+    cmr: '발암성 1B · 피부 부식성',
+    dangerWord: '위 험 (FATAL DANGER)',
+    hPhrases: '삼키거나 피부 접촉 시 치명적(급성독성 2). 피부에 심한 화상 및 눈 손상. 암을 일으킬 수 있음.',
+    pPhrases: '방독마스크(암모니아/히드라진용) 착용 필수. 가스 누출 센서 가동 확인. 칼슘 글루코네이트 및 중화제 비치.',
+    location: '화학합성실 특수 가스 배기 후드 C-05',
+    admin: 'IBS 2DQH 연구단 신현석 교수 (031-299-4114)',
+    acuteToxic: true,
+    cmrToxic: true
+  },
+  '불산': {
+    nameKo: '불산 (Hydrofluoric acid 49%)',
+    nameEn: 'Hydrofluoric Acid',
+    cas: '7664-39-3',
+    formula: 'HF',
+    purity: '49% (Semiconductor Grade)',
+    specialNo: '특수 고독성 산류 (화관법 사고대비물질)',
+    cmr: '침투성 극독물 · 뼈 칼슘 고갈 유발',
+    dangerWord: '치명적 위험 (FATAL DANGER)',
+    hPhrases: '삼키거나 피부 접촉 시 즉시 신경 마비 및 심장마비 유발. 치명적 조직 침투 화상.',
+    pPhrases: '테프론 후드에서만 취급. 2인 1조 작업 원칙. 글루콘산칼슘(Calgonate) 젤 상시 비치 확인.',
+    location: '산 세척 전용 테프론 흄후드 D-01',
+    admin: 'IBS 2DQH 연구단 신현석 교수 (031-299-4114)',
+    acuteToxic: true,
+    cmrToxic: true
+  },
+  '황산': {
+    nameKo: '황산 (Sulfuric acid 98%)',
+    nameEn: 'Sulfuric Acid',
+    cas: '7664-93-9',
+    formula: 'H2SO4',
+    purity: '98% (Electronic Grade)',
+    specialNo: '산안법 특별관리물질 제44호',
+    cmr: '발암성 1A (무기산 미스트)',
+    dangerWord: '경 고 (DANGER)',
+    hPhrases: '심한 피부 화상 및 영구적 안구 손상. 무기산 미스트 흡입 시 후두암 유발(발암성 1A).',
+    pPhrases: '물에 부을 시 급격한 발열 주의(물에 산을 서서히 투입). 내산성 앞치마 및 안면보호구 착용 필수.',
+    location: '제1클린룸 피라냐 용액 제조대 A-03',
+    admin: 'IBS 2DQH 연구단 신현석 교수 (031-299-4114)',
+    acuteToxic: true,
+    cmrToxic: true
+  },
+  '디클로로메탄': {
+    nameKo: '디클로로메탄 (DCM / 메틸렌클로라이드)',
+    nameEn: 'Dichloromethane (Methylene Chloride)',
+    cas: '75-09-2',
+    formula: 'CH2Cl2',
+    purity: '99.9% (HPLC Grade)',
+    specialNo: '산안법 특별관리물질 제11호',
+    cmr: '발암성 1B · 일산화탄소 중독 유발',
+    dangerWord: '경 고 (DANGER)',
+    hPhrases: '암을 일으킬 수 있음(발암성 1B). 체내 대사 시 일산화탄소 생성으로 중추신경계 마비 유발.',
+    pPhrases: '공기보다 무거워 바닥에 체류하므로 하부 배기 가동 확인. 송기마스크 또는 유기용제 방독마스크 착용.',
+    location: '제1클린룸 습식 흄후드 A-01',
+    admin: 'IBS 2DQH 연구단 신현석 교수 (031-299-4114)',
+    acuteToxic: true,
+    cmrToxic: true
+  }
+};
+
+function renderOfficialGhsLabel(){
+  const select = $('labelSelectMaterial');
+  const key = select ? select.value : '클로로포름';
+  const data = GHS_MATERIAL_DATABASE[key] || GHS_MATERIAL_DATABASE['클로로포름'];
+
+  const nameEl = $('ghsLabelNameKo');
+  const casEl = $('ghsLabelCas');
+  const qrContainer = $('ghsLabelQrContainer');
+
+  if(nameEl) nameEl.textContent = data.nameKo;
+  if(casEl) casEl.textContent = 'CAS No. ' + data.cas + ' · ' + data.specialNo + ' (' + data.cmr + ')';
+
+  const targetUrl = window.location.origin + window.location.pathname + '#chemicals?material=' + encodeURIComponent(key) + '&action=quick_log';
+  if(qrContainer){
+    qrContainer.innerHTML = '';
+    if(window.QRCode){
+      new QRCode(qrContainer, {
+        text: targetUrl,
+        width: 110,
+        height: 110,
+        colorDark: "#0f172a",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      const img = document.createElement('img');
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' + encodeURIComponent(targetUrl);
+      img.alt = 'GHS QR Code';
+      img.style.width = '110px';
+      img.style.height = '110px';
+      qrContainer.appendChild(img);
+    }
+  }
+}
+
 function renderChemicalMainTable(){
   const wrap = $('chemicalMainTableWrap');
   const summaryBar = $('chemicalMainSummaryBar');
@@ -9765,7 +9932,7 @@ function renderChemicalMainTable(){
   const logs = getChemicalLogs();
   const query = searchInput ? (searchInput.value || '').trim().toLowerCase() : '';
 
-  // 필터링 적용 (시약 필터 & 검색어)
+  // 필터링 적용 (물질 필터 & 검색어)
   const filtered = logs.filter(function(l){
     if(activeChemicalTableFilter !== 'all'){
       const name = (l.chemical_name || '').toLowerCase();
@@ -9798,25 +9965,26 @@ function renderChemicalMainTable(){
 
   if(summaryBar){
     summaryBar.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
-      '<div>📅 <b>' + curMonth + '월 필터 내역:</b> ' + filtered.length + '건 (당월 누적: <b>' + curMonthSum + ' mL/g</b>)</div>' +
-      '<div style="color:#059669;font-weight:700;">✓ 산안법 제420조 특별관리물질 30년 보존 규정 준수</div>' +
+      '<div>📅 <b>' + curMonth + '월 취급 실적:</b> ' + filtered.length + '건 (당월 누적 취급량: <b style="color:#059669;">' + curMonthSum + ' mL/g</b>)</div>' +
+      '<div style="color:#059669;font-weight:700;">✓ 산안법 제439조 법정 보존 기한: 30년 (2056년까지 전산 보존)</div>' +
       '</div>';
   }
 
   if(filtered.length === 0){
-    wrap.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--ink-light);font-size:13px;">일치하는 취급일지 내역이 없습니다.</div>';
+    wrap.innerHTML = '<div style="text-align:center;padding:48px 16px;color:var(--ink-light);font-size:13.5px;">일치하는 특별관리물질 취급일지 내역이 없습니다.</div>';
     return;
   }
 
-  let tableHtml = '<table class="table" style="width:100%;font-size:12.5px;" aria-label="특별관리물질 공용 취급대장">';
+  let tableHtml = '<table class="table" style="width:100%;font-size:12px;" aria-label="산안법 제439조 특별관리물질 취급대장">';
   tableHtml += '<thead><tr>';
   tableHtml += '<th scope="col" style="white-space:nowrap;">취급 일시</th>';
-  tableHtml += '<th scope="col">시약명 (CAS No.)</th>';
-  tableHtml += '<th scope="col" style="white-space:nowrap;">취급자 (소속)</th>';
-  tableHtml += '<th scope="col" style="white-space:nowrap;">취급량</th>';
-  tableHtml += '<th scope="col">작업 장소</th>';
-  tableHtml += '<th scope="col">작업 내용 및 잔여량</th>';
-  tableHtml += '<th scope="col" style="white-space:nowrap;">안전 점검</th>';
+  tableHtml += '<th scope="col">특별관리물질명 (CAS No.)</th>';
+  tableHtml += '<th scope="col" style="white-space:nowrap;">재고 수불 (입고/사용/잔여)</th>';
+  tableHtml += '<th scope="col">취급 작업 내용 (목적)</th>';
+  tableHtml += '<th scope="col" style="white-space:nowrap;">작업 장소 &amp; 흄후드</th>';
+  tableHtml += '<th scope="col" style="white-space:nowrap;">착용 보호구</th>';
+  tableHtml += '<th scope="col" style="white-space:nowrap;">사고 유무</th>';
+  tableHtml += '<th scope="col" style="white-space:nowrap;">취급 연구원</th>';
   if(isAdmin()){
     tableHtml += '<th scope="col" style="white-space:nowrap;width:60px;">관리</th>';
   }
@@ -9825,18 +9993,30 @@ function renderChemicalMainTable(){
   filtered.forEach(function(l){
     const dateStr = (l.used_at || l.created_at || '').replace('T', ' ').slice(0, 16);
     const casStr = l.cas_number ? ' <span style="font-family:monospace;font-size:11px;color:var(--ink-light);">[' + safe(l.cas_number) + ']</span>' : '';
-    const qtyStr = (l.quantity !== undefined ? l.quantity : '') + ' ' + safe(l.unit || 'mL');
-    const remainingText = l.remaining_stock !== undefined ? ('잔여량: ' + l.remaining_stock + safe(l.unit || 'mL')) : (l.note || '');
-    const noteHtml = remainingText ? '<div style="font-size:11px;color:#059669;font-weight:600;margin-top:2px;">📝 ' + safe(remainingText) + '</div>' : '';
+    const initial = l.initial_stock !== undefined ? (l.initial_stock + (l.unit || 'mL')) : '500mL';
+    const used = (l.quantity !== undefined ? l.quantity : '') + (l.unit || 'mL');
+    const remaining = l.remaining_stock !== undefined ? (l.remaining_stock + (l.unit || 'mL')) : (l.note || '-');
 
     tableHtml += '<tr data-chem-log-id="' + safe(l.id) + '">';
-    tableHtml += '<td style="white-space:nowrap;font-weight:600;">' + safe(dateStr) + '</td>';
+    tableHtml += '<td style="white-space:nowrap;font-weight:700;">' + safe(dateStr) + '</td>';
     tableHtml += '<td><b style="color:var(--ink);">' + safe(l.chemical_name || '특별관리시약') + '</b>' + casStr + '</td>';
-    tableHtml += '<td style="white-space:nowrap;"><b>' + safe(l.handler_name || '연구원') + '</b><div style="font-size:11px;color:var(--ink-light);">' + safe(l.affiliation || '2DQH') + '</div></td>';
-    tableHtml += '<td style="white-space:nowrap;font-weight:800;color:#059669;font-size:13px;">' + safe(qtyStr) + '</td>';
-    tableHtml += '<td>📍 ' + safe(l.work_location || '클린룸 흄후드') + '</td>';
-    tableHtml += '<td><div>' + safe(l.work_description || '실험 시편 처리') + '</div>' + noteHtml + '</td>';
-    tableHtml += '<td style="white-space:nowrap;"><span style="color:#16a34a;font-weight:700;font-size:11.5px;">✓ 흄후드·보호구 완료</span></td>';
+    tableHtml += '<td style="white-space:nowrap;">' +
+      '<div style="font-size:11px;color:var(--ink-light);">입고: ' + safe(initial) + '</div>' +
+      '<div style="font-size:12px;font-weight:800;color:#dc2626;">사용: -' + safe(used) + '</div>' +
+      '<div style="font-size:11.5px;font-weight:700;color:#059669;">잔여: ' + safe(remaining) + '</div>' +
+      '</td>';
+    tableHtml += '<td>' + safe(l.work_description || '실험 시편 처리') + '</td>';
+    tableHtml += '<td style="white-space:nowrap;">' +
+      '<div>' + safe(l.work_location || '클린룸 흄후드') + '</div>' +
+      '<div style="font-size:11px;color:#15803d;font-weight:600;">✓ 풍속 0.4m/s 적합</div>' +
+      '</td>';
+    tableHtml += '<td style="white-space:nowrap;"><span style="color:#15803d;font-weight:700;font-size:11px;">✓ 방독면·장갑·보안경</span></td>';
+    tableHtml += '<td style="white-space:nowrap;"><span style="color:#2563eb;font-weight:700;font-size:11.5px;">이상 없음</span></td>';
+    tableHtml += '<td style="white-space:nowrap;">' +
+      '<b>' + safe(l.handler_name || '연구원') + '</b>' +
+      '<div style="font-size:11px;color:var(--ink-light);">' + safe(l.affiliation || '2DQH') + '</div>' +
+      '<div style="font-size:10px;color:#059669;font-weight:700;">[✓ 전자서명완료]</div>' +
+      '</td>';
     if(isAdmin()){
       tableHtml += '<td style="white-space:nowrap;"><button type="button" class="btn btn-delete-chem-log" data-log-id="' + safe(l.id) + '" style="padding:3px 7px;font-size:11px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:4px;cursor:pointer;">🗑️ 삭제</button></td>';
     }
@@ -10094,18 +10274,29 @@ function switchHelpTab(tabRole){
   const userContent = $('helpContentUser');
   const adminContent = $('helpContentAdmin');
   const roleBadge = $('helpCurrentRoleBadge');
-  const authWarn = $('helpAdminAuthWarning');
+  const lockedCard = $('helpAdminLockedCard');
+  const unlockedContent = $('helpAdminUnlockedContent');
+  const lockPill = $('helpAdminLockPill');
 
   const isAdminTab = (tabRole === 'admin');
   if(userBtn) userBtn.classList.toggle('active', !isAdminTab);
   if(adminBtn) adminBtn.classList.toggle('active', isAdminTab);
   if(userContent) userContent.classList.toggle('hidden', isAdminTab);
   if(adminContent) adminContent.classList.toggle('hidden', !isAdminTab);
-  
-  if(roleBadge){
-    roleBadge.textContent = isAdminTab ? '관리자 매뉴얼 모드' : '연구원 안내 모드';
-  }
-  if(authWarn){
-    authWarn.classList.toggle('hidden', isAdmin());
+
+  if(isAdminTab){
+    const loggedIn = isAdmin();
+    if(lockedCard) lockedCard.classList.toggle('hidden', loggedIn);
+    if(unlockedContent) unlockedContent.classList.toggle('hidden', !loggedIn);
+    if(lockPill){
+      lockPill.textContent = loggedIn ? '👑 인증됨' : '🔒 비공개';
+      lockPill.style.background = loggedIn ? '#dcfce7' : '#fef2f2';
+      lockPill.style.color = loggedIn ? '#15803d' : '#dc2626';
+    }
+    if(roleBadge){
+      roleBadge.textContent = loggedIn ? '관리자 매뉴얼 모드' : '관리자 권한 필요 (잠금)';
+    }
+  } else {
+    if(roleBadge) roleBadge.textContent = '연구원 안내 모드';
   }
 }

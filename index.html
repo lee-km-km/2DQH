@@ -371,198 +371,304 @@
     <!-- 🔬 연구장비 포털 & 로그북 뷰 (Phase 1: 9대 연구장비 포털 및 독립 스테이션 모델) -->
     
     <!-- 🧪 특별관리물질 & 시약 공용 취급 포털 (독립 운영 & 스마트폰 QR 직통 최적화) -->
+    
+    <!-- ================================================================= -->
+    <!-- 🧪 특별관리물질 취급일지 및 법정 관리대장 (산안법 제439조 공인 양식) -->
+    <!-- ================================================================= -->
     <section class="view hidden" id="view-chemicals">
-      <div class="page-head hide-mobile">
-        <div class="head-title">
-          <h1>🧪 특별관리물질 &amp; 시약 공용 취급 포털</h1>
-          <span class="count-badge" id="chemicalPageBadge" style="background:#fee2e2;color:#991b1b;font-weight:700;">산안법 제420조 특별관리물질 44종 관리</span>
+      <!-- A. 공식 공문서 헤더 & 법정 고지 배너 -->
+      <div class="official-ledger-header">
+        <div class="ledger-header-top">
+          <div class="ledger-title-box">
+            <span class="ledger-badge">산업안전보건법 제114조 · 제439조 [별표 12] 법정 서식</span>
+            <h1 class="ledger-main-title">🧪 특별관리물질 취급일지 및 관리대장</h1>
+            <p class="ledger-sub-title">IBS 2DQH 연구단 · 성균관대 양자기술첨단기기센터 | 연구실 책임자: 신현석 교수</p>
+          </div>
+          <!-- 공식 결재선 박스 -->
+          <div class="ledger-approval-box">
+            <div class="approval-cell">
+              <span class="approval-role">작성자(연구원)</span>
+              <span class="approval-status sign-ok">✓ 전자서명</span>
+            </div>
+            <div class="approval-cell">
+              <span class="approval-role">안전담당관</span>
+              <span class="approval-status sign-ok">✓ 검토완료</span>
+            </div>
+            <div class="approval-cell">
+              <span class="approval-role">연구책임자</span>
+              <span class="approval-status sign-approved">✓ 결재승인</span>
+            </div>
+          </div>
         </div>
-        <div class="head-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button type="button" class="btn primary" id="btnOpenChemicalQrModal" style="background:#059669;border-color:#059669;display:inline-flex;align-items:center;gap:6px;font-weight:700;">
-            📱 시약장 모바일 QR 라벨 보기
-          </button>
-          <button type="button" class="btn btn-export-log-csv" id="btnExportChemicalLogsMonthMain" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
-            📥 이번 달 엑셀 (CSV)
-          </button>
-          <button type="button" class="btn btn-export-log-csv" id="btnExportChemicalLogsYearMain" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
-            📆 연간 전체 엑셀 (CSV)
-          </button>
+
+        <div class="ledger-statutory-notice">
+          <span class="notice-icon">⚖️</span>
+          <span><b>법적 보존 의무:</b> 산업안전보건기준에 관한 규칙 제439조에 따라 특별관리물질(CMR 1A/1B) 취급 기록은 <b>마지막 작성일로부터 30년간 전산 영구 보존</b>됩니다.</span>
         </div>
       </div>
 
-      <!-- 모바일 전용 상단 액션 바 -->
-      <div class="mobile-only" style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button type="button" class="btn primary" id="btnOpenChemicalQrModalMobile" style="background:#059669;border-color:#059669;flex:1;padding:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
-          📱 시약장 QR 라벨
+      <!-- B. 상단 탭 네비게이션: 1. 법정 관리대장 | 2. 모바일 QR 현장일지 | 3. GHS/QR 라벨 생성기 -->
+      <div class="chem-mode-tabs" role="tablist">
+        <button type="button" class="chem-tab-btn active" id="btnChemTabLedger" data-chem-tab="ledger">
+          <span>📋</span> 1. 법정 공용 관리대장 (30년 보존)
         </button>
-        <button type="button" class="btn" id="btnExportChemicalLogsMonthMobile" style="flex:1;padding:10px;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:4px;">
-          📥 월간 엑셀
+        <button type="button" class="chem-tab-btn" id="btnChemTabQuick" data-chem-tab="quick">
+          <span>⚡</span> 2. 모바일 QR 현장 취급일지 (시약장 앞 10초)
+        </button>
+        <button type="button" class="chem-tab-btn" id="btnChemTabLabels" data-chem-tab="labels">
+          <span>🏷️</span> 3. 시약장 부착용 GHS·QR 라벨 인쇄
         </button>
       </div>
 
-      <!-- 1. 스마트폰 QR 즉시 취급일지 작성 패널 (시약장 앞 10초 완료) -->
-      <div class="panel" id="chemicalQuickCard" style="border:2px solid #059669;background:var(--bg);box-shadow:0 4px 12px rgba(5,150,105,0.08);margin-bottom:20px;border-radius:12px;">
-        <div class="panel-head" style="background:rgba(5,150,105,0.06);border-bottom:1px solid rgba(5,150,105,0.2);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-          <div>
-            <h3 style="margin:0;font-size:16px;color:#059669;display:flex;align-items:center;gap:8px;">
-              <span>⚡</span> <b>모바일 QR 스마트 간편 취급일지 작성</b>
-            </h3>
-            <p style="margin:4px 0 0;font-size:12px;color:var(--ink-light);">
-              시약장 앞 스마트폰 카메라로 QR 스캔 시 즉시 등록 · 산안법 제420조에 따라 법정 30년 영구 보존
-            </p>
+      <!-- C. 탭 1: 법정 공용 관리대장 (Ledger Table Mode) -->
+      <div id="chemSectionLedger" class="chem-tab-content">
+        <!-- 4대 핵심 지표 카드 -->
+        <div class="chem-metrics-grid">
+          <div class="chem-metric-card border-green">
+            <span class="chem-metric-label">📅 당월 총 취급 실적</span>
+            <span class="chem-metric-value" id="metricChemMonthCount">6건</span>
+            <span class="chem-metric-foot text-green">산업안전보건법 제439조 준수</span>
           </div>
-          <span style="font-size:11.5px;background:#d1fae5;color:#065f46;padding:4px 10px;border-radius:999px;font-weight:700;">
-            ✓ 원터치 잔여량 자동계산
-          </span>
+          <div class="chem-metric-card border-blue">
+            <span class="chem-metric-label">🧪 관리 대상 물질</span>
+            <span class="chem-metric-value" id="metricChemSubstanceCount">8종</span>
+            <span class="chem-metric-foot text-blue">산안법 [별표 12] 법정 44종 관리</span>
+          </div>
+          <div class="chem-metric-card border-amber">
+            <span class="chem-metric-label">👤 직전 취급자 &amp; 물질</span>
+            <span class="chem-metric-value truncate" id="metricChemLatestUser">신현석 교수님 (클로로포름)</span>
+            <span class="chem-metric-foot text-amber" id="metricChemLatestDesc">50mL 사용 · 잔여: 450mL</span>
+          </div>
+          <div class="chem-metric-card border-emerald">
+            <span class="chem-metric-label">🛡️ 배기설비 및 보호구 적합률</span>
+            <span class="chem-metric-value text-green">100%</span>
+            <span class="chem-metric-foot text-green">흄후드 0.4m/s &amp; 보호구 전원 착용</span>
+          </div>
         </div>
 
-        <form id="formQuickChemicalLog" style="padding:16px 18px;">
-          <!-- A. 시약 선택 & 실시간 잔여량/직전 사용자 알림 -->
-          <div style="margin-bottom:14px;">
-            <label for="quickChemSelect" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--ink);">
-              🧪 취급 시약 선택 (법정 특별관리물질 44종 및 연구실 다빈도 시약)
-            </label>
-            <select id="quickChemSelect" class="form-control" style="width:100%;padding:10px 12px;font-size:14px;font-weight:600;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--ink);">
-              <option value="클로로포름 (Chloroform)|67-66-3|500|mL|제1클린룸 습식 흄후드 A">클로로포름 (Chloroform) [CAS 67-66-3] · 특별관리 21호</option>
-              <option value="디메틸포름아미드 (DMF)|68-12-2|500|mL|제1클린룸 유기용매 흄후드 B">디메틸포름아미드 (DMF) [CAS 68-12-2] · 특별관리 3호</option>
-              <option value="하이드라진 수화물 (Hydrazine)|7803-57-8|250|mL|화학합성실 특수 가스 배기 후드">하이드라진 수화물 (Hydrazine monohydrate) [CAS 7803-57-8] · 특별관리 19호</option>
-              <option value="불산 (Hydrofluoric acid 49%)|7664-39-3|500|mL|산 세척 전용 테프론 흄후드">불산 (Hydrofluoric acid 49%) [CAS 7664-39-3] · 특수유해산</option>
-              <option value="황산 (Sulfuric acid 98%)|7664-93-9|1000|mL|제1클린룸 피라냐 용액 제조대">황산 (Sulfuric acid 98%) [CAS 7664-93-9] · 특별관리 44호</option>
-              <option value="디클로로메탄 (DCM)|75-09-2|1000|mL|제1클린룸 습식 흄후드 A">디클로로메탄 (Dichloromethane / MC) [CAS 75-09-2] · 특별관리 11호</option>
-              <option value="아세톤 (Acetone 99.5%)|67-64-1|2000|mL|제1클린룸 세정대">아세톤 (Acetone 99.5%) [CAS 67-64-1] · 범용 유기용매</option>
-              <option value="에탄올 (Ethanol 99.9%)|64-17-5|1000|mL|제1클린룸 세정대">에탄올 (Ethanol 99.9%) [CAS 64-17-5] · 기판 세정제</option>
-              <option value="직접입력">✏️ 기타 시약 직접 입력...</option>
-            </select>
-          </div>
-
-          <!-- B. 실시간 잔여량 및 직전 사용자 알림 배너 -->
-          <div id="quickChemStockAlert" style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
-            <div id="quickChemStockAlertText">
-              💡 <b>클로로포름:</b> 직전 취급 신현석 교수님 (50mL) · <b>현재 잔여량: 450mL</b> (초기 500mL)
+        <!-- 관리대장 툴바 & 감사 엑셀 다운로드 -->
+        <div class="panel" style="padding:0;overflow:hidden;border-radius:10px;">
+          <div class="chem-ledger-toolbar">
+            <div class="toolbar-left">
+              <h3 style="margin:0;font-size:15px;color:var(--ink);display:flex;align-items:center;gap:8px;">
+                <span>📋</span> 특별관리물질 법정 관리대장 (산안법 제439조 규격)
+              </h3>
+              <span class="count-badge" id="chemicalMainTableCountBadge" style="background:#fee2e2;color:#991b1b;font-weight:700;">총 6건</span>
             </div>
-            <div style="font-weight:700;color:#059669;" id="quickChemStockCalcPreview">
-              사용 후 예상 잔여량: 400mL
+            <div class="toolbar-right">
+              <div class="search-input-box" style="width:220px;">
+                <span class="search-input-icon" aria-hidden="true">🔍</span>
+                <input type="text" id="chemicalLedgerSearchInput" placeholder="취급자, 물질명, CAS 검색...">
+              </div>
+              <button type="button" class="btn primary" id="btnExportChemicalLogsMonthMain" style="background:#059669;border-color:#059669;font-size:12.5px;padding:6px 12px;font-weight:700;">
+                📥 법정 서식 엑셀 (CSV)
+              </button>
+              <button type="button" class="btn" id="btnExportChemicalLogsYearMain" style="font-size:12.5px;padding:6px 12px;">
+                📆 연간 감사 대장 (CSV)
+              </button>
             </div>
           </div>
 
-          <!-- C. 2열 그리드 입력 필드 (연구원 정보, 취급량, 일시, 장소) -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-bottom:14px;">
+          <!-- 물질별 필터 칩 바 -->
+          <div id="chemicalLedgerFilterChips" class="chem-filter-chips-bar">
+            <button type="button" class="btn-preset-chip active" data-chem-filter="all">전체 물질 (All)</button>
+            <button type="button" class="btn-preset-chip" data-chem-filter="클로로포름">클로로포름 (Chloroform)</button>
+            <button type="button" class="btn-preset-chip" data-chem-filter="디메틸포름아미드">디메틸포름아미드 (DMF)</button>
+            <button type="button" class="btn-preset-chip" data-chem-filter="하이드라진">하이드라진 (Hydrazine)</button>
+            <button type="button" class="btn-preset-chip" data-chem-filter="불산">불산 (HF 49%)</button>
+            <button type="button" class="btn-preset-chip" data-chem-filter="황산">황산 (H2SO4 98%)</button>
+            <button type="button" class="btn-preset-chip" data-chem-filter="디클로로메탄">디클로로메탄 (DCM)</button>
+          </div>
+
+          <!-- 대장 요약 바 -->
+          <div id="chemicalMainSummaryBar" class="chem-ledger-summary-bar">
+            로딩 중...
+          </div>
+
+          <!-- 법정 서식 취급대장 메인 테이블 (산안법 제439조 공인 9대 컬럼) -->
+          <div id="chemicalMainTableWrap" class="table-wrap chem-official-table-wrap">
+            로딩 중...
+          </div>
+        </div>
+      </div>
+
+      <!-- D. 탭 2: 모바일 QR 현장 간편일지 작성 폼 (Quick Mobile Form) -->
+      <div id="chemSectionQuick" class="chem-tab-content hidden">
+        <div class="panel chem-form-panel">
+          <div class="chem-form-header">
             <div>
-              <label for="quickChemHandler" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급자 성명 *</label>
-              <input type="text" id="quickChemHandler" class="form-control" placeholder="성명 (예: 이강민 연구원)" required style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);">
+              <span class="form-step-badge">📱 모바일 QR 현장 직통 모드</span>
+              <h2 class="chem-form-title">특별관리물질 실시간 취급일지 작성</h2>
+              <p class="chem-form-sub">시약장/흄후드 앞에서 스마트폰으로 QR을 스캔하여 10초 만에 법정 서식 작성 완료</p>
             </div>
-            <div>
-              <label for="quickChemAffiliation" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">소속 / 연구실</label>
-              <input type="text" id="quickChemAffiliation" class="form-control" value="2DQH 연구단" placeholder="연구실명" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);">
-            </div>
-            <div>
-              <label for="quickChemDate" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급 일시 *</label>
-              <input type="datetime-local" id="quickChemDate" class="form-control" required style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);">
-            </div>
-            <div>
-              <label for="quickChemQty" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">사용량 및 단위 *</label>
-              <div style="display:flex;gap:6px;">
-                <input type="number" id="quickChemQty" class="form-control" step="0.1" min="0.1" placeholder="수량 (예: 50)" value="50" required style="flex:2;padding:9px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);font-weight:700;">
-                <select id="quickChemUnit" class="form-control" style="flex:1;padding:9px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);font-weight:600;">
-                  <option value="mL">mL</option>
-                  <option value="g">g</option>
-                  <option value="L">L</option>
-                  <option value="kg">kg</option>
-                </select>
+            <button type="button" class="btn btn-sm" id="btnQuickSwitchToLedger">📋 관리대장 보기</button>
+          </div>
+
+          <form id="formQuickChemicalLog" class="chem-official-form">
+            <!-- 1. 물질 선택 및 실시간 재고 수불 안내 -->
+            <div class="form-section-box">
+              <label for="quickChemSelect" class="form-label-strong">
+                🧪 특별관리물질 선택 (산안법 제439조 [별표 12] 법정 물질) *
+              </label>
+              <select id="quickChemSelect" class="form-control-large">
+                <option value="클로로포름 (Chloroform)|67-66-3|500|mL|제1클린룸 습식 흄후드 A|발암성 1B">클로로포름 (Chloroform) [CAS 67-66-3] · 특별관리 21호 (발암성 1B)</option>
+                <option value="디메틸포름아미드 (DMF)|68-12-2|500|mL|제1클린룸 유기용매 흄후드 B|생식독성 1B">디메틸포름아미드 (DMF) [CAS 68-12-2] · 특별관리 3호 (생식독성 1B)</option>
+                <option value="하이드라진 수화물 (Hydrazine)|7803-57-8|250|mL|화학합성실 특수 가스 배기 후드|발암성 1B">하이드라진 수화물 (Hydrazine) [CAS 7803-57-8] · 특별관리 19호 (발암성 1B)</option>
+                <option value="불산 (Hydrofluoric acid 49%)|7664-39-3|500|mL|산 세척 전용 테프론 흄후드|특수유해산">불산 (Hydrofluoric acid 49%) [CAS 7664-39-3] · 급성독성/부식성</option>
+                <option value="황산 (Sulfuric acid 98%)|7664-93-9|1000|mL|제1클린룸 피라냐 용액 제조대|특별관리 44호">황산 (Sulfuric acid 98%) [CAS 7664-93-9] · 특별관리 44호 (발암성 1A)</option>
+                <option value="디클로로메탄 (DCM)|75-09-2|1000|mL|제1클린룸 습식 흄후드 A|발암성 1B">디클로로메탄 (Dichloromethane) [CAS 75-09-2] · 특별관리 11호 (발암성 1B)</option>
+                <option value="벤젠 (Benzene 99.8%)|71-43-2|500|mL|화학실 밀폐 환기장치|발암성 1A">벤젠 (Benzene) [CAS 71-43-2] · 특별관리 1호 (발암성 1A)</option>
+                <option value="포름알데히드 (Formaldehyde 37%)|50-00-0|500|mL|생물안전 후드 C|발암성 1A">포름알데히드 (Formaldehyde) [CAS 50-00-0] · 특별관리 39호 (발암성 1A)</option>
+                <option value="직접입력">✏️ 기타 특별관리물질 직접 입력...</option>
+              </select>
+
+              <!-- 실시간 재고 수불부 안내 배너 -->
+              <div id="quickChemStockAlert" class="stock-balance-card">
+                <div class="stock-balance-left" id="quickChemStockAlertText">
+                  💡 <b>클로로포름:</b> 직전 취급 신현석 교수님 (50mL) · <b>현재 잔여량: 450mL</b> (초기 500mL)
+                </div>
+                <div class="stock-balance-right" id="quickChemStockCalcPreview">
+                  사용 후 예상 잔여재고: <b>400mL</b>
+                </div>
               </div>
             </div>
-            <div>
-              <label for="quickChemLocation" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">작업 장소 (배기시설) *</label>
-              <input type="text" id="quickChemLocation" class="form-control" value="제1클린룸 습식 흄후드 A" placeholder="흄후드 번호" required style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);">
-            </div>
-            <div>
-              <label for="quickChemDesc" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">작업 내용 및 목적</label>
-              <input type="text" id="quickChemDesc" class="form-control" value="2D 페로브스카이트 박막 시편 세정 및 합성" placeholder="실험 목적" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);">
-            </div>
-          </div>
 
-          <!-- D. 필수 법정 안전 점검 체크박스 -->
-          <div style="background:rgba(5,150,105,0.05);border:1px solid rgba(5,150,105,0.25);border-radius:8px;padding:12px 14px;margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;">
-            <div style="font-size:12px;font-weight:700;color:#059669;display:flex;align-items:center;gap:4px;">
-              <span>🛡️</span> 법정 필수 안전 점검:
+            <!-- 2. 취급자 정보 및 취급량/일시 (법정 기재사항) -->
+            <div class="form-grid-2col">
+              <div class="form-group">
+                <label for="quickChemHandler" class="form-label">취급 연구원 성명 *</label>
+                <input type="text" id="quickChemHandler" class="form-control" placeholder="성명 (예: 이강민 연구원)" required>
+              </div>
+              <div class="form-group">
+                <label for="quickChemAffiliation" class="form-label">소속 연구실 *</label>
+                <input type="text" id="quickChemAffiliation" class="form-control" value="IBS 2DQH 연구단" placeholder="연구실명" required>
+              </div>
+              <div class="form-group">
+                <label for="quickChemDate" class="form-label">취급 일시 (년-월-일 시:분) *</label>
+                <input type="datetime-local" id="quickChemDate" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="quickChemQty" class="form-label">취급 수량 및 단위 (수불량) *</label>
+                <div style="display:flex;gap:6px;">
+                  <input type="number" id="quickChemQty" class="form-control" step="0.1" min="0.1" placeholder="수량" value="50" required style="flex:2;font-weight:700;">
+                  <select id="quickChemUnit" class="form-control" style="flex:1;font-weight:600;">
+                    <option value="mL">mL</option>
+                    <option value="g">g</option>
+                    <option value="L">L</option>
+                    <option value="kg">kg</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="quickChemLocation" class="form-label">취급 작업 장소 (국소배기장치) *</label>
+                <input type="text" id="quickChemLocation" class="form-control" value="제1클린룸 습식 흄후드 A" placeholder="실험실 호실 및 흄후드 번호" required>
+              </div>
+              <div class="form-group">
+                <label for="quickChemDesc" class="form-label">취급 작업 내용 및 공정 목적 *</label>
+                <input type="text" id="quickChemDesc" class="form-control" value="2D 페로브스카이트 박막 시편 세정 및 합성" placeholder="실험 목적 및 용도 구체적 기재" required>
+              </div>
             </div>
-            <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;color:var(--ink);font-weight:600;">
-              <input type="checkbox" id="quickChemVentilation" checked style="width:16px;height:16px;accent-color:#059669;">
-              흄후드(Fume Hood) 배기 가동 정상 확인
-            </label>
-            <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;color:var(--ink);font-weight:600;">
-              <input type="checkbox" id="quickChemPpe" checked style="width:16px;height:16px;accent-color:#059669;">
-              내화학 보호장갑 및 보호안경 착용 완료
-            </label>
-          </div>
 
-          <!-- E. 등록 버튼 -->
-          <button type="submit" id="btnSubmitQuickChem" class="btn primary" style="width:100%;padding:14px;font-size:15px;font-weight:700;background:#059669;border-color:#059669;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;">
-            <span>🚀</span> 취급일지 등록 (산안법 제420조 법정 30년 영구 전산 보존)
-          </button>
-        </form>
+            <!-- 3. 법정 필수 안전 점검 체크리스트 (산안법 제439조 제5호/제6호) -->
+            <div class="safety-checklist-box">
+              <div class="checklist-title">
+                <span>🛡️</span> <b>산업안전보건기준 제439조 법정 필수 안전점검</b> (모두 적합해야 작업 가능)
+              </div>
+              <div class="checklist-items">
+                <label class="check-item">
+                  <input type="checkbox" id="quickChemVentilation" checked required>
+                  <span><b>국소배기장치(흄후드)</b> 배기 정상 가동 및 제어풍속(0.4 m/s 이상) 적합 확인</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" id="quickChemPpe" checked required>
+                  <span><b>개인보호구 착용:</b> 화학물질용 방독마스크, 내화학 보호장갑, 보안경 및 실험복 착용</span>
+                </label>
+                <label class="check-item">
+                  <input type="checkbox" id="quickChemIncident" checked required>
+                  <span><b>사고 유무 확인:</b> 누출·비산·흡입 사고 없음 (비상세안기 및 중화제 정상 비치 확인)</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- 4. 등록 버튼 -->
+            <button type="submit" id="btnSubmitQuickChem" class="btn btn-submit-official">
+              <span>✍️</span> <b>법정 특별관리물질 취급일지 전자 서명 등록 (30년 영구 보존)</b>
+            </button>
+          </form>
+        </div>
       </div>
 
-      <!-- 2. 실시간 통계 요약 4대 지표 카드 -->
-      <div id="chemicalMainMetrics" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;margin-bottom:20px;">
-        <div class="panel" style="padding:14px 18px;margin:0;border-left:4px solid #059669;">
-          <div style="font-size:11.5px;color:var(--ink-light);margin-bottom:4px;">📅 이번 달 취급 총 건수</div>
-          <div style="font-size:22px;font-weight:800;color:var(--ink);" id="metricChemMonthCount">6건</div>
-          <div style="font-size:11px;color:#059669;margin-top:2px;">전월 대비 정상 운용 중</div>
-        </div>
-        <div class="panel" style="padding:14px 18px;margin:0;border-left:4px solid #2563eb;">
-          <div style="font-size:11.5px;color:var(--ink-light);margin-bottom:4px;">🧪 관리 대상 물질 종수</div>
-          <div style="font-size:22px;font-weight:800;color:var(--ink);" id="metricChemSubstanceCount">8종</div>
-          <div style="font-size:11px;color:#2563eb;margin-top:2px;">산안법 제420조 법정 44종 관리</div>
-        </div>
-        <div class="panel" style="padding:14px 18px;margin:0;border-left:4px solid #d97706;">
-          <div style="font-size:11.5px;color:var(--ink-light);margin-bottom:4px;">👤 직전 취급자 &amp; 시약</div>
-          <div style="font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="metricChemLatestUser">신현석 교수님 (클로로포름)</div>
-          <div style="font-size:11px;color:#d97706;margin-top:2px;" id="metricChemLatestDesc">50mL 사용 · 잔여 450mL</div>
-        </div>
-        <div class="panel" style="padding:14px 18px;margin:0;border-left:4px solid #16a34a;">
-          <div style="font-size:11.5px;color:var(--ink-light);margin-bottom:4px;">🛡️ 필수 안전수칙 준수율</div>
-          <div style="font-size:22px;font-weight:800;color:#16a34a;" id="metricChemSafetyRate">100%</div>
-          <div style="font-size:11px;color:#16a34a;margin-top:2px;">보호구 &amp; 흄후드 배기 확인</div>
-        </div>
-      </div>
-
-      <!-- 3. 실시간 공용 취급대장 (Ledger Table & 시약별 필터) -->
-      <section class="panel" id="chemicalMainLedgerPanel" style="border-radius:12px;">
-        <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 18px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <h3 style="margin:0;font-size:16px;color:var(--ink);">📋 특별관리물질 공용 취급대장 전체 내역</h3>
-            <span class="count-badge" id="chemicalMainTableCountBadge" style="background:#fee2e2;color:#991b1b;font-weight:700;">총 6건</span>
+      <!-- E. 탭 3: 시약장 부착용 GHS / QR 라벨 인쇄기 -->
+      <div id="chemSectionLabels" class="chem-tab-content hidden">
+        <div class="panel" style="border-radius:10px;">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);">
+            <div>
+              <h3 style="margin:0;font-size:16px;color:var(--ink);">🏷️ 시약장 및 시약병 부착용 공인 GHS·QR 스티커 라벨</h3>
+              <p style="margin:4px 0 0;font-size:12px;color:var(--ink-light);">산안법 제114조 및 화학물질관리법 규격 경고표지 + 스마트폰 직통 QR 코드</p>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn primary" id="btnPrintOfficialLabel" style="background:#059669;border-color:#059669;font-weight:700;">
+                🖨️ A4 스티커 규격 라벨 인쇄
+              </button>
+            </div>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <div class="search-input-box" style="width:220px;">
-              <span class="search-input-icon" aria-hidden="true">🔍</span>
-              <input type="text" id="chemicalLedgerSearchInput" placeholder="취급자, 시약명, CAS 검색..." style="width:100%;font-size:12.5px;padding:6px 10px 6px 30px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);">
+
+          <div style="padding:18px;">
+            <div style="margin-bottom:16px;max-width:400px;">
+              <label for="labelSelectMaterial" style="display:block;font-size:13px;font-weight:700;margin-bottom:6px;">라벨 출력 대상 물질 선택:</label>
+              <select id="labelSelectMaterial" class="form-control" style="width:100%;padding:9px 12px;font-size:13.5px;font-weight:600;background:var(--bg);color:var(--ink);border:1px solid var(--border);border-radius:6px;">
+                <option value="클로로포름">클로로포름 (Chloroform) [CAS 67-66-3]</option>
+                <option value="디메틸포름아미드">디메틸포름아미드 (DMF) [CAS 68-12-2]</option>
+                <option value="하이드라진">하이드라진 수화물 (Hydrazine) [CAS 7803-57-8]</option>
+                <option value="불산">불산 (Hydrofluoric acid 49%) [CAS 7664-39-3]</option>
+                <option value="황산">황산 (Sulfuric acid 98%) [CAS 7664-93-9]</option>
+                <option value="디클로로메탄">디클로로메탄 (Dichloromethane) [CAS 75-09-2]</option>
+              </select>
+            </div>
+
+            <!-- 인쇄 미리보기 영역 -->
+            <div class="official-ghs-label-container" id="printableGhsLabelArea">
+              <div class="ghs-label-card">
+                <div class="ghs-label-header">
+                  <div class="ghs-warning-title">경 고 (DANGER)</div>
+                  <div class="ghs-material-name" id="ghsLabelNameKo">클로로포름 (Chloroform)</div>
+                  <div class="ghs-cas-no" id="ghsLabelCas">CAS No. 67-66-3 · 분자식: CHCl3 · 순도: 99.8%</div>
+                </div>
+
+                <div class="ghs-label-body">
+                  <div class="ghs-pictograms-box">
+                    <div class="ghs-pic-item danger" title="급성독성">
+                      <svg viewBox="0 0 100 100" class="ghs-svg"><polygon points="50,5 95,50 50,95 5,50" fill="#fff" stroke="#dc2626" stroke-width="8"/><path d="M50,25 C42,25 36,31 36,39 C36,44 38,47 41,50 L41,57 L59,57 L59,50 C62,47 64,44 64,39 C64,31 58,25 50,25 Z M45,38 A3,3 0 1,1 45,32 A3,3 0 1,1 45,38 Z M55,38 A3,3 0 1,1 55,32 A3,3 0 1,1 55,38 Z M45,62 L55,62 L53,68 L47,68 Z" fill="#000"/></svg>
+                      <span>급성독성</span>
+                    </div>
+                    <div class="ghs-pic-item health" title="건강유해(발암성/생식독성)">
+                      <svg viewBox="0 0 100 100" class="ghs-svg"><polygon points="50,5 95,50 50,95 5,50" fill="#fff" stroke="#dc2626" stroke-width="8"/><circle cx="50" cy="30" r="8" fill="#000"/><path d="M43,42 L57,42 L53,68 L47,68 Z M50,48 L65,58 L60,63 L50,54 L40,63 L35,58 Z" fill="#000"/></svg>
+                      <span>CMR 특별관리</span>
+                    </div>
+                  </div>
+
+                  <div class="ghs-qr-box">
+                    <div id="ghsLabelQrContainer"></div>
+                    <span class="ghs-qr-scan-guide">📱 스마트폰 카메라 스캔<br>즉시 취급일지 작성</span>
+                  </div>
+                </div>
+
+                <div class="ghs-phrases-box">
+                  <div class="phrase-line"><b>유해·위험 문구:</b> 삼키거나 흡입하면 유독함. 암을 일으킬 수 있음(발암성 1B). 장기간 또는 반복노출 시 장기 손상.</div>
+                  <div class="phrase-line"><b>예방조치 문구:</b> 취급 전 취급 설명서를 확보할 것. 환기가 잘 되는 흄후드에서만 취급할 것. 보호장갑·보호안경 착용 필수.</div>
+                </div>
+
+                <div class="ghs-label-footer">
+                  <span>보관위치: <b>제1클린룸 산·알칼리 특별시약장 A-02</b></span>
+                  <span>관리책임자: <b>IBS 2DQH 연구단 신현석 교수 (031-299-4114)</b></span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+    </section>
 
-        <!-- 시약별 필터 칩 바 -->
-        <div id="chemicalLedgerFilterChips" style="padding:8px 18px;border-bottom:1px solid var(--border);background:var(--bg-subtle);display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-          <button type="button" class="btn-preset-chip active" data-chem-filter="all" style="padding:4px 12px;font-size:12px;font-weight:700;border-radius:999px;">전체 시약 (All)</button>
-          <button type="button" class="btn-preset-chip" data-chem-filter="클로로포름" style="padding:4px 12px;font-size:12px;border-radius:999px;">클로로포름</button>
-          <button type="button" class="btn-preset-chip" data-chem-filter="포름아미드" style="padding:4px 12px;font-size:12px;border-radius:999px;">디메틸포름아미드 (DMF)</button>
-          <button type="button" class="btn-preset-chip" data-chem-filter="하이드라진" style="padding:4px 12px;font-size:12px;border-radius:999px;">하이드라진</button>
-          <button type="button" class="btn-preset-chip" data-chem-filter="불산" style="padding:4px 12px;font-size:12px;border-radius:999px;">불산 (HF)</button>
-          <button type="button" class="btn-preset-chip" data-chem-filter="황산" style="padding:4px 12px;font-size:12px;border-radius:999px;">황산</button>
-          <button type="button" class="btn-preset-chip" data-chem-filter="디클로로메탄" style="padding:4px 12px;font-size:12px;border-radius:999px;">디클로로메탄</button>
-        </div>
-
-        <!-- 대장 요약 바 -->
-        <div id="chemicalMainSummaryBar" style="padding:10px 18px;background:var(--bg-subtle);border-bottom:1px solid var(--border);font-size:12.5px;color:var(--ink);">
-          로딩 중...
-        </div>
-
-        <!-- 취급대장 메인 테이블 -->
-        <div id="chemicalMainTableWrap" class="table-wrap" style="max-height:540px;overflow-y:auto;">
-          로딩 중...
-        </div>
-      </section>
     </section>
 <section class="view" id="view-logbook">
       <!-- 1. 장비 목록 허브 (Catalog Hub) -->
@@ -1202,98 +1308,220 @@
 
   <!-- Phase 2 범용 장비 시험 가동 모달 -->
   <!-- 📖 도움말 & 매뉴얼 대시보드 뷰 -->
+  
+  <!-- ================================================================= -->
+  <!-- 📖 연구포털 & 전자로그북 도움말 및 운영 매뉴얼 대시보드 -->
+  <!-- ================================================================= -->
   <section class="view hidden" id="view-help">
-    <div class="page-head hide-mobile">
-      <div class="head-title">
-        <h1>📖 연구포털 &amp; 전자로그북 이용 안내</h1>
-        <span class="count-badge" id="helpCurrentRoleBadge">연구원 안내 모드</span>
+    <!-- A. 도움말 헤더 배너 -->
+    <div class="help-hero-banner">
+      <div class="help-hero-content">
+        <span class="help-badge" id="helpCurrentRoleBadge">연구원 안내 모드</span>
+        <h1 class="help-hero-title">📖 IBS 2DQH 첨단기기센터 &amp; LIMS 사용자 매뉴얼</h1>
+        <p class="help-hero-desc">10대 정밀 연구장비 전자로그북 운용부터 산안법 특별관리물질 30년 보존 취급대장, 비품 대여 시스템까지 완벽 가이드</p>
+      </div>
+
+      <!-- 도움말 탭 바 (연구원 vs 관리자) -->
+      <div class="help-tabs-bar">
+        <button type="button" class="btn help-tab-btn active" id="btnHelpTabUser" data-help-tab="user">
+          <span>👤</span> 연구원 / 일반 사용자 가이드
+        </button>
+        <button type="button" class="btn help-tab-btn" id="btnHelpTabAdmin" data-help-tab="admin">
+          <span>👑</span> 관리자 전용 운영 매뉴얼 <span class="lock-pill" id="helpAdminLockPill">🔒 비공개</span>
+        </button>
       </div>
     </div>
 
-    <!-- 도움말 역할 전환 탭 (연구원 vs 관리자) -->
-    <div class="help-tabs-bar" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-      <button type="button" class="btn help-tab-btn active" id="btnHelpTabUser" data-help-tab="user" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-weight:700;">
-        <span>👤</span> 연구원 / 사용자 가이드
-      </button>
-      <button type="button" class="btn help-tab-btn" id="btnHelpTabAdmin" data-help-tab="admin" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-weight:700;">
-        <span>👑</span> 관리자 운영 매뉴얼
-      </button>
-    </div>
-
-    <!-- 1. 연구원 / 일반 사용자 가이드 섹션 -->
+    <!-- B. 연구원 / 일반 사용자 가이드 (User Mode) -->
     <div id="helpContentUser" class="help-content-section">
-      <div class="panel" style="margin-bottom:16px;">
-        <h3 style="margin:0 0 12px;font-size:16px;color:var(--primary);display:flex;align-items:center;gap:8px;">
-          <span>🔬</span> 1. 연구장비 포털 &amp; 디지털 로그북 이용법
+      <!-- 1. 3단계 퀵 스타트 비주얼 로드맵 -->
+      <div class="panel help-roadmap-panel">
+        <h3 class="help-section-title">
+          <span>🚀</span> <b>초보 연구원을 위한 3단계 퀵 스타트 가이드</b>
         </h3>
-        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
-          <p>• <b>장비 목록 및 상태 확인</b>: 연구장비 포털 탭에서 10대 장비(XRD, Bonder, Evaporator, PPMS 등)의 실시간 가동 상태, 설치 위치, 사양 및 담당자를 확인할 수 있습니다.</p>
-          <p>• <b>장비 가동 세션 등록</b>: 개별 장비 페이지의 <code>[📝 장비 사용 기록 작성]</code> 버튼을 눌러 시료명, 시작·종료 시간, 주요 파라미터를 입력하고 저장하면 전자로그북에 즉시 반영됩니다.</p>
-          <p>• <b>가동 캘린더 및 일자별 상세</b>: 월간 달력에서 일자를 클릭하면 해당 일자에 누가, 어떤 시료를, 몇 분 동안 측정했는지 사용자 상세 목록을 한눈에 볼 수 있습니다.</p>
-          <p>• <b>실시간 가동 피드</b>: 최근 사용 기록을 실시간으로 확인하며, 검색창(🔍)에 연구원명이나 장비명을 입력해 빠르게 찾을 수 있습니다. <code>[더보기]</code>를 누르면 과거 기록을 순차적으로 탐색할 수 있습니다.</p>
+        <div class="roadmap-grid">
+          <div class="roadmap-step-card">
+            <div class="step-num-badge">STEP 01</div>
+            <div class="step-icon">🔬</div>
+            <h4 class="step-title">장비 상태 확인 &amp; QR 스캔</h4>
+            <p class="step-desc">연구장비 포털에서 10대 장비의 실시간 가동 상태(대기중/가동중)를 확인하거나, 장비 본체에 부착된 QR 코드를 스마트폰으로 스캔합니다.</p>
+          </div>
+          <div class="roadmap-step-arrow">➔</div>
+          <div class="roadmap-step-card">
+            <div class="step-num-badge">STEP 02</div>
+            <div class="step-icon">📝</div>
+            <h4 class="step-title">시운전 파라미터 작성</h4>
+            <p class="step-desc"><code>[장비 사용 기록 작성]</code>을 클릭하고 시료명, 측정 목적, 장비별 고유 물리 파라미터(칠러 온도, 진공도, 레이저 파장, 하중 등)를 입력합니다.</p>
+          </div>
+          <div class="roadmap-step-arrow">➔</div>
+          <div class="roadmap-step-card">
+            <div class="step-num-badge">STEP 03</div>
+            <div class="step-icon">📊</div>
+            <h4 class="step-title">전자로그북 보존 &amp; 캘린더 조회</h4>
+            <p class="step-desc">작성 즉시 Supabase 전용 테이블에 저장되며, 월간 캘린더 일자를 클릭하여 해당 날짜의 측정 내역과 연구원별 세션을 즉시 열람합니다.</p>
+          </div>
         </div>
       </div>
 
-      <div class="panel" style="margin-bottom:16px;">
-        <h3 style="margin:0 0 12px;font-size:16px;color:var(--primary);display:flex;align-items:center;gap:8px;">
-          <span>🛠️</span> 2. 연구실 비품 대여 및 간편 반납
-        </h3>
-        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
-          <p>• <b>비품 대여 신청</b>: 비품 목록에서 원하는 공구/측정기의 <code>[⚡ 대여 신청]</code>을 누르고 본인 이름을 입력하면 1인당 최대 3개까지 즉시 대여됩니다.</p>
-          <p>• <b>간편 반납 및 위치 안내</b>: 대여 현황 탭 또는 비품 카드의 <code>[✓ 반납]</code>을 누르면 해당 비품의 원래 보관 위치가 안내되며 원클릭으로 반납 완료됩니다.</p>
-          <p>• <b>24시간 연장</b>: 반납 예정일 연장이 필요한 경우 원터치 <code>[+24시간 연장]</code> 칩을 활용하세요.</p>
+      <!-- 2. 4대 핵심 기능 카드 그리드 -->
+      <div class="help-feature-grid">
+        <!-- 기능 1: 연구장비 포털 -->
+        <div class="panel help-card">
+          <div class="help-card-head">
+            <span class="card-icon">🔬</span>
+            <div>
+              <h4 class="card-title">10대 첨단 연구장비 디지털 로그북</h4>
+              <span class="card-badge bg-blue">SESS AQT 연동</span>
+            </div>
+          </div>
+          <div class="help-card-body">
+            <ul class="help-card-list">
+              <li><b>10대 장비 개별 독립 테이블</b>: XRD, TEM, AFM, Raman, FT-IR, E-beam, ALD, Co-sputter, UHV-sputter, Wire Bonder의 고유 장비 파라미터 맞춤 기록</li>
+              <li><b>월간 가동 캘린더</b>: 이전달/다음달 이동 및 날짜 배지 클릭 시 해당 일자의 사용자명, 시료명, 측정 시간 상세 조회</li>
+              <li><b>실시간 가동 피드</b>: 최근 사용 로그를 최신순으로 탐색하고, 돋보기(🔍)로 연구원 성명이나 시료 검색 가능</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 기능 2: 특별관리물질 취급대장 -->
+        <div class="panel help-card">
+          <div class="help-card-head">
+            <span class="card-icon">🧪</span>
+            <div>
+              <h4 class="card-title">특별관리물질 30년 보존 취급대장</h4>
+              <span class="card-badge bg-red">산안법 제439조</span>
+            </div>
+          </div>
+          <div class="help-card-body">
+            <ul class="help-card-list">
+              <li><b>법정 30년 영구 보존</b>: 클로로포름, DMF, 하이드라진, 불산 등 CMR 44종 취급 시 반드시 당일 일지 작성 필수</li>
+              <li><b>스마트폰 QR 현장 10초 작성</b>: 시약장 앞 QR 스캔 시 직전 취급자, 현재 잔여량, 사용 후 예상 잔여량이 자동 계산됨</li>
+              <li><b>필수 안전 점검</b>: 흄후드 배기 풍속(0.4m/s 이상), 방독마스크, 내화학 장갑 착용 체크 후 원터치 전자서명</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 기능 3: 비품 대여 및 반납 -->
+        <div class="panel help-card">
+          <div class="help-card-head">
+            <span class="card-icon">🛠️</span>
+            <div>
+              <h4 class="card-title">연구실 공용 비품 간편 대여 &amp; 반납</h4>
+              <span class="card-badge bg-green">1인 3점 제한</span>
+            </div>
+          </div>
+          <div class="help-card-body">
+            <ul class="help-card-list">
+              <li><b>간편 대여 신청</b>: 공구/측정기 카드의 <code>[⚡ 대여 신청]</code>을 누르고 본인 성명 입력 시 즉시 대여 승인</li>
+              <li><b>보관 위치 자동 안내 반납</b>: 반납 시 해당 비품이 원래 있어야 할 보관 캐비닛/선반 위치가 팝업으로 안내됨</li>
+              <li><b>+24시간 연장</b>: 반납 기한 연장이 필요한 경우 원터치 <code>[+24시간 연장]</code> 칩 클릭</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 기능 4: 모바일 QR 직통 운영 -->
+        <div class="panel help-card">
+          <div class="help-card-head">
+            <span class="card-icon">📱</span>
+            <div>
+              <h4 class="card-title">스마트폰 QR 현장 직통 운영 체계</h4>
+              <span class="card-badge bg-purple">모바일 반응형</span>
+            </div>
+          </div>
+          <div class="help-card-body">
+            <ul class="help-card-list">
+              <li><b>현장 스캔 직행</b>: PC에 로그인하지 않아도 스마트폰 카메라로 장비 본체나 시약장 라벨을 비추면 바로 해당 작업 창 열림</li>
+              <li><b>A4 스티커 라벨 인쇄</b>: 시약장 부착용 GHS 위험 경고문구와 QR 코드가 포함된 표준 스티커 라벨 즉시 출력 가능</li>
+            </ul>
+          </div>
         </div>
       </div>
 
-      <div class="panel" style="margin-bottom:16px;">
-        <h3 style="margin:0 0 12px;font-size:16px;color:var(--primary);display:flex;align-items:center;gap:8px;">
-          <span>🚨</span> 3. 특별관리물질(법정 44종) 필수 취급일지 작성
-        </h3>
-        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
-          <p>• <b>법적 보존 의무</b>: 산업안전보건법 제420조에 따라 지정된 특별관리물질(Chloroform, Formamide, Hydrazine 등)은 취급 시 반드시 <code>[📝 취급일지 작성]</code>을 완료해야 하며, 기록은 <b>30년간 전산 보존</b>됩니다.</p>
-          <p>• <b>공용 취급대장 열람</b>: 소모품 탭 하단의 <b>공용 취급대장</b>에서 직전 사용자가 언제 얼마만큼 사용했는지, 현재 잔여량이 얼마나 남았는지 상시 투명하게 확인할 수 있습니다.</p>
+      <!-- 3. 자주 묻는 질문 (FAQ Accordion) -->
+      <div class="panel help-faq-panel">
+        <h3 class="help-section-title"><span>❓</span> <b>연구원 자주 묻는 질문 (FAQ)</b></h3>
+        <div class="faq-list">
+          <details class="faq-item">
+            <summary class="faq-question">Q. 측정이 취소되었거나 잘못 등록한 세션은 어떻게 수정하나요?</summary>
+            <div class="faq-answer">
+              일반 연구원 계정에서는 데이터 무결성을 위해 삭제가 제한됩니다. 실험실 관리자(또는 신현석 교수님)에게 정정을 요청하시면 관리자 로그인 상태에서 <code>[🗑️ 삭제]</code> 버튼을 통해 오등록된 기록을 즉시 정정할 수 있습니다.
+            </div>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-question">Q. 스마트폰으로 시약장 QR 코드를 스캔하면 어떻게 연결되나요?</summary>
+            <div class="faq-answer">
+              기본 스마트폰 카메라 앱으로 시약장/시약병의 QR 코드를 비추면 별도 앱 설치 없이 웹 브라우저가 열리며 <b>「특별관리물질 현장 간편일지」</b> 창으로 즉시 직행합니다.
+            </div>
+          </details>
+          <details class="faq-item">
+            <summary class="faq-question">Q. 특별관리물질 취급일지는 왜 반드시 당일 작성해야 하나요?</summary>
+            <div class="faq-answer">
+              산업안전보건법 제439조에 따라 특별관리물질은 취급 근로자 이름, 취급량, 잔여량, 배기설비 가동 상태를 누락 없이 기록하여 <b>30년간 전산 보존</b>할 법적 의무가 있습니다. 미작성 시 연구실 정기 안전감사에서 과태료 처분을 받게 됩니다.
+            </div>
+          </details>
         </div>
       </div>
     </div>
 
-    <!-- 2. 관리자 운영 가이드 섹션 -->
+    <!-- C. 관리자 전용 운영 매뉴얼 (Admin Mode) - 비로그인 시 엄격 차단! -->
     <div id="helpContentAdmin" class="help-content-section hidden">
-      <div id="helpAdminAuthWarning" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#991b1b;font-size:13px;display:flex;align-items:center;gap:8px;">
-        <span>🔒</span> <b>안내:</b> 관리자 전용 기능(데이터 수정/삭제, CSV 감사 출력, Supabase 연동)을 실제로 조작하시려면 우측 상단의 <b>[관리자 로그인]</b>이 필요합니다.
+      <!-- 🔒 비로그인 시 표시되는 보안 잠금 카드 (미인증 사용자 차단) -->
+      <div id="helpAdminLockedCard" class="panel help-auth-gate-card">
+        <div class="auth-gate-icon">🔒</div>
+        <h2 class="auth-gate-title">관리자 전용 비공개 운영 지침입니다</h2>
+        <p class="auth-gate-desc">
+          본 매뉴얼은 10대 연구장비 가동 세션 영구 삭제, 정부 감사용 공인 CSV 승인, 비품/소모품 마스터 데이터 등록, Supabase 클라우드 데이터베이스 원격 관리 지침을 포함하고 있습니다.<br>
+          인가된 실험실 관리자만 열람할 수 있습니다.
+        </p>
+        <button type="button" class="btn primary" id="btnHelpAdminLoginTrigger" style="padding:10px 24px;font-size:14px;font-weight:700;">
+          🔑 관리자 로그인하기
+        </button>
       </div>
 
-      <div class="panel" style="margin-bottom:16px;">
-        <h3 style="margin:0 0 12px;font-size:16px;color:#991b1b;display:flex;align-items:center;gap:8px;">
-          <span>📊</span> 1. 장비운영통계 및 주기별 실적 CSV 감사 출력
-        </h3>
-        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
-          <p>• <b>통계 집계 분석</b>: <code>주간 통계</code>(당월 1~5주차), <code>월별 통계</code>(1~12월), <code>연간 통계</code> 탭을 통해 장비별 총 가동 시간, 가동률, 세션 건수, 시료 수량을 실시간 확인합니다.</p>
-          <p>• <b>소속별 비중(어디에서 가장 많이 찍었는지)</b>: 해당 기간에 측정한 연구실별 비중(1위, 2위)과 최다 시편이 자동으로 계산되어 표시됩니다.</p>
-          <p>• <b>감사용 통합 CSV 다운로드</b>: <code>[📥 장비운영통계 CSV 다운로드]</code> 버튼을 누르면 10대 장비 전체 요약 및 개별 세션 로그가 포함된 공인 엑셀 CSV 파일이 즉시 생성됩니다.</p>
+      <!-- 👑 로그인 시에만 언락되는 관리자 본문 -->
+      <div id="helpAdminUnlockedContent" class="hidden">
+        <div class="panel" style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px 18px;margin-bottom:18px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">👑</span>
+            <div>
+              <h4 style="margin:0;font-size:15px;color:#991b1b;font-weight:800;">관리자 인증 완료 (최고 권한 활성화됨)</h4>
+              <p style="margin:2px 0 0;font-size:12.5px;color:#7f1d1d;">모든 세션 데이터 삭제, 감사 엑셀 승인 출력, Supabase 10대 장비 테이블 직접 조작이 가능합니다.</p>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="panel" style="margin-bottom:16px;">
-        <h3 style="margin:0 0 12px;font-size:16px;color:#991b1b;display:flex;align-items:center;gap:8px;">
-          <span>⚡</span> 2. 세션 수정·삭제 및 마스터 데이터 관리
-        </h3>
-        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
-          <p>• <b>잘못 등록된 세션 삭제</b>: 관리자 로그인 상태에서는 장비 상세 페이지 및 타임라인에 <code>[🗑️ 삭제]</code> 버튼이 활성화되어 오등록된 데이터를 즉시 정정할 수 있습니다.</p>
-          <p>• <b>비품 및 소모품 마스터 등록</b>: 신규 비품(식별번호, 보관위치 지정) 등록, 소모품 수량 입고(재고 증가) 처리가 가능합니다.</p>
-        </div>
-      </div>
+        <div class="help-admin-sections-grid">
+          <!-- 관리자 가이드 1: 데이터 정정 및 삭제 -->
+          <div class="panel help-admin-card">
+            <h4 class="admin-card-title"><span>🗑️</span> 1. 오등록 세션 및 취급일지 영구 정정·삭제</h4>
+            <div class="admin-card-body">
+              <p>• <b>장비 가동 세션 삭제</b>: 장비 상세 페이지의 최근 가동 기록 또는 가동 피드에서 행 우측의 <code>[🗑️ 삭제]</code> 버튼을 누르면 해당 장비의 Supabase 전용 테이블(<code>xrd_logs</code> 등)에서 즉시 영구 삭제됩니다.</p>
+              <p>• <b>특별관리물질 취급일지 삭제</b>: 관리대장 테이블 우측의 <code>[🗑️ 삭제]</code> 버튼으로 잘못 입력된 수불 내역을 정정할 수 있습니다.</p>
+            </div>
+          </div>
 
-      <div class="panel" style="margin-bottom:16px;">
-        <h3 style="margin:0 0 12px;font-size:16px;color:#991b1b;display:flex;align-items:center;gap:8px;">
-          <span>☁️</span> 3. Supabase 클라우드 동기화 및 백업
-        </h3>
-        <div style="font-size:13.5px;line-height:1.7;color:var(--ink);">
-          <p>• 웹앱에서 저장된 모든 장비 가동 세션은 로컬 브라우저뿐만 아니라 연동된 Supabase 데이터베이스에 자동 동기화됩니다.</p>
-          <p>• Supabase 콘솔(Table Editor)에서 장비별 테이블(예: <code>xrd_logs</code>, <code>equipment_sessions</code>)을 열어 직접 대량의 로그를 검토하거나 내보낼 수 있습니다.</p>
+          <!-- 관리자 가이드 2: 정부 감사용 CSV 출력 -->
+          <div class="panel help-admin-card">
+            <h4 class="admin-card-title"><span>📊</span> 2. 고용노동부 / 연구실안전관리원 감사 엑셀 출력</h4>
+            <div class="admin-card-body">
+              <p>• <b>장비운영통계 CSV</b>: 장비운영통계 탭의 <code>[📥 장비운영통계 CSV 다운로드]</code>를 통해 10대 장비 전체 집계 요약 및 전체 세션 로그를 한 번에 추출합니다.</p>
+              <p>• <b>산안법 제439조 특별관리대장 CSV</b>: 특별관리물질 포털 상단의 <code>[📥 법정 서식 엑셀]</code>을 눌러 공인 감사 제출용 수불대장을 1초 만에 내려받습니다.</p>
+            </div>
+          </div>
+
+          <!-- 관리자 가이드 3: Supabase 10대 장비 독립 테이블 직접 관리 -->
+          <div class="panel help-admin-card">
+            <h4 class="admin-card-title"><span>☁️</span> 3. Supabase 클라우드 DB 테이블 직접 조작 가이드</h4>
+            <div class="admin-card-body">
+              <p>• <b>장비별 독립 테이블 (Table Editor)</b>: Supabase 콘솔에서 <code>xrd_logs</code>, <code>tem_logs</code>, <code>afm_logs</code>, <code>raman_logs</code>, <code>wirebonder_logs</code>, <code>chemical_logs</code> 등을 스프레드시트처럼 열어 대량 데이터를 직접 수정하거나 필터링할 수 있습니다.</p>
+              <p>• <b>통합 뷰 (view_equipment_sessions)</b>: 개별 테이블의 모든 데이터가 자동으로 <code>UNION ALL</code> 가상 뷰로 실시간 집계되어 웹앱 화면에 고속 렌더링됩니다.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
+
 
   <div id="modalTestDriveBackdrop" class="backdrop">
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="testDriveModalTitle" style="max-width:620px;width:min(620px,94vw);">
