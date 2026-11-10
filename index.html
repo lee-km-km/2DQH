@@ -25,7 +25,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=20261110_09">
+  <link rel="stylesheet" href="style.css?v=20261110_10">
   <script>
     (function(){
       try {
@@ -391,18 +391,15 @@
               </div>
 
               <!-- 주기 전환 탭 (주간 / 월별 / 연간 순서 정렬) -->
-              <div class="eq-period-switcher" id="eqPeriodSwitcher" style="display:inline-flex;background:var(--bg);padding:3px;border-radius:8px;border:1px solid var(--border);gap:2px;">
-                <button type="button" class="eq-period-tab active" data-analytics-period="week" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📈 주간 통계</button>
-                <button type="button" class="eq-period-tab" data-analytics-period="month" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📅 월별 통계</button>
-                <button type="button" class="eq-period-tab" data-analytics-period="year" style="border:none;background:transparent;padding:6px 12px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;color:var(--ink-light);transition:all 0.15s ease;">📆 연간 통계</button>
+              <div class="eq-period-switcher" id="eqPeriodSwitcher">
+                <button type="button" class="eq-period-tab active" data-analytics-period="week">📈 주간 통계</button>
+                <button type="button" class="eq-period-tab" data-analytics-period="month">📅 월별 통계</button>
+                <button type="button" class="eq-period-tab" data-analytics-period="year">📆 연간 통계</button>
               </div>
 
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <button type="button" class="btn primary" id="btnExportAllUnifiedLogs" style="font-size:12px;padding:6px 12px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;" title="전체 연구장비 통합 세션 로그 엑셀(CSV) 다운로드">
-                  📥 통합 세션 엑셀(CSV)
-                </button>
-                <button type="button" class="btn" id="btnExportAnalyticsCsv" style="font-size:12px;padding:6px 12px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px;" title="선택된 장비 및 주기의 통계 데이터를 엑셀 호환 CSV로 다운로드">
-                  📊 집계 요약 엑셀(CSV)
+                <button type="button" class="btn primary" id="btnExportAnalyticsCsv" style="font-size:12.5px;padding:7px 14px;border-radius:8px;font-weight:700;display:inline-flex;align-items:center;gap:6px;" title="현재 기간의 장비별 분석 실적 및 운영 통계 통합 CSV 다운로드">
+                  📥 장비운영통계 CSV 다운로드
                 </button>
               </div>
             </div>
@@ -1066,7 +1063,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261110_09"></script>
-<script src="app.js?v=20261110_09"></script>
+<script src="consumables_catalog.js?v=20261110_10"></script>
+<script src="app.js?v=20261110_10"></script>
 </body>
 </html>

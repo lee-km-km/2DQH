@@ -761,37 +761,143 @@ function loadLocalStorage(forceReset){
     equipmentSessions = [];
   }
 
-  // SESS 나노와이어본더(Wire Bonder) 초기 독립 세션 데이터 자동 등록 보장
-  if(!Array.isArray(equipmentSessions) || !equipmentSessions.some(function(s){ return s.equipment_code === 'WireBonder' || s.equipment_id === 'EQ-BONDER-01'; })){
-    if(!Array.isArray(equipmentSessions)) equipmentSessions = [];
-    equipmentSessions.unshift({
-      id: 'sess_bonder_001',
-      equipment_id: 'EQ-BONDER-01',
-      equipment_code: 'WireBonder',
-      equipment_name: 'Wire Bonder (초음파 와이어본더 / 나노와이어본더)',
-      used_on: today(),
-      start_time: '14:00',
-      end_time: '16:00',
-      duration_min: 120,
-      user_name: '박지원 연구원',
-      affiliation: '2DQH',
-      professor: '신현석 교수님',
-      sample_name: 'Graphene/h-BN Hall-bar 소자 전극 와이어 본딩 (16 ch)',
-      sample_count: 16,
-      scan_type: '양자홀바(Hall-bar) 전극',
-      parameters: {
-        wire_type: 'Al 1.0 mil (25 ㎛)',
-        bonding_mode: 'Ultrasonic Wedge (웨지 본딩)',
-        ultrasonic_power: 3.5,
-        bonding_force: 45,
-        stage_temp: 25,
-        wire_feed_ok: true,
-        wedge_tip_ok: true,
-        electrode_test_ok: true
+  // 연구장비 캘린더 및 주간/월별/연간 운영통계 초기 시연 데이터 (11월 실측 데이터셋)
+  if(!Array.isArray(equipmentSessions) || equipmentSessions.length < 5){
+    equipmentSessions = [
+      {
+        id: 'sess_bonder_001',
+        equipment_id: 'EQ-BONDER-01',
+        equipment_code: 'WireBonder',
+        equipment_name: 'Wire Bonder (초음파 와이어본더)',
+        used_on: today(),
+        start_time: '14:00',
+        end_time: '16:00',
+        duration_min: 120,
+        user_name: '박지원 연구원',
+        affiliation: '2DQH 그래핀 연구팀',
+        professor: '신현석 교수님',
+        sample_name: 'Graphene/h-BN Hall-bar 소자 전극 와이어 본딩',
+        sample_count: 16,
+        scan_type: '웨지 본딩(Wedge)',
+        parameters: { wire_type: 'Al 1.0 mil (25 ㎛)', bonding_force: 45 },
+        memo: '16채널 Al 와이어 웨지 본딩 완료. 4단자 전극 접촉 저항 2.1 Ω 정상 통전 확인.',
+        created_at: new Date(Date.now() - 3600000 * 2).toISOString()
       },
-      memo: '16채널 Al 와이어 웨지 본딩 완료. 4단자 전극 접촉 저항 2.1 Ω 확인, 정상 통전 확인.',
-      created_at: new Date(Date.now() - 3600000 * 1.5).toISOString()
-    });
+      {
+        id: 'sess_afm_001',
+        equipment_id: 'EQ-AFM-01',
+        equipment_code: 'AFM',
+        equipment_name: 'AFM (원자간력현미경)',
+        used_on: '2026-11-09',
+        start_time: '10:00',
+        end_time: '12:30',
+        duration_min: 150,
+        user_name: '김태현 연구원',
+        affiliation: '2DQH 2차원 물질팀',
+        professor: '신현석 교수님',
+        sample_name: 'MoS2/WSe2 이종접합 원자단차(Step-height) 프로파일',
+        sample_count: 4,
+        scan_type: 'Non-contact 모드',
+        parameters: { mode: 'Non-contact', scan_rate: '0.8 Hz' },
+        memo: '단차 0.72 nm 측정으로 단일층 전사 성공 확인.',
+        created_at: '2026-11-09T12:35:00.000Z'
+      },
+      {
+        id: 'sess_xrd_002',
+        equipment_id: 'EQ-XRD-01',
+        equipment_code: 'XRD',
+        equipment_name: 'HR-XRD (고분해능 X선 회절분석기)',
+        used_on: '2026-11-08',
+        start_time: '13:30',
+        end_time: '15:15',
+        duration_min: 105,
+        user_name: '한지훈 연구원',
+        affiliation: '2DQH 페로브스카이트팀',
+        professor: '신현석 교수님',
+        sample_name: 'CsPbBr3 무기 페로브스카이트 박막 회절분석',
+        sample_count: 3,
+        scan_type: 'θ/2θ 스캔',
+        parameters: { chiller_start: 22.0, vacuum_start: 91 },
+        memo: '(100) 배향성 피크 선명, 결정성 우수 확인.',
+        created_at: '2026-11-08T15:20:00.000Z'
+      },
+      {
+        id: 'sess_raman_001',
+        equipment_id: 'EQ-RAMAN-01',
+        equipment_code: 'Raman',
+        equipment_name: 'Micro Raman (라만 분광기)',
+        used_on: '2026-11-07',
+        start_time: '15:00',
+        end_time: '16:30',
+        duration_min: 90,
+        user_name: '정우진 연구원',
+        affiliation: '2DQH 나노광학팀',
+        professor: '신현석 교수님',
+        sample_name: 'CVD 그래핀 G/2D peak 2D 맵핑 분석',
+        sample_count: 6,
+        scan_type: '532 nm 레이저',
+        parameters: { laser: '532 nm', power: '2 mW' },
+        memo: 'I(2D)/I(G) 비율 2.4로 우수한 단일층 균일도 확인.',
+        created_at: '2026-11-07T16:35:00.000Z'
+      },
+      {
+        id: 'sess_evap_001',
+        equipment_id: 'EQ-EVAP-01',
+        equipment_code: 'ThermalEvap',
+        equipment_name: 'Thermal Evaporator (열 증착기)',
+        used_on: '2026-11-05',
+        start_time: '11:00',
+        end_time: '12:00',
+        duration_min: 60,
+        user_name: '최민서 연구원',
+        affiliation: '2DQH 소자제작팀',
+        professor: '신현석 교수님',
+        sample_name: 'Cr/Au (5/50 nm) 소스-드레인 접촉 전극 증착',
+        sample_count: 8,
+        scan_type: '고진공 열증착',
+        parameters: { base_vacuum: '3.2e-6 Torr', rate: '0.5 A/s' },
+        memo: '두께 균일도 ±2% 이내 양호.',
+        created_at: '2026-11-05T12:05:00.000Z'
+      },
+      {
+        id: 'sess_sputter_001',
+        equipment_id: 'EQ-SPUTTER-01',
+        equipment_code: 'Sputter',
+        equipment_name: 'RF/DC Sputter (스퍼터)',
+        used_on: '2026-11-04',
+        start_time: '14:30',
+        end_time: '16:20',
+        duration_min: 110,
+        user_name: '이강민 연구원',
+        affiliation: '2DQH 그래핀 연구팀',
+        professor: '신현석 교수님',
+        sample_name: 'SiO2 20 nm 보호막 증착',
+        sample_count: 2,
+        scan_type: 'RF 스퍼터링',
+        parameters: { rf_power: '100W', ar_flow: '20 sccm' },
+        memo: '표면 조도 거칠기 Rq 0.25 nm 확인.',
+        created_at: '2026-11-04T16:25:00.000Z'
+      },
+      {
+        id: 'sess_pl_001',
+        equipment_id: 'EQ-PL-01',
+        equipment_code: 'PL',
+        equipment_name: 'Micro PL (포토루미네센스)',
+        used_on: '2026-11-02',
+        start_time: '16:00',
+        end_time: '17:20',
+        duration_min: 80,
+        user_name: '김태현 연구원',
+        affiliation: '2DQH 2차원 물질팀',
+        professor: '신현석 교수님',
+        sample_name: 'WS2 단일층(Monolayer) 실온 발광 스펙트럼',
+        sample_count: 5,
+        scan_type: '실온(RT) 광발광',
+        parameters: { excitation: '405 nm' },
+        memo: '중심 파장 625 nm (1.98 eV) 엑시톤 피크 확인.',
+        created_at: '2026-11-02T17:25:00.000Z'
+      }
+    ];
     try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
   }
 
@@ -4379,13 +4485,25 @@ function renderEquipmentAnalyticsScopeChips(){
     }
   }
 
-  // 2. 주기 전환 탭 활성화 상태 동기화
+  // 2. 주기 전환 탭 활성화 상태 동기화 및 전용 클릭 이벤트 바인딩
   const periodSwitcher = $('eqPeriodSwitcher');
   if(periodSwitcher){
     const tabs = periodSwitcher.querySelectorAll('.eq-period-tab');
     tabs.forEach(function(tab){
       tab.classList.toggle('active', tab.dataset.analyticsPeriod === selectedAnalyticsPeriod);
     });
+
+    if(!periodSwitcher.__boundClick){
+      periodSwitcher.__boundClick = true;
+      periodSwitcher.addEventListener('click', function(e){
+        const tab = e.target.closest('[data-analytics-period]');
+        if(!tab) return;
+        e.preventDefault();
+        e.stopPropagation();
+        selectedAnalyticsPeriod = tab.dataset.analyticsPeriod || 'month';
+        renderEquipmentAnalyticsDashboard();
+      });
+    }
   }
 
   const periodName = selectedAnalyticsPeriod === 'week' ? '주간 가동 추이 분석' : (selectedAnalyticsPeriod === 'month' ? '월별 가동 실적 분석' : '연간 가동 실적 분석');
@@ -4727,7 +4845,10 @@ function renderEquipmentAnalyticsOverview(targetSessions, allSessions){
 
     for(let m = 1; m <= 12; m++){
       const mStr = currentCalendarYear + '-' + pad(m);
-      const mSessions = targetSessions.filter(function(s){ return (s.used_on || '').startsWith(mStr); });
+      const mSessions = targetSessions.filter(function(s){
+        const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+        return d.startsWith(mStr);
+      });
       let mins = 0;
       let samples = 0;
       const users = new Set();
@@ -4837,7 +4958,10 @@ function renderEquipmentAnalyticsOverview(targetSessions, allSessions){
 
     const yearStats = years.map(function(yr){
       const yStr = String(yr);
-      const ySessions = targetSessions.filter(function(s){ return (s.used_on || '').startsWith(yStr); });
+      const ySessions = targetSessions.filter(function(s){
+        const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+        return d.startsWith(yStr);
+      });
       let mins = 0;
       let samples = 0;
       const users = new Set();
@@ -5125,239 +5249,255 @@ function exportAnalyticsSummaryCsv(){
   const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
   const lines = [];
   const periodLabel = selectedAnalyticsPeriod === 'week' ? '주간' : (selectedAnalyticsPeriod === 'month' ? '월별' : '연간');
-  let filename = '2DQH_연구장비_' + periodLabel + '통계_' + today() + '.csv';
+  const monthWeeks = getMonthWeeks(currentCalendarYear, currentCalendarMonth);
+  let curWeek = null;
+  if(timelineDateFilter){
+    curWeek = monthWeeks.find(function(w){ return timelineDateFilter >= w.startDate && timelineDateFilter <= w.endDate; });
+  }
+  if(!curWeek){
+    curWeek = monthWeeks.find(function(w){ return today() >= w.startDate && today() <= w.endDate; }) || monthWeeks[0];
+  }
 
-  if(isAll){
-    const monthWeeks = getMonthWeeks(currentCalendarYear, currentCalendarMonth);
-    const curWeek = monthWeeks[0];
+  const periodDesc = selectedAnalyticsPeriod === 'week'
+    ? (currentCalendarYear + '년 ' + currentCalendarMonth + '월 ' + curWeek.label)
+    : (selectedAnalyticsPeriod === 'month' ? (currentCalendarYear + '년 ' + currentCalendarMonth + '월') : (currentCalendarYear + '년 연간'));
+
+  let filename = '2DQH_연구장비_운영통계_' + periodLabel + '_' + today() + '.csv';
+
+  // 세션 스코프 필터링
+  const targetSessions = isAll ? allSessions : allSessions.filter(function(s){
+    return s.equipment_id === selectedAnalyticsEquipmentId || (selectedEq && s.equipment_code === selectedEq.code);
+  });
+
+  // 기간별 세션 추출
+  let periodSessions = [];
+  if(selectedAnalyticsPeriod === 'week'){
+    periodSessions = targetSessions.filter(function(s){
+      const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+      return d >= curWeek.startDate && d <= curWeek.endDate;
+    });
+  } else if(selectedAnalyticsPeriod === 'month'){
     const currentMonthStr = currentCalendarYear + '-' + pad(currentCalendarMonth);
-    const currentYearStr = String(currentCalendarYear);
-
-    filename = '2DQH_연구장비_전체운용_' + periodLabel + '통계_' + today() + '.csv';
-
-    lines.push('"[IBS 2DQH 연구단 연구장비 전체 운용 실적 및 최다 측정처 요약 (' + periodLabel + ')]"');
-    lines.push('"생성일시: ' + today() + '","분석 기준: ' + periodLabel + ' (' + (selectedAnalyticsPeriod === 'week' ? curWeek.label : (selectedAnalyticsPeriod === 'month' ? currentCalendarYear + '년 ' + currentCalendarMonth + '월' : currentCalendarYear + '년 연간')) + ')"');
-    lines.push('""');
-
-    lines.push('"[1. 연구장비별 기간 실적 및 최다 측정처 (어디에서 많이 찍었는지)]"');
-    lines.push(['장비명', '장비코드', '설치위치', '운영상태', '기간가동시간(h)', '기간가동(분)', '기간세션수', '기간시료수', '최다측정 연구실/소속 (비중)', '최다사용자', '누적가동(h)', '누적세션수'].map(c => '"' + c + '"').join(','));
-
-    let grandPeriodMins = 0;
-    let grandPeriodSessions = 0;
-    let grandPeriodSamples = 0;
-    const globalAffilMap = {};
-
-    researchEquipments.forEach(function(eq){
-      const eqSessions = allSessions.filter(function(s){
-        return s.equipment_id === eq.id || s.equipment_code === eq.code;
-      });
-
-      let pSessions = [];
-      if(selectedAnalyticsPeriod === 'week'){
-        pSessions = eqSessions.filter(function(s){
-          return (s.used_on || '') >= curWeek.startDate && (s.used_on || '') <= curWeek.endDate;
-        });
-      } else if(selectedAnalyticsPeriod === 'month'){
-        pSessions = eqSessions.filter(function(s){
-          return (s.used_on || '').startsWith(currentMonthStr);
-        });
-      } else {
-        pSessions = eqSessions.filter(function(s){
-          return (s.used_on || '').startsWith(currentYearStr);
-        });
-      }
-
-      let pMins = 0;
-      let pSamples = 0;
-      const affilMap = {};
-      const userMap = {};
-
-      pSessions.forEach(function(s){
-        pMins += (s.duration_min || 0);
-        pSamples += (s.sample_count || 1);
-        const aff = s.affiliation || '2DQH';
-        affilMap[aff] = (affilMap[aff] || 0) + (s.sample_count || 1);
-        globalAffilMap[aff] = (globalAffilMap[aff] || 0) + (s.sample_count || 1);
-        const u = s.user_name || '연구원';
-        userMap[u] = (userMap[u] || 0) + 1;
-      });
-
-      grandPeriodMins += pMins;
-      grandPeriodSessions += pSessions.length;
-      grandPeriodSamples += pSamples;
-
-      let topAffil = '-';
-      let maxAff = 0;
-      for(const a in affilMap){
-        if(affilMap[a] > maxAff){
-          maxAff = affilMap[a];
-          const pct = pSamples > 0 ? Math.round((affilMap[a] / pSamples) * 100) : 0;
-          topAffil = a + ' (' + maxAff + '개, ' + pct + '%)';
-        }
-      }
-
-      let topUser = '-';
-      let maxU = 0;
-      for(const u in userMap){
-        if(userMap[u] > maxU){
-          maxU = userMap[u];
-          topUser = u + ' (' + maxU + '건)';
-        }
-      }
-
-      let totalMins = 0;
-      eqSessions.forEach(function(s){ totalMins += (s.duration_min || 0); });
-
-      lines.push([
-        eq.name,
-        eq.code,
-        eq.location || '',
-        eq.status === 'active' ? '정상 가동' : '대기 중',
-        (pMins / 60).toFixed(1),
-        pMins,
-        pSessions.length,
-        pSamples,
-        topAffil,
-        topUser,
-        (totalMins / 60).toFixed(1),
-        eqSessions.length
-      ].map(formatCsvCell).join(','));
+    periodSessions = targetSessions.filter(function(s){
+      const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+      return d.startsWith(currentMonthStr);
     });
-
-    lines.push([
-      '[전체 장비 총계]',
-      'ALL',
-      '전체',
-      '운영 중',
-      (grandPeriodMins / 60).toFixed(1),
-      grandPeriodMins,
-      grandPeriodSessions,
-      grandPeriodSamples,
-      '전체 연구단',
-      '-',
-      '-',
-      allSessions.length
-    ].map(formatCsvCell).join(','));
-
-    lines.push('""');
-    lines.push('"[2. 소속/연구실별 측정 비중 요약 (어디에서 많이 찍었는지)]"');
-    lines.push(['소속/연구실', '측정시료수', '측정비중(%)'].map(c => '"' + c + '"').join(','));
-
-    const sortedGlobalAffils = Object.keys(globalAffilMap).sort(function(a, b){ return globalAffilMap[b] - globalAffilMap[a]; });
-    sortedGlobalAffils.forEach(function(af){
-      const cnt = globalAffilMap[af];
-      const pct = grandPeriodSamples > 0 ? Math.round((cnt / grandPeriodSamples) * 100) : 0;
-      lines.push([af, cnt, pct + '%'].map(formatCsvCell).join(','));
+  } else {
+    const yrStr = String(currentCalendarYear);
+    periodSessions = targetSessions.filter(function(s){
+      const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+      return d.startsWith(yrStr);
     });
+  }
 
-  } else if(selectedEq){
-    const eqSessions = allSessions.filter(function(s){ return s.equipment_id === selectedEq.id || s.equipment_code === selectedEq.code; });
-    const code = selectedEq.code || 'EQUIP';
-    filename = '2DQH_' + code + '_' + periodLabel + '통계_' + today() + '.csv';
+  // 총괄 집계 계산
+  let grandPeriodMins = 0;
+  let grandPeriodSamples = 0;
+  const userSet = new Set();
+  const affilMap = {};
 
-    const affilCounts = {};
-    const sampleCounts = {};
-    let totalSamples = 0;
-    let totalMins = 0;
+  periodSessions.forEach(function(s){
+    grandPeriodMins += (s.duration_min || 0);
+    grandPeriodSamples += (s.sample_count || 1);
+    if(s.user_name) userSet.add(s.user_name);
+    const af = s.affiliation || '2DQH';
+    affilMap[af] = (affilMap[af] || 0) + (s.sample_count || 1);
+  });
 
-    eqSessions.forEach(function(s){
-      totalMins += (s.duration_min || 0);
-      const cnt = (s.sample_count || 1);
-      totalSamples += cnt;
-      const aff = s.affiliation || '2DQH';
-      affilCounts[aff] = (affilCounts[aff] || 0) + cnt;
-      if(s.sample_name){
-        sampleCounts[s.sample_name] = (sampleCounts[s.sample_name] || 0) + cnt;
-      }
-    });
-
-    lines.push('"[IBS 2DQH 연구단 - ' + selectedEq.name + ' (' + selectedEq.code + ') 가동 통계 및 측정처 분석]"');
-    lines.push('"설치위치: ' + (selectedEq.location || '연구실') + '","총 누적가동: ' + (totalMins / 60).toFixed(1) + '시간 (' + totalMins + '분)","총 세션: ' + eqSessions.length + '건","총 시료: ' + totalSamples + '개"');
-    lines.push('""');
-
-    lines.push('"[1. 소속/연구실별 측정 비중 요약 (어디에서 많이 찍었는지)]"');
-    lines.push(['소속/연구실', '측정시료수', '측정비중(%)'].map(c => '"' + c + '"').join(','));
-    const sortedAffils = Object.keys(affilCounts).sort(function(a, b){ return affilCounts[b] - affilCounts[a]; });
-    sortedAffils.forEach(function(af){
-      const cnt = affilCounts[af];
-      const pct = totalSamples > 0 ? Math.round((cnt / totalSamples) * 100) : 0;
-      lines.push([af, cnt, pct + '%'].map(formatCsvCell).join(','));
-    });
-
-    lines.push('""');
-    lines.push('"[2. ' + selectedEq.code + ' ' + periodLabel + ' 세부 실적 내역]"');
-
-    if(selectedAnalyticsPeriod === 'week'){
-      lines.push(['주차', '시작일', '종료일', '가동시간(시간)', '가동시간(분)', '세션건수', '측정시료수', '주요사용자'].map(c => '"' + c + '"').join(','));
-      const weeks = getMonthWeeks(currentCalendarYear, currentCalendarMonth);
-      weeks.forEach(function(w){
-        const wSessions = eqSessions.filter(function(s){
-          return (s.used_on || '') >= w.startDate && (s.used_on || '') <= w.endDate;
-        });
-        let mins = 0;
-        let samples = 0;
-        const users = new Set();
-        wSessions.forEach(function(s){
-          mins += (s.duration_min || 0);
-          samples += (s.sample_count || 1);
-          if(s.user_name) users.add(s.user_name);
-        });
-        lines.push([
-          w.label,
-          w.startDate,
-          w.endDate,
-          (mins / 60).toFixed(1),
-          mins,
-          wSessions.length,
-          samples,
-          Array.from(users).join('; ')
-        ].map(formatCsvCell).join(','));
-      });
-    } else if(selectedAnalyticsPeriod === 'month'){
-      lines.push(['연월', '가동시간(시간)', '가동시간(분)', '세션건수', '측정시료수', '주요사용자'].map(c => '"' + c + '"').join(','));
-      for(let m = 1; m <= 12; m++){
-        const mStr = currentCalendarYear + '-' + pad(m);
-        const mSessions = eqSessions.filter(function(s){ return (s.used_on || '').startsWith(mStr); });
-        let mins = 0;
-        let samples = 0;
-        const users = new Set();
-        mSessions.forEach(function(s){
-          mins += (s.duration_min || 0);
-          samples += (s.sample_count || 1);
-          if(s.user_name) users.add(s.user_name);
-        });
-        lines.push([
-          mStr,
-          (mins / 60).toFixed(1),
-          mins,
-          mSessions.length,
-          samples,
-          Array.from(users).join('; ')
-        ].map(formatCsvCell).join(','));
-      }
-    } else {
-      lines.push(['연도', '총가동시간(시간)', '총세션건수', '총시료수', '참여사용자수'].map(c => '"' + c + '"').join(','));
-      const years = [2024, 2025, 2026, 2027];
-      years.forEach(function(yr){
-        const ySessions = eqSessions.filter(function(s){ return (s.used_on || '').startsWith(String(yr)); });
-        let mins = 0;
-        let samples = 0;
-        const users = new Set();
-        ySessions.forEach(function(s){
-          mins += (s.duration_min || 0);
-          samples += (s.sample_count || 1);
-          if(s.user_name) users.add(s.user_name);
-        });
-        lines.push([
-          yr + '년',
-          (mins / 60).toFixed(1),
-          ySessions.length,
-          samples,
-          users.size
-        ].map(formatCsvCell).join(','));
-      });
+  let topAffilOverall = '-';
+  let maxAffOverall = 0;
+  for(const k in affilMap){
+    if(affilMap[k] > maxAffOverall){
+      maxAffOverall = affilMap[k];
+      const pct = grandPeriodSamples > 0 ? Math.round((affilMap[k] / grandPeriodSamples) * 100) : 0;
+      topAffilOverall = k + ' (' + maxAffOverall + '개, ' + pct + '%)';
     }
   }
+
+  // ====================================================
+  // [헤더 및 메타데이터]
+  // ====================================================
+  lines.push('"[IBS 2DQH 연구단 연구장비 운영통계 및 분석 실적 리포트]"');
+  lines.push('"보고서 생성일시: ' + today() + '","분석 기준 주기: ' + periodLabel + ' 통계 (' + periodDesc + ')","대상: ' + (isAll ? '전체 10대 연구장비 통합' : (selectedEq.name + ' [' + selectedEq.code + ']')) + '"');
+  lines.push('""');
+
+  // ====================================================
+  // 1. 전체 장비 총괄 운영 서머리
+  // ====================================================
+  lines.push('"[1. 연구장비 총괄 운영 서머리]"');
+  lines.push('"항목","통계 집계 수치"');
+  lines.push('"대상 연구장비","' + (isAll ? (researchEquipments.length + '대 통합 운영') : selectedEq.name) + '"');
+  lines.push('"분석 기준 기간","' + periodDesc + ' (' + periodLabel + ')"');
+  lines.push('"총 분석·가동 건수","' + periodSessions.length + '건 (전체 누적 ' + targetSessions.length + '건)"');
+  lines.push('"총 가동시간 (시간)","' + (grandPeriodMins / 60).toFixed(1) + '시간"');
+  lines.push('"총 가동시간 (분)","' + grandPeriodMins.toLocaleString() + '분"');
+  lines.push('"총 측정 시료수","' + grandPeriodSamples + '개"');
+  lines.push('"참여 연구원 수","' + userSet.size + '명"');
+  lines.push('"최다 분석처 (소속)","' + topAffilOverall + '"');
+  lines.push('""');
+
+  // ====================================================
+  // 2. 장비별 분석 실적 및 운영 현황 (핵심 필드만 깔끔하게 정돈)
+  // ====================================================
+  lines.push('"[2. 연구장비별 분석 실적 및 가동 현황]"');
+  lines.push([
+    '장비코드',
+    '장비명',
+    '설치위치',
+    '운영상태',
+    '분석·가동건수',
+    '가동시간(h)',
+    '가동(분)',
+    '가동비중(%)',
+    '측정시료수',
+    '최다 분석처 (비중)',
+    '주요 사용자'
+  ].map(function(c){ return '"' + c + '"'; }).join(','));
+
+  const targetEquipList = isAll ? researchEquipments : [selectedEq].filter(Boolean);
+
+  targetEquipList.forEach(function(eq){
+    const eqSessions = allSessions.filter(function(s){
+      return s.equipment_id === eq.id || s.equipment_code === eq.code;
+    });
+
+    let pSessions = [];
+    if(selectedAnalyticsPeriod === 'week'){
+      pSessions = eqSessions.filter(function(s){
+        const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+        return d >= curWeek.startDate && d <= curWeek.endDate;
+      });
+    } else if(selectedAnalyticsPeriod === 'month'){
+      const currentMonthStr = currentCalendarYear + '-' + pad(currentCalendarMonth);
+      pSessions = eqSessions.filter(function(s){
+        const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+        return d.startsWith(currentMonthStr);
+      });
+    } else {
+      const yrStr = String(currentCalendarYear);
+      pSessions = eqSessions.filter(function(s){
+        const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+        return d.startsWith(yrStr);
+      });
+    }
+
+    let pMins = 0;
+    let pSamples = 0;
+    const eqAffMap = {};
+    const eqUserMap = {};
+
+    pSessions.forEach(function(s){
+      pMins += (s.duration_min || 0);
+      pSamples += (s.sample_count || 1);
+      const a = s.affiliation || '2DQH';
+      eqAffMap[a] = (eqAffMap[a] || 0) + (s.sample_count || 1);
+      const u = s.user_name || '연구원';
+      eqUserMap[u] = (eqUserMap[u] || 0) + 1;
+    });
+
+    let topEqAff = '-';
+    let maxA = 0;
+    for(const a in eqAffMap){
+      if(eqAffMap[a] > maxA){
+        maxA = eqAffMap[a];
+        const pct = pSamples > 0 ? Math.round((eqAffMap[a] / pSamples) * 100) : 0;
+        topEqAff = a + ' (' + maxA + '개, ' + pct + '%)';
+      }
+    }
+
+    const sortedUsers = Object.keys(eqUserMap).sort(function(a, b){ return eqUserMap[b] - eqUserMap[a]; });
+    const userSummary = sortedUsers.slice(0, 2).map(function(u){ return u + '(' + eqUserMap[u] + '건)'; }).join(', ') || '-';
+
+    const pctOfGrand = grandPeriodMins > 0 ? Math.round((pMins / grandPeriodMins) * 100) : 0;
+
+    lines.push([
+      eq.code,
+      eq.name,
+      eq.location || '연구실',
+      eq.status === 'active' ? '정상 가동' : '대기 중',
+      pSessions.length,
+      (pMins / 60).toFixed(1),
+      pMins,
+      pctOfGrand + '%',
+      pSamples,
+      topEqAff,
+      userSummary
+    ].map(formatCsvCell).join(','));
+  });
+
+  if(isAll){
+    lines.push([
+      '합계(TOTAL)',
+      '10대 연구장비 통합 총계',
+      '2DQH 연구단',
+      '정상 가동',
+      periodSessions.length,
+      (grandPeriodMins / 60).toFixed(1),
+      grandPeriodMins,
+      '100%',
+      grandPeriodSamples,
+      topAffilOverall,
+      Array.from(userSet).slice(0, 3).join(', ') + (userSet.size > 3 ? ' 외 ' + (userSet.size - 3) + '명' : '')
+    ].map(formatCsvCell).join(','));
+  }
+  lines.push('""');
+
+  // ====================================================
+  // 3. 소속/연구실별 측정 비중 (어디에서 많이 찍었는지)
+  // ====================================================
+  lines.push('"[3. 소속/연구실별 측정 비중 요약 (어디에서 가장 많이 찍었는지)]"');
+  lines.push(['순위', '소속/연구실명', '측정 시료수(개)', '측정 비중(%)'].map(function(c){ return '"' + c + '"'; }).join(','));
+
+  const sortedAffils = Object.keys(affilMap).sort(function(a, b){ return affilMap[b] - affilMap[a]; });
+  if(sortedAffils.length > 0){
+    sortedAffils.forEach(function(af, idx){
+      const cnt = affilMap[af];
+      const pct = grandPeriodSamples > 0 ? Math.round((cnt / grandPeriodSamples) * 100) : 0;
+      lines.push([
+        (idx + 1) + '위',
+        af,
+        cnt,
+        pct + '%'
+      ].map(formatCsvCell).join(','));
+    });
+  } else {
+    lines.push(['-', '측정 기록 없음', 0, '0%'].map(formatCsvCell).join(','));
+  }
+  lines.push('""');
+
+  // ====================================================
+  // 4. 최근 개별 가동 세션 상세 내역
+  // ====================================================
+  lines.push('"[4. 최근 개별 가동 세션 상세 내역]"');
+  lines.push([
+    '사용일자',
+    '시작시간',
+    '장비명',
+    '장비코드',
+    '사용자',
+    '소속/연구실',
+    '책임교수',
+    '가동시간(분)',
+    '측정시료',
+    '시료수',
+    '측정목적'
+  ].map(function(c){ return '"' + c + '"'; }).join(','));
+
+  periodSessions.slice(0, 50).forEach(function(s){
+    lines.push([
+      normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : '')),
+      s.start_time || '10:00',
+      s.equipment_name || s.equipment_code || '연구장비',
+      s.equipment_code || '',
+      s.user_name || '연구원',
+      s.affiliation || '2DQH',
+      s.professor || '',
+      s.duration_min || 0,
+      s.sample_name || '',
+      s.sample_count || 1,
+      s.purpose || s.scan_type || '연구장비 가동'
+    ].map(formatCsvCell).join(','));
+  });
 
   const csvContent = lines.join('\r\n');
   const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -5369,7 +5509,7 @@ function exportAnalyticsSummaryCsv(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ ' + filename + ' 통계 요약 파일이 엑셀 호환 CSV로 다운로드되었습니다.');
+  toast('✓ ' + filename + ' 운영통계 CSV 파일이 다운로드되었습니다.');
 }
 
 function renderEquipmentCalendar(allSessions){
@@ -5386,14 +5526,15 @@ function renderEquipmentCalendar(allSessions){
 
   const sessionCountMap = {};
   allSessions.forEach(function(s){
-    if(s.used_on){
-      sessionCountMap[s.used_on] = (sessionCountMap[s.used_on] || 0) + 1;
+    const dStr = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+    if(dStr){
+      sessionCountMap[dStr] = (sessionCountMap[dStr] || 0) + 1;
     }
   });
 
   const todayStr = today();
 
-  // 타 월의 날짜 필터가 남아있으면 초기화 (선택 일자 필터는 기본 null로 전체 보기 유지)
+  // 타 월의 날짜 필터가 남아있으면 초기화
   if(timelineDateFilter && !timelineDateFilter.startsWith(currentCalendarYear + '-' + pad(currentCalendarMonth))){
     timelineDateFilter = null;
   }
@@ -5422,7 +5563,7 @@ function renderEquipmentCalendar(allSessions){
     if(cnt > 0) cls += ' has-sessions';
     if(isSelected) cls += ' selected';
 
-    html += '<div class="' + cls + '" data-cal-date="' + dateStr + '" title="' + dateStr + (cnt > 0 ? ': ' + cnt + '건 가동' : '') + '">';
+    html += '<div class="' + cls + '" data-cal-date="' + dateStr + '" title="' + dateStr + (cnt > 0 ? ': ' + cnt + '건 가동 (클릭하여 사용자 보기)' : ': 가동 기록 없음') + '">';
     html += '<span>' + d + '</span>';
     if(cnt > 0){
       html += '<span class="eq-cal-badge">' + cnt + '</span>';
@@ -5432,6 +5573,20 @@ function renderEquipmentCalendar(allSessions){
 
   html += '</div>';
   container.innerHTML = html;
+
+  // 캘린더 전용 클릭 이벤트 바인딩 (이벤트 버블링 차단 방지)
+  if(!container.__boundClick){
+    container.__boundClick = true;
+    container.addEventListener('click', function(e){
+      const dayEl = e.target.closest('[data-cal-date]');
+      if(!dayEl) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const d = dayEl.dataset.calDate;
+      timelineDateFilter = (timelineDateFilter === d) ? null : d;
+      renderEquipmentAnalyticsDashboard();
+    });
+  }
 
   // 캘린더 바로 아래 선택 일자 사용자 및 세션 내역 즉시 렌더링
   renderEquipmentCalendarDateDetail(timelineDateFilter, allSessions);
@@ -5446,7 +5601,8 @@ function renderEquipmentCalendarDateDetail(dateStr, allSessions){
   if(!dateStr){
     const currentMonthStr = currentCalendarYear + '-' + pad(currentCalendarMonth);
     const monthSessions = all.filter(function(s){
-      return (s.used_on || '').startsWith(currentMonthStr);
+      const sDate = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+      return sDate.startsWith(currentMonthStr);
     });
     const mTotalMins = monthSessions.reduce(function(a, c){ return a + (c.duration_min || 0); }, 0);
     const mTotalSamples = monthSessions.reduce(function(a, c){ return a + (c.sample_count || 1); }, 0);
@@ -5462,8 +5618,10 @@ function renderEquipmentCalendarDateDetail(dateStr, allSessions){
     return;
   }
 
+  const normDateStr = normalizeExportDate(dateStr);
   const sessions = all.filter(function(s){
-    return s.used_on === dateStr;
+    const sDate = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+    return sDate === normDateStr;
   });
 
   const totalMins = sessions.reduce(function(a, c){ return a + (c.duration_min || 0); }, 0);
@@ -5471,8 +5629,8 @@ function renderEquipmentCalendarDateDetail(dateStr, allSessions){
 
   let html = '<div class="eq-cal-date-header" style="background:var(--bg);padding:10px 14px;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;">';
   html += '  <div class="eq-cal-date-title" style="display:flex;justify-content:space-between;align-items:center;width:100%;">';
-  html += '    <span>📅 <b>' + safe(dateStr) + '</b> 일자 가동 상세 (' + sessions.length + '건 · ' + (totalMins / 60).toFixed(1) + 'h)</span>';
-  html += '    <button type="button" id="btnClearCalDateDetail" class="btn" style="padding:3px 8px;font-size:11.5px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;">✕ 전체보기</button>';
+  html += '    <span>📅 <b>' + safe(normDateStr) + '</b> 가동 상세 (' + sessions.length + '건 · ' + (totalMins / 60).toFixed(1) + 'h)</span>';
+  html += '    <button type="button" id="btnClearCalDateDetail" class="btn" style="padding:4px 10px;font-size:11.5px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-weight:600;">✕ 전체보기</button>';
   html += '  </div>';
   if(sessions.length > 0){
     html += '  <div style="font-size:11.5px;font-weight:600;color:var(--primary);margin-top:4px;">총 ' + totalMins + '분 가동 · ' + totalSamples + '개 시료 측정</div>';
@@ -5480,42 +5638,68 @@ function renderEquipmentCalendarDateDetail(dateStr, allSessions){
   html += '</div>';
 
   if(sessions.length === 0){
-    html += '<div class="eq-cal-user-empty" style="text-align:center;padding:16px;color:#64748b;font-size:12.5px;">📅 ' + safe(dateStr) + '에는 등록된 장비 가동 기록이 없습니다.</div>';
+    html += '<div class="eq-cal-user-empty" style="text-align:center;padding:18px 14px;background:var(--card);border-radius:8px;border:1px dashed var(--border);color:#64748b;font-size:12.5px;">';
+    html += '  <div>📅 <b>' + safe(normDateStr) + '</b>에는 등록된 장비 가동 기록이 없습니다.</div>';
+    html += '  <button type="button" class="btn primary" id="btnQuickAddSessionOnDate" style="margin-top:8px;font-size:11.5px;padding:5px 12px;border-radius:6px;">📝 이 날짜로 장비 사용 기록 작성</button>';
+    html += '</div>';
     detailEl.innerHTML = html;
-    return;
+  } else {
+    html += '<div class="eq-cal-user-list">';
+    sessions.forEach(function(s){
+      const eqName = s.equipment_name || s.equipment_code || '연구장비';
+      const userName = s.user_name || '연구원';
+      const affil = s.affiliation || '2DQH';
+      const durMins = s.duration_min || 0;
+      const sample = s.sample_name || '시료 미지정';
+      const sampleCnt = s.sample_count || 1;
+      const timeRange = (s.start_time || '') + (s.end_time ? ' ~ ' + s.end_time : '');
+      const purpose = s.purpose || (s.parameters && s.parameters.mode) || s.scan_type || '장비 가동';
+
+      html += '<div class="eq-cal-user-card" style="border-left:3px solid var(--primary);">';
+      html += '  <div class="user-top">';
+      html += '    <span class="user-name" style="font-size:13px;">👤 <b style="color:var(--ink);">' + safe(userName) + '</b> <span style="font-size:11.5px;color:var(--ink-light);font-weight:600;">(' + safe(affil) + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span></span>';
+      html += '    <span style="font-size:12px;font-weight:700;color:var(--primary);">⏱️ ' + durMins + '분' + (timeRange ? ' <span style="font-weight:normal;color:#64748b;font-size:11px;">(' + safe(timeRange) + ')</span>' : '') + '</span>';
+      html += '  </div>';
+      html += '  <div class="user-meta" style="margin-top:4px;">';
+      html += '    <span style="color:var(--ink);font-weight:600;">🔬 ' + safe(eqName) + '</span>';
+      html += '    <span>🧪 ' + safe(sample) + ' (' + sampleCnt + '개)</span>';
+      if(purpose){
+        html += '    <span style="color:var(--primary);font-weight:600;">⚡ ' + safe(purpose) + '</span>';
+      }
+      html += '  </div>';
+      if(s.memo){
+        html += '  <div style="font-size:11.5px;color:var(--ink-light);margin-top:4px;border-top:1px dashed var(--border);padding-top:4px;">📝 ' + safe(s.memo) + '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    detailEl.innerHTML = html;
   }
 
-  html += '<div class="eq-cal-user-list">';
-  sessions.forEach(function(s){
-    const eqName = s.equipment_name || s.equipment_code || '연구장비';
-    const userName = s.user_name || '연구원';
-    const affil = s.affiliation || '2DQH';
-    const durMins = s.duration_min || 0;
-    const sample = s.sample_name || '시료 미지정';
-    const sampleCnt = s.sample_count || 1;
-    const timeRange = (s.start_time || '') + (s.end_time ? ' ~ ' + s.end_time : '');
-    const purpose = s.purpose || (s.parameters && s.parameters.mode) || '장비 가동';
-
-    html += '<div class="eq-cal-user-card">';
-    html += '  <div class="user-top">';
-    html += '    <span class="user-name">👤 <b>' + safe(userName) + '</b> <span style="font-size:11.5px;color:var(--ink-light);font-weight:normal;">(' + safe(affil) + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span></span>';
-    html += '    <span style="font-size:11.5px;font-weight:700;color:var(--primary);">⏱️ ' + durMins + '분' + (timeRange ? ' <span style="font-weight:normal;color:#64748b;">(' + safe(timeRange) + ')</span>' : '') + '</span>';
-    html += '  </div>';
-    html += '  <div class="user-meta">';
-    html += '    <span>🔬 <b>' + safe(eqName) + '</b></span>';
-    html += '    <span>🧪 ' + safe(sample) + ' (' + sampleCnt + '개)</span>';
-    if(purpose){
-      html += '    <span>⚡ ' + safe(purpose) + '</span>';
-    }
-    html += '  </div>';
-    if(s.memo){
-      html += '  <div style="font-size:11.5px;color:var(--ink-light);margin-top:2px;border-top:1px dashed var(--border);padding-top:3px;">📝 ' + safe(s.memo) + '</div>';
-    }
-    html += '</div>';
-  });
-  html += '</div>';
-
-  detailEl.innerHTML = html;
+  // 캘린더 상세 내 버튼 전용 이벤트 바인딩
+  if(!detailEl.__boundClick){
+    detailEl.__boundClick = true;
+    detailEl.addEventListener('click', function(e){
+      const clearBtn = e.target.closest('#btnClearCalDateDetail');
+      if(clearBtn){
+        e.preventDefault();
+        e.stopPropagation();
+        timelineDateFilter = null;
+        renderEquipmentAnalyticsDashboard();
+        return;
+      }
+      const quickAddBtn = e.target.closest('#btnQuickAddSessionOnDate');
+      if(quickAddBtn){
+        e.preventDefault();
+        e.stopPropagation();
+        openModal('testDrive');
+        const f = $('testDriveForm');
+        if(f && f.used_on && timelineDateFilter){
+          f.used_on.value = timelineDateFilter;
+        }
+      }
+    });
+  }
 }
 
 function renderEquipmentRecentTimeline(allSessions){

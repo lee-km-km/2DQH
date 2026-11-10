@@ -6443,10 +6443,10 @@ tr.row-overdue:hover {
   color: var(--ink, #0f172a);
 }
 .eq-period-tab.active {
-  background: #ffffff;
-  color: #2563eb !important;
-  font-weight: 700;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  background: var(--card, #ffffff) !important;
+  color: var(--primary, #2563eb) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12) !important;
 }
 
 .eq-period-table {
