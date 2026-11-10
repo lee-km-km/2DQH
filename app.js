@@ -1093,6 +1093,11 @@ function setAdminUI(){
     showView('inventory');
   }
 
+  if(!isAdm && currentHubView === 'analytics'){
+    currentHubView = 'catalog';
+    switchEquipmentHubView('catalog');
+  }
+
   // 장비 관련 화면 갱신 (관리자 로그인 상태에 따라 수정/삭제 및 통계 뷰 동적 반영)
   if(currentSelectedEquipment === 'EQ-XRD-01'){
     renderXrdLogs();
@@ -2117,25 +2122,34 @@ function renderLoans(){
 // ==========================================
 const CONSUMABLE_CATEGORIES = [
   '자주찾는 소모품',
-  '보호·클린룸',
-  '배관·테이프',
-  '시약·화학'
+  '시약',
+  '보호구',
+  '배관·테이프'
 ];
+
+function isReagentCategory(cat){
+  return cat === '시약' || cat === '시약·화학' || cat === '화학·시약';
+}
+
+function isProtectiveCategory(cat){
+  return cat === '보호구' || cat === '보호·클린룸';
+}
 
 function consumableCategoryTabsHtml(selected){
   return '<div class="category-tabs" aria-label="소모품 카테고리">' +
     CONSUMABLE_CATEGORIES.map(function(cat){
       const icon = (
         cat === '자주찾는 소모품' ? '⭐' :
-        cat === '보호·클린룸' ? '🧤' :
-        cat === '배관·테이프' ? '🔧' :
-        cat === '시약·화학' ? '🧪' : '📦'
+        cat === '시약' ? '🧪' :
+        cat === '보호구' ? '🧤' :
+        cat === '배관·테이프' ? '🔧' : '📦'
       );
-      const isReagent = cat === '시약·화학';
+      const isReagent = isReagentCategory(cat);
+      const isActive = (selected === cat) || (cat === '시약' && (selected === '시약·화학' || selected === '화학·시약')) || (cat === '보호구' && selected === '보호·클린룸');
       return '<button type="button" class="category-tab' +
         (isReagent ? ' tab-reagent' : '') +
-        (selected === cat ? ' active' : '') + '" data-consumable-category="' + safe(cat) +
-        '" aria-pressed="' + (selected === cat ? 'true' : 'false') +
+        (isActive ? ' active' : '') + '" data-consumable-category="' + safe(cat) +
+        '" aria-pressed="' + (isActive ? 'true' : 'false') +
         '">' + icon + ' ' + safe(cat) + '</button>';
     }).join('') + '</div>';
 }
@@ -2417,14 +2431,16 @@ function renderConsumables(){
       matchCategory = true;
     } else if(selectedConsumableCategory === '자주찾는 소모품'){
       // 기본 화면: 일상 핵심 소모품만 노출 (시약 제외)
-      matchCategory = c.category !== '시약·화학' && c.category !== '화학·시약';
-    } else if(selectedConsumableCategory === '시약·화학' || selectedConsumableCategory === '화학·시약'){
-      const isReagent = c.category === '시약·화학' || c.category === '화학·시약';
+      matchCategory = !isReagentCategory(c.category);
+    } else if(isReagentCategory(selectedConsumableCategory)){
+      const isReagent = isReagentCategory(c.category);
       if(!isReagent) return false;
       if(showOnlyControlledReagents){
         return isControlledSubstance(c);
       }
       return true;
+    } else if(isProtectiveCategory(selectedConsumableCategory)){
+      matchCategory = isProtectiveCategory(c.category);
     } else {
       matchCategory = c.category === selectedConsumableCategory;
     }
@@ -2432,8 +2448,8 @@ function renderConsumables(){
     return matchCategory && matchSearch;
   });
 
-  // 시약·화학 탭이거나 검색 시 특별관리물질을 상단에 자동 우선 배치
-  if(selectedConsumableCategory === '시약·화학' || selectedConsumableCategory === '화학·시약' || q){
+  // 시약 탭이거나 검색 시 특별관리물질을 상단에 자동 우선 배치
+  if(isReagentCategory(selectedConsumableCategory) || q){
     list.sort(function(a, b){
       const aCtrl = isControlledSubstance(a) ? 1 : 0;
       const bCtrl = isControlledSubstance(b) ? 1 : 0;
@@ -2462,8 +2478,8 @@ function renderConsumables(){
     let summaryHtml = '';
     if(q){
       summaryHtml = '<div class="summary-line"><span class="summary-icon">🔍</span> \'' + safe(q) + '\' 검색 결과: <strong>' + filteredCount + '</strong>개 품목</div>';
-    } else if(selectedConsumableCategory === '시약·화학' || selectedConsumableCategory === '화학·시약'){
-      const totalReagents = consumables.filter(function(c){ return c.category === '시약·화학' || c.category === '화학·시약'; }).length;
+    } else if(isReagentCategory(selectedConsumableCategory)){
+      const totalReagents = consumables.filter(function(c){ return isReagentCategory(c.category); }).length;
       const controlledCount = consumables.filter(isControlledSubstance).length;
 
       if(showOnlyControlledReagents){
@@ -2474,19 +2490,21 @@ function renderConsumables(){
           '</div>' +
           '<div class="controlled-summary-actions">' +
             '<button type="button" class="btn-filter-controlled active" id="btnToggleControlledFilter">🧪 전체 시약 보기 (' + totalReagents + '종)</button>' +
-            '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogs" title="고용노동부 법정 서식 CSV 다운로드">📥 취급일지 다운로드 (CSV)</button>' +
+            '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogsMonth" title="이번 달 특별관리물질 취급일지 CSV 다운로드">📅 월간 취급일지 (CSV)</button>' +
+            '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogsYear" title="올해 특별관리물질 취급일지 CSV 다운로드">📆 연간 취급일지 (CSV)</button>' +
           '</div>' +
         '</div>';
       } else {
         summaryHtml = '<div class="controlled-summary-bar reagent-bar">' +
           '<div class="controlled-summary-text">' +
             '<span class="summary-icon">🧪</span> ' +
-            '<span><strong>연구실 시약 도감</strong> (' + totalReagents + '종) · ' +
+            '<span><strong>보관 시약 관리대장</strong> (' + totalReagents + '종) · ' +
             '<strong style="color:#b91c1c;">⚠️ 특별관리물질 ' + controlledCount + '종 포함</strong></span>' +
           '</div>' +
           '<div class="controlled-summary-actions">' +
             '<button type="button" class="btn-filter-controlled" id="btnToggleControlledFilter">⚠️ 특별관리물질만 (' + controlledCount + '종)</button>' +
-            '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogs" title="고용노동부 법정 서식 CSV 다운로드">📥 취급일지 다운로드 (CSV)</button>' +
+            '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogsMonth" title="이번 달 특별관리물질 취급일지 CSV 다운로드">📅 월간 취급일지 (CSV)</button>' +
+            '<button type="button" class="btn-export-log-csv" id="btnExportChemicalLogsYear" title="올해 특별관리물질 취급일지 CSV 다운로드">📆 연간 취급일지 (CSV)</button>' +
           '</div>' +
         '</div>';
       }
@@ -2689,8 +2707,8 @@ function copyConsumableLocation(id, btnEl){
   }
 }
 
-// 특별관리물질 취급일지 법정 서식(산업안전보건기준에 관한 규칙 제439조) CSV 다운로드
-function exportChemicalLogsCsv(){
+// 특별관리물질 취급일지 법정 서식(산업안전보건기준에 관한 규칙 제439조) CSV 다운로드 (월간 / 연간 분리 지원)
+function exportChemicalLogsCsv(period){
   let logs = [];
   try {
     logs = JSON.parse(localStorage.getItem('labstock_chemical_logs') || '[]');
@@ -2699,6 +2717,35 @@ function exportChemicalLogsCsv(){
   if(!logs || logs.length === 0){
     toast('⚠️ 등록된 특별관리물질 취급일지가 없습니다. 시약 카드의 [📝 취급일지 작성]을 통해 먼저 일지를 작성해 주세요.');
     return;
+  }
+
+  const now = new Date();
+  const curYear = String(now.getFullYear());
+  const curMonth = curYear + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+  let filteredLogs = logs;
+  let filePeriodLabel = '전체';
+
+  if(period === 'month'){
+    filePeriodLabel = curMonth + '_월간';
+    filteredLogs = logs.filter(function(item){
+      const dt = item.used_at || '';
+      return dt.startsWith(curMonth);
+    });
+    if(filteredLogs.length === 0){
+      toast('ℹ️ 이번 달(' + curMonth + ')에 등록된 특별관리물질 취급일지가 없습니다.');
+      return;
+    }
+  } else if(period === 'year'){
+    filePeriodLabel = curYear + '_연간';
+    filteredLogs = logs.filter(function(item){
+      const dt = item.used_at || '';
+      return dt.startsWith(curYear);
+    });
+    if(filteredLogs.length === 0){
+      toast('ℹ️ 올해(' + curYear + '년)에 등록된 특별관리물질 취급일지가 없습니다.');
+      return;
+    }
   }
 
   const headers = [
@@ -2717,7 +2764,7 @@ function exportChemicalLogsCsv(){
     '사용 후 잔여량 및 비고'
   ];
 
-  const rows = logs.map(function(item, idx){
+  const rows = filteredLogs.map(function(item, idx){
     let statutoryCategory = '';
     const c = consumableFor(item.consumable_id);
     const ci = c ? getControlledSubstanceInfo(c) : null;
@@ -2749,12 +2796,12 @@ function exportChemicalLogsCsv(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = '2DQH_특별관리물질_취급일지_' + today() + '.csv';
+  a.download = '2DQH_특별관리물질_' + filePeriodLabel + '_취급일지_' + today() + '.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  toast('✓ 특별관리물질 취급일지(' + logs.length + '건)가 법정 서식 CSV로 다운로드되었습니다.');
+  toast('✓ 특별관리물질 ' + filePeriodLabel + ' 취급일지(' + filteredLogs.length + '건)가 법정 서식 CSV로 다운로드되었습니다.');
 }
 
 // ========================================================
@@ -4421,6 +4468,10 @@ function getUnifiedEquipmentSessions(){
 }
 
 function switchEquipmentHubView(mode){
+  if(mode === 'analytics' && !isAdmin()){
+    toast('장비 운영 통계는 관리자 전용 기능입니다.');
+    mode = 'catalog';
+  }
   currentHubView = mode || 'catalog';
   const isCatalog = (currentHubView === 'catalog');
 
@@ -6380,7 +6431,8 @@ function openModal(mode, id){
       const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
       const lastWorkLoc = localStorage.getItem('labstock_last_work_location') || '3층 화학실 흄후드 1번';
       const lastWorkDesc = localStorage.getItem('labstock_last_work_description') || '2D Flake 박리 기판 세척 및 린스';
-      const lastUnit = localStorage.getItem('labstock_last_unit') || 'mL';
+      let lastUnit = localStorage.getItem('labstock_last_unit') || 'mL';
+      if(lastUnit === 'L') lastUnit = 'mL';
       const nowStr = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
       const ci = getControlledSubstanceInfo(c);
@@ -6408,7 +6460,7 @@ function openModal(mode, id){
       }
       parts.push('    </div>');
       parts.push('    <div class="chem-id-spec">');
-      parts.push('      <strong style="color:#334155;">시약 규격:</strong> ' + safe(c.name));
+      parts.push('      <strong>시약 규격:</strong> ' + safe(c.name));
       parts.push('    </div>');
       parts.push('  </div>');
       parts.push('  <div class="chem-id-meta-bar">');
@@ -6445,7 +6497,6 @@ function openModal(mode, id){
       parts.push('<option value="µL">');
       parts.push('<option value="g">');
       parts.push('<option value="mg">');
-      parts.push('<option value="L">');
       parts.push('<option value="ea">');
       parts.push('<option value="방울">');
       parts.push('</datalist>');
@@ -6465,7 +6516,6 @@ function openModal(mode, id){
       parts.push('<button type="button" class="btn-preset-chip' + (curUnit === 'µL' ? ' active' : '') + '" data-set-field="unit" data-set-val="µL">µL</button>');
       parts.push('<button type="button" class="btn-preset-chip' + (curUnit === 'g' ? ' active' : '') + '" data-set-field="unit" data-set-val="g">g</button>');
       parts.push('<button type="button" class="btn-preset-chip' + (curUnit === 'mg' ? ' active' : '') + '" data-set-field="unit" data-set-val="mg">mg</button>');
-      parts.push('<button type="button" class="btn-preset-chip' + (curUnit === 'L' ? ' active' : '') + '" data-set-field="unit" data-set-val="L">L</button>');
       parts.push('</div></div>');
 
       parts.push('<label class="field full">작업 장소 *<input name="work_location" required maxlength="100" value="' + safe(lastWorkLoc) + '" placeholder="예: 3층 화학실 흄후드 1번">');
@@ -6496,7 +6546,7 @@ function openModal(mode, id){
       parts.push('<label class="safety-check-item"><input type="checkbox" name="ventilation_checked" value="true" checked required><span class="safety-check-text"><b>국소배기 정상 가동</b><small>흄후드/배기벤치 배기 상태</small></span></label>');
       parts.push('</div></div>');
 
-      parts.push('<label class="field full">사용 후 잔여량 및 비고 (선택)<input name="note" maxlength="100" placeholder="예: 잔여량 약 3.8L / 밀봉 보관 완료">');
+      parts.push('<label class="field full">사용 후 잔여량 및 비고 (선택)<input name="note" maxlength="100" placeholder="예: 잔여량 약 450mL / 밀봉 보관 완료">');
       parts.push('<div class="preset-chips-wrap" style="margin-top:8px;">');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="note" data-set-val="잔여량 충분 / 밀봉 보관 완료">밀봉 보관 완료</button>');
       parts.push('<button type="button" class="btn-preset-chip" data-set-field="note" data-set-val="잔여량 약 50% 남음">잔여 50%</button>');
@@ -6885,7 +6935,6 @@ function openModal(mode, id){
   } else {
     parts.push('<label class="field">관리자 이메일<input name="email" type="email" required autocomplete="username"></label>');
     parts.push('<label class="field" style="margin-top:12px">비밀번호<input name="password" type="password" required autocomplete="current-password"></label>');
-    parts.push('<p class="sub" style="margin-top:12px">Supabase에서 미리 생성한 관리자 계정만 로그인할 수 있도록 회원가입은 꺼두세요.</p>');
   }
 
   $('modalBody').innerHTML = parts.join('');
@@ -8084,7 +8133,7 @@ function bindEvents(){
 
     if(target.dataset.consumableCategory){
       selectedConsumableCategory = target.dataset.consumableCategory;
-      if(selectedConsumableCategory !== '시약·화학'){
+      if(!isReagentCategory(selectedConsumableCategory)){
         showOnlyControlledReagents = false;
       }
       displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
@@ -8219,8 +8268,18 @@ function bindEvents(){
       return;
     }
 
+    if(target.id === 'btnExportChemicalLogsMonth' || target.closest('#btnExportChemicalLogsMonth')){
+      exportChemicalLogsCsv('month');
+      return;
+    }
+
+    if(target.id === 'btnExportChemicalLogsYear' || target.closest('#btnExportChemicalLogsYear')){
+      exportChemicalLogsCsv('year');
+      return;
+    }
+
     if(target.id === 'btnExportChemicalLogs' || target.closest('#btnExportChemicalLogs')){
-      exportChemicalLogsCsv();
+      exportChemicalLogsCsv('all');
       return;
     }
 
@@ -8342,6 +8401,10 @@ function bindEvents(){
         showView('logbook');
         selectResearchEquipment('EQ-XRD-01');
       } else if(navType === 'analytics'){
+        if(!isAdmin()){
+          toast('장비 운영 통계는 관리자 로그인 후 조회할 수 있습니다.');
+          return;
+        }
         currentHubView = 'analytics';
         showView('logbook');
         showEquipmentCatalogHub();
@@ -8884,6 +8947,10 @@ function bindEvents(){
   if(navAnalytics){
     navAnalytics.addEventListener('click', function(e){
       e.preventDefault();
+      if(!isAdmin()){
+        toast('장비 운영 통계는 관리자 로그인 후 조회할 수 있습니다.');
+        return;
+      }
       currentHubView = 'analytics';
       showView('logbook');
       showEquipmentCatalogHub();
@@ -9210,7 +9277,7 @@ function handleUrlFastTrack(){
     const logId = params.get('log') || (params.get('action') === 'chemicalLog' ? params.get('id') : null) || (hashLogMatch ? hashLogMatch[1] : null);
     if(logId){
       showView('consumables', { updateUrl: false });
-      selectedConsumableCategory = '시약·화학';
+      selectedConsumableCategory = '시약';
       displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
       renderConsumables();
       setTimeout(function(){

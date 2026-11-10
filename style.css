@@ -1442,7 +1442,7 @@ tbody tr:hover .asset-thumb-box {
   .layout { display: block; }
   
   /* 모바일 상단 바: 큼직하고 시원한 로고 & 돋보기 버튼 노출 */
-  .desktop-only, #loginBtn, #connection { display: none !important; }
+  .desktop-only, #loginBtn, #logoutBtn, #connection { display: none !important; }
   .btn-toggle-search { display: inline-flex !important; }
   
   /* 모바일 검색 & 카테고리 접기/펼치기 패널 */
@@ -2603,18 +2603,21 @@ tbody tr:hover .asset-thumb-box {
     gap: 6px;
   }
   .portal-module-switcher {
-    padding: 2px;
-    gap: 2px;
-    border-radius: 14px;
+    padding: 2px !important;
+    gap: 2px !important;
+    border-radius: 14px !important;
+    flex-shrink: 0 !important;
+    max-width: 100% !important;
   }
   .portal-module-btn {
-    padding: 4px 8px;
-    font-size: 11.5px;
-    gap: 3px;
-    border-radius: 12px;
+    padding: 4px 6px !important;
+    font-size: 11px !important;
+    gap: 2px !important;
+    border-radius: 12px !important;
+    white-space: nowrap !important;
   }
   .portal-module-btn .mod-icon {
-    font-size: 12px;
+    font-size: 11px !important;
   }
   .btn-toggle-search {
     padding: 5px 8px;
@@ -7609,6 +7612,132 @@ body:not(.is-admin) [data-delete-eq-session] {
   border-left-color: #2563eb !important;
   color: #cbd5e1 !important;
 }
+
+/* ======================================================== */
+/* [다크 모드] 특별관리물질 관리대장 / 취급일지 UI 최적화 */
+/* ======================================================== */
+[data-theme="dark"] .controlled-summary-bar {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .controlled-summary-bar.reagent-bar {
+  background: #162032 !important;
+  border-color: #232f46 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .controlled-summary-bar.reagent-bar.is-filtered-controlled {
+  background: #450a0a !important;
+  border-color: #7f1d1d !important;
+  color: #fecaca !important;
+}
+[data-theme="dark"] .btn-filter-controlled {
+  background: #331515 !important;
+  color: #fca5a5 !important;
+  border-color: #7f1d1d !important;
+}
+[data-theme="dark"] .btn-filter-controlled:hover {
+  background: #450a0a !important;
+  border-color: #991b1b !important;
+}
+[data-theme="dark"] .btn-filter-controlled.active {
+  background: #991b1b !important;
+  color: #ffffff !important;
+  border-color: #b91c1c !important;
+}
+[data-theme="dark"] .btn-export-log-csv {
+  background: #1e293b !important;
+  color: #f87171 !important;
+  border-color: #ef4444 !important;
+}
+[data-theme="dark"] .btn-export-log-csv:hover,
+[data-theme="dark"] .btn-export-log-csv:active {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+/* 취급일지 작성 모달 상단 시약 정보 카드 다크모드 */
+[data-theme="dark"] .chem-id-card {
+  background: #162032 !important;
+  border-color: #232f46 !important;
+  border-left-color: #ef4444 !important;
+}
+[data-theme="dark"] .chem-badge-controlled {
+  background: #450a0a !important;
+  color: #fca5a5 !important;
+  border-color: #7f1d1d !important;
+}
+[data-theme="dark"] .chem-badge-num {
+  background: #111827 !important;
+  color: #94a3b8 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .chem-name-ko {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .chem-name-en {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .chem-id-spec {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .chem-id-spec strong {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .chem-id-meta-bar {
+  border-top-color: #232f46 !important;
+}
+[data-theme="dark"] .chem-meta-item {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .chem-meta-item b {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .chem-notice-card {
+  background: #064e3b !important;
+  border-color: #047857 !important;
+}
+[data-theme="dark"] .chem-notice-head {
+  color: #6ee7b7 !important;
+}
+[data-theme="dark"] .chem-notice-desc {
+  color: #a7f3d0 !important;
+}
+
+/* 취급일지 작성 모달 필수 법정 안전 점검 다크모드 */
+[data-theme="dark"] .safety-checklist-card {
+  background: #162032 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .safety-card-title {
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .safety-check-item {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .safety-check-item:hover {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .safety-check-item:has(input:checked) {
+  background: rgba(5, 150, 105, 0.2) !important;
+  border-color: #059669 !important;
+}
+[data-theme="dark"] .safety-check-text b {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .safety-check-item:has(input:checked) .safety-check-text b {
+  color: #6ee7b7 !important;
+}
+[data-theme="dark"] .safety-check-text small {
+  color: #94a3b8 !important;
+}
+
 
 
 
