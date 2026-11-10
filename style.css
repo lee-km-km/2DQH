@@ -928,48 +928,7 @@ td b { font-weight: 600; color: var(--ink); }
   flex-wrap: wrap;
 }
 
-.dday-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.2;
-  white-space: nowrap;
-  letter-spacing: -0.2px;
-}
-
-.dday-badge.dday-today {
-  background: #fef08a;
-  color: #854d0e;
-  border: 1px solid #facc15;
-}
-
-.dday-badge.dday-urgent {
-  background: #ffedd5;
-  color: #9a3412;
-  border: 1px solid #fdba74;
-}
-
-.dday-badge.dday-overdue {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fca5a5;
-  font-weight: 800;
-}
-
-.dday-badge.dday-future {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-}
-
-.dday-badge.dday-nodate {
-  background: #f8fafc;
-  color: #94a3b8;
-  border: 1px solid #e2e8f0;
-}
+/* dday badge removed */
 .btn-action-borrow {
   background: var(--brand-red);
   color: #ffffff;
@@ -1278,24 +1237,7 @@ td b { font-weight: 600; color: var(--ink); }
 
 /* QR Scanner Modal Specifics */
 .qr-modal { max-width: 380px; }
-.qr-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px;
-}
-#qrReader {
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: #000;
-}
-.qr-guide-text {
-  margin: 10px 0 0;
-  font-size: 12px;
-  color: var(--muted);
-  text-align: center;
-}
+/* qr modal body removed */
 
 /* Toast */
 .toast {
@@ -1325,32 +1267,7 @@ td b { font-weight: 600; color: var(--ink); }
 
 /* Mobile Home Screen (Minimal) */
 .home { max-width: 440px; margin: 0 auto; }
-.home-head h1 { margin: 0 0 16px; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
-.home-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  min-height: 64px;
-  margin: 0 0 8px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--ink);
-  text-align: left;
-  transition: all 0.12s;
-}
-.home-btn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
-.home-btn.primary-action {
-  background: var(--bg-subtle);
-  border-color: var(--border-strong);
-}
-.home-txt b { display: block; font-size: 15px; font-weight: 600; }
-.home-txt small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
-.home-count { font-size: 12px; font-family: var(--font-mono); color: var(--muted); font-weight: 500; }
-.home-links { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+/* legacy home removed */
 
 /* Category Pills */
 .inventory-categories { padding: 4px 0 14px; }
@@ -2250,40 +2167,7 @@ tbody tr:hover .asset-thumb-box {
   border-top: 1px dashed #f1f5f9;
 }
 
-.btn-copy-loc {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 16px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  flex: 1;
-}
-
-.btn-copy-loc:hover {
-  background: #eff6ff;
-  border-color: #93c5fd;
-  color: #1d4ed8;
-}
-
-.btn-copy-loc:active {
-  transform: scale(0.98);
-}
-
-.btn-copy-loc.copied {
-  background: #ecfdf5 !important;
-  border-color: #10b981 !important;
-  color: #047857 !important;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-}
+/* btn copy loc removed */
 
 /* ==========================================
    소모품 및 시약 전문 UI 뱃지 시스템
@@ -2462,36 +2346,7 @@ tbody tr:hover .asset-thumb-box {
   flex-shrink: 0;
 }
 
-.btn-compact-copy {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #334155;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.btn-compact-copy:hover {
-  background: #eff6ff;
-  border-color: #93c5fd;
-  color: #1d4ed8;
-}
-
-.btn-compact-copy.copied {
-  background: #ecfdf5 !important;
-  border-color: #10b981 !important;
-  color: #047857 !important;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-}
+/* btn compact copy removed */
 
 /* 검색 결과 없을 때 */
 .consumables-empty-state {
@@ -3780,51 +3635,7 @@ tr.row-overdue:hover {
   line-height: 1.4;
 }
 
-.research-equipment-tabs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  margin-bottom: 16px;
-  -webkit-overflow-scrolling: touch;
-}
-.research-equipment-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-.research-equipment-tab:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: var(--ink);
-}
-.research-equipment-tab.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #ffffff;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-}
-.research-equipment-tab .tab-badge {
-  font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.08);
-}
-.research-equipment-tab.active .tab-badge {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-}
+/* research equipment tabs removed */
 
 /* 2DQH-XRD_log 특화 스타일 */
 .xrd-notice {
@@ -4555,50 +4366,7 @@ tr.row-overdue:hover {
   white-space: nowrap;
 }
 
-.logbook-card {
-  background: #ffffff;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
-.logbook-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.logbook-asset-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.logbook-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 12.5px;
-  color: #475569;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-}
-
-.logbook-sample-box {
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: #334155;
-  margin-top: 6px;
-  line-height: 1.45;
-}
+/* legacy logbook card removed */
 
 .status-badge.is-normal {
   background: #dcfce7;
@@ -5195,24 +4963,7 @@ tr.row-overdue:hover {
 }
 
 /* 위치 복사 버튼 */
-[data-theme="dark"] .btn-copy-loc,
-[data-theme="dark"] .btn-compact-copy {
-  background: #1e293b !important;
-  color: #cbd5e1 !important;
-  border: 1px solid #334155 !important;
-}
-[data-theme="dark"] .btn-copy-loc:hover,
-[data-theme="dark"] .btn-compact-copy:hover {
-  background: #27354f !important;
-  border-color: #3b82f6 !important;
-  color: #60a5fa !important;
-}
-[data-theme="dark"] .btn-copy-loc.copied,
-[data-theme="dark"] .btn-compact-copy.copied {
-  background: #064e3b !important;
-  border-color: #059669 !important;
-  color: #a7f3d0 !important;
-}
+/* dark mode copy btn removed */
 
 /* 보기 모드 토글 (카드 vs 컴팩트) */
 [data-theme="dark"] .view-mode-toggle {

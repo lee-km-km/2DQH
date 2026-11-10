@@ -6160,10 +6160,7 @@ function openModal(mode, id){
     titleText = '빠른 구매요청';
   } else if(mode === 'chemicalLog'){
     titleText = '📝 특별관리물질 취급일지 작성';
-  } else if(mode === 'equipmentLog'){
-    titleText = '📖 연구장비 전자 로그북 작성';
-  } else if(mode === 'addResearchEquipment'){
-    titleText = '🔬 새 연구장비 등록 (비품과 독립 관리)';
+
   }
 
   $('modalTitle').textContent = titleText;
@@ -6403,146 +6400,6 @@ function openModal(mode, id){
       parts.push('</div></label>');
       parts.push('</div>');
     }
-  } else if(mode === 'equipmentLog'){
-    const targetAsset = id ? assetFor(id) : null;
-    const lastBorrower = localStorage.getItem('labstock_last_borrower_name') || '';
-    const lastProject = localStorage.getItem('labstock_last_project_name') || '2DQH 연구단 기본과제';
-    const nowLocal = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-
-    parts.push('<div class="logbook-modal-form-wrap">');
-
-    // 1. 대상 연구장비 카드 / 셀렉터
-    if(targetAsset){
-      parts.push('<div class="selected-asset-box has-modal-thumb">');
-      parts.push('  <div class="modal-thumb-box" aria-hidden="true">' + getEquipmentImageHtml(targetAsset, 'thumb') + '</div>');
-      parts.push('  <div class="modal-thumb-info">');
-      parts.push('    <div class="modal-thumb-title">' + safe(targetAsset.name) + '</div>');
-      parts.push('    <div class="modal-thumb-sub"><span>' + safe(targetAsset.id) + '</span> · <span>📍 ' + safe(targetAsset.location || '연구실') + '</span> · <span class="badge-status">' + safe(topLevelCategory(targetAsset)) + '</span></div>');
-      parts.push('  </div>');
-      parts.push('  <input type="hidden" name="asset_id" value="' + safe(targetAsset.id) + '">');
-      parts.push('  <input type="hidden" name="asset_name" value="' + safe(targetAsset.name) + '">');
-      parts.push('</div>');
-    } else {
-      parts.push('<label class="field full">대상 연구장비 *');
-      parts.push('  <select name="asset_id" required class="quick-return-select" id="logbookAssetSelect">');
-      parts.push('    <option value="">-- 연구장비를 선택하세요 --</option>');
-      assets.forEach(function(ast){
-        parts.push('    <option value="' + safe(ast.id) + '">' + safe(ast.id) + ' - ' + safe(ast.name) + ' (' + safe(ast.location || '미지정') + ')</option>');
-      });
-      parts.push('  </select>');
-      parts.push('</label>');
-    }
-
-    // 2. 사용자 성명
-    parts.push('<label class="field full">사용자 성명 (Operator) *');
-    parts.push('  <input name="operator_name" required placeholder="예: 김연구" value="' + safe(lastBorrower) + '">');
-    parts.push('</label>');
-
-    // 3. 시작 일시 & 가동 시간
-    parts.push('<div class="form-grid-2">');
-    parts.push('  <label class="field">시작 일시 *');
-    parts.push('    <input name="start_time" type="datetime-local" required value="' + nowLocal + '">');
-    parts.push('  </label>');
-    parts.push('  <label class="field">가동 시간 (시간 단위) *');
-    parts.push('    <input name="run_hours" type="number" step="0.1" min="0.1" max="100" required value="2.0" placeholder="예: 2.5">');
-    parts.push('  </label>');
-    parts.push('</div>');
-    parts.push('<div class="preset-chips-wrap" style="margin-top:-6px;margin-bottom:12px;">');
-    parts.push('  <span class="preset-chips-label">빠른 시간:</span>');
-    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="run_hours" data-set-val="1.0">1시간</button>');
-    parts.push('  <button type="button" class="btn-preset-chip active" data-set-field="run_hours" data-set-val="2.0">2시간</button>');
-    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="run_hours" data-set-val="3.0">3시간</button>');
-    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="run_hours" data-set-val="4.0">4시간</button>');
-    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="run_hours" data-set-val="8.0">전일(8h)</button>');
-    parts.push('</div>');
-
-    // 4. 연구과제명
-    parts.push('<label class="field full">연구과제명 / 사용 목적 *');
-    parts.push('  <input name="project_name" required placeholder="예: 2DQH 연구단 기본과제" value="' + safe(lastProject) + '">');
-    parts.push('</label>');
-    parts.push('<div class="preset-chips-wrap" style="margin-top:-6px;margin-bottom:12px;">');
-    parts.push('  <span class="preset-chips-label">추천 과제:</span>');
-    parts.push('  <button type="button" class="btn-preset-chip active" data-set-field="project_name" data-set-val="2DQH 연구단 기본과제">2DQH 기본과제</button>');
-    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="project_name" data-set-val="IBS 연구단 시설 공동활용">시설 공동활용</button>');
-    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="project_name" data-set-val="위탁/외부 연구과제">위탁과제</button>');
-    parts.push('  <button type="button" class="btn-preset-chip" data-set-field="project_name" data-set-val="장비 점검 및 시운전">점검·시운전</button>');
-    parts.push('</div>');
-
-    // 5. 시료 / 샘플 정보
-    parts.push('<label class="field full">측정 시료 / 샘플 정보 (선택)');
-    parts.push('  <input name="sample_info" placeholder="예: Graphene/h-BN heterostructure, 3개 샘플">');
-    parts.push('</label>');
-
-    // 6. 장비 상태 점검
-    parts.push('<div class="field full">');
-    parts.push('  <label class="field-title" style="display:block;margin-bottom:6px;font-size:13px;font-weight:700;">장비 상태 점검 (Status Inspection) *</label>');
-    parts.push('  <div class="status-check-group" style="display:flex;gap:10px;">');
-    parts.push('    <label class="status-radio-label is-normal" style="flex:1;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px solid #86efac;background:#f0fdf4;border-radius:10px;font-weight:700;color:#166534;">');
-    parts.push('      <input type="radio" name="status_check" value="normal" checked style="accent-color:#16a34a;">');
-    parts.push('      <span>✓ 정상 작동</span>');
-    parts.push('    </label>');
-    parts.push('    <label class="status-radio-label is-issue" style="flex:1;cursor:pointer;display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px solid #fca5a5;background:#fef2f2;border-radius:10px;font-weight:700;color:#991b1b;">');
-    parts.push('      <input type="radio" name="status_check" value="issue" style="accent-color:#dc2626;">');
-    parts.push('      <span>⚠️ 이상 발견 / 점검 필요</span>');
-    parts.push('    </label>');
-    parts.push('  </div>');
-    parts.push('</div>');
-
-    // 7. 비고 및 메모
-    parts.push('<label class="field full">특이사항 / 전달 메모 (선택)');
-    parts.push('  <textarea name="notes" rows="2" placeholder="측정 파라미터(진공도, 가스 잔량 등)나 다음 사용자를 위한 인수인계 메모를 입력하세요..."></textarea>');
-    parts.push('</label>');
-
-    // 8. 최근 3회 기록
-    if(targetAsset){
-      const assetHistory = equipmentLogs.filter(function(lg){ return lg.asset_id === targetAsset.id; }).slice(0, 3);
-      if(assetHistory.length > 0){
-        parts.push('<div class="logbook-recent-card" style="margin-top:10px;padding:10px 12px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;">');
-        parts.push('  <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px;">📋 최근 사용 기록 (' + assetHistory.length + '건)</div>');
-        assetHistory.forEach(function(rec){
-          const stIcon = rec.status_check === 'issue' ? '⚠️ 이상' : '✓ 정상';
-          const dt = String(rec.start_time || '').replace('T', ' ').slice(0, 16);
-          parts.push('  <div style="font-size:11.5px;color:#64748b;margin-bottom:3px;display:flex;justify-content:space-between;">');
-          parts.push('    <span>' + dt + ' · ' + safe(rec.operator_name) + ' (' + safe(rec.run_hours || '—') + 'h)</span>');
-          parts.push('    <span style="font-weight:600;' + (rec.status_check === 'issue' ? 'color:#dc2626;' : 'color:#16a34a;') + '">' + stIcon + '</span>');
-          parts.push('  </div>');
-        });
-        parts.push('</div>');
-      }
-    }
-
-    parts.push('</div>');
-  } else if(mode === 'addResearchEquipment'){
-    parts.push('<div class="logbook-modal-form-wrap">');
-    parts.push('  <p style="font-size:13px;color:#64748b;margin-bottom:14px;line-height:1.45;">멀티미터, 공구 등 일반 비품(Inventory)과 구별되는 고가 연구실 실험·분석 장비를 등록합니다. 등록된 장비는 전용 로그북과 연동됩니다.</p>');
-    parts.push('  <div class="field">');
-    parts.push('    <label for="inpEqCode">장비 약칭 / 식별 코드 *</label>');
-    parts.push('    <input id="inpEqCode" name="code" required placeholder="예: AFM, FTIR, FURNACE, PL" style="text-transform:uppercase;">');
-    parts.push('  </div>');
-    parts.push('  <div class="field">');
-    parts.push('    <label for="inpEqName">연구장비 명칭 *</label>');
-    parts.push('    <input id="inpEqName" name="name" required placeholder="예: 원자현미경 (Atomic Force Microscope)">');
-    parts.push('  </div>');
-    parts.push('  <div class="field">');
-    parts.push('    <label for="inpEqModel">모델명 및 제조사</label>');
-    parts.push('    <input id="inpEqModel" name="model" placeholder="예: Park Systems NX10">');
-    parts.push('  </div>');
-    parts.push('  <div class="field">');
-    parts.push('    <label for="inpEqLoc">설치 위치 / 연구실</label>');
-    parts.push('    <input id="inpEqLoc" name="location" placeholder="예: 2DQH 정밀측정실">');
-    parts.push('  </div>');
-    parts.push('  <div class="field">');
-    parts.push('    <label for="inpEqManager">장비 책임자 / 연락처</label>');
-    parts.push('    <input id="inpEqManager" name="manager" placeholder="예: 홍길동 (담당자)">');
-    parts.push('  </div>');
-    parts.push('  <div class="field">');
-    parts.push('    <label for="inpEqType">로그북 운영 양식</label>');
-    parts.push('    <select id="inpEqType" name="type">');
-    parts.push('      <option value="standard">일반 정밀장비 일지 (가동시간 / 시료 / 장비상태)</option>');
-    parts.push('      <option value="xrd">X선 회절분석기 (HR-XRD 2단계 정밀 양식)</option>');
-    parts.push('    </select>');
-    parts.push('  </div>');
-    parts.push('</div>');
   } else if(mode === 'movement'){
     const c = consumableFor(id);
     const moveType = window.__labstockMovementType === 'in' ? 'in' : 'use';
@@ -6829,8 +6686,6 @@ function openModal(mode, id){
   else if(mode === 'quickReturn') btnText = '✅ 반납 완료';
   else if(mode === 'quickReorder') btnText = '구매요청';
   else if(mode === 'chemicalLog') btnText = '✓ 취급일지 작성 완료';
-  else if(mode === 'equipmentLog') btnText = '✓ 로그북 등록';
-  else if(mode === 'addResearchEquipment') btnText = '✓ 연구장비 등록 완료';
 
   const isReturn = (mode === 'return' || mode === 'quickReturn');
   const modalFormEl = $('modalForm');
@@ -7212,112 +7067,6 @@ async function saveForm(e){
     return;
   }
 
-  // [연구장비 전자 로그북 등록 처리]
-  if(modalMode === 'equipmentLog'){
-    try {
-      const targetAstId = v.asset_id || modalId;
-      const targetAst = assetFor(targetAstId);
-      const logEntry = {
-        id: 'eqlog-' + Date.now(),
-        asset_id: targetAstId,
-        asset_name: (v.asset_name || (targetAst ? targetAst.name : targetAstId) || '').trim(),
-        operator_name: (v.operator_name || '').trim(),
-        start_time: v.start_time || new Date().toISOString(),
-        run_hours: Number(v.run_hours) || 1.0,
-        project_name: (v.project_name || '').trim(),
-        sample_info: (v.sample_info || '').trim(),
-        status_check: v.status_check || 'normal',
-        notes: (v.notes || '').trim(),
-        created_at: new Date().toISOString()
-      };
-
-      if(v.operator_name){
-        localStorage.setItem('labstock_last_borrower_name', v.operator_name.trim());
-      }
-      if(v.project_name){
-        localStorage.setItem('labstock_last_project_name', v.project_name.trim());
-      }
-
-      // 1. 브라우저 로컬 저장
-      equipmentLogs.unshift(logEntry);
-      localStorage.setItem('labstock_equipment_logs', JSON.stringify(equipmentLogs));
-  localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments));
-  localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs));
-  localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions));
-
-      // 2. Supabase 연동 시 DB 저장 시도
-      if(db && !isLocalMode){
-        try {
-          const { error: dbErr } = await db.from('equipment_logs').insert({
-            asset_id: logEntry.asset_id,
-            asset_name: logEntry.asset_name,
-            operator_name: logEntry.operator_name,
-            start_time: logEntry.start_time,
-            run_hours: logEntry.run_hours,
-            project_name: logEntry.project_name,
-            sample_info: logEntry.sample_info,
-            status_check: logEntry.status_check,
-            notes: logEntry.notes
-          });
-          if(dbErr) console.warn('Supabase equipment_logs 저장 건너뜀 (로컬 스토리지에 보존됨):', dbErr);
-        } catch(netErr) {
-          console.warn('Supabase 동기화 건너뜀 (로컬 스토리지에 보존됨):', netErr);
-        }
-      }
-
-      closeModal();
-      toast('✓ 연구장비 사용 로그북이 성공적으로 등록되었습니다.');
-      renderLogbook();
-      renderInventory();
-    } catch(eqErr){
-      console.error('로그북 등록 실패:', eqErr);
-      toast('로그북 저장 중 오류가 발생했습니다.');
-    } finally {
-      btn.disabled = false;
-    }
-    return;
-  }
-
-  // [새 연구장비 등록 처리 (비품과 독립 관리)]
-  if(modalMode === 'addResearchEquipment'){
-    try {
-      const code = (v.code || '').trim().toUpperCase();
-      const name = (v.name || '').trim();
-      const model = (v.model || '').trim();
-      const location = (v.location || '').trim();
-      const manager = (v.manager || '').trim();
-      const type = (v.type || 'standard');
-
-      if(!code || !name){
-        toast('장비 식별 코드와 장비 명칭을 입력해주세요.');
-        btn.disabled = false;
-        return;
-      }
-
-      const newEq = {
-        id: 'EQ-' + code + '-' + pad(researchEquipments.length + 1),
-        code: code,
-        name: name,
-        model: model || '—',
-        location: location || '2DQH 연구실',
-        manager: manager || '장비담당자',
-        type: type
-      };
-
-      researchEquipments.push(newEq);
-      try { localStorage.setItem('labstock_research_equipments', JSON.stringify(researchEquipments)); } catch(_) {}
-      closeModal();
-      toast("✓ '" + name + "' 연구장비가 등록되었습니다.");
-      renderLogbook();
-      selectResearchEquipment(newEq.id);
-    } catch(err){
-      console.error('연구장비 등록 오류:', err);
-      toast('연구장비 등록 중 오류가 발생했습니다.');
-    } finally {
-      btn.disabled = false;
-    }
-    return;
-  }
   if(isLocalMode || !db){
     if(modalMode === 'borrow'){
       const newLoan = {
@@ -8156,22 +7905,6 @@ function bindEvents(){
         return;
       }
       deleteXrdLog(target.dataset.xrdDel);
-      return;
-    }
-
-    if(target.id === 'btnAddResearchEquipment' || target.id === 'btnRegisterNewEquipment' || target.closest('#btnAddResearchEquipment') || target.closest('#btnRegisterNewEquipment')){
-      openModal('addResearchEquipment');
-      return;
-    }
-
-    if(target.id === 'btnOpenGeneralLogModal' || target.closest('#btnOpenGeneralLogModal')){
-      openModal('equipmentLog', currentSelectedEquipment);
-      return;
-    }
-
-    if(target.dataset.equipmentLog || target.closest('[data-equipment-log]')){
-      const btn = target.dataset.equipmentLog ? target : target.closest('[data-equipment-log]');
-      openModal('equipmentLog', btn.dataset.equipmentLog);
       return;
     }
 
