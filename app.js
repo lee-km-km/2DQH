@@ -3937,13 +3937,10 @@ function toggleTheme(){
 // [장비 본체 부착용 QR 라벨 생성 및 인쇄 모달]
 // ========================================================
 function openEquipmentQrModal(eqId){
-  if(!isAdmin()){
-    toast('장비 본체 부착용 QR 관리는 관리자 전용 기능입니다.');
-    return;
-  }
+  // 연구원, 학생, 관리자 누구나 장비 본체 부착용 QR 코드를 조회/출력 가능
   eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
-  const eq = researchEquipments.find(function(e){ return e.id === eqId; }) || {
-    id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', model: 'SmartLab / Rigaku', location: 'IBS 2DQH XRD실'
+  const eq = researchEquipments.find(function(e){ return e.id === eqId || e.code === eqId; }) || {
+    id: eqId, code: eqId, name: eqId, model: 'IBS 2DQH 연구장비', location: 'N센터 실험실'
   };
 
   const modal = $('modalEquipmentQrBackdrop');
@@ -3966,18 +3963,18 @@ function openEquipmentQrModal(eqId){
     if(window.QRCode){
       new QRCode(container, {
         text: targetUrl,
-        width: 180,
-        height: 180,
+        width: 190,
+        height: 190,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
       });
     } else {
       const img = document.createElement('img');
-      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(targetUrl);
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=' + encodeURIComponent(targetUrl);
       img.alt = 'QR Code';
-      img.style.width = '180px';
-      img.style.height = '180px';
+      img.style.width = '190px';
+      img.style.height = '190px';
       img.style.display = 'block';
       img.style.margin = '0 auto';
       container.appendChild(img);
@@ -3998,23 +3995,26 @@ function downloadEquipmentQrImage(){
   const canvas = container.querySelector('canvas');
   const img = container.querySelector('img');
 
+  const cur = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || { code: 'Equipment', name: '연구장비' };
+  const fileName = (cur.code || 'Equipment') + '_QR_Label.png';
+
   if(canvas){
     const a = document.createElement('a');
-    a.download = 'HR-XRD_QR_Label.png';
+    a.download = fileName;
     a.href = canvas.toDataURL('image/png');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    toast('✓ HR-XRD QR 라벨 이미지가 다운로드되었습니다.');
+    toast('📷 ' + (cur.code || '장비') + ' 본체 부착용 QR 라벨이 다운로드되었습니다.');
   } else if(img){
     const a = document.createElement('a');
-    a.download = 'HR-XRD_QR_Label.png';
+    a.download = fileName;
     a.href = img.src;
     a.target = '_blank';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    toast('✓ HR-XRD QR 라벨 이미지를 저장합니다.');
+    toast('📷 ' + (cur.code || '장비') + ' QR 라벨 이미지를 엽니다.');
   } else {
     toast('QR 코드 이미지를 찾을 수 없습니다.');
   }
@@ -4257,15 +4257,15 @@ function openEquipmentTestDrive(code){
     formHtml += '  </div>';
   }
 
-  // 4. SOP 체크리스트 (카드형 레이아웃으로 텍스트 분리 현상 완벽 해결)
+  // 4. SOP 체크리스트 (가로 일체형 카드 레이아웃 + 인라인 스타일로 텍스트 분리 현상 원천 차단)
   if(schema.checks && schema.checks.length){
-    formHtml += '  <div class="sop-checklist-container">';
-    formHtml += '    <div class="sop-checklist-title"><span>✅</span> SOP 안전 점검 (필수 확인)</div>';
-    formHtml += '    <div class="sop-checklist-wrap">';
+    formHtml += '  <div class="sop-checklist-container" style="margin-top:14px;padding-top:14px;border-top:1px dashed #cbd5e1;">';
+    formHtml += '    <div class="sop-checklist-title" style="font-size:13px;font-weight:800;color:var(--ink,#0f172a);margin-bottom:10px;display:flex;align-items:center;gap:6px;"><span>✅</span> SOP 안전 점검 (필수 확인)</div>';
+    formHtml += '    <div class="sop-checklist-wrap" style="display:flex;flex-direction:column;gap:8px;width:100%;">';
     schema.checks.forEach(function(chk){
-      formHtml += '      <label class="sop-check-card">';
-      formHtml += '        <input type="checkbox" name="param_chk_' + safe(chk.key) + '" checked>';
-      formHtml += '        <span class="sop-check-text">' + safe(chk.label) + '</span>';
+      formHtml += '      <label class="sop-check-card" style="display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;background:#f8fafc!important;border:1.5px solid #cbd5e1!important;border-radius:8px!important;padding:10px 14px!important;cursor:pointer!important;width:100%!important;box-sizing:border-box!important;margin:0!important;text-align:left!important;">';
+      formHtml += '        <input type="checkbox" name="param_chk_' + safe(chk.key) + '" checked style="width:19px!important;min-width:19px!important;height:19px!important;min-height:19px!important;margin:0!important;padding:0!important;flex-shrink:0!important;accent-color:#2563eb!important;cursor:pointer!important;">';
+      formHtml += '        <span class="sop-check-text" style="font-size:13px!important;font-weight:600!important;color:#0f172a!important;line-height:1.45!important;flex:1!important;text-align:left!important;white-space:normal!important;word-break:keep-all!important;">' + safe(chk.label) + '</span>';
       formHtml += '      </label>';
     });
     formHtml += '    </div>';
@@ -4654,7 +4654,10 @@ function renderEquipmentPortalGrid(){
       actionBtnText = '📖 ' + safe(eq.code) + ' 전자 로그북 열기';
     }
 
-    const actionBtnHtml = '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;"' : '') + '>' + actionBtnText + '</button>';
+    const actionBtnHtml = '<div style="display:flex;gap:6px;margin-top:8px;">' +
+      '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;flex:1;"' : ' style="flex:1;"') + '>' + actionBtnText + '</button>' +
+      '<button type="button" class="btn btn-card-qr-trigger" data-eq-id="' + safe(eq.id) + '" title="본체 부착용 QR 코드 열기" style="padding:0 12px;background:#ffffff;border:1.5px solid #2563eb;color:#2563eb;font-weight:700;display:inline-flex;align-items:center;gap:4px;">📷 QR</button>' +
+    '</div>';
     const statusBadgeHtml = '<span class="eq-card-cat-badge">' + safe(eq.categoryName || '장비') + '</span>';
 
     html +=
@@ -8668,6 +8671,14 @@ function bindEvents(){
       return;
     }
 
+    const cardQrTarget = target.closest('.btn-card-qr-trigger');
+    if(cardQrTarget){
+      e.preventDefault();
+      e.stopPropagation();
+      openEquipmentQrModal(cardQrTarget.dataset.eqId);
+      return;
+    }
+
     const eqCard = target.dataset.selectEq ? target : target.closest('[data-select-eq]');
     if(eqCard){
       selectResearchEquipment(eqCard.dataset.selectEq);
@@ -8818,7 +8829,7 @@ function bindEvents(){
     }
 
     // 장비 본체 부착용 QR 모달 제어
-    if(target.id === 'btnShowEquipmentQr' || target.closest('#btnShowEquipmentQr')){
+    if(target.id === 'btnShowEquipmentQr' || target.closest('#btnShowEquipmentQr') || target.id === 'btnDetailTopShowQr' || target.closest('#btnDetailTopShowQr') || target.id === 'btnPlaceholderShowQr' || target.closest('#btnPlaceholderShowQr')){
       openEquipmentQrModal();
       return;
     }
