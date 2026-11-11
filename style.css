@@ -10041,26 +10041,233 @@ html:not(.is-admin) #btnHelpTabAdmin {
   border-radius: 6px;
 }
 
-.chem-inventory-table {
-  min-width: 1150px !important;
-  width: 100% !important;
-  table-layout: auto !important;
-  border-collapse: collapse !important;
+@media (min-width: 769px) {
+  .chem-inventory-table {
+    min-width: 1150px !important;
+    width: 100% !important;
+    table-layout: auto !important;
+    border-collapse: collapse !important;
+  }
+
+  .chem-inventory-table th,
+  .chem-inventory-table td {
+    white-space: nowrap !important;
+    padding: 10px 12px !important;
+    font-size: 12.5px !important;
+    vertical-align: middle !important;
+  }
+
+  .chem-inventory-table td:nth-child(2) {
+    white-space: normal !important;
+    min-width: 220px !important;
+    max-width: 320px !important;
+    word-break: break-word !important;
+  }
+
+  #chemMobileCardList {
+    display: none !important;
+  }
 }
 
-.chem-inventory-table th,
-.chem-inventory-table td {
-  white-space: nowrap !important;
-  padding: 10px 12px !important;
-  font-size: 12.5px !important;
-  vertical-align: middle !important;
+/* ============================================================= */
+/* [모바일 전용 시약 카드 뷰 & 뷰모드 스위처 스타일] */
+/* ============================================================= */
+.chem-view-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-subtle, #f1f5f9);
+  margin-left: 8px;
+}
+.btn-chem-view-mode {
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--ink-light, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-chem-view-mode.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
 }
 
-.chem-inventory-table td:nth-child(2) {
-  white-space: normal !important;
-  min-width: 220px !important;
-  max-width: 320px !important;
-  word-break: break-word !important;
+@media (max-width: 768px) {
+  #chemTablePanel:not(.mobile-view-table) {
+    display: none !important;
+  }
+  #chemTablePanel.mobile-view-table {
+    display: block !important;
+  }
+  #chemMobileCardList.mobile-view-table {
+    display: none !important;
+  }
+  #chemMobileCardList:not(.mobile-view-table) {
+    display: flex !important;
+  }
+}
+
+.chem-mobile-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 6px 0 24px;
+}
+.chem-m-card {
+  background: var(--bg-card, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  padding: 14px 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.chem-m-card.is-special {
+  border-left: 4.5px solid #dc2626 !important;
+  background: linear-gradient(to right, rgba(254, 242, 242, 0.5), #ffffff 15%);
+}
+[data-theme="dark"] .chem-m-card {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .chem-m-card.is-special {
+  background: linear-gradient(to right, rgba(127, 29, 29, 0.25), #151c2e 15%) !important;
+  border-left-color: #ef4444 !important;
+}
+.chem-m-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.chem-m-card-title-group {
+  flex: 1;
+  min-width: 0;
+}
+.chem-m-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  word-break: break-word;
+  line-height: 1.35;
+  margin-bottom: 5px;
+}
+.chem-m-pill-special {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+.chem-m-pill-reagent {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+[data-theme="dark"] .chem-m-pill-special {
+  background: rgba(220, 38, 38, 0.2) !important;
+  color: #f87171 !important;
+  border-color: #7f1d1d !important;
+}
+[data-theme="dark"] .chem-m-pill-reagent {
+  background: rgba(22, 163, 74, 0.2) !important;
+  color: #4ade80 !important;
+  border-color: #14532d !important;
+}
+.chem-m-badge-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.chem-m-badge-status.in-stock {
+  background: #dcfce7;
+  color: #15803d;
+}
+.chem-m-badge-status.discarded {
+  background: #fee2e2;
+  color: #991b1b;
+}
+[data-theme="dark"] .chem-m-badge-status.in-stock {
+  background: rgba(21, 128, 61, 0.3) !important;
+  color: #86efac !important;
+}
+.chem-m-card-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--border, #e2e8f0);
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+.chem-m-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.chem-m-detail-item .lbl {
+  font-size: 10.5px;
+  color: var(--ink-light, #64748b);
+  font-weight: 600;
+}
+.chem-m-detail-item .val {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, #1e293b);
+  word-break: break-word;
+}
+.chem-m-detail-item .val.mono {
+  font-family: monospace;
+}
+.chem-m-detail-item .val.stock {
+  color: #059669;
+  font-weight: 800;
+}
+[data-theme="dark"] .chem-m-detail-item .val.stock {
+  color: #34d399 !important;
+}
+.chem-m-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-m-action {
+  flex: 1;
+  padding: 8px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid var(--border, #cbd5e1);
+  background: var(--bg-subtle, #f8fafc);
+  color: var(--ink, #1e293b);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+.btn-m-action.primary {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+[data-theme="dark"] .btn-m-action {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
 }
 
 /* 취급일지 작성 모달 폼 반응형: 모바일에서 세로로 글자 쪼개짐 방지 */

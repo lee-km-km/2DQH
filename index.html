@@ -464,7 +464,7 @@
           <div class="chem-search-row chem-search-row-bottom">
             <div class="filter-check-group">
               <span class="filter-group-title">상태:</span>
-              <label><input type="checkbox" id="chemStateAll"> 전체</label>
+              <label><input type="checkbox" id="chemStateAll" checked> 전체</label>
               <label><input type="checkbox" id="chemStateWait" checked> 대기</label>
               <label><input type="checkbox" id="chemStateIn" checked> 입고</label>
               <label><input type="checkbox" id="chemStateOut"> 폐기</label>
@@ -479,7 +479,7 @@
             <div class="filter-cond-group">
               <span class="filter-group-title">특성조건:</span>
               <label><input type="checkbox" id="chemCondSpecial" checked> 특별관리물질</label>
-              <label><input type="checkbox" id="chemCondReagent" checked> 일반시약</label>
+              <label><input type="checkbox" id="chemCondReagent" checked> 시약</label>
             </div>
             <div class="chem-search-actions">
               <button type="button" class="btn-chem-search" id="btnChemSearchSubmit">검색</button>
@@ -491,11 +491,16 @@
         <!-- 3. 테이블 상단 액션 툴바 (공식 버튼 바) -->
         <div class="chem-table-top-bar">
           <div class="chem-total-count-box">
-            총 <b id="chemTotalCountBadge">16</b> 건
+            총 <b id="chemTotalCountBadge">300</b> 건
             <span class="sort-radio-box">
               <label><input type="radio" name="chemSort" value="latest" checked> 최신순</label>
               <label><input type="radio" name="chemSort" value="name"> 제품명순</label>
             </span>
+            <!-- 모바일 전용 카드/표 뷰 전환 스위처 -->
+            <div class="chem-view-mode-toggle mobile-only" role="group" aria-label="보기 모드">
+              <button type="button" class="btn-chem-view-mode active" id="btnChemViewCard" data-view-mode="card">📱 카드</button>
+              <button type="button" class="btn-chem-view-mode" id="btnChemViewTable" data-view-mode="table">📊 표</button>
+            </div>
           </div>
 
           <div class="chem-action-buttons-group">
@@ -529,8 +534,11 @@
           </div>
         </div>
 
-        <!-- 4. 재고 테이블 (Image 1 규격 15개 컬럼) -->
-        <div class="panel chem-table-panel" style="padding:0;overflow:hidden;border-radius:6px;">
+        <!-- 4-A. 모바일 최적화 카드 뷰 (모바일 기본 노출) -->
+        <div id="chemMobileCardList" class="chem-mobile-card-list mobile-only" aria-label="화학물질 및 시약 모바일 카드 목록"></div>
+
+        <!-- 4-B. 재고 테이블 (Image 1 규격 15개 컬럼, 데스크톱 기본 및 모바일 표 전환 시 표시) -->
+        <div class="panel chem-table-panel" id="chemTablePanel" style="padding:0;overflow:hidden;border-radius:6px;">
           <div class="mobile-table-scroll-hint mobile-only">👉 좌우로 스크롤하여 상세 정보(MSDS, 수량, 잔량 등)를 확인하세요</div>
           <div class="table-wrap chem-official-inventory-table-wrap">
             <table class="chem-inventory-table" id="chemInventoryTable">

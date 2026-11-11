@@ -7964,6 +7964,12 @@ function showView(name, options){
   // 모바일 하단 탭 바 활성화 상태 동기화 (inventory, consumables, logbook, loans)
   
   if(name === 'chemicals'){
+    currentChemScope = 'all';
+    if($('chemCondSpecial')) $('chemCondSpecial').checked = true;
+    if($('chemCondReagent')) $('chemCondReagent').checked = true;
+    document.querySelectorAll('.btn-chem-scope').forEach(function(b){
+      b.classList.toggle('active', b.dataset.chemScope === 'all');
+    });
     renderChemicalsView();
   }
   if(name === 'help'){
@@ -16211,18 +16217,22 @@ let currentChemSubTab = 'calendar'; // 'calendar' | 'monthly' | 'yearly'
 
 function get291ChemicalsMaster(){
   try {
-    const raw = localStorage.getItem('lab291_chemicals_master_v5');
+    const raw = localStorage.getItem('lab291_chemicals_master_v6');
     if(raw){
       const parsed = JSON.parse(raw);
-      if(Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if(Array.isArray(parsed) && parsed.length >= LAB_291_CHEMICALS_MASTER.length) return parsed;
     }
+  } catch(e){}
+  try {
+    localStorage.removeItem('lab291_chemicals_master_v5');
+    localStorage.removeItem('lab291_chemicals_master_v4');
   } catch(e){}
   return LAB_291_CHEMICALS_MASTER;
 }
 
 function save291ChemicalsMaster(data){
   try {
-    localStorage.setItem('lab291_chemicals_master_v5', JSON.stringify(data));
+    localStorage.setItem('lab291_chemicals_master_v6', JSON.stringify(data));
   } catch(e){}
 }
 
@@ -16348,12 +16358,18 @@ function render291InventoryTable(){
       '🔍 검색 조건에 일치하는 시약이 없습니다.<br>' +
       '<span style="font-size:12px;color:var(--ink-muted);margin-top:6px;display:inline-block;">검색어를 확인하시거나 상단 <b>[초기화]</b> 버튼을 눌러 전체 목록을 조회하세요.</span>' +
       '</td></tr>';
+    const cardListEl = $('chemMobileCardList');
+    if(cardListEl){
+      cardListEl.innerHTML = '<div style="text-align:center;padding:40px 16px;background:var(--bg-card);border:1px dashed var(--border);border-radius:10px;color:var(--ink-light);font-size:13px;">🔍 검색 조건에 일치하는 시약이 없습니다.<br><span style="font-size:11.5px;color:var(--ink-muted);margin-top:6px;display:inline-block;">상단 [초기화]를 눌러 전체 목록을 조회하세요.</span></div>';
+    }
     return;
   }
 
   const logs = get291UsageLogs();
 
   let html = '';
+  let cardsHtml = '';
+
   filtered.forEach(function(c){
     const chemLogs = logs.filter(function(l){
       return (l.chemId && l.chemId === c.id) ||
@@ -16366,7 +16382,9 @@ function render291InventoryTable(){
     }
 
     const hazardBadge = c.hazard === 'F' ? '<span class="chem-badge-hazard hazard-f" title="인화성">F</span>' : (c.hazard === 'D' ? '<span class="chem-badge-hazard hazard-d" title="독성/위험">D</span>' : '-');
+    const hazardCardPill = c.hazard === 'F' ? '<span class="chem-badge-hazard hazard-f" title="인화성">F (인화성)</span>' : (c.hazard === 'D' ? '<span class="chem-badge-hazard hazard-d" title="독성/위험">D (유해위험)</span>' : '');
 
+    // 1. 데스크톱 & 모바일 표형 HTML
     html += '<tr data-chem-id="' + safe(c.id) + '">';
     html += '<td style="text-align:center;"><input type="checkbox" class="chem-row-checkbox" value="' + safe(c.id) + '"></td>';
     html += '<td style="min-width:200px;"><b style="color:var(--ink);">' + safe(c.name) + '</b>' + (c.isSpecial ? ' <span style="font-size:10px;padding:1px 5px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;font-weight:700;">특별관리</span>' : '') + '</td>';
@@ -16390,9 +16408,58 @@ function render291InventoryTable(){
     }
     html += '</td>';
     html += '</tr>';
+
+    // 2. 모바일 반응형 카드 HTML
+    cardsHtml += '<div class="chem-m-card' + (c.isSpecial ? ' is-special' : '') + '" data-chem-id="' + safe(c.id) + '">';
+    cardsHtml += '  <div class="chem-m-card-top">';
+    cardsHtml += '    <div class="chem-m-card-title-group">';
+    cardsHtml += '      <div class="chem-m-card-title">' + safe(c.name) + '</div>';
+    cardsHtml += '      ' + (c.isSpecial ? '<span class="chem-m-pill-special">⭐ 특별관리물질</span>' : '<span class="chem-m-pill-reagent">🧪 일반시약</span>');
+    if(hazardCardPill) cardsHtml += ' ' + hazardCardPill;
+    cardsHtml += '    </div>';
+    cardsHtml += '    <span class="chem-m-badge-status ' + (c.status === '폐기' ? 'discarded' : 'in-stock') + '">' + safe(c.status || '입고') + '</span>';
+    cardsHtml += '  </div>';
+    cardsHtml += '  <div class="chem-m-card-details">';
+    cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">제조사</span><span class="val">' + safe(c.mfg || '-') + '</span></div>';
+    cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">CAS No.</span><span class="val mono">' + safe(c.cas || '-') + '</span></div>';
+    cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">CAT No.</span><span class="val mono">' + safe(c.catNo || '-') + '</span></div>';
+    cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">보관위치</span><span class="val">📍 ' + safe(c.location || 'N센터 291호') + '</span></div>';
+    cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">담당자</span><span class="val">👤 ' + safe(c.handler || '-') + '</span></div>';
+    cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">수량 / 잔량</span><span class="val stock">' + safe(c.qty) + ' · <b>' + currentStock + ' ' + safe(c.unit) + '</b></span></div>';
+    cardsHtml += '  </div>';
+    cardsHtml += '  <div class="chem-m-card-actions">';
+    cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '">📄 MSDS</button>';
+    cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '">📜 이력</button>';
+    cardsHtml += '    <button type="button" class="btn-m-action primary btn-chem-m-quick-log" data-chem-id="' + safe(c.id) + '">📝 일지작성</button>';
+    cardsHtml += '  </div>';
+    cardsHtml += '</div>';
   });
 
   tbody.innerHTML = html;
+
+  const cardListEl = $('chemMobileCardList');
+  if(cardListEl){
+    cardListEl.innerHTML = cardsHtml;
+
+    cardListEl.querySelectorAll('.btn-chem-view-msds').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openChemMsdsModal(btn.dataset.chemId);
+      });
+    });
+    cardListEl.querySelectorAll('.btn-chem-view-history').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openChemHistoryModal(btn.dataset.chemId);
+      });
+    });
+    cardListEl.querySelectorAll('.btn-chem-m-quick-log').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openChemWriteLogModal(btn.dataset.chemId);
+      });
+    });
+  }
 
   const allBox = $('chemSelectAllCheckbox');
   if(allBox) allBox.checked = false;
@@ -16416,7 +16483,7 @@ function render291InventoryTable(){
           found.status = '폐기';
           found.stock = 0;
           save291ChemicalsMaster(chemicals);
-          renderChemicalsTable();
+          render291InventoryTable();
           toast('✓ 시약이 [폐기] 상태로 전환되었습니다.');
         }
       }
@@ -17791,9 +17858,48 @@ function bindChemicalsEvents(){
     if(el) el.addEventListener('change', function(){ render291InventoryTable(); });
   });
 
-  ['chemStateAll', 'chemStateWait', 'chemStateIn', 'chemStateOut', 'chemStateDel'].forEach(function(id){
+  // 모바일 카드 vs 표 뷰모드 전환
+  addEvt('btnChemViewCard', 'click', function(e){
+    e.preventDefault();
+    if($('btnChemViewCard')) $('btnChemViewCard').classList.add('active');
+    if($('btnChemViewTable')) $('btnChemViewTable').classList.remove('active');
+    if($('chemTablePanel')) $('chemTablePanel').classList.remove('mobile-view-table');
+    if($('chemMobileCardList')) $('chemMobileCardList').classList.remove('mobile-view-table');
+  });
+
+  addEvt('btnChemViewTable', 'click', function(e){
+    e.preventDefault();
+    if($('btnChemViewTable')) $('btnChemViewTable').classList.add('active');
+    if($('btnChemViewCard')) $('btnChemViewCard').classList.remove('active');
+    if($('chemTablePanel')) $('chemTablePanel').classList.add('mobile-view-table');
+    if($('chemMobileCardList')) $('chemMobileCardList').classList.add('mobile-view-table');
+  });
+
+  // 상태 전체/개별 체크박스 연동
+  const stateAllEl = $('chemStateAll');
+  if(stateAllEl){
+    stateAllEl.addEventListener('change', function(){
+      const checked = stateAllEl.checked;
+      ['chemStateWait', 'chemStateIn', 'chemStateOut', 'chemStateDel'].forEach(function(id){
+        const el = $(id);
+        if(el) el.checked = checked;
+      });
+      render291InventoryTable();
+    });
+  }
+
+  ['chemStateWait', 'chemStateIn', 'chemStateOut', 'chemStateDel'].forEach(function(id){
     const el = $(id);
-    if(el) el.addEventListener('change', function(){ render291InventoryTable(); });
+    if(el){
+      el.addEventListener('change', function(){
+        const allChecked = ['chemStateWait', 'chemStateIn', 'chemStateOut', 'chemStateDel'].every(function(sid){
+          const sel = $(sid);
+          return sel ? sel.checked : false;
+        });
+        if(stateAllEl) stateAllEl.checked = allChecked;
+        render291InventoryTable();
+      });
+    }
   });
 
   // 특성 조건 체크박스 변경 시 스코프 탭 및 필터 2방향 동기화
