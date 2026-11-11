@@ -16091,15 +16091,39 @@ function openChemWriteLogModal(chemId){
   const modal = $('modalChemWriteLogBackdrop');
   if(!modal) return;
 
-  const select = $('modalChemSelect');
   const chemicals = get291ChemicalsMaster();
 
+  // 1. chemId가 명시적으로 전달되지 않은 경우, 체크박스로 선택된 시약 ID 자동 추출!
+  if(!chemId){
+    const checkedBoxes = document.querySelectorAll('.chem-row-checkbox:checked');
+    if(checkedBoxes.length > 0){
+      chemId = checkedBoxes[0].value;
+    }
+  }
+
+  // 2. 여전히 chemId가 없으면, 특별관리물질 첫 번째 항목 또는 기본 시약 선택
+  if(!chemId){
+    const defaultSpecial = chemicals.find(function(c){ return c.isSpecial; });
+    if(defaultSpecial) chemId = defaultSpecial.id;
+    else if(chemicals.length > 0) chemId = chemicals[0].id;
+  }
+
+  const select = $('modalChemSelect');
   if(select){
-    // 특별관리물질 취급일지 작성이므로 특별관리물질만 정확하게 필터링하여 옵션 나열
-    const specialChems = chemicals.filter(function(c){ return c.isSpecial; });
-    select.innerHTML = specialChems.map(function(c){
-      return '<option value="' + safe(c.id) + '" ' + (c.id === chemId ? 'selected' : '') + '>' + safe(c.name) + ' [' + safe(c.cas) + ']</option>';
+    // 특별관리물질 우선 나열하되, 체크된 시약이 일반 시약인 경우에도 select 목록에 포함되도록 구성
+    let targetChems = chemicals.filter(function(c){ return c.isSpecial; });
+    const selectedChem = chemicals.find(function(c){ return c.id === chemId; });
+    if(selectedChem && !targetChems.some(function(c){ return c.id === selectedChem.id; })){
+      targetChems.unshift(selectedChem); // 체크된 일반 시약을 맨 앞에 배치
+    }
+
+    select.innerHTML = targetChems.map(function(c){
+      return '<option value="' + safe(c.id) + '" ' + (c.id === chemId ? 'selected' : '') + '>' +
+        safe(c.name) + ' [' + safe(c.cas) + ']' + (c.isSpecial ? ' (특별관리)' : '') +
+      '</option>';
     }).join('');
+
+    select.value = chemId;
   }
 
   const handlerEl = $('modalChemHandler');
@@ -17384,10 +17408,26 @@ function bindChemicalsEvents(){
   });
 
   // F. 전체 선택 체크박스
+    // 체크박스 변경 시 행 하이라이트 연동 (단일/다중 선택 시 시각적 강조)
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.classList.contains('chem-row-checkbox')){
+      const tr = e.target.closest('tr');
+      if(tr){
+        if(e.target.checked) tr.classList.add('chem-row-selected');
+        else tr.classList.remove('chem-row-selected');
+      }
+    }
+  });
+
   addEvt('chemSelectAllCheckbox', 'change', function(e){
     const checked = e.target.checked;
     document.querySelectorAll('.chem-row-checkbox').forEach(function(box){
       box.checked = checked;
+      const tr = box.closest('tr');
+      if(tr){
+        if(checked) tr.classList.add('chem-row-selected');
+        else tr.classList.remove('chem-row-selected');
+      }
     });
   });
 
