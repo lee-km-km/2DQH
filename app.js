@@ -3936,8 +3936,57 @@ function toggleTheme(){
 // ========================================================
 // [장비 본체 부착용 QR 라벨 생성 및 인쇄 모달]
 // ========================================================
+// QR 코드 렌더링 통합 헬퍼 (로컬 QRCode.js 우선 + 3중 안전 렌더링)
+function renderQrCodeInto(container, text, size){
+  size = size || 180;
+  if(!container) return;
+  container.innerHTML = '';
+
+  if(window.QRCode){
+    try {
+      new QRCode(container, {
+        text: text,
+        width: size,
+        height: size,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      setTimeout(function(){
+        const img = container.querySelector('img');
+        if(img){
+          img.style.display = 'block';
+          img.style.margin = '0 auto';
+        }
+        const cvs = container.querySelector('canvas');
+        if(cvs){
+          cvs.style.display = 'block';
+          cvs.style.margin = '0 auto';
+        }
+      }, 50);
+      return;
+    } catch(err){
+      console.warn('QRCode generation fallback:', err);
+    }
+  }
+
+  // Fallback: 이미지 태그
+  const img = document.createElement('img');
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(text);
+  img.alt = 'QR Code';
+  img.style.width = size + 'px';
+  img.style.height = size + 'px';
+  img.style.display = 'block';
+  img.style.margin = '0 auto';
+  container.appendChild(img);
+}
+
+// [장비 본체 부착용 QR 라벨 생성 및 인쇄 모달 (관리자 전용)]
 function openEquipmentQrModal(eqId){
-  // 연구원, 학생, 관리자 누구나 장비 본체 부착용 QR 코드를 조회/출력 가능
+  if(!isAdmin()){
+    toast('장비 본체 부착용 QR 관리는 관리자 전용 기능입니다.');
+    return;
+  }
   eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
   const eq = researchEquipments.find(function(e){ return e.id === eqId || e.code === eqId; }) || {
     id: eqId, code: eqId, name: eqId, model: 'IBS 2DQH 연구장비', location: 'N센터 실험실'
@@ -3959,26 +4008,7 @@ function openEquipmentQrModal(eqId){
   if(urlEl) urlEl.textContent = targetUrl;
 
   if(container){
-    container.innerHTML = '';
-    if(window.QRCode){
-      new QRCode(container, {
-        text: targetUrl,
-        width: 190,
-        height: 190,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    } else {
-      const img = document.createElement('img');
-      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=' + encodeURIComponent(targetUrl);
-      img.alt = 'QR Code';
-      img.style.width = '190px';
-      img.style.height = '190px';
-      img.style.display = 'block';
-      img.style.margin = '0 auto';
-      container.appendChild(img);
-    }
+    renderQrCodeInto(container, targetUrl, 190);
   }
 
   modal.classList.add('open');
@@ -4654,10 +4684,15 @@ function renderEquipmentPortalGrid(){
       actionBtnText = '📖 ' + safe(eq.code) + ' 전자 로그북 열기';
     }
 
-    const actionBtnHtml = '<div style="display:flex;gap:6px;margin-top:8px;">' +
-      '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;flex:1;"' : ' style="flex:1;"') + '>' + actionBtnText + '</button>' +
-      '<button type="button" class="btn btn-card-qr-trigger" data-eq-id="' + safe(eq.id) + '" title="본체 부착용 QR 코드 열기" style="padding:0 12px;background:#ffffff;border:1.5px solid #2563eb;color:#2563eb;font-weight:700;display:inline-flex;align-items:center;gap:4px;">📷 QR</button>' +
-    '</div>';
+    let actionBtnHtml = '';
+    if(isAdmin()){
+      actionBtnHtml = '<div style="display:flex;gap:6px;margin-top:8px;">' +
+        '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;flex:1;"' : ' style="flex:1;"') + '>' + actionBtnText + '</button>' +
+        '<button type="button" class="btn btn-card-qr-trigger admin-only" data-eq-id="' + safe(eq.id) + '" title="본체 부착용 QR 코드 열기" style="padding:0 12px;background:#ffffff;border:1.5px solid #2563eb;color:#2563eb;font-weight:700;display:inline-flex;align-items:center;gap:4px;">📷 QR</button>' +
+      '</div>';
+    } else {
+      actionBtnHtml = '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;margin-top:8px;"' : ' style="margin-top:8px;"') + '>' + actionBtnText + '</button>';
+    }
     const statusBadgeHtml = '<span class="eq-card-cat-badge">' + safe(eq.categoryName || '장비') + '</span>';
 
     html +=
@@ -17230,22 +17265,17 @@ function openChemQrModalForSingle(chemId){
 
   const titleEl = document.querySelector('.qr-label-title');
   const locEl = document.querySelector('.qr-label-loc');
-  const qrBox = $('chemicalQrCodeBox');
+  const qrBox = $('chemicalQrCanvasContainer') || $('chemicalQrCodeBox');
 
   if(titleEl) titleEl.textContent = c.name + ' 직통 QR';
   if(locEl) locEl.textContent = '보관: ' + c.location + ' · 책임: ' + c.handler;
 
-  if(qrBox && typeof QRCode !== 'undefined'){
-    qrBox.innerHTML = '';
-    const targetUrl = window.location.origin + window.location.pathname + '#chemicals?chem=' + encodeURIComponent(c.id);
-    new QRCode(qrBox, {
-      text: targetUrl,
-      width: 140,
-      height: 140,
-      colorDark: '#0f172a',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.H
-    });
+  const targetUrl = window.location.origin + window.location.pathname + '#chemicals?chem=' + encodeURIComponent(c.id);
+  const urlEl = $('chemicalQrLabelUrlText');
+  if(urlEl) urlEl.textContent = targetUrl;
+
+  if(qrBox){
+    renderQrCodeInto(qrBox, targetUrl, 140);
   }
 
   modal.classList.add('open');
