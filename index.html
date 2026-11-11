@@ -495,15 +495,24 @@
           </div>
 
           <div class="chem-action-buttons-group">
-            <!-- 관리자 전용 액션 버튼들 (비로그인 시 화면에서 완전 숨김) -->
+            <!-- 관리자 전용 액션 버튼들 (이미지 1 규격 일치, 비로그인 시 화면에서 숨김) -->
             <button type="button" class="btn-korea-action red admin-only hidden" id="btnChemNoticeExtract" title="선택한 물질의 특별관리물질 고지문 자동 작성 및 인쇄">
               특별관리물질고지
             </button>
-            <button type="button" class="btn-korea-action blue admin-only hidden" id="btnChemOfficialLedgerCsv" title="N센터 291호 연구실 표준 특별관리물질 취급일지 CSV 다운로드">
+            <button type="button" class="btn-korea-action blue admin-only hidden" id="btnChemOfficialLedgerModal" title="N센터 291호 법정 특별관리물질 취급일지 서식 열람 및 인쇄">
               특별관리물질취급일지
             </button>
             <button type="button" class="btn-korea-action green admin-only hidden" id="btnChemProductExcel" title="전체 재고현황 엑셀 다운로드">
               제품 통합 EXCEL
+            </button>
+            <button type="button" class="btn-korea-action gray admin-only hidden" id="btnChemCombinedHazardsLedger" title="통합유해인자치급및관리대장 서식 다운로드">
+              통합유해인자치급및관리대장
+            </button>
+            <button type="button" class="btn-korea-action gray admin-only hidden" id="btnChemHazardsLedger" title="유해인자치급및관리대장 서식 다운로드">
+              유해인자치급및관리대장
+            </button>
+            <button type="button" class="btn-korea-action gray admin-only hidden" id="btnChemDetailedPerfLedger" title="취급세부실적대장 서식 다운로드">
+              취급세부실적대장
             </button>
             <button type="button" class="btn-korea-action dark admin-only hidden" id="btnChemOpenNewProductModal">
               시약등록
@@ -753,6 +762,157 @@
               🚀 취급일지 전자 서명 등록 (30년 영구 보존)
             </button>
           </form>
+        </section>
+      </div>
+
+      <!-- 9. 특별관리물질 고지 모달 (사용자 요청 이미지 2 서식 100% 일치) -->
+      <div id="modalChemNoticeBackdrop" class="backdrop">
+        <section class="modal chem-notice-modal" role="dialog" aria-modal="true" style="max-width:820px;width:min(820px,96vw);border-radius:8px;overflow:hidden;background:#fff;">
+          <div class="modal-head" style="border-bottom:1px solid #e2e8f0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">📋</span>
+              <h3 style="margin:0;font-size:16px;color:#0f172a;font-weight:700;">특별관리물질 취급 장소 고지문 (산업안전보건법 시행규칙 제1157호)</h3>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button type="button" class="btn primary btn-sm" id="btnPrintNoticeA4" style="background:#dc2626;border-color:#dc2626;color:#fff;font-weight:700;">🖨️ A4 고지문 인쇄</button>
+              <button class="icon-btn" id="btnCloseChemNotice" aria-label="닫기" type="button"><span aria-hidden="true">×</span></button>
+            </div>
+          </div>
+          <div class="modal-body" style="padding:24px;background:#f1f5f9;display:flex;justify-content:center;">
+            <!-- 고지문 인쇄 캔버스 (이미지 2 정밀 재현) -->
+            <div id="noticePrintCanvas" class="chem-notice-board" style="width:100%;max-width:720px;background:#fff;border:3px solid #000;box-sizing:border-box;font-family:'Pretendard', 'Malgun Gothic', sans-serif;">
+              <!-- 상단 타이틀 바: 연노랑 배경 -->
+              <div style="background:#fffde7;border-bottom:3px solid #000;padding:16px 0;text-align:center;">
+                <h1 style="margin:0;font-size:32px;font-weight:900;letter-spacing:6px;color:#000;">특별관리물질 고지</h1>
+              </div>
+              
+              <!-- 본문 영역 -->
+              <div style="padding:28px 24px 20px;">
+                <!-- 관계자 외 출입금지 -->
+                <div style="text-align:center;margin-bottom:28px;">
+                  <h2 style="margin:0;font-size:38px;font-weight:900;letter-spacing:4px;color:#000;">관계자 외 출입금지</h2>
+                </div>
+
+                <!-- 물질명 (빨간색 큰 글씨) 및 함유량 -->
+                <div style="text-align:center;margin-bottom:36px;min-height:90px;display:flex;flex-direction:column;justify-content:center;">
+                  <div id="noticeSubstanceNameDisplay" style="font-size:32px;font-weight:900;color:#e11d48;line-height:1.25;word-break:break-word;">
+                    Benzene, for HPLC, ≥99.9%
+                  </div>
+                  <div id="noticeSubstanceSubDisplay" style="font-size:20px;font-weight:800;color:#e11d48;margin-top:10px;">
+                    (Benzene, for HPLC, ≥99.9% 0.1% 이상 함유)
+                  </div>
+                </div>
+
+                <!-- 하단 2분할 섹션: 좌측 독성표, 우측 안전수칙 -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;border-top:2px solid #000;padding-top:20px;gap:20px;align-items:center;">
+                  <!-- 좌측 독성 분류표 -->
+                  <div>
+                    <table style="width:100%;border-collapse:collapse;border:2px solid #000;font-size:18px;font-weight:800;text-align:center;">
+                      <tbody>
+                        <tr style="border-bottom:2px solid #000;">
+                          <td style="padding:10px 14px;border-right:2px solid #000;color:#dc2626;background:#fff5f5;text-align:left;width:68%;">발암성</td>
+                          <td id="noticeCarcinogenCheck" style="padding:10px;font-size:22px;color:#dc2626;font-weight:900;">X</td>
+                        </tr>
+                        <tr style="border-bottom:2px solid #000;">
+                          <td style="padding:10px 14px;border-right:2px solid #000;color:#dc2626;background:#fff5f5;text-align:left;">생식세포 변이원성</td>
+                          <td id="noticeMutagenCheck" style="padding:10px;font-size:22px;color:#dc2626;font-weight:900;">X</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:10px 14px;border-right:2px solid #000;color:#dc2626;background:#fff5f5;text-align:left;">생식독성</td>
+                          <td id="noticeReproCheck" style="padding:10px;font-size:22px;color:#dc2626;font-weight:900;">X</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- 우측 안전수칙 -->
+                  <div style="padding-left:10px;font-size:25px;font-weight:900;color:#000;line-height:2.0;letter-spacing:1px;">
+                    <div>• 보호구/보호의 착용</div>
+                    <div>• 흡연/음식섭취 금지</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 10. 특별관리물질 취급일지 법정 서식 뷰어 모달 (사용자 요청 이미지 3 서식 100% 일치) -->
+      <div id="modalChemOfficialLedgerBackdrop" class="backdrop">
+        <section class="modal chem-ledger-modal" role="dialog" aria-modal="true" style="max-width:1000px;width:min(1000px,96vw);border-radius:8px;overflow:hidden;background:#fff;">
+          <div class="modal-head" style="border-bottom:1px solid #e2e8f0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:18px;">📜</span>
+              <h3 style="margin:0;font-size:16px;color:#0f172a;font-weight:700;">특별관리물질 취급일지 (산업안전보건법 제439조 법정 서식)</h3>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button type="button" class="btn btn-sm" id="btnDownloadLedgerExcel" style="background:#059669;color:#fff;font-weight:700;border:none;padding:6px 12px;border-radius:4px;">📊 엑셀(.xlsx)</button>
+              <button type="button" class="btn primary btn-sm" id="btnPrintLedgerA4" style="background:#2563eb;color:#fff;font-weight:700;border:none;padding:6px 12px;border-radius:4px;">🖨️ 법정 서식 인쇄</button>
+              <button class="icon-btn" id="btnCloseChemOfficialLedger" aria-label="닫기" type="button"><span aria-hidden="true">×</span></button>
+            </div>
+          </div>
+          <div class="modal-body" style="padding:24px;background:#f8fafc;max-height:80vh;overflow-y:auto;">
+            <!-- 인쇄 캔버스 (이미지 3 정밀 재현) -->
+            <div id="ledgerPrintCanvas" style="background:#fff;padding:30px;border:1px solid #cbd5e1;box-shadow:0 2px 8px rgba(0,0,0,0.06);font-family:'Pretendard', 'Malgun Gothic', sans-serif;">
+              <!-- 서식 제목 -->
+              <div style="text-align:center;margin-bottom:24px;">
+                <h1 style="margin:0;font-size:28px;font-weight:900;letter-spacing:4px;color:#000;text-decoration:underline;text-underline-offset:8px;">특별관리물질 취급일지</h1>
+              </div>
+
+              <!-- 상단 메타 정보 헤더 -->
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;font-size:13.5px;color:#000;line-height:1.7;">
+                <div>
+                  <div><b>· 건 물 명 :</b> N센터</div>
+                  <div><b>· 소 &nbsp;&nbsp;&nbsp; 속 :</b> 이차원양자헤테로구조체연구단</div>
+                  <div><b>· 연구실명 :</b> 이차원 소재 합성 실험실 (291호)</div>
+                </div>
+                <div style="text-align:right;">
+                  <div><b>· 연구실책임자 :</b> 신현석 &nbsp;&nbsp;<b>(서명)</b></div>
+                </div>
+              </div>
+
+              <!-- 법정 서식 테이블 -->
+              <table style="width:100%;border-collapse:collapse;border:1.5px solid #000;font-size:12px;text-align:center;">
+                <thead>
+                  <tr style="background:#f8fafc;border-bottom:1.5px solid #000;font-weight:800;">
+                    <th style="border:1px solid #000;padding:8px 6px;width:11%;">취급일자</th>
+                    <th style="border:1px solid #000;padding:8px 6px;width:24%;">물질명</th>
+                    <th style="border:1px solid #000;padding:8px 6px;width:9%;">사용량</th>
+                    <th style="border:1px solid #000;padding:8px 6px;width:9%;">재고량</th>
+                    <th style="border:1px solid #000;padding:8px 6px;width:16%;">작업내용</th>
+                    <th style="border:1px solid #000;padding:8px 6px;width:9%;">작업자</th>
+                    <th style="border:1px solid #000;padding:8px 6px;width:11%;">착용한 보호구</th>
+                    <th style="border:1px solid #000;padding:8px 6px;width:11%;">사고 발생 시,<br>피해내용 및 조치사항</th>
+                  </tr>
+                </thead>
+                <tbody id="officialLedgerTableBody">
+                  <!-- JS에서 렌더링 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 11. 공식 MSDS 요약 정보 뷰어 모달 -->
+      <div id="modalMsdsViewerBackdrop" class="backdrop">
+        <section class="modal msds-viewer-modal" role="dialog" aria-modal="true" style="max-width:840px;width:min(840px,96vw);border-radius:10px;overflow:hidden;background:#fff;">
+          <div class="modal-head" style="border-bottom:1px solid #e2e8f0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:20px;">📄</span>
+              <div>
+                <h3 id="msdsModalTitle" style="margin:0;font-size:16px;color:#0f172a;font-weight:700;">물질안전보건자료 (MSDS) 공식 요약 정보</h3>
+                <p id="msdsModalSub" style="margin:2px 0 0;font-size:12px;color:#64748b;">제조사 공식 MSDS 16대 필수 항목 요약</p>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button type="button" class="btn primary btn-sm" id="btnPrintMsdsA4" style="background:#2563eb;color:#fff;font-weight:700;border:none;padding:6px 12px;border-radius:4px;">🖨️ MSDS 요약 인쇄</button>
+              <button class="icon-btn" id="btnCloseMsdsModal" aria-label="닫기" type="button"><span aria-hidden="true">×</span></button>
+            </div>
+          </div>
+          <div class="modal-body" id="msdsModalBody" style="padding:22px;background:#f8fafc;max-height:80vh;overflow-y:auto;">
+            <!-- JS에서 동적 렌더링 -->
+          </div>
         </section>
       </div>
     </section>
@@ -1427,7 +1587,7 @@
       <!-- 1. 3단계 퀵 스타트 비주얼 로드맵 -->
       <div class="panel help-roadmap-panel">
         <h3 class="help-section-title">
-          <span>🚀</span> <b>초보 연구원을 위한 3단계 퀵 스타트 가이드</b>
+          <span>🚀</span> <b>연구원을 위한 3단계 핵심 이용 가이드</b>
         </h3>
         <div class="roadmap-grid">
           <div class="roadmap-step-card">
@@ -1550,12 +1710,12 @@
           <div class="faq-accordion-item">
             <button type="button" class="faq-accordion-question">
               <span class="faq-q-badge">Q2</span>
-              <span class="faq-q-text">측정이 취소되었거나 파라미터/사용자명을 잘못 등록했을 때 수정·삭제는 어떻게 하나요?</span>
+              <span class="faq-q-text">측정 내용이나 파라미터를 잘못 입력했을 때 수정이나 삭제는 어떻게 하나요?</span>
               <span class="faq-accordion-chevron">▼</span>
             </button>
             <div class="faq-accordion-answer">
-              <p>국가연구개발과제 감사 및 연구데이터 무결성 유지를 위해 <b>일반 연구원 계정에서는 임의 삭제가 제한</b>되어 있습니다.</p>
-              <p>오등록 세션의 삭제나 수정이 필요한 경우 실험실 관리자(또는 책임자)에게 요청하시면, <b>관리자 로그인</b> 상태에서 해당 기록 우측의 <code>[🗑️ 삭제]</code> 버튼을 통해 데이터베이스에서 안전하게 영구 정정할 수 있습니다.</p>
+              <p>국가연구개발과제 감사 및 연구 데이터의 무결성과 감사 추적성을 위해 <b>일반 연구원 모드에서는 임의 삭제가 제한</b>되어 있습니다.</p>
+              <p>입력 내용의 수정이나 취소가 필요한 경우 실험실 관리자(또는 책임자)에게 요청하시면, <b>관리자 로그인</b> 상태에서 해당 기록 우측의 <code>[🗑️ 삭제]</code> 버튼을 통해 데이터베이스에서 안전하게 수정하거나 삭제할 수 있습니다.</p>
             </div>
           </div>
 
@@ -1650,7 +1810,7 @@
 
       <div class="help-admin-sections-grid">
         <div class="panel help-admin-card">
-          <h4 class="admin-card-title"><span>🗑️</span> 1. 오등록 세션 및 취급일지 영구 정정·삭제</h4>
+          <h4 class="admin-card-title"><span>🗑️</span> 1. 장비 사용 기록 및 취급일지 데이터 정정·삭제</h4>
           <div class="admin-card-body">
             <p>• <b>장비 가동 세션 삭제</b>: 장비 상세 페이지의 최근 가동 기록 또는 가동 피드에서 행 우측의 <code>[🗑️ 삭제]</code> 버튼을 누르면 해당 장비의 Supabase 전용 테이블(<code>xrd_logs</code> 등)에서 즉시 영구 삭제됩니다.</p>
             <p>• <b>특별관리물질 취급일지 삭제</b>: 관리대장 테이블 우측의 <code>[🗑️ 삭제]</code> 버튼으로 잘못 입력된 수불 내역을 정정할 수 있습니다.</p>
@@ -1658,10 +1818,10 @@
         </div>
 
         <div class="panel help-admin-card">
-          <h4 class="admin-card-title"><span>📊</span> 2. 고용노동부 / 연구실안전관리원 감사 엑셀 &amp; 고지문 출력</h4>
+          <h4 class="admin-card-title"><span>📊</span> 2. 연구실 안전 점검 대비 법정 서식 및 엑셀 출력</h4>
           <div class="admin-card-body">
             <p>• <b>특별관리물질고지 추출</b>: 재고 목록에서 원하는 물질을 체크박스로 선택 후 <code>[특별관리물질고지]</code>를 누르면 법정 고지문(관계자 외 출입금지)이 자동 생성되어 즉시 A4 인쇄/PDF 저장이 가능합니다.</p>
-            <p>• <b>산안법 제439조 특별관리대장 CSV</b>: <code>[특별관리물질취급일지]</code>를 눌러 N센터 291호 연구실 공인 서식의 엑셀 CSV를 즉시 내려받습니다.</p>
+            <p>• <b>산업안전보건법 제439조 특별관리물질 취급일지 서식</b>: <code>[특별관리물질취급일지]</code>를 눌러 N센터 291호 연구실 공인 서식의 엑셀 CSV를 즉시 내려받습니다.</p>
           </div>
         </div>
 

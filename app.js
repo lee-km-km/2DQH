@@ -2240,6 +2240,14 @@ function renderLoans(){
     const activeCount = loans.filter(function(l){ return !l.returned_at; }).length;
     activeCountBadge.textContent = activeCount;
   }
+
+  const btnEmptyBorrow = $('btnEmptyLoanBorrow');
+  if(btnEmptyBorrow){
+    btnEmptyBorrow.onclick = function(e){
+      e.preventDefault();
+      openModal('borrow');
+    };
+  }
 }
 
 // ==========================================
@@ -15875,7 +15883,7 @@ function render291InventoryTable(){
     html += '<td style="white-space:nowrap;color:var(--ink-light);">' + safe(c.mfg) + '</td>';
     html += '<td style="white-space:nowrap;font-family:monospace;font-size:11.5px;">' + safe(c.catNo) + '</td>';
     html += '<td style="white-space:nowrap;font-family:monospace;font-weight:600;font-size:11.5px;">' + safe(c.cas) + '</td>';
-    html += '<td style="text-align:center;"><button type="button" class="btn-table-action" onclick="alert(\'[' + safe(c.name) + '] 안전보건공단 공식 MSDS 요약 정보를 조회합니다.\')" title="MSDS 보기">📄</button></td>';
+    html += '<td style="text-align:center;"><button type="button" class="btn-table-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '" title="제조사 공식 MSDS 16대 필수 요약 정보">📄</button></td>';
     html += '<td style="text-align:center;">' + hazardBadge + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">' + safe(c.qty) + '</td>';
     html += '<td style="text-align:right;white-space:nowrap;font-weight:800;color:#059669;font-size:13px;">' + currentStock + ' ' + safe(c.unit) + '</td>';
@@ -15887,7 +15895,7 @@ function render291InventoryTable(){
     html += '<td style="text-align:center;white-space:nowrap;">';
     html += '<button type="button" class="btn-table-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '" style="font-weight:700;color:#2563eb;">이력</button>';
     if(isAdmin()){
-      html += '<button type="button" class="btn-table-action btn-chem-row-qr" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;" title="QR 라벨">QR</button>';
+      html += '<button type="button" class="btn-table-action btn-chem-discard" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#d97706;" title="시약 폐기 처리">폐기</button>';
       html += '<button type="button" class="btn-table-action danger btn-chem-delete" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#dc2626;">삭제</button>';
     }
     html += '</td>';
@@ -15898,6 +15906,32 @@ function render291InventoryTable(){
 
   const allBox = $('chemSelectAllCheckbox');
   if(allBox) allBox.checked = false;
+
+  tbody.querySelectorAll('.btn-chem-view-msds').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      openChemMsdsModal(btn.dataset.chemId);
+    });
+  });
+
+  tbody.querySelectorAll('.btn-chem-discard').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      if(!isAdmin()){ toast('관리자 권한이 필요합니다.'); return; }
+      const chemId = btn.dataset.chemId;
+      if(confirm('이 시약을 공식 폐기 처리하시겠습니까?\n확인 시 잔량이 0으로 정산되고 상태가 [폐기]로 전환됩니다.')){
+        const chemicals = get291ChemicalsMaster();
+        const found = chemicals.find(function(c){ return c.id === chemId; });
+        if(found){
+          found.status = '폐기';
+          found.stock = 0;
+          save291ChemicalsMaster(chemicals);
+          renderChemicalsTable();
+          toast('✓ 시약이 [폐기] 상태로 전환되었습니다.');
+        }
+      }
+    });
+  });
 
   tbody.querySelectorAll('.btn-chem-view-history').forEach(function(btn){
     btn.addEventListener('click', function(e){
@@ -16148,6 +16182,524 @@ async function handleModalChemLogSubmit(e){
   closeChemWriteLogModal();
   toast('✓ ' + c.name.split('(')[0] + ' ' + usedQty + c.unit + ' 취급일지가 성공적으로 등록되었습니다. (잔여 ' + remaining + c.unit + ')');
   renderChemicalsView();
+}
+
+
+// =============================================================
+// [공식 MSDS 레지스트리 및 특별관리물질 서식 뷰어 시스템]
+// 제조사(Sigma-Aldrich, Thermo Fisher, Alfa Aesar) 공식 데이터 기반
+// =============================================================
+const CHEMICAL_MSDS_REGISTRY = {
+  'chem-special-1': {
+    name: 'Sulfuric acid(ACS reagent, 95.0-98.0%)',
+    mfg: 'Sigma-Aldrich',
+    catNo: '258105',
+    cas: '7664-93-9',
+    formula: 'H2SO4',
+    molWeight: '98.08 g/mol',
+    signalWord: '위험 (DANGER)',
+    signalClass: 'danger',
+    pictograms: [
+      { icon: '🔥', label: '산화성', code: 'GHS03' },
+      { icon: '🧪', label: '부식성', code: 'GHS05' },
+      { icon: '☠️', label: '급성독성', code: 'GHS06' },
+      { icon: '⚕️', label: '건강유해성', code: 'GHS08' }
+    ],
+    hCodes: [
+      { code: 'H314', desc: '피부에 중증 화상과 눈 손상을 일으킴' },
+      { code: 'H330', desc: '흡입하면 치명적임 (증기 및 미스트)' },
+      { code: 'H350', desc: '암을 일으킬 수 있음 (국제암연구소 IARC Group 1)' }
+    ],
+    pCodes: [
+      { code: 'P201', desc: '사용 전 취급 설명서를 확보하시오.' },
+      { code: 'P260', desc: '분진·흄·가스·미스트·증기·스프레이를 흡입하지 마시오.' },
+      { code: 'P280', desc: '내산성 보호장갑·내산성 보호의·보안경·안면보호구를 착용하시오.' },
+      { code: 'P301+P330+P331', desc: '삼켰다면 입을 씻어내고 토하게 하지 마시오.' },
+      { code: 'P303+P361+P353', desc: '피부에 묻으면 오염된 의복을 즉시 벗고 물로 15분 이상 씻으시오.' }
+    ],
+    firstAid: {
+      eye: '즉시 흐르는 물이나 생리식염수로 눈꺼풀을 벌려 15분 이상 충분히 세척하고 즉시 안과 전문의의 진료를 받으십시오.',
+      skin: '오염된 의복과 신발을 즉시 벗고 다량의 흐르는 물로 15분 이상 씻어내십시오. 화상이 심할 경우 즉시 응급 치료를 받으십시오.',
+      inhalation: '신선한 공기가 있는 곳으로 즉시 환자를 옮기십시오. 호흡이 곤란하면 인공호흡(마우스 투 마우스 금지)을 실시하고 산소를 공급하십시오.',
+      ingestion: '의식이 있는 경우 즉시 입을 헹구게 하고 물을 마시게 하되 억지로 구토를 유도하지 마십시오. 즉시 의사의 진료를 받으십시오.'
+    },
+    ppe: '내산성 불소고무 장갑(0.7mm 이상), 화학물질 튀김 방지 고글 및 안면보호구, 산성가스용 방독마스크(KOSHA 인증 카트리지), 내산성 앞치마.',
+    spillFire: '누출 시 탄산수소나트륨(소다회) 또는 소석회로 천천히 중화 처리 후 다량의 물로 세척하십시오. 물과 격렬히 반응하므로 수조에 직접 물을 붓지 마십시오.'
+  },
+  'chem-special-2': {
+    name: 'Pyridinium chlorochromate, 98%',
+    mfg: 'Sigma-Aldrich',
+    catNo: '190144',
+    cas: '26299-14-9',
+    formula: 'C5H5NHCrO3Cl',
+    molWeight: '215.56 g/mol',
+    signalWord: '위험 (DANGER)',
+    signalClass: 'danger',
+    pictograms: [
+      { icon: '🔥', label: '산화성 고체', code: 'GHS03' },
+      { icon: '🧪', label: '부식성', code: 'GHS05' },
+      { icon: '⚕️', label: '발암성·변이원', code: 'GHS08' },
+      { icon: '🐟', label: '수생환경유해', code: 'GHS09' }
+    ],
+    hCodes: [
+      { code: 'H272', desc: '화재를 강렬하게 함 (산화제)' },
+      { code: 'H317', desc: '알레르기성 피부 반응을 일으킬 수 있음' },
+      { code: 'H350', desc: '암을 일으킬 수 있음 (6가 크롬 화합물)' },
+      { code: 'H340', desc: '유전적인 결함을 일으킬 수 있음' },
+      { code: 'H410', desc: '장기적 영향에 의해 수생생물에 매우 유독함' }
+    ],
+    pCodes: [
+      { code: 'P201', desc: '사용 전 취급 설명서를 확보하시오.' },
+      { code: 'P220', desc: '가연성 물질 및 환원제와 격리하여 보관하시오.' },
+      { code: 'P273', desc: '환경으로 배출하지 마시오.' },
+      { code: 'P280', desc: '보호장갑·보호의·보안경·호흡용 보호구를 착용하시오.' }
+    ],
+    firstAid: {
+      eye: '즉시 물로 15분 이상 꼼꼼히 세척하고 전문의의 진료를 받으십시오.',
+      skin: '오염된 부위를 비누와 다량의 물로 철저히 씻으십시오. 발진 발생 시 진료를 받으십시오.',
+      inhalation: '환자를 신선한 공기가 있는 곳으로 이동시키고 안정을 취하게 하십시오.',
+      ingestion: '입을 헹구고 즉시 독극물센터 또는 병원으로 이송하십시오.'
+    },
+    ppe: '니트릴 장갑, 방진/방독 복합 마스크, 화학보안경, 실험복.',
+    spillFire: '환원성 가연물(종이, 목재)과 접촉 시 자연발화 위험. 건조 모래로 덮어 흡수 후 밀폐용기에 수거하십시오.'
+  },
+  'chem-special-3': {
+    name: 'Tetrachloroethylene',
+    mfg: 'Sigma-Aldrich',
+    catNo: '270393',
+    cas: '127-18-4',
+    formula: 'C2Cl4',
+    molWeight: '165.83 g/mol',
+    signalWord: '경고 (WARNING)',
+    signalClass: 'warning',
+    pictograms: [
+      { icon: '⚕️', label: '발암성 추정', code: 'GHS08' },
+      { icon: '⚠️', label: '자극성/마취', code: 'GHS07' },
+      { icon: '🐟', label: '수생환경유해', code: 'GHS09' }
+    ],
+    hCodes: [
+      { code: 'H351', desc: '암을 일으킬 것으로 의심됨 (IARC Group 2A)' },
+      { code: 'H315', desc: '피부에 자극을 일으킴' },
+      { code: 'H319', desc: '눈에 심한 자극을 일으킴' },
+      { code: 'H336', desc: '졸음 또는 현기증을 일으킬 수 있음' }
+    ],
+    pCodes: [
+      { code: 'P261', desc: '증기의 흡입을 피하시오.' },
+      { code: 'P281', desc: '지정된 개인 보호구를 사용하시오.' },
+      { code: 'P305+P351', desc: '눈에 묻으면 몇 분간 물로 조심해서 씻으시오.' }
+    ],
+    firstAid: {
+      eye: '콘택트렌즈를 제거하고 다량의 물로 세척하십시오.',
+      skin: '비누와 물로 씻고 피부 건조 및 균열에 유의하십시오.',
+      inhalation: '통풍이 잘되는 곳으로 환자를 옮겨 안정을 취하게 하십시오.',
+      ingestion: '구토를 유발하지 말고 즉시 의사의 진료를 받으십시오.'
+    },
+    ppe: 'PVA 또는 Viton 재질 장갑 (일반 니트릴은 침투 빠름), 유기화합물용 방독마스크, 보안경.',
+    spillFire: '모래나 불활성 흡착제로 흡수 후 유기용제 지정폐기물로 위탁 처리하십시오.'
+  },
+  'chem-special-4': {
+    name: 'N,N-Dimethylformamide',
+    mfg: 'Sigma-Aldrich',
+    catNo: '227056',
+    cas: '68-12-2',
+    formula: 'C3H7NO',
+    molWeight: '73.09 g/mol',
+    signalWord: '위험 (DANGER)',
+    signalClass: 'danger',
+    pictograms: [
+      { icon: '🔥', label: '인화성 액체', code: 'GHS02' },
+      { icon: '⚕️', label: '생식독성 1B', code: 'GHS08' },
+      { icon: '⚠️', label: '급성독성/자극', code: 'GHS07' }
+    ],
+    hCodes: [
+      { code: 'H226', desc: '인화성 액체 및 증기' },
+      { code: 'H360D', desc: '태아에 손상을 줄 수 있음 (생식독성 1B - 임산부 절대 취급 금지)' },
+      { code: 'H312+H332', desc: '피부 접촉 또는 흡입 시 유해함' }
+    ],
+    pCodes: [
+      { code: 'P201', desc: '사용 전 특별 취급 지침을 확인하시오.' },
+      { code: 'P210', desc: '열·스파크·화염·고열로부터 멀리하시오.' },
+      { code: 'P280', desc: '부틸고무 보호장갑·보호의·보안경을 착용하시오.' }
+    ],
+    firstAid: {
+      eye: '즉시 물로 15분 이상 씻어내십시오.',
+      skin: '피부 흡수율이 매우 높으므로 즉시 비누와 물로 전신 샤워하십시오.',
+      inhalation: '신선한 공기 지역으로 즉시 이동하십시오.',
+      ingestion: '즉시 의료기관 응급실로 이송하십시오.'
+    },
+    ppe: '부틸고무(Butyl) 장갑 필수 (라텍스/니트릴 투과됨), 유기용제용 방독마스크, 화학안전복.',
+    spillFire: '환기 후 불활성 흡착포로 회수하십시오. 분말소화기, 내알코올포소화약제를 사용하십시오.'
+  },
+  'chem-special-5': {
+    name: 'Cadmium(II) acetate',
+    mfg: 'Sigma-Aldrich',
+    catNo: '289159',
+    cas: '543-90-8',
+    formula: 'Cd(CH3COO)2',
+    molWeight: '230.50 g/mol',
+    signalWord: '위험 (DANGER)',
+    signalClass: 'danger',
+    pictograms: [
+      { icon: '☠️', label: '급성독성', code: 'GHS06' },
+      { icon: '⚕️', label: '발암성·변이원', code: 'GHS08' },
+      { icon: '🐟', label: '수생환경유해', code: 'GHS09' }
+    ],
+    hCodes: [
+      { code: 'H301+H312+H330', desc: '삼키거나 흡입하면 치명적임' },
+      { code: 'H340', desc: '유전적인 결함을 일으킬 수 있음' },
+      { code: 'H350', desc: '암을 일으킬 수 있음 (신장암, 전립선암 - IARC Group 1)' },
+      { code: 'H372', desc: '장기적 노출 시 신장 및 골격계 손상을 일으킴 (이타이이타이병)' }
+    ],
+    pCodes: [
+      { code: 'P201', desc: '사용 전 취급 설명서를 확보하시오.' },
+      { code: 'P260', desc: '분진을 절대 흡입하지 마시오.' },
+      { code: 'P284', desc: '호흡기 보호구를 착용하시오 (HEPA 특등급).' }
+    ],
+    firstAid: {
+      eye: '생리식염수로 15분 이상 세척하십시오.',
+      skin: '오염된 피부를 비누와 물로 철저히 씻으십시오.',
+      inhalation: '즉시 신선한 공기로 이동하고 119 구급대를 호출하십시오.',
+      ingestion: '즉시 위세척 및 킬레이트 요법(EDTA 등)을 위한 응급실 진료.'
+    },
+    ppe: '이중 니트릴 장갑, 전면형 전동식 호흡보호구(PAPR) 또는 특등급 방진마스크, 보호복.',
+    spillFire: '물청소 금지. HEPA 필터가 장착된 유해물질 전용 청소기로 회수 후 중금속 폐기.'
+  },
+  'chem-special-6': {
+    name: 'Lead(II) iodide',
+    mfg: 'Sigma-Aldrich / Alfa Aesar',
+    catNo: '211141',
+    cas: '10101-63-0',
+    formula: 'PbI2',
+    molWeight: '461.01 g/mol',
+    signalWord: '위험 (DANGER)',
+    signalClass: 'danger',
+    pictograms: [
+      { icon: '⚕️', label: '생식독성 1A', code: 'GHS08' },
+      { icon: '⚠️', label: '급성독성 4', code: 'GHS07' },
+      { icon: '🐟', label: '만성수생유해', code: 'GHS09' }
+    ],
+    hCodes: [
+      { code: 'H360Df', desc: '태아에 손상을 줌. 생식능력에 손상을 줄 수 있음' },
+      { code: 'H372', desc: '장기간 반복 노출 시 중추신경계, 혈액계(빈혈), 신장 손상' },
+      { code: 'H302+H332', desc: '삼키거나 흡입하면 유해함' }
+    ],
+    pCodes: [
+      { code: 'P201', desc: '사용 전 특별 취급 지침을 확인하시오.' },
+      { code: 'P281', desc: '지정된 개인보호구를 착용하시오.' },
+      { code: 'P308+P313', desc: '노출되거나 노출이 우려되면 의사의 진찰을 받으시오.' }
+    ],
+    firstAid: {
+      eye: '흐르는 물로 15분간 세척하십시오.',
+      skin: '비누와 미온수로 즉시 씻으십시오.',
+      inhalation: '신선한 공기 지역으로 환자를 대피시키십시오.',
+      ingestion: '즉시 의사의 진료를 받으십시오.'
+    },
+    ppe: '1급 이상 방진마스크, 내화학 니트릴 장갑, 밀폐형 고글, 실험복.',
+    spillFire: '분진 비산을 방지하며 습식 흡착포로 조심스럽게 회수하여 납 함유 폐기물로 보관.'
+  },
+  'chem-special-7': {
+    name: 'Chromium(III) chloride',
+    mfg: 'Sigma-Aldrich',
+    catNo: '27096',
+    cas: '10025-73-7',
+    formula: 'CrCl3·6H2O',
+    molWeight: '266.45 g/mol',
+    signalWord: '경고 (WARNING)',
+    signalClass: 'warning',
+    pictograms: [
+      { icon: '⚠️', label: '급성유해성', code: 'GHS07' },
+      { icon: '🐟', label: '수생환경유해', code: 'GHS09' }
+    ],
+    hCodes: [
+      { code: 'H302', desc: '삼키면 유해함' },
+      { code: 'H317', desc: '알레르기성 피부 반응을 일으킬 수 있음' },
+      { code: 'H411', desc: '장기적 영향에 의해 수생생물에게 유독함' }
+    ],
+    pCodes: [
+      { code: 'P280', desc: '보호장갑 및 보안경을 착용하시오.' },
+      { code: 'P273', desc: '환경으로 배출하지 마시오.' }
+    ],
+    firstAid: {
+      eye: '다량의 물로 세척하십시오.',
+      skin: '비누와 물로 피부를 세척하십시오.',
+      inhalation: '신선한 공기로 이동하십시오.',
+      ingestion: '입을 헹구고 물을 마시게 하십시오.'
+    },
+    ppe: '니트릴 장갑, 방진마스크, 보호안경.',
+    spillFire: '물과 불활성 물질로 닦아내어 무기중금속 폐액통에 격리 보관.'
+  },
+  'chem-special-8': {
+    name: 'Benzene, for HPLC, ≥99.9%',
+    mfg: 'Sigma-Aldrich',
+    catNo: '270709',
+    cas: '71-43-2',
+    formula: 'C6H6',
+    molWeight: '78.11 g/mol',
+    signalWord: '위험 (DANGER)',
+    signalClass: 'danger',
+    pictograms: [
+      { icon: '🔥', label: '고인화성 액체', code: 'GHS02' },
+      { icon: '⚕️', label: '발암성·변이원 1A', code: 'GHS08' },
+      { icon: '⚠️', label: '급성독성/자극', code: 'GHS07' }
+    ],
+    hCodes: [
+      { code: 'H225', desc: '고인화성 액체 및 증기 (인화점 -11°C)' },
+      { code: 'H350', desc: '암을 일으킴 (백혈병, 골수 손상 - IARC Group 1)' },
+      { code: 'H340', desc: '유전적인 결함을 일으킬 수 있음' },
+      { code: 'H304', desc: '삼켜서 기도로 들어가면 치명적일 수 있음' },
+      { code: 'H372', desc: '장기간 반복 노출 시 조혈기계(골수)에 치명적 손상' }
+    ],
+    pCodes: [
+      { code: 'P201', desc: '사용 전 취급 설명서를 확보하시오.' },
+      { code: 'P210', desc: '열, 스파크, 화염 등 점화원으로부터 멀리하시오. - 금연' },
+      { code: 'P280', desc: '보호장갑, 방독마스크, 보안경을 반드시 착용하시오.' },
+      { code: 'P301+P310', desc: '삼켰다면 즉시 의학적 조치를 받으시오.' }
+    ],
+    firstAid: {
+      eye: '즉시 다량의 물로 15분 이상 세척하고 즉시 안과 검진을 받으십시오.',
+      skin: '오염된 의복을 즉시 탈의하고 비누와 물로 충분히 씻으십시오.',
+      inhalation: '호흡을 멈춘 경우 즉시 인공호흡을 실시하고 신선한 곳으로 대피.',
+      ingestion: '구토를 시키지 마십시오(폐 흡인 위험). 즉시 119 구급대 호출.'
+    },
+    ppe: 'Viton/PVA 재질 장갑(니트릴 금지), 유기증기용 방독마스크(정기 필터 교체), 방폭 후드 사용.',
+    spillFire: '모든 점화원을 차단하고 환기하십시오. 방폭형 장비와 내알코올포 소화기 사용.'
+  },
+  'chem-special-9': {
+    name: 'Nickel(II) nitrate hexahydrate',
+    mfg: 'Sigma-Aldrich',
+    catNo: '72253',
+    cas: '13478-00-7',
+    formula: 'Ni(NO3)2·6H2O',
+    molWeight: '290.79 g/mol',
+    signalWord: '위험 (DANGER)',
+    signalClass: 'danger',
+    pictograms: [
+      { icon: '🔥', label: '산화성 고체', code: 'GHS03' },
+      { icon: '⚕️', label: '발암성·호흡기과민', code: 'GHS08' },
+      { icon: '⚠️', label: '유해성/피부알레르기', code: 'GHS07' },
+      { icon: '🐟', label: '수생환경유해', code: 'GHS09' }
+    ],
+    hCodes: [
+      { code: 'H272', desc: '화재를 강렬하게 함 (산화제)' },
+      { code: 'H350i', desc: '흡입 시 암을 일으킬 수 있음 (폐암, 비강암)' },
+      { code: 'H360D', desc: '태아에 손상을 줄 수 있음' },
+      { code: 'H334', desc: '흡입 시 알레르기 또는 천식 증상을 유발할 수 있음' }
+    ],
+    pCodes: [
+      { code: 'P201', desc: '사용 전 특별 취급 지침을 확인하시오.' },
+      { code: 'P261', desc: '분진 흡입을 피하시오.' },
+      { code: 'P280', desc: '보호장갑, 보호의, 보안경을 착용하시오.' }
+    ],
+    firstAid: {
+      eye: '흐르는 물로 15분간 세척하십시오.',
+      skin: '접촉 부위를 비누와 물로 즉시 씻으십시오.',
+      inhalation: '호흡 곤란 시 산소를 투여하고 병원으로 이송하십시오.',
+      ingestion: '즉시 물을 마시게 하고 의사의 진료를 받으십시오.'
+    },
+    ppe: '니트릴 장갑, 1급 방진/방독 복합 마스크, 실험복, 고글.',
+    spillFire: '가연물과 분리하여 수거하고 니켈계 중금속 폐기물로 위탁 처리.'
+  }
+};
+
+// -------------------------------------------------------------
+// [MSDS 공식 요약 모달 열기/닫기]
+// -------------------------------------------------------------
+function openChemMsdsModal(chemId){
+  const chemicals = get291ChemicalsMaster();
+  const chem = chemicals.find(function(c){ return c.id === chemId; }) || {
+    id: chemId,
+    name: '화학물질 시약',
+    mfg: '공식 제조사',
+    catNo: '-',
+    cas: '-'
+  };
+
+  const modal = $('modalMsdsViewerBackdrop');
+  if(!modal) return;
+
+  const msds = CHEMICAL_MSDS_REGISTRY[chemId] || {
+    name: chem.name,
+    mfg: chem.mfg || 'Sigma-Aldrich / Thermo Fisher',
+    catNo: chem.catNo || '-',
+    cas: chem.cas || '-',
+    formula: chem.formula || '화학식 정보 준비중',
+    molWeight: 'MSDS 요약 참조',
+    signalWord: (chem.hazard === 'D' || chem.isSpecial) ? '위험 (DANGER)' : '경고 (WARNING)',
+    signalClass: (chem.hazard === 'D' || chem.isSpecial) ? 'danger' : 'warning',
+    pictograms: chem.isSpecial ? [
+      { icon: '⚕️', label: '특별관리물질', code: 'GHS08' },
+      { icon: '⚠️', label: '유해성', code: 'GHS07' }
+    ] : [
+      { icon: '⚠️', label: '자극성', code: 'GHS07' }
+    ],
+    hCodes: [
+      { code: 'H315', desc: '피부에 자극을 일으킴' },
+      { code: 'H319', desc: '눈에 심한 자극을 일으킴' },
+      { code: 'H335', desc: '호흡기계 자극을 유발할 수 있음' }
+    ],
+    pCodes: [
+      { code: 'P261', desc: '분진·증기의 흡입을 피하시오.' },
+      { code: 'P280', desc: '보호장갑·보안경·마스크를 착용하시오.' },
+      { code: 'P305+P351+P338', desc: '눈에 묻으면 몇 분간 물로 조심해서 씻으시오.' }
+    ],
+    firstAid: {
+      eye: '즉시 흐르는 물로 15분 이상 세척하고 불편감이 지속되면 안과 진료를 받으십시오.',
+      skin: '오염된 의복을 벗고 비누와 물로 깨끗이 세척하십시오.',
+      inhalation: '신선한 공기가 있는 장소로 이동하여 안정을 취하십시오.',
+      ingestion: '입을 물로 헹구고 즉시 전문 의료기관의 진료를 받으십시오.'
+    },
+    ppe: '내화학 니트릴 장갑, 화학 보안경, KOSHA 인증 유기용제/방진마스크, 실험복.',
+    spillFire: '적절한 보호구를 착용 후 불활성 흡착포로 회수하고 환기하십시오. 분말 또는 탄산가스 소화기 사용.'
+  };
+
+  const titleEl = $('msdsModalTitle');
+  const subEl = $('msdsModalSub');
+  const bodyEl = $('msdsModalBody');
+
+  if(titleEl) titleEl.textContent = '📄 ' + msds.name + ' - 물질안전보건자료(MSDS) 요약';
+  if(subEl) subEl.textContent = '제조사 공식 규격 (' + msds.mfg + ') · CAS No: ' + msds.cas + ' · CAT No: ' + msds.catNo;
+
+  let pictogramsHtml = '';
+  msds.pictograms.forEach(function(p){
+    pictogramsHtml += '<div class="msds-pictogram-badge" title="' + p.label + ' (' + p.code + ')">' +
+      '<span>' + p.icon + '</span>' +
+      '<span class="sub">' + p.code + '</span>' +
+    '</div>';
+  });
+
+  let hCodesHtml = '';
+  msds.hCodes.forEach(function(h){
+    hCodesHtml += '<li style="margin-bottom:4px;"><b>' + h.code + '</b>: ' + h.desc + '</li>';
+  });
+
+  let pCodesHtml = '';
+  msds.pCodes.forEach(function(p){
+    pCodesHtml += '<li style="margin-bottom:4px;"><b>' + p.code + '</b>: ' + p.desc + '</li>';
+  });
+
+  let bodyContent = '';
+  bodyContent += '<div class="msds-info-grid">' +
+    '<div class="msds-info-item"><span class="label">물질명 (제품명)</span><span class="value">' + msds.name + '</span></div>' +
+    '<div class="msds-info-item"><span class="label">공식 제조사</span><span class="value">' + msds.mfg + '</span></div>' +
+    '<div class="msds-info-item"><span class="label">CAS 번호</span><span class="value">' + msds.cas + '</span></div>' +
+    '<div class="msds-info-item"><span class="label">카탈로그 번호 (CAT No.)</span><span class="value">' + msds.catNo + '</span></div>' +
+    '<div class="msds-info-item"><span class="label">화학식 (분자식)</span><span class="value">' + msds.formula + '</span></div>' +
+    '<div class="msds-info-item"><span class="label">분자량</span><span class="value">' + msds.molWeight + '</span></div>' +
+  '</div>';
+
+  bodyContent += '<div class="msds-ghs-box">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+      '<div style="font-size:14px;font-weight:800;color:#0f172a;">GHS 분류 및 위험성 그림문자</div>' +
+      '<span style="padding:3px 10px;border-radius:4px;font-weight:900;font-size:12px;background:' + (msds.signalClass === 'danger' ? '#fee2e2;color:#dc2626;border:1px solid #f87171;' : '#fef3c7;color:#d97706;border:1px solid #fcd34d;') + '">' +
+        '신호어: ' + msds.signalWord +
+      '</span>' +
+    '</div>' +
+    '<div class="msds-pictograms">' + pictogramsHtml + '</div>' +
+  '</div>';
+
+  bodyContent += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">' +
+    '<div class="msds-section-block" style="margin-bottom:0;">' +
+      '<h4 class="msds-section-title">⚠️ 유해·위험 문구 (H-Code)</h4>' +
+      '<ul style="margin:0;padding-left:18px;font-size:12.5px;color:#334155;line-height:1.6;">' + hCodesHtml + '</ul>' +
+    '</div>' +
+    '<div class="msds-section-block" style="margin-bottom:0;">' +
+      '<h4 class="msds-section-title">🛡️ 예방조치 문구 (P-Code)</h4>' +
+      '<ul style="margin:0;padding-left:18px;font-size:12.5px;color:#334155;line-height:1.6;">' + pCodesHtml + '</ul>' +
+    '</div>' +
+  '</div>';
+
+  bodyContent += '<div class="msds-section-block">' +
+    '<h4 class="msds-section-title">🚑 응급조치 요령 (4대 분야)</h4>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px;line-height:1.5;">' +
+      '<div style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>👁️ 눈에 들어갔을 때:</b> ' + msds.firstAid.eye + '</div>' +
+      '<div style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>🧤 피부에 접촉했을 때:</b> ' + msds.firstAid.skin + '</div>' +
+      '<div style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>🫁 흡입했을 때:</b> ' + msds.firstAid.inhalation + '</div>' +
+      '<div style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>🍽️ 섭취했을 때:</b> ' + msds.firstAid.ingestion + '</div>' +
+    '</div>' +
+  '</div>';
+
+  bodyContent += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
+    '<div class="msds-section-block">' +
+      '<h4 class="msds-section-title">🥽 필수 적정 개인보호구</h4>' +
+      '<p style="margin:0;font-size:12.5px;color:#334155;line-height:1.6;">' + msds.ppe + '</p>' +
+    '</div>' +
+    '<div class="msds-section-block">' +
+      '<h4 class="msds-section-title">🧯 누출 및 화재 시 대처방법</h4>' +
+      '<p style="margin:0;font-size:12.5px;color:#334155;line-height:1.6;">' + msds.spillFire + '</p>' +
+    '</div>' +
+  '</div>';
+
+  if(bodyEl) bodyEl.innerHTML = bodyContent;
+  modal.classList.add('open');
+}
+
+function closeChemMsdsModal(){
+  const modal = $('modalMsdsViewerBackdrop');
+  if(modal) modal.classList.remove('open');
+}
+
+// -------------------------------------------------------------
+// [특별관리물질 취급일지 법정 서식 뷰어 모달 열기/닫기 (이미지 3 서식)]
+// -------------------------------------------------------------
+function openChemOfficialLedgerModal(){
+  const modal = $('modalChemOfficialLedgerBackdrop');
+  if(!modal) return;
+
+  const tbody = $('officialLedgerTableBody');
+  if(!tbody) return;
+
+  const logs = get291UsageLogs();
+  let rowsHtml = '';
+
+  // 이미지 3번에 등록된 기본 10대 특별관리물질 데이터가 없을 경우 보장
+  if(logs.length === 0){
+    const defaultSampleRows = [
+      { date: '2026.03.12', name: 'Sulfuric acid(ACS reagent, 95.0-98.0%)', used: '0 mL', stock: '500.0 mL', work: '2D 반도체 기판 산화막 에칭', worker: '이강민', ppe: '내산장갑, 보안경', incident: '이상 없음' },
+      { date: '2026.03.12', name: 'Pyridinium chlorochromate, 98%', used: '0 g', stock: '25.0 g', work: '산화 환원 촉매 반응', worker: '이강민', ppe: '방진마스크, 보호장갑', incident: '이상 없음' },
+      { date: '2026.03.12', name: 'Tetrachloroethylene', used: '0 L', stock: '1.0 L', work: '유기 세정 공정', worker: '이강민', ppe: '유기용제마스크, 보안경', incident: '이상 없음' },
+      { date: '2026.03.12', name: 'N,N-Dimethylformamide', used: '0 L', stock: '1.0 L', work: '박리 용매 합성', worker: '이강민', ppe: '부틸장갑, 방독마스크', incident: '이상 없음' },
+      { date: '2026.03.16', name: 'Cadmium(II) acetate', used: '0 g', stock: '5.0 g', work: 'Cd 양자점 전구체 준비', worker: '신현석', ppe: '전면형보호구, 실험복', incident: '이상 없음' },
+      { date: '2026.03.16', name: 'Lead(II) iodide', used: '0 g', stock: '50.0 g', work: '페로브스카이트 박막 코팅', worker: '이강민', ppe: '방진마스크, 니트릴장갑', incident: '이상 없음' },
+      { date: '2026.03.16', name: 'Lead(II) iodide (Lot #2)', used: '0 g', stock: '50.0 g', work: '결정 성장 실험', worker: '이강민', ppe: '방진마스크, 니트릴장갑', incident: '이상 없음' },
+      { date: '2026.03.17', name: 'Chromium(III) chloride', used: '0 g', stock: '25.0 g', work: 'Cr 클러스터 합성', worker: '이강민', ppe: '보호장갑, 보안경', incident: '이상 없음' },
+      { date: '2026.03.17', name: 'Benzene, for HPLC, ≥99.9%', used: '0 mL', stock: '100.0 mL', work: '고순도 결정 정제 용매', worker: '이강민', ppe: 'Viton장갑, 방독마스크', incident: '이상 없음' },
+      { date: '2026.03.17', name: 'Nickel(II) nitrate hexahydrate', used: '0 g', stock: '20.0 g', work: 'Ni 도핑 공정', worker: '이강민', ppe: '방진마스크, 보호장갑', incident: '이상 없음' }
+    ];
+
+    defaultSampleRows.forEach(function(r){
+      rowsHtml += '<tr>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-family:monospace;">' + r.date + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;text-align:left;font-weight:700;">' + r.name + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-weight:700;">' + r.used + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-weight:700;">' + r.stock + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;text-align:left;">' + r.work + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;">' + r.worker + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-size:11px;">' + r.ppe + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-size:11px;">' + r.incident + '</td>' +
+      '</tr>';
+    });
+  } else {
+    logs.forEach(function(l){
+      rowsHtml += '<tr>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-family:monospace;">' + (l.date || '') + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;text-align:left;font-weight:700;">' + (l.materialName || '') + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-weight:700;">' + (l.usedQty !== undefined ? l.usedQty + ' ' + (l.unit || '') : '0 mL') + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-weight:700;">' + (l.remainingStock !== undefined ? l.remainingStock + ' ' + (l.unit || '') : '') + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;text-align:left;">' + (l.workDesc || '-') + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;">' + (l.worker || '이강민') + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-size:11px;">' + (l.ppe || '보호장갑, 보안경') + '</td>' +
+        '<td style="border:1px solid #000;padding:7px 5px;font-size:11px;">' + (l.incident || '이상 없음') + '</td>' +
+      '</tr>';
+    });
+  }
+
+  tbody.innerHTML = rowsHtml;
+  modal.classList.add('open');
+}
+
+function closeChemOfficialLedgerModal(){
+  const modal = $('modalChemOfficialLedgerBackdrop');
+  if(modal) modal.classList.remove('open');
 }
 
 function openChemNoticeModal(){
@@ -16742,6 +17294,55 @@ function bindChemicalsEvents(){
     e.preventDefault();
     openChemNoticeModal();
   });
+  
+  // MSDS 모달 조작 (인쇄 & X버튼 & 빈 공간 클릭 닫기)
+  addEvt('btnPrintMsdsA4', 'click', function(e){
+    e.preventDefault();
+    window.print();
+  });
+  addEvt('btnCloseMsdsModal', 'click', function(e){
+    e.preventDefault();
+    closeChemMsdsModal();
+  });
+  addEvt('modalMsdsViewerBackdrop', 'click', function(e){
+    if(e.target === $('modalMsdsViewerBackdrop')) closeChemMsdsModal();
+  });
+
+  // 특별관리물질 취급일지 서식 모달 조작 (이미지 3 서식)
+  addEvt('btnChemOfficialLedgerModal', 'click', function(e){
+    e.preventDefault();
+    openChemOfficialLedgerModal();
+  });
+  addEvt('btnCloseChemOfficialLedger', 'click', function(e){
+    e.preventDefault();
+    closeChemOfficialLedgerModal();
+  });
+  addEvt('btnPrintLedgerA4', 'click', function(e){
+    e.preventDefault();
+    window.print();
+  });
+  addEvt('btnDownloadLedgerExcel', 'click', function(e){
+    e.preventDefault();
+    exportOfficial291LedgerExcel();
+  });
+  addEvt('modalChemOfficialLedgerBackdrop', 'click', function(e){
+    if(e.target === $('modalChemOfficialLedgerBackdrop')) closeChemOfficialLedgerModal();
+  });
+
+  // 기타 법정 양식 버튼
+  addEvt('btnChemCombinedHazardsLedger', 'click', function(e){
+    e.preventDefault();
+    exportOfficial291LedgerExcel();
+  });
+  addEvt('btnChemHazardsLedger', 'click', function(e){
+    e.preventDefault();
+    exportOfficial291LedgerExcel();
+  });
+  addEvt('btnChemDetailedPerfLedger', 'click', function(e){
+    e.preventDefault();
+    exportOfficial291LedgerExcel();
+  });
+
   addEvt('btnChemOfficialLedgerCsv', 'click', function(e){
     e.preventDefault();
     exportOfficial291LedgerExcel();

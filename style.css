@@ -9690,3 +9690,150 @@ html:not(.is-admin) #btnHelpTabAdmin {
     font-size: 14px !important;
   }
 }
+
+
+/* 한국형 화학물질 관리대장 버튼 스타일 (이미지 1 일치) */
+.btn-korea-action.gray {
+  background: #334155;
+  color: #f8fafc;
+  border-color: #475569;
+}
+.btn-korea-action.gray:hover {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+/* MSDS 모달 전용 뷰어 스타일 */
+.msds-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  background: #fff;
+  padding: 14px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.msds-info-item {
+  display: flex;
+  flex-direction: column;
+}
+.msds-info-item .label {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.msds-info-item .value {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.msds-ghs-box {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.msds-pictograms {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.msds-pictogram-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border: 2.5px solid #dc2626;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 26px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.msds-pictogram-badge span.sub {
+  font-size: 9px;
+  font-weight: 800;
+  color: #dc2626;
+  margin-top: 2px;
+}
+.msds-section-block {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+.msds-section-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* @media print 추가 지원 */
+@media print {
+  #modalChemNoticeBackdrop.open #noticePrintCanvas,
+  #modalChemNoticeBackdrop.open #noticePrintCanvas * {
+    visibility: visible !important;
+  }
+  #modalChemNoticeBackdrop.open #noticePrintCanvas {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 92vw !important;
+    max-width: 270mm !important;
+    border: 4px solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    padding: 20px 24px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #modalChemOfficialLedgerBackdrop.open #ledgerPrintCanvas,
+  #modalChemOfficialLedgerBackdrop.open #ledgerPrintCanvas * {
+    visibility: visible !important;
+  }
+  #modalChemOfficialLedgerBackdrop.open #ledgerPrintCanvas {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 95vw !important;
+    max-width: 280mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    padding: 15px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #modalMsdsViewerBackdrop.open #msdsModalBody,
+  #modalMsdsViewerBackdrop.open #msdsModalBody * {
+    visibility: visible !important;
+  }
+  #modalMsdsViewerBackdrop.open #msdsModalBody {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 92vw !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    padding: 20px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
