@@ -315,7 +315,9 @@ function updateLimsNavActive(type){
 }
 
 let selectedEquipmentCategory = 'all';
-let researchEquipments = [];
+let researchEquipments = (typeof DEFAULT_RESEARCH_EQUIPMENTS !== 'undefined' && Array.isArray(DEFAULT_RESEARCH_EQUIPMENTS))
+  ? DEFAULT_RESEARCH_EQUIPMENTS.slice()
+  : [];
 let currentSelectedEquipment = 'EQ-XRD-01';
 let equipmentSessions = [];
 let selectedAnalyticsEquipmentId = 'all'; // 'all' | 'EQ-XRD-01' | 'EQ-BONDER-01' ... 장비별 통계 분리 스코프
@@ -4029,7 +4031,7 @@ function closeEquipmentQrModal(){
   const modal = $('modalEquipmentQrBackdrop');
   if(modal){
     modal.classList.remove('open');
-    modal.style.display = '';
+    modal.style.display = 'none';
   }
 }
 
@@ -6658,7 +6660,12 @@ function selectResearchEquipment(eqId){
   if(hub) hub.classList.add('hidden');
   if(detail) detail.classList.remove('hidden');
 
-  const selected = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || researchEquipments[0];
+  const list = (researchEquipments && researchEquipments.length)
+    ? researchEquipments
+    : ((typeof DEFAULT_RESEARCH_EQUIPMENTS !== 'undefined' && DEFAULT_RESEARCH_EQUIPMENTS.length) ? DEFAULT_RESEARCH_EQUIPMENTS : []);
+  const selected = list.find(function(e){ return e.id === currentSelectedEquipment; }) || list[0] || {
+    id: eqId || 'EQ-XRD-01', code: 'XRD', name: 'HR-XRD', type: 'xrd', status: 'active', categoryName: '구조분석', model: 'SmartLab 9 kW'
+  };
 
   const catBadge = $('detailEqCategory');
   const statusBadge = $('detailEqStatus');
