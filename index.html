@@ -700,17 +700,33 @@
               <input type="text" id="modalChemDesc" class="form-control" value="시편 세정 및 합성 반응" placeholder="작업 목적 구체적 기재" required style="width:100%;padding:8px 10px;">
             </div>
 
-            <div style="margin-bottom:14px;background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.25);border-radius:6px;padding:10px 12px;">
-              <div style="font-size:11.5px;font-weight:700;color:#059669;margin-bottom:6px;">🛡️ 안전점검:</div>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-bottom:4px;">
-                <input type="checkbox" id="modalChemCheckVent" checked required> 흄후드 배기 정상 가동 확인 (0.4m/s 이상)
-              </label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;margin-bottom:4px;">
-                <input type="checkbox" id="modalChemCheckPpe" checked required> 방독마스크·보안경·내화학장갑 착용 완료
-              </label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
-                <input type="checkbox" id="modalChemCheckSafe" checked required> 누출 등 이상 없음 확인
-              </label>
+            <div class="chem-safety-check-section">
+              <div class="chem-safety-check-title">
+                <span>🛡️</span> 산안법 제439조 안전 준수 점검 (필수 확인)
+              </div>
+              <div class="chem-safety-check-list">
+                <label class="chem-safety-check-card">
+                  <input type="checkbox" id="modalChemCheckVent" checked required class="chem-safety-checkbox">
+                  <div class="chem-safety-check-info">
+                    <span class="chem-safety-check-badge">환기설비</span>
+                    <span class="chem-safety-check-text">국소배기장치(흄후드) 배기 정상 가동 및 제어풍속(0.4m/s 이상) 확인</span>
+                  </div>
+                </label>
+                <label class="chem-safety-check-card">
+                  <input type="checkbox" id="modalChemCheckPpe" checked required class="chem-safety-checkbox">
+                  <div class="chem-safety-check-info">
+                    <span class="chem-safety-check-badge">보호구</span>
+                    <span class="chem-safety-check-text">방독마스크(유기가스/산성가스용)·보안경·내화학장갑 착용 완료</span>
+                  </div>
+                </label>
+                <label class="chem-safety-check-card">
+                  <input type="checkbox" id="modalChemCheckSafe" checked required class="chem-safety-checkbox">
+                  <div class="chem-safety-check-info">
+                    <span class="chem-safety-check-badge">안전확인</span>
+                    <span class="chem-safety-check-text">시약 용기 밀봉 상태, 누출 및 이상 없음 확인 (사고 예방 조치)</span>
+                  </div>
+                </label>
+              </div>
             </div>
 
             <button type="submit" class="btn primary" style="width:100%;padding:12px;font-size:14.5px;font-weight:700;background:#059669;border-color:#059669;">
@@ -1176,7 +1192,7 @@
           <div class="eq-detail-badges" style="display:flex;align-items:center;gap:8px;">
             <span class="eq-badge-cat" id="detailEqCategory">분석·측정</span>
             <span class="eq-badge-status" id="detailEqStatus">운영 중</span>
-            <button type="button" class="btn btn-show-eq-qr admin-only hidden" id="btnDetailTopShowQr" title="장비 QR 라벨" style="padding:4px 12px;font-weight:800;border:1.5px solid #2563eb;color:#2563eb;background:#ffffff;border-radius:6px;font-size:13px;cursor:pointer;">QR</button>
+            <button type="button" class="btn btn-show-eq-qr" id="btnDetailTopShowQr" title="장비 모바일 접속용 QR 코드 열기" style="padding:4px 12px;font-weight:800;border:1.5px solid #2563eb;color:#2563eb;background:#ffffff;border-radius:6px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">📱 QR</button>
           </div>
         </div>
 
@@ -1929,9 +1945,12 @@
 
   <div id="modalTestDriveBackdrop" class="backdrop">
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="testDriveModalTitle" style="max-width:620px;width:min(620px,94vw);">
-      <div class="modal-head">
-        <h2 id="testDriveModalTitle">📝 장비 사용 기록 작성</h2>
-        <button class="icon-btn" id="closeTestDriveModal" aria-label="닫기"><span aria-hidden="true">×</span></button>
+      <div class="modal-head" style="display:flex;justify-content:space-between;align-items:center;">
+        <h2 id="testDriveModalTitle" style="margin:0;">📝 장비 사용 기록 작성</h2>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button type="button" class="btn btn-sm" id="btnTestDriveModalQr" title="장비 모바일 접속 QR 코드 확인" style="font-weight:700;border:1.5px solid #2563eb;color:#2563eb;padding:3px 10px;font-size:12px;background:#ffffff;border-radius:6px;cursor:pointer;">📱 QR</button>
+          <button class="icon-btn" id="closeTestDriveModal" aria-label="닫기"><span aria-hidden="true">×</span></button>
+        </div>
       </div>
       <form id="testDriveForm">
         <div id="testDriveFormDynamicContent"></div>

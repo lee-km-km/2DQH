@@ -10784,3 +10784,120 @@ html:not(.is-admin) #btnHelpTabAdmin {
     overflow-y: visible !important;
   }
 }
+
+/* ============================================================= */
+/* [취급일지 작성 모달 - PC/모바일 안전점검 체크리스트 고도화 UI] */
+/* ============================================================= */
+.chem-safety-check-section {
+  margin-bottom: 16px;
+  background: rgba(5, 150, 105, 0.04);
+  border: 1.5px solid rgba(5, 150, 105, 0.22);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+[data-theme="dark"] .chem-safety-check-section {
+  background: rgba(5, 150, 105, 0.08);
+  border-color: rgba(5, 150, 105, 0.35);
+}
+
+.chem-safety-check-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #059669;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+[data-theme="dark"] .chem-safety-check-title {
+  color: #34d399;
+}
+
+.chem-safety-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chem-safety-check-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: var(--bg-card, #ffffff) !important;
+  border: 1.5px solid var(--border, #cbd5e1) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+.chem-safety-check-card:hover {
+  border-color: #059669 !important;
+  background: rgba(5, 150, 105, 0.03) !important;
+  transform: translateY(-1px);
+}
+[data-theme="dark"] .chem-safety-check-card {
+  background: var(--bg-surface, #1e293b) !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .chem-safety-check-card:hover {
+  border-color: #34d399 !important;
+  background: rgba(5, 150, 105, 0.12) !important;
+}
+
+.chem-safety-checkbox {
+  width: 19px !important;
+  min-width: 19px !important;
+  height: 19px !important;
+  accent-color: #059669 !important;
+  cursor: pointer !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+.chem-safety-check-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.chem-safety-check-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  flex-shrink: 0;
+}
+[data-theme="dark"] .chem-safety-check-badge {
+  background: rgba(5, 150, 105, 0.2);
+  color: #6ee7b7;
+  border-color: #065f46;
+}
+
+.chem-safety-check-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink, #0f172a);
+  line-height: 1.4;
+}
+[data-theme="dark"] .chem-safety-check-text {
+  color: #e2e8f0;
+}
+
+/* 체크 완료 상태 카드 강조 */
+.chem-safety-check-card:has(.chem-safety-checkbox:checked) {
+  border-color: #059669 !important;
+  background: rgba(5, 150, 105, 0.05) !important;
+}
+[data-theme="dark"] .chem-safety-check-card:has(.chem-safety-checkbox:checked) {
+  border-color: #10b981 !important;
+  background: rgba(5, 150, 105, 0.15) !important;
+}
