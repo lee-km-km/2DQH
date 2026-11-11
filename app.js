@@ -8024,6 +8024,18 @@ function openBestReorder(){
   else openModal('quickReorder');
 }
 
+function triggerModalShake(backdropEl){
+  if(!backdropEl) return;
+  const modalBox = backdropEl.querySelector('.modal') || backdropEl.querySelector('section') || backdropEl.firstElementChild;
+  if(!modalBox) return;
+  modalBox.classList.remove('modal-shake');
+  void modalBox.offsetWidth; // reflow
+  modalBox.classList.add('modal-shake');
+  setTimeout(function(){
+    modalBox.classList.remove('modal-shake');
+  }, 320);
+}
+
 function closeModal(){
   window.__isPromptingReturnBeforeBorrow = false;
   window.__pendingBorrowAssetId = null;
