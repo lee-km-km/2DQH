@@ -16383,7 +16383,7 @@ function render291InventoryTable(){
     }
 
     const hazardBadge = c.hazard === 'F' ? '<span class="chem-badge-hazard hazard-f" title="인화성">F</span>' : (c.hazard === 'D' ? '<span class="chem-badge-hazard hazard-d" title="독성/위험">D</span>' : '-');
-    const hazardCardPill = c.hazard === 'F' ? '<span class="chem-badge-hazard hazard-f" title="인화성">F (인화성)</span>' : (c.hazard === 'D' ? '<span class="chem-badge-hazard hazard-d" title="독성/위험">D (유해위험)</span>' : '');
+    const hazardCardPill = c.hazard === 'F' ? '<span class="chem-m-pill-hazard hazard-f" title="인화성">🔥 F (인화성)</span>' : (c.hazard === 'D' ? '<span class="chem-m-pill-hazard hazard-d" title="독성/위험">⚠️ D (유해위험)</span>' : '');
 
     // 1. 데스크톱 & 모바일 표형 HTML
     html += '<tr data-chem-id="' + safe(c.id) + '">';
@@ -16416,8 +16416,10 @@ function render291InventoryTable(){
     cardsHtml += '  <div class="chem-m-card-top">';
     cardsHtml += '    <div class="chem-m-card-title-group">';
     cardsHtml += '      <div class="chem-m-card-title">' + safe(c.name) + '</div>';
-    cardsHtml += '      ' + (c.isSpecial ? '<span class="chem-m-pill-special">⭐ 특별관리물질</span>' : '<span class="chem-m-pill-reagent">🧪 일반시약</span>');
+    cardsHtml += '      <div class="chem-m-tag-group">';
+    cardsHtml += '        ' + (c.isSpecial ? '<span class="chem-m-pill-special">⭐ 특별관리물질</span>' : '<span class="chem-m-pill-reagent">🧪 일반시약</span>');
     if(hazardCardPill) cardsHtml += ' ' + hazardCardPill;
+    cardsHtml += '      </div>';
     cardsHtml += '    </div>';
     cardsHtml += '    <span class="chem-m-badge-status ' + (c.status === '폐기' ? 'discarded' : 'in-stock') + '">' + safe(c.status || '입고') + '</span>';
     cardsHtml += '  </div>';
@@ -16759,21 +16761,54 @@ function openChemHistoryModal(chemId){
     if(matched.length === 0){
       wrap.innerHTML = '<div style="text-align:center;padding:36px;color:var(--ink-light);font-size:13px;">아직 작성된 취급 이력이 없습니다. [📝 이 시약 취급일지 작성]을 눌러 사용량을 기록하세요.</div>';
     } else {
-      let tbl = '<table class="chem-inventory-table" style="width:100%;font-size:12px;">';
-      tbl += '<thead><tr><th>취급일자</th><th>사용자 (소속)</th><th>사용량</th><th>사용 후 잔여량</th><th>작업 내용</th><th>착용 보호구</th><th>사고 유무</th></tr></thead><tbody>';
+      // 1) 모바일 전용 반응형 카드 뷰
+      let mCards = '<div class="chem-hist-mobile-list mobile-only">';
       matched.forEach(function(m){
-        tbl += '<tr>';
-        tbl += '<td style="white-space:nowrap;font-weight:700;">' + safe(m.date + ' ' + (m.time || '')) + '</td>';
-        tbl += '<td style="white-space:nowrap;"><b>' + safe(m.worker) + '</b> (' + safe(m.affiliation) + ')</td>';
-        tbl += '<td style="white-space:nowrap;color:#dc2626;font-weight:800;">' + (m.usedQty > 0 ? ('-' + m.usedQty + ' ' + safe(m.unit)) : '0 ' + safe(m.unit)) + '</td>';
-        tbl += '<td style="white-space:nowrap;color:#059669;font-weight:800;">' + m.remainingStock + ' ' + safe(m.unit) + '</td>';
-        tbl += '<td>' + safe(m.workDesc) + '</td>';
-        tbl += '<td style="white-space:nowrap;color:#15803d;font-weight:600;">✓ ' + safe(m.ppe) + '</td>';
-        tbl += '<td style="white-space:nowrap;color:#2563eb;font-weight:600;">' + safe(m.incident) + '</td>';
-        tbl += '</tr>';
+        mCards += '<div class="chem-hist-card">';
+        mCards += '  <div class="chem-hist-card-head">';
+        mCards += '    <span class="chem-hist-card-date">📅 ' + safe(m.date + ' ' + (m.time || '')) + '</span>';
+        mCards += '    <span class="chem-hist-card-worker">👤 <b>' + safe(m.worker) + '</b> <span class="chem-hist-affil">(' + safe(m.affiliation) + ')</span></span>';
+        mCards += '  </div>';
+        mCards += '  <div class="chem-hist-card-qty-row">';
+        mCards += '    <div class="chem-hist-qty-badge used">';
+        mCards += '      <span class="q-lbl">사용량</span>';
+        mCards += '      <span class="q-val">' + (m.usedQty > 0 ? ('-' + m.usedQty + ' ' + safe(m.unit)) : ('0 ' + safe(m.unit))) + '</span>';
+        mCards += '    </div>';
+        mCards += '    <div class="chem-hist-qty-arrow">➔</div>';
+        mCards += '    <div class="chem-hist-qty-badge remaining">';
+        mCards += '      <span class="q-lbl">사용 후 잔량</span>';
+        mCards += '      <span class="q-val">' + m.remainingStock + ' ' + safe(m.unit) + '</span>';
+        mCards += '    </div>';
+        mCards += '  </div>';
+        mCards += '  <div class="chem-hist-card-desc">';
+        mCards += '    <span class="d-lbl">작업내용:</span> <span class="d-val">' + safe(m.workDesc) + '</span>';
+        mCards += '  </div>';
+        mCards += '  <div class="chem-hist-card-footer">';
+        mCards += '    <span class="chem-hist-pill ppe">🛡️ ' + safe(m.ppe) + '</span>';
+        mCards += '    <span class="chem-hist-pill incident">✅ ' + safe(m.incident) + '</span>';
+        mCards += '  </div>';
+        mCards += '</div>';
       });
-      tbl += '</tbody></table>';
-      wrap.innerHTML = tbl;
+      mCards += '</div>';
+
+      // 2) 데스크톱 가로 스크롤 테이블 뷰
+      let dTable = '<div class="chem-hist-desktop-wrap desktop-only" style="overflow-x:auto;">';
+      dTable += '<table class="chem-inventory-table chem-hist-table" style="min-width:680px;width:100%;font-size:12px;">';
+      dTable += '<thead><tr><th style="width:130px;">취급일자</th><th style="width:120px;">사용자 (소속)</th><th style="width:90px;">사용량</th><th style="width:95px;">사용 후 잔여량</th><th>작업 내용</th><th style="width:110px;">착용 보호구</th><th style="width:80px;">사고 유무</th></tr></thead><tbody>';
+      matched.forEach(function(m){
+        dTable += '<tr>';
+        dTable += '<td style="white-space:nowrap;font-weight:700;">' + safe(m.date + ' ' + (m.time || '')) + '</td>';
+        dTable += '<td style="white-space:nowrap;"><b>' + safe(m.worker) + '</b> (' + safe(m.affiliation) + ')</td>';
+        dTable += '<td style="white-space:nowrap;color:#dc2626;font-weight:800;text-align:right;">' + (m.usedQty > 0 ? ('-' + m.usedQty + ' ' + safe(m.unit)) : '0 ' + safe(m.unit)) + '</td>';
+        dTable += '<td style="white-space:nowrap;color:#059669;font-weight:800;text-align:right;">' + m.remainingStock + ' ' + safe(c.unit) + '</td>';
+        dTable += '<td>' + safe(m.workDesc) + '</td>';
+        dTable += '<td style="white-space:nowrap;color:#15803d;font-weight:600;">✓ ' + safe(m.ppe) + '</td>';
+        dTable += '<td style="white-space:nowrap;color:#2563eb;font-weight:600;text-align:center;">' + safe(m.incident) + '</td>';
+        dTable += '</tr>';
+      });
+      dTable += '</tbody></table></div>';
+
+      wrap.innerHTML = mCards + dTable;
     }
   }
 

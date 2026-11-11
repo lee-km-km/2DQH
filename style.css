@@ -9807,21 +9807,48 @@ html:not(.is-admin) #btnHelpTabAdmin {
     width: 100% !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
+    display: block !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    background: var(--bg-card, #ffffff) !important;
+    box-shadow: inset -6px 0 8px -4px rgba(0,0,0,0.06) !important;
   }
   .chem-inventory-table {
-    min-width: 860px !important;
-    width: 100% !important;
+    min-width: 1450px !important;
+    width: max-content !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
   }
   .chem-inventory-table th, .chem-inventory-table td {
-    padding: 7px 5px !important;
-    font-size: 11px !important;
+    padding: 8px 8px !important;
+    font-size: 11.5px !important;
     white-space: nowrap !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
   }
-  .chem-inventory-table td:nth-child(2) {
-    min-width: 170px !important;
-    max-width: 240px !important;
-    white-space: normal !important;
-    word-break: break-word !important;
+  /* 15개 전체 컬럼에 명시적 최소 너비 부여 (글자 겹침 및 세로 뭉개짐 방지) */
+  .chem-inventory-table th:nth-child(1), .chem-inventory-table td:nth-child(1) { width: 38px !important; min-width: 38px !important; text-align: center !important; }
+  .chem-inventory-table th:nth-child(2), .chem-inventory-table td:nth-child(2) { width: 240px !important; min-width: 240px !important; white-space: normal !important; word-break: break-word !important; }
+  .chem-inventory-table th:nth-child(3), .chem-inventory-table td:nth-child(3) { width: 110px !important; min-width: 110px !important; }
+  .chem-inventory-table th:nth-child(4), .chem-inventory-table td:nth-child(4) { width: 95px !important; min-width: 95px !important; }
+  .chem-inventory-table th:nth-child(5), .chem-inventory-table td:nth-child(5) { width: 105px !important; min-width: 105px !important; }
+  .chem-inventory-table th:nth-child(6), .chem-inventory-table td:nth-child(6) { width: 55px !important; min-width: 55px !important; text-align: center !important; }
+  .chem-inventory-table th:nth-child(7), .chem-inventory-table td:nth-child(7) { width: 75px !important; min-width: 75px !important; text-align: center !important; }
+  .chem-inventory-table th:nth-child(8), .chem-inventory-table td:nth-child(8) { width: 70px !important; min-width: 70px !important; text-align: center !important; }
+  .chem-inventory-table th:nth-child(9), .chem-inventory-table td:nth-child(9) { width: 95px !important; min-width: 95px !important; text-align: right !important; }
+  .chem-inventory-table th:nth-child(10), .chem-inventory-table td:nth-child(10) { width: 80px !important; min-width: 80px !important; text-align: center !important; }
+  .chem-inventory-table th:nth-child(11), .chem-inventory-table td:nth-child(11) { width: 140px !important; min-width: 140px !important; }
+  .chem-inventory-table th:nth-child(12), .chem-inventory-table td:nth-child(12) { width: 65px !important; min-width: 65px !important; text-align: center !important; }
+  .chem-inventory-table th:nth-child(13), .chem-inventory-table td:nth-child(13) { width: 85px !important; min-width: 85px !important; text-align: center !important; }
+  .chem-inventory-table th:nth-child(14), .chem-inventory-table td:nth-child(14) { width: 85px !important; min-width: 85px !important; text-align: center !important; }
+  .chem-inventory-table th:nth-child(15), .chem-inventory-table td:nth-child(15) { width: 175px !important; min-width: 175px !important; text-align: center !important; }
+  .chem-inventory-table td:nth-child(15) .btn-table-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    padding: 3px 6px !important;
+    font-size: 11px !important;
   }
   
   /* 캘린더 모바일 최적화 */
@@ -10186,6 +10213,48 @@ html:not(.is-admin) #btnHelpTabAdmin {
   color: #4ade80 !important;
   border-color: #14532d !important;
 }
+
+/* 유해위험물질 모바일 카드 가로형 뱃지 (글자 세로 뭉개짐 방지) */
+.chem-m-tag-group {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin-top: 5px !important;
+}
+.chem-m-pill-hazard {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  width: auto !important;
+  height: auto !important;
+  line-height: normal !important;
+}
+.chem-m-pill-hazard.hazard-f {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fca5a5 !important;
+}
+.chem-m-pill-hazard.hazard-d {
+  background: #fefce8 !important;
+  color: #854d0e !important;
+  border: 1px solid #fde047 !important;
+}
+[data-theme="dark"] .chem-m-pill-hazard.hazard-f {
+  background: rgba(220, 38, 38, 0.22) !important;
+  color: #f87171 !important;
+  border-color: #991b1b !important;
+}
+[data-theme="dark"] .chem-m-pill-hazard.hazard-d {
+  background: rgba(202, 138, 4, 0.22) !important;
+  color: #facc15 !important;
+  border-color: #854d0e !important;
+}
 .chem-m-badge-status {
   font-size: 11px;
   font-weight: 700;
@@ -10472,4 +10541,196 @@ html:not(.is-admin) #btnHelpTabAdmin {
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;
+}
+
+
+/* ============================================================= */
+/* [시약 취급 이력 모달 - 모바일 반응형 카드 & 레이아웃 최적화] */
+/* ============================================================= */
+.chem-hist-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chem-hist-card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+[data-theme="dark"] .chem-hist-card {
+  background: var(--bg-surface, #1e293b);
+  border-color: #334155;
+}
+
+.chem-hist-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border, #e2e8f0);
+  font-size: 12px;
+}
+.chem-hist-card-date {
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+}
+.chem-hist-card-worker {
+  color: var(--ink-light, #64748b);
+  font-size: 11.5px;
+}
+.chem-hist-card-worker b {
+  color: var(--ink, #0f172a);
+}
+.chem-hist-affil {
+  font-size: 11px;
+}
+
+.chem-hist-card-qty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-subtle, #f8fafc);
+  border: 1px solid var(--border, #f1f5f9);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 9px 0;
+}
+[data-theme="dark"] .chem-hist-card-qty-row {
+  background: rgba(15, 23, 42, 0.4);
+  border-color: #334155;
+}
+
+.chem-hist-qty-badge {
+  display: flex;
+  flex-direction: column;
+}
+.chem-hist-qty-badge .q-lbl {
+  font-size: 10px;
+  color: var(--ink-light, #64748b);
+  font-weight: 600;
+}
+.chem-hist-qty-badge.used .q-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: #dc2626;
+}
+.chem-hist-qty-badge.remaining .q-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: #059669;
+}
+.chem-hist-qty-arrow {
+  color: var(--ink-light, #94a3b8);
+  font-size: 14px;
+}
+
+.chem-hist-card-desc {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink, #1e293b);
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+.chem-hist-card-desc .d-lbl {
+  color: var(--ink-light, #64748b);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.chem-hist-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.chem-hist-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.chem-hist-pill.ppe {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.chem-hist-pill.incident {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+[data-theme="dark"] .chem-hist-pill.ppe {
+  background: rgba(22, 163, 74, 0.2);
+  color: #4ade80;
+  border-color: #166534;
+}
+[data-theme="dark"] .chem-hist-pill.incident {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+  border-color: #1e40af;
+}
+
+/* 모바일 전용 모달 레이아웃 강제 튜닝 */
+@media (max-width: 768px) {
+  #modalChemHistoryBackdrop .modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    margin: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border-radius: 12px !important;
+  }
+  #modalChemHistoryBackdrop .modal-head {
+    padding: 12px 14px !important;
+    flex-shrink: 0 !important;
+  }
+  #chemHistoryModalTitle {
+    font-size: 14.5px !important;
+    line-height: 1.35 !important;
+    word-break: break-word !important;
+  }
+  #chemHistoryModalSub {
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+  #modalChemHistoryBackdrop .modal-body {
+    padding: 12px !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  #chemHistoryMetaBox {
+    padding: 10px 12px !important;
+    gap: 10px !important;
+    font-size: 12px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  #chemHistoryMetaBox > div {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+  #btnHistWriteLog {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 9px !important;
+    font-size: 12.5px !important;
+  }
+  #chemHistoryTableWrap {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
 }
