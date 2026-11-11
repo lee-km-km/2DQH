@@ -4319,17 +4319,26 @@ function renderEquipmentTestSessions(code){
 }
 
 function openEquipmentTestDrive(code){
-  const currentEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || {
-    id: 'EQ-' + code, code: code, name: code
-  };
-  code = currentEq.code || code || 'AFM';
-  const schema = EQUIPMENT_SCHEMAS[code] || EQUIPMENT_SCHEMAS['AFM'];
+  let targetCode = code;
+  let targetEq = null;
+  if(targetCode){
+    targetEq = researchEquipments.find(function(e){ return e.code === targetCode || e.id === targetCode; });
+  }
+  if(!targetEq){
+    targetEq = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || {
+      id: 'EQ-' + (targetCode || 'AFM'), code: targetCode || 'AFM', name: targetCode || 'AFM'
+    };
+    targetCode = targetEq.code || targetCode || 'AFM';
+  } else {
+    targetCode = targetEq.code || targetCode;
+  }
+  const schema = EQUIPMENT_SCHEMAS[targetCode] || EQUIPMENT_SCHEMAS['AFM'];
 
   const modal = $('modalTestDriveBackdrop');
   if(!modal) return;
 
   const titleEl = $('testDriveModalTitle');
-  if(titleEl) titleEl.textContent = '📝 ' + currentEq.name + ' 사용 기록 작성';
+  if(titleEl) titleEl.textContent = '📝 ' + (targetEq.name || targetCode) + ' 사용 기록 작성';
 
   const container = $('testDriveFormDynamicContent');
   if(!container) return;
@@ -4341,6 +4350,8 @@ function openEquipmentTestDrive(code){
   const storedProf = localStorage.getItem('xrd_professor') || '신현석 교수님';
 
   let formHtml = '';
+  formHtml += '<input type="hidden" name="equipment_id" value="' + safe(targetEq.id) + '">';
+  formHtml += '<input type="hidden" name="equipment_code" value="' + safe(targetCode) + '">';
 
   // 1. 공통 필수 메타데이터 (시간, 사용자, 샘플)
   formHtml += '<div class="param-section-box">';
@@ -4608,10 +4619,15 @@ async function handleTestDriveFormSubmit(e){
   const f = $('testDriveForm');
   if(!f) return;
 
-  const currentEq = researchEquipments.find(function(eq){ return eq.id === currentSelectedEquipment; }) || {
-    id: 'EQ-UNKNOWN', code: 'EQUIP'
-  };
-  const code = currentEq.code || 'AFM';
+  const codeFromForm = f.equipment_code ? f.equipment_code.value : '';
+  const idFromForm = f.equipment_id ? f.equipment_id.value : '';
+
+  const targetEq = (idFromForm && researchEquipments.find(function(eq){ return eq.id === idFromForm; })) ||
+    (codeFromForm && researchEquipments.find(function(eq){ return eq.code === codeFromForm; })) ||
+    researchEquipments.find(function(eq){ return eq.id === currentSelectedEquipment; }) || {
+      id: idFromForm || 'EQ-AFM', code: codeFromForm || 'AFM', name: codeFromForm || 'AFM'
+    };
+  const code = targetEq.code || codeFromForm || 'AFM';
   const schema = EQUIPMENT_SCHEMAS[code] || {};
 
   const usedOn = f.used_on ? f.used_on.value : today();
@@ -4656,7 +4672,7 @@ async function handleTestDriveFormSubmit(e){
 
   const sessionEntry = {
     id: Date.now(),
-    equipment_id: currentEq.id,
+    equipment_id: targetEq.id,
     equipment_code: code,
     used_on: usedOn,
     start_time: startTime,
@@ -4724,7 +4740,7 @@ async function handleTestDriveFormSubmit(e){
   }
 
   closeEquipmentTestDrive();
-  toast('✓ ' + currentEq.name + ' 사용 기록이 저장되었습니다.');
+  toast('✓ ' + targetEq.name + ' 사용 기록이 저장되었습니다.');
   renderEquipmentTestSessions(code);
 }
 
