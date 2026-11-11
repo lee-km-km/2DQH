@@ -3984,7 +3984,8 @@ function renderQrCodeInto(container, text, size){
 // [장비 본체 부착용 QR 라벨 생성 및 인쇄 모달 (관리자 전용)]
 function openEquipmentQrModal(eqId){
   if(!isAdmin()){
-    toast('장비 본체 부착용 QR 관리는 관리자 전용 기능입니다.');
+    toast('장비 본체 부착용 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
+    if(typeof openLoginModal === 'function') openLoginModal();
     return;
   }
   eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
@@ -4000,8 +4001,8 @@ function openEquipmentQrModal(eqId){
   const urlEl = $('qrLabelUrlText');
   const container = $('equipmentQrCanvasContainer');
 
-  if(titleEl) titleEl.textContent = eq.name;
-  if(modelEl) modelEl.textContent = (eq.model || '') + ' · ' + (eq.location || '');
+  if(titleEl) titleEl.textContent = eq.name || eq.code;
+  if(modelEl) modelEl.textContent = (eq.model || '') + (eq.location ? ' · ' + eq.location : '');
 
   // 생성될 직행 URL (HTTPS origin + 경로 + 해시 쿼리)
   const targetUrl = window.location.origin + window.location.pathname + '#logbook?eq=' + encodeURIComponent(eq.id) + '&action=quick_start';
@@ -4012,11 +4013,15 @@ function openEquipmentQrModal(eqId){
   }
 
   modal.classList.add('open');
+  modal.style.display = 'flex';
 }
 
 function closeEquipmentQrModal(){
   const modal = $('modalEquipmentQrBackdrop');
-  if(modal) modal.classList.remove('open');
+  if(modal){
+    modal.classList.remove('open');
+    modal.style.display = '';
+  }
 }
 
 // [본체 부착용 완성형 QR 라벨 고해상도 PNG 합성 및 다운로드]
@@ -6881,13 +6886,213 @@ function exportGeneralEquipmentLogsCsv(){
   toast('✓ ' + (data.curEq.name || '장비') + ' 세션 로그(' + data.count + '건)가 최다 측정처 요약과 함께 엑셀(CSV)로 다운로드되었습니다.');
 }
 
-function exportEquipmentLogsCsv(){
-  const selected = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; });
-  if(selected && (selected.type === 'xrd' || selected.code === 'XRD')){
-    exportXrdLogsCsv();
-  } else {
-    exportGeneralEquipmentLogsCsv();
+// [연구장비 공식 사용일지 표준 Excel(.xlsx) 내보내기 엔진 (날짜 ### 짤림 원천 차단)]
+function exportEquipmentLogsExcel(){
+  const selected = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || {
+    id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', location: 'IBS 2DQH XRD실'
+  };
+
+  const isXrd = (selected.type === 'xrd' || selected.code === 'XRD');
+  const logs = isXrd ? xrdLogs : equipmentSessions.filter(function(s){
+    return s.equipment_id === selected.id || s.equipment_code === selected.code;
+  });
+
+  if(!logs || logs.length === 0){
+    toast('내보낼 ' + (selected.name || '장비') + ' 사용일지 데이터가 없습니다.');
+    return;
   }
+
+  // 1. 통계 집계
+  let totalMins = 0;
+  let totalSamples = 0;
+  const affilMap = {};
+  const userMap = {};
+
+  logs.forEach(function(l){
+    const mins = l.duration_min != null ? Number(l.duration_min) : (Number(l.run_hours) ? Math.round(Number(l.run_hours) * 60) : 60);
+    totalMins += mins;
+    const cnt = l.sample_count != null ? Number(l.sample_count) : 1;
+    totalSamples += cnt;
+    const aff = l.affiliation || '2DQH';
+    affilMap[aff] = (affilMap[aff] || 0) + cnt;
+    const u = l.user_name || l.operator_name || '연구원';
+    userMap[u] = (userMap[u] || 0) + 1;
+  });
+
+  let topAffil = '-';
+  let maxAff = 0;
+  for(const a in affilMap){
+    if(affilMap[a] > maxAff){
+      maxAff = affilMap[a];
+      const pct = totalSamples > 0 ? Math.round((maxAff / totalSamples) * 100) : 0;
+      topAffil = a + ' (' + maxAff + '개, ' + pct + '%)';
+    }
+  }
+
+  let topUser = '-';
+  let maxU = 0;
+  for(const u in userMap){
+    if(userMap[u] > maxU){
+      maxU = userMap[u];
+      topUser = u + ' (' + maxU + '건)';
+    }
+  }
+
+  // 2. 워크시트 데이터 배열 (AOA) 생성
+  const aoa = [];
+  aoa.push(['[IBS 2DQH 연구단 연구장비 공식 사용 및 운영일지]']);
+  aoa.push(['장비명: ' + (selected.name || selected.code) + ' (' + (selected.code || '') + ')', '', '설치위치: ' + (selected.location || '-'), '', '출력일자: ' + today()]);
+  aoa.push(['총 가동건수: ' + logs.length + '건', '', '총 가동시간: ' + (totalMins / 60).toFixed(1) + '시간 (' + totalMins + '분)', '', '총 시료수: ' + totalSamples + '개', '', '최다 사용처: ' + topAffil, '', '최다 사용자: ' + topUser]);
+  aoa.push([]); // 빈 줄
+
+  // 헤더 행
+  const headers = [
+    'No',
+    '측정일자 (Date)',
+    '시작시간 (Start)',
+    '종료시간 (End)',
+    '가동시간_분 (Duration)',
+    '사용자 (Operator)',
+    '소속 연구실 (Affiliation)',
+    '지도교수 (Adviser)',
+    '시료/공정명 (Sample)',
+    '시료수량 (Count)',
+    '측정/스캔모드 (Mode)',
+    '장비 파라미터 (Parameters)',
+    'SOP점검 (Safety Check)',
+    '진행상태 (Status)',
+    '비고/특이사항 (Memo)'
+  ];
+  aoa.push(headers);
+
+  // 데이터 행 추가
+  logs.forEach(function(l, idx){
+    const dateStr = normalizeExportDate(l.used_on || l.start_time || '');
+    const startTm = l.start_time ? String(l.start_time).replace(/.*T/, '').slice(0, 5) : '-';
+    let endTm = l.end_time ? String(l.end_time).replace(/.*T/, '').slice(0, 5) : '';
+    if(!endTm && l.duration_min && startTm !== '-'){
+      const parts = startTm.split(':');
+      if(parts.length === 2){
+        const totalStartM = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+        const totalEndM = totalStartM + Number(l.duration_min);
+        const eh = Math.floor(totalEndM / 60) % 24;
+        const em = totalEndM % 60;
+        endTm = String(eh).padStart(2, '0') + ':' + String(em).padStart(2, '0');
+      }
+    }
+    const durMin = l.duration_min != null ? Number(l.duration_min) : (Number(l.run_hours) ? Math.round(Number(l.run_hours) * 60) : 60);
+    const userName = l.user_name || l.operator_name || '-';
+    const affil = l.affiliation || '2DQH';
+    const prof = l.professor || '-';
+    const sample = l.sample_name || l.sample_info || '-';
+    const sampleCnt = l.sample_count != null ? Number(l.sample_count) : 1;
+    const scanMode = l.scan_type || (l.parameters && l.parameters.scan_type) || (isXrd ? (l.scan_mode || 'θ/2θ') : '표준');
+
+    // 파라미터 문자열 포맷팅
+    let paramStr = '-';
+    if(l.parameters && typeof l.parameters === 'object'){
+      const pArr = [];
+      for(const k in l.parameters){
+        if(k === 'scan_type' || k.endsWith('_ok')) continue;
+        pArr.push(k + ': ' + l.parameters[k]);
+      }
+      if(pArr.length > 0) paramStr = pArr.join(' | ');
+    } else if(isXrd){
+      const xrdParams = [];
+      if(l.chiller_temp_start != null) xrdParams.push('Chiller: ' + l.chiller_temp_start + '°C');
+      if(l.vacuum_start != null) xrdParams.push('Vac: ' + l.vacuum_start + 'mV');
+      if(xrdParams.length > 0) paramStr = xrdParams.join(' | ');
+    }
+
+    // SOP 점검 결과
+    let sopStr = '완료 (Pass)';
+    if(l.parameters){
+      let allOk = true;
+      for(const k in l.parameters){
+        if(k.endsWith('_ok') && l.parameters[k] === false){
+          allOk = false;
+          break;
+        }
+      }
+      if(!allOk) sopStr = '주의/특이';
+    }
+
+    const statusText = (l.status === 'active' || l.status === 'in_use') ? '가동중' : '정상완료';
+    const memo = String(l.memo || l.notes || '').replace(/[\r\n]+/g, ' ').trim() || '-';
+
+    aoa.push([
+      idx + 1,
+      dateStr,
+      startTm,
+      endTm || '-',
+      durMin,
+      userName,
+      affil,
+      prof,
+      sample,
+      sampleCnt,
+      scanMode,
+      paramStr,
+      sopStr,
+      statusText,
+      memo
+    ]);
+  });
+
+  const fileName = '2DQH_' + (selected.code || 'Equipment') + '_사용일지_' + today();
+
+  // 3. SheetJS (.xlsx) 파일 생성 (열 너비 지정으로 ### 짤림 원천 차단)
+  if(window.XLSX){
+    try {
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      // 열 너비 지정: 날짜 15, 사용자 14, 샘플명 26, 파라미터 32 등 넉넉하게 보장
+      ws['!cols'] = [
+        { wch: 6 },  // No
+        { wch: 15 }, // 날짜 (### 짤림 절대 방지)
+        { wch: 11 }, // 시작시간
+        { wch: 11 }, // 종료시간
+        { wch: 14 }, // 가동시간
+        { wch: 14 }, // 사용자
+        { wch: 16 }, // 소속
+        { wch: 16 }, // 지도교수
+        { wch: 28 }, // 시료명
+        { wch: 10 }, // 시료수
+        { wch: 16 }, // 모드
+        { wch: 34 }, // 파라미터
+        { wch: 15 }, // SOP 점검
+        { wch: 12 }, // 상태
+        { wch: 32 }  // 메모
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, '사용일지');
+      XLSX.writeFile(wb, fileName + '.xlsx');
+      toast('✓ ' + (selected.name || '장비') + ' 공식 사용일지(' + logs.length + '건) 엑셀 파일이 다운로드되었습니다.');
+      return;
+    } catch(err){
+      console.warn('XLSX export failed, fallback to CSV:', err);
+    }
+  }
+
+  // 4. Fallback: UTF-8 BOM CSV 생성
+  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+  const csvLines = aoa.map(function(row){
+    return row.map(function(cell){
+      const str = String(cell == null ? '' : cell);
+      return '"' + str.replace(/"/g, '""') + '"';
+    }).join(',');
+  });
+  const blob = new Blob([bom, csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✓ ' + (selected.name || '장비') + ' 사용일지가 다운로드되었습니다.');
 }
 
 function consumableFor(id){
@@ -8862,7 +9067,7 @@ function bindEvents(){
     }
 
     if(target.id === 'btnExportEquipmentLogs' || target.closest('#btnExportEquipmentLogs')){
-      exportEquipmentLogsCsv();
+      exportEquipmentLogsExcel();
       return;
     }
 
@@ -8962,7 +9167,12 @@ function bindEvents(){
     }
 
     // 장비 본체 부착용 QR 모달 제어
-    if(target.id === 'btnShowEquipmentQr' || target.closest('#btnShowEquipmentQr') || target.id === 'btnDetailTopShowQr' || target.closest('#btnDetailTopShowQr')){
+    if(target.id === 'btnDetailTopShowQr' || target.closest('#btnDetailTopShowQr') || target.id === 'btnShowEquipmentQr' || target.closest('#btnShowEquipmentQr')){
+      if(!isAdmin()){
+        toast('장비 본체 부착용 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
+        if(typeof openLoginModal === 'function') openLoginModal();
+        return;
+      }
       openEquipmentQrModal();
       return;
     }
