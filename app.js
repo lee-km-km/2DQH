@@ -9084,7 +9084,10 @@ function bindEvents(){
   const mBackdrop = $('modalBackdrop');
   if(mBackdrop){
     mBackdrop.addEventListener('click', function(e){
-      if(e.target === mBackdrop) closeModal();
+      if(e.target === mBackdrop){
+        // 작성 중 실수로 바깥을 클릭해도 창이 꺼지지 않도록 보호하고 시각적 피드백 제공
+        triggerModalShake(mBackdrop);
+      }
     });
   }
 
@@ -9205,7 +9208,10 @@ function bindEvents(){
   const tdModalEl = $('modalTestDriveBackdrop');
   if(tdModalEl){
     tdModalEl.addEventListener('click', function(e){
-      if(e.target === tdModalEl) closeEquipmentTestDrive();
+      if(e.target === tdModalEl){
+        // 장비 사용 기록 작성 중 데이터 유실 방지
+        triggerModalShake(tdModalEl);
+      }
     });
   }
 
@@ -17428,7 +17434,9 @@ function bindChemicalsEvents(){
     exportOfficial291LedgerExcel();
   });
   addEvt('modalChemOfficialLedgerBackdrop', 'click', function(e){
-    if(e.target === $('modalChemOfficialLedgerBackdrop')) closeChemOfficialLedgerModal();
+    if(e.target === $('modalChemOfficialLedgerBackdrop')){
+      triggerModalShake($('modalChemOfficialLedgerBackdrop'));
+    }
   });
 
   // 기타 법정 양식 버튼
@@ -17482,7 +17490,10 @@ function bindChemicalsEvents(){
     closeChemWriteLogModal();
   });
   addEvt('modalChemWriteLogBackdrop', 'click', function(e){
-    if(e.target === $('modalChemWriteLogBackdrop')) closeChemWriteLogModal();
+    if(e.target === $('modalChemWriteLogBackdrop')){
+      // 취급일지 작성 중 데이터 유실 방지: 배경 클릭 시 닫히지 않고 안내 진동 효과
+      triggerModalShake($('modalChemWriteLogBackdrop'));
+    }
   });
   addEvt('modalChemSelect', 'change', updateModalChemStockPreview);
   addEvt('formWriteChemicalLogModal', 'submit', handleModalChemLogSubmit);

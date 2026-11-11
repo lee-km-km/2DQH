@@ -9943,3 +9943,14 @@ html:not(.is-admin) #btnHelpTabAdmin {
     font-size: 15px !important;
   }
 }
+
+
+/* 입력 데이터 보호를 위한 Static Backdrop Shake 애니메이션 */
+@keyframes modalShake {
+  0%, 100% { transform: scale(1); }
+  20%, 60% { transform: scale(1.02) translateX(-3px); }
+  40%, 80% { transform: scale(0.99) translateX(3px); }
+}
+.modal-shake {
+  animation: modalShake 0.28s ease-in-out !important;
+}
