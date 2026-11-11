@@ -513,6 +513,7 @@ const EQUIPMENT_SCHEMAS = {
     scanTypes: ['Survey Scan (전원소 와이드)', 'Narrow / Core Level Scan (C 1s, O 1s 등)', 'Valence Band (UPS)', 'Depth Profile (Ar+ 에칭)', 'ARXPS (각도분해)']
   },
 };
+if(typeof window !== 'undefined') window.EQUIPMENT_SCHEMAS = EQUIPMENT_SCHEMAS;
 
 // [공통 유틸리티] 숫자 2자리 패딩
 function pad(n){ return String(n).padStart(2, '0'); }
@@ -1026,7 +1027,15 @@ const AppState = {
   get modalMode(){ return modalMode; },
   set modalMode(v){ modalMode = v; },
   get modalId(){ return modalId; },
-  set modalId(v){ modalId = v; }
+  set modalId(v){ modalId = v; },
+  get researchEquipments(){ return researchEquipments; },
+  set researchEquipments(v){ researchEquipments = v; },
+  get equipmentSessions(){ return equipmentSessions; },
+  set equipmentSessions(v){ equipmentSessions = v; },
+  get xrdLogs(){ return xrdLogs; },
+  set xrdLogs(v){ xrdLogs = v; },
+  get currentSelectedEquipment(){ return currentSelectedEquipment; },
+  set currentSelectedEquipment(v){ currentSelectedEquipment = v; }
 };
 window.AppState = AppState;
 
@@ -4828,7 +4837,7 @@ function showEquipmentCatalogHub(){
   if(hub) hub.classList.remove('hidden');
   if(detail) detail.classList.add('hidden');
   switchEquipmentHubView(currentHubView || 'catalog');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ========================================================
@@ -4952,7 +4961,7 @@ function switchEquipmentHubView(mode){
   } else {
     renderEquipmentPortalGrid();
   }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function getMonthWeeks(year, month){
@@ -6656,7 +6665,7 @@ function selectResearchEquipment(eqId){
   const titleEl = $('detailEqPageTitle');
   const countBadge = $('logbookCountBadge');
 
-  const isXrd = (selected.type === 'xrd' || selected.code === 'XRD');
+  const isXrd = (selected.type === 'xrd' || selected.code === 'XRD' || selected.code === 'HR-XRD' || selected.id === 'EQ-XRD-01');
   const isBonder = (selected.code === 'WireBonder');
   const isXps = (selected.code === 'XPS');
   const isActive = (selected.status === 'active' || isXrd || isBonder || isXps);
@@ -6723,7 +6732,7 @@ function selectResearchEquipment(eqId){
     renderEquipmentTestSessions(selected.code);
   }
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
   const viewLogbook = $('view-logbook');
   if(viewLogbook) viewLogbook.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -6892,7 +6901,7 @@ function exportEquipmentLogsExcel(){
     id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', location: 'IBS 2DQH XRD실'
   };
 
-  const isXrd = (selected.type === 'xrd' || selected.code === 'XRD');
+  const isXrd = (selected.type === 'xrd' || selected.code === 'XRD' || selected.code === 'HR-XRD' || selected.id === 'EQ-XRD-01');
   const logs = isXrd ? xrdLogs : equipmentSessions.filter(function(s){
     return s.equipment_id === selected.id || s.equipment_code === selected.code;
   });
@@ -7115,7 +7124,7 @@ function renderHistory(){
   const selectedStatus = statusFilterEl ? statusFilterEl.value : 'all';
 
   // 비품 드롭다운 옵션 동적 채우기 (현재 등록된 assets 기준)
-  if(assetFilterEl && assetFilterEl.options.length <= 1){
+  if(assetFilterEl && assetFilterEl.options && assetFilterEl.options.length <= 1){
     const sortedAssets = assets.slice().sort(function(a, b){
       return (a.name || '').localeCompare(b.name || '', 'ko');
     });
@@ -7960,7 +7969,7 @@ function showView(name, options){
   }
 
   // 뷰 전환 시 최상단으로 깔끔하게 이동 (모바일/PC 하단 묻힘 현상 방지)
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function scrollToReorderPanel(){
@@ -8695,7 +8704,7 @@ function bindEvents(){
       if(toggleBtn) toggleBtn.classList.remove('active');
       closeModal();
       renderInventory();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
@@ -9166,8 +9175,8 @@ function bindEvents(){
       }
     }
 
-    // 장비 본체 부착용 QR 모달 제어
-    if(target.id === 'btnDetailTopShowQr' || target.closest('#btnDetailTopShowQr') || target.id === 'btnShowEquipmentQr' || target.closest('#btnShowEquipmentQr')){
+    // 장비 본체 부착용 QR 모달 제어 (우측 상단 단일 QR 버튼)
+    if(target.id === 'btnDetailTopShowQr' || target.closest('#btnDetailTopShowQr')){
       if(!isAdmin()){
         toast('장비 본체 부착용 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
         if(typeof openLoginModal === 'function') openLoginModal();
