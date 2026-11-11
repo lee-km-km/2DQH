@@ -15766,8 +15766,9 @@ const LAB_291_USAGE_LOGS_DEFAULT = [
 ];
 
 let currentChemScope = 'special'; // 'special' | 'general' | 'all'
-let currentChemCalYear = 2026;
-let currentChemCalMonth = 3;
+const _initDate = new Date();
+let currentChemCalYear = _initDate.getFullYear();
+let currentChemCalMonth = _initDate.getMonth() + 1;
 let currentChemSubTab = 'calendar'; // 'calendar' | 'monthly' | 'yearly'
 
 function get291ChemicalsMaster(){
@@ -16847,15 +16848,15 @@ function render291Calendar(){
     html += '<div class="chem-cal-cell empty"></div>';
   }
 
-  const todayStr = today();
+  const todayDot = today().replace(/-/g, '.');
 
   for(let d = 1; d <= lastDate; d++){
     const dStr = String(d).padStart(2, '0');
     const fullDate = prefix + '.' + dStr;
     const dayLogs = monthLogs.filter(function(l){ return l.date === fullDate; });
-    const isToday = (fullDate === todayStr);
+    const isToday = (fullDate === todayDot);
 
-    let cellContent = '<div class="cal-date-num">' + d + '</div>';
+    let cellContent = '<div class="cal-date-num">' + d + (isToday ? ' <span style="font-size:9.5px;padding:1px 4px;background:#2563eb;color:#fff;border-radius:3px;font-weight:700;margin-left:3px;">오늘</span>' : '') + '</div>';
     if(dayLogs.length > 0){
       cellContent += '<div class="cal-badge-box">';
       dayLogs.slice(0, 2).forEach(function(l){
@@ -17287,8 +17288,9 @@ function bindChemicalsEvents(){
   });
   addEvt('btnChemCalToday', 'click', function(e){
     e.preventDefault();
-    currentChemCalYear = 2026;
-    currentChemCalMonth = 3;
+    const now = new Date();
+    currentChemCalYear = now.getFullYear();
+    currentChemCalMonth = now.getMonth() + 1;
     render291Calendar();
   });
 
