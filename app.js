@@ -4008,7 +4008,7 @@ function openEquipmentQrModal(eqId){
   if(urlEl) urlEl.textContent = targetUrl;
 
   if(container){
-    renderQrCodeInto(container, targetUrl, 190);
+    renderQrCodeInto(container, targetUrl, 148);
   }
 
   modal.classList.add('open');
@@ -4019,35 +4019,141 @@ function closeEquipmentQrModal(){
   if(modal) modal.classList.remove('open');
 }
 
+// [본체 부착용 완성형 QR 라벨 고해상도 PNG 합성 및 다운로드]
 function downloadEquipmentQrImage(){
+  const cur = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || {
+    id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', model: 'SmartLab · Rigaku', location: 'IBS XRD실'
+  };
   const container = $('equipmentQrCanvasContainer');
-  if(!container) return;
-  const canvas = container.querySelector('canvas');
-  const img = container.querySelector('img');
+  if(!container){ toast('QR 요소를 찾을 수 없습니다.'); return; }
+  
+  const qrSource = container.querySelector('canvas') || container.querySelector('img');
+  if(!qrSource){ toast('QR 이미지가 아직 생성되지 않았습니다.'); return; }
 
-  const cur = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || { code: 'Equipment', name: '연구장비' };
   const fileName = (cur.code || 'Equipment') + '_QR_Label.png';
 
-  if(canvas){
-    const a = document.createElement('a');
-    a.download = fileName;
-    a.href = canvas.toDataURL('image/png');
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    toast('📷 ' + (cur.code || '장비') + ' 본체 부착용 QR 라벨이 다운로드되었습니다.');
-  } else if(img){
-    const a = document.createElement('a');
-    a.download = fileName;
-    a.href = img.src;
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    toast('📷 ' + (cur.code || '장비') + ' QR 라벨 이미지를 엽니다.');
-  } else {
-    toast('QR 코드 이미지를 찾을 수 없습니다.');
+  try {
+    // 600x640 고해상도 라벨 카드 캔버스 합성
+    const w = 600;
+    const h = 640;
+    const cvs = document.createElement('canvas');
+    cvs.width = w;
+    cvs.height = h;
+    const ctx = cvs.getContext('2d');
+
+    // 1. 배경 (흰색 라운드 사각형)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. 외곽 테두리 (2겹 라벨 디자인)
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(16, 16, w - 32, h - 32);
+
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(26, 26, w - 52, h - 52);
+
+    // 3. 상단 뱃지
+    ctx.fillStyle = '#0f172a';
+    if(ctx.roundRect){
+      ctx.beginPath();
+      ctx.roundRect(160, 42, 280, 44, 22);
+      ctx.fill();
+    } else {
+      ctx.fillRect(160, 42, 280, 44);
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('IBS 2DQH 연구장비', 300, 64);
+
+    // 4. 장비명
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 26px Pretendard, sans-serif';
+    let title = cur.name || cur.code;
+    if(title.length > 25) title = title.substring(0, 24) + '...';
+    ctx.fillText(title, 300, 122);
+
+    // 5. 모델명 및 위치
+    ctx.fillStyle = '#475569';
+    ctx.font = '600 19px Pretendard, sans-serif';
+    const sub = (cur.model || '') + (cur.location ? ' · ' + cur.location : '');
+    ctx.fillText(sub, 300, 158);
+
+    // 6. 정사각형 QR 코드 그리기 (정중앙 320x320)
+    const qrSize = 320;
+    const qrX = (w - qrSize) / 2;
+    const qrY = 190;
+    ctx.drawImage(qrSource, qrX, qrY, qrSize, qrSize);
+
+    // 7. 하단 안내문 및 식별자
+    ctx.fillStyle = '#2563eb';
+    ctx.font = 'bold 20px Pretendard, sans-serif';
+    ctx.fillText('스마트폰 카메라 스캔 → 즉시 세션 시작', 300, 545);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '15px monospace';
+    ctx.fillText('Equipment Code: ' + (cur.code || cur.id), 300, 585);
+
+    // 8. 다운로드 실행 (Blob 우선 지원)
+    if(cvs.toBlob){
+      cvs.toBlob(function(blob){
+        if(!blob){
+          downloadViaDataUrl(cvs.toDataURL('image/png'), fileName, cur.code);
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.download = fileName;
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function(){
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 800);
+        toast('📷 ' + (cur.code || '장비') + ' 본체 부착용 QR 라벨 이미지가 저장되었습니다.');
+      }, 'image/png');
+    } else {
+      downloadViaDataUrl(cvs.toDataURL('image/png'), fileName, cur.code);
+    }
+  } catch(err){
+    console.warn('Composite canvas failed, fallback to raw QR:', err);
+    // 기본 QR 다운로드 fallback
+    if(qrSource.tagName.toLowerCase() === 'canvas'){
+      downloadViaDataUrl(qrSource.toDataURL('image/png'), fileName, cur.code);
+    } else {
+      const a = document.createElement('a');
+      a.download = fileName;
+      a.href = qrSource.src;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast('📷 ' + (cur.code || '장비') + ' QR 라벨 이미지를 저장합니다.');
+    }
   }
+}
+
+function downloadViaDataUrl(dataUrl, fileName, code){
+  const a = document.createElement('a');
+  a.download = fileName;
+  a.href = dataUrl;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('📷 ' + (code || '장비') + ' 본체 부착용 QR 라벨 이미지가 저장되었습니다.');
+}
+
+// [QR 라벨 전용 깔끔한 인쇄 핸들러]
+function printEquipmentQrLabel(){
+  document.body.classList.add('printing-equipment-qr');
+  window.print();
+  setTimeout(function(){
+    document.body.classList.remove('printing-equipment-qr');
+  }, 1200);
 }
 
 // ========================================================
@@ -4684,15 +4790,7 @@ function renderEquipmentPortalGrid(){
       actionBtnText = '📖 ' + safe(eq.code) + ' 전자 로그북 열기';
     }
 
-    let actionBtnHtml = '';
-    if(isAdmin()){
-      actionBtnHtml = '<div style="display:flex;gap:6px;margin-top:8px;">' +
-        '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;flex:1;"' : ' style="flex:1;"') + '>' + actionBtnText + '</button>' +
-        '<button type="button" class="btn btn-card-qr-trigger admin-only" data-eq-id="' + safe(eq.id) + '" title="본체 부착용 QR 코드 열기" style="padding:0 12px;background:#ffffff;border:1.5px solid #2563eb;color:#2563eb;font-weight:700;display:inline-flex;align-items:center;gap:4px;">📷 QR</button>' +
-      '</div>';
-    } else {
-      actionBtnHtml = '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;margin-top:8px;"' : ' style="margin-top:8px;"') + '>' + actionBtnText + '</button>';
-    }
+    const actionBtnHtml = '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;margin-top:8px;"' : ' style="margin-top:8px;"') + '>' + actionBtnText + '</button>';
     const statusBadgeHtml = '<span class="eq-card-cat-badge">' + safe(eq.categoryName || '장비') + '</span>';
 
     html +=
@@ -8864,7 +8962,7 @@ function bindEvents(){
     }
 
     // 장비 본체 부착용 QR 모달 제어
-    if(target.id === 'btnShowEquipmentQr' || target.closest('#btnShowEquipmentQr') || target.id === 'btnDetailTopShowQr' || target.closest('#btnDetailTopShowQr') || target.id === 'btnPlaceholderShowQr' || target.closest('#btnPlaceholderShowQr')){
+    if(target.id === 'btnShowEquipmentQr' || target.closest('#btnShowEquipmentQr') || target.id === 'btnDetailTopShowQr' || target.closest('#btnDetailTopShowQr')){
       openEquipmentQrModal();
       return;
     }
@@ -8875,7 +8973,7 @@ function bindEvents(){
     }
 
     if(target.id === 'btnPrintEquipmentQr' || target.closest('#btnPrintEquipmentQr')){
-      window.print();
+      printEquipmentQrLabel();
       return;
     }
 

@@ -5176,6 +5176,19 @@ tr.row-overdue:hover {
   }
 
   /* 2. 장비 및 시약 부착용 QR 라벨 인쇄 */
+  #modalEquipmentQrBackdrop,
+  #modalChemicalQrBackdrop {
+    background: transparent !important;
+  }
+  .modal.equipment-qr-modal {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  .modal.equipment-qr-modal .modal-head,
+  .modal.equipment-qr-modal .qr-modal-actions {
+    display: none !important;
+  }
   #modalEquipmentQrBackdrop.open #equipmentQrPrintArea,
   #modalEquipmentQrBackdrop.open #equipmentQrPrintArea *,
   #modalChemicalQrBackdrop.open #chemicalQrPrintArea,
@@ -5188,10 +5201,11 @@ tr.row-overdue:hover {
     left: 50% !important;
     top: 50% !important;
     transform: translate(-50%, -50%) !important;
-    width: 85mm !important;
-    max-width: 85mm !important;
-    border: 2px solid #000000 !important;
-    padding: 8mm 6mm !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    border: 2.5px solid #000000 !important;
+    border-radius: 8mm !important;
+    padding: 6mm 5mm !important;
     box-shadow: none !important;
     background: #ffffff !important;
     color: #000000 !important;
