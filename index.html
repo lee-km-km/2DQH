@@ -399,13 +399,13 @@
       <div id="chemInventoryViewArea">
         <!-- 시약 카테고리 원클릭 필터 탭 (특별관리물질 vs 일반 시약 vs 전체 통합) -->
         <div class="chem-quick-scope-bar" role="tablist">
-          <button type="button" class="btn-chem-scope active" data-chem-scope="special" id="btnScopeSpecial">
+          <button type="button" class="btn-chem-scope" data-chem-scope="special" id="btnScopeSpecial">
             ⭐ 특별관리물질
           </button>
           <button type="button" class="btn-chem-scope" data-chem-scope="general" id="btnScopeGeneral">
             🧪 일반 시약·유해물질
           </button>
-          <button type="button" class="btn-chem-scope" data-chem-scope="all" id="btnScopeAll">
+          <button type="button" class="btn-chem-scope active" data-chem-scope="all" id="btnScopeAll">
             📦 전체 화학물질 (통합 검색)
           </button>
         </div>
@@ -478,8 +478,8 @@
             </div>
             <div class="filter-cond-group">
               <span class="filter-group-title">특성조건:</span>
-              <label><input type="checkbox" id="chemCondSpecial" checked> 특별관리물질만</label>
-              <label><input type="checkbox" id="chemCondReagent"> 시약</label>
+              <label><input type="checkbox" id="chemCondSpecial" checked> 특별관리물질</label>
+              <label><input type="checkbox" id="chemCondReagent" checked> 일반시약</label>
             </div>
             <div class="chem-search-actions">
               <button type="button" class="btn-chem-search" id="btnChemSearchSubmit">검색</button>
@@ -531,6 +531,7 @@
 
         <!-- 4. 재고 테이블 (Image 1 규격 15개 컬럼) -->
         <div class="panel chem-table-panel" style="padding:0;overflow:hidden;border-radius:6px;">
+          <div class="mobile-table-scroll-hint mobile-only">👉 좌우로 스크롤하여 상세 정보(MSDS, 수량, 잔량 등)를 확인하세요</div>
           <div class="table-wrap chem-official-inventory-table-wrap">
             <table class="chem-inventory-table" id="chemInventoryTable">
               <thead>

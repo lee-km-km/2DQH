@@ -8715,9 +8715,13 @@ function bindEvents(){
     if(conn){ conn.textContent = '오프라인 (읽기 전용)'; conn.style.color = '#b45309'; }
   });
 
-  // 모바일 드로어 오버레이 클릭/터치 시 즉시 닫기
+  // 모바일 드로어 오버레이 클릭/터치 및 닫기[X] 버튼 클릭 시 즉시 닫기
   addEvt('mobileDrawerOverlay', 'click', closeMobileDrawer);
   addEvt('mobileDrawerOverlay', 'touchstart', function(e){
+    e.preventDefault();
+    closeMobileDrawer();
+  });
+  addEvt('btnCloseMobileDrawer', 'click', function(e){
     e.preventDefault();
     closeMobileDrawer();
   });
@@ -16199,7 +16203,7 @@ const LAB_291_USAGE_LOGS_DEFAULT = [
   }
 ];
 
-let currentChemScope = 'special'; // 'special' | 'general' | 'all'
+let currentChemScope = 'all'; // 'special' | 'general' | 'all'
 const _initDate = new Date();
 let currentChemCalYear = _initDate.getFullYear();
 let currentChemCalMonth = _initDate.getMonth() + 1;
@@ -17665,6 +17669,17 @@ function bindChemicalsEvents(){
         currentChemScope = btn.dataset.chemScope;
         document.querySelectorAll('.btn-chem-scope').forEach(function(b){ b.classList.remove('active'); });
         btn.classList.add('active');
+        // 특성 조건 체크박스와 2방향 실시간 동기화
+        if(currentChemScope === 'special'){
+          if($('chemCondSpecial')) $('chemCondSpecial').checked = true;
+          if($('chemCondReagent')) $('chemCondReagent').checked = false;
+        } else if(currentChemScope === 'general'){
+          if($('chemCondSpecial')) $('chemCondSpecial').checked = false;
+          if($('chemCondReagent')) $('chemCondReagent').checked = true;
+        } else {
+          if($('chemCondSpecial')) $('chemCondSpecial').checked = true;
+          if($('chemCondReagent')) $('chemCondReagent').checked = true;
+        }
         render291InventoryTable();
       });
     }
@@ -17776,9 +17791,31 @@ function bindChemicalsEvents(){
     if(el) el.addEventListener('change', function(){ render291InventoryTable(); });
   });
 
-  ['chemStateAll', 'chemStateWait', 'chemStateIn', 'chemStateOut', 'chemStateDel', 'chemCondSpecial', 'chemCondReagent'].forEach(function(id){
+  ['chemStateAll', 'chemStateWait', 'chemStateIn', 'chemStateOut', 'chemStateDel'].forEach(function(id){
     const el = $(id);
     if(el) el.addEventListener('change', function(){ render291InventoryTable(); });
+  });
+
+  // 특성 조건 체크박스 변경 시 스코프 탭 및 필터 2방향 동기화
+  ['chemCondSpecial', 'chemCondReagent'].forEach(function(id){
+    const el = $(id);
+    if(el) el.addEventListener('change', function(){
+      const sp = $('chemCondSpecial') && $('chemCondSpecial').checked;
+      const re = $('chemCondReagent') && $('chemCondReagent').checked;
+      if(sp && re){
+        currentChemScope = 'all';
+      } else if(sp && !re){
+        currentChemScope = 'special';
+      } else if(!sp && re){
+        currentChemScope = 'general';
+      } else {
+        currentChemScope = 'all';
+      }
+      document.querySelectorAll('.btn-chem-scope').forEach(function(b){
+        b.classList.toggle('active', b.dataset.chemScope === currentChemScope);
+      });
+      render291InventoryTable();
+    });
   });
 
   document.querySelectorAll('input[name="chemDangerType"], input[name="chemSort"]').forEach(function(radio){
@@ -17811,9 +17848,11 @@ function bindChemicalsEvents(){
     if($('chemFilterHandler')) $('chemFilterHandler').value = '';
     if($('chemFilterLoc')) $('chemFilterLoc').value = '';
     if($('chemFilterManageNo')) $('chemFilterManageNo').value = '';
-    currentChemScope = 'special';
+    currentChemScope = 'all';
+    if($('chemCondSpecial')) $('chemCondSpecial').checked = true;
+    if($('chemCondReagent')) $('chemCondReagent').checked = true;
     document.querySelectorAll('.btn-chem-scope').forEach(function(b){
-      b.classList.toggle('active', b.dataset.chemScope === 'special');
+      b.classList.toggle('active', b.dataset.chemScope === 'all');
     });
     render291InventoryTable();
   });

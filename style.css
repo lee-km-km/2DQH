@@ -1443,7 +1443,7 @@ tbody tr:hover .asset-thumb-box {
     overflow-y: auto !important;
     transform: translateX(100%) !important;
     transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
-    padding: 72px 18px 80px 18px !important;
+    padding: 16px 18px 80px 18px !important;
     border-left: 1px solid var(--border, #e2e8f0) !important;
     border-right: none !important;
   }
@@ -1451,7 +1451,44 @@ tbody tr:hover .asset-thumb-box {
     transform: translateX(0) !important;
   }
   .sidebar-mobile-head {
-    display: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 0 14px 0 !important;
+    margin-bottom: 14px !important;
+    border-bottom: 1.5px solid var(--border, #e2e8f0) !important;
+    width: 100% !important;
+  }
+  .sidebar-mobile-head .brand {
+    display: flex !important;
+    align-items: center !important;
+  }
+  .sidebar-mobile-head .brand-img-logo {
+    height: 28px !important;
+    width: auto !important;
+    object-fit: contain !important;
+  }
+  .btn-close-drawer {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 44px !important;
+    height: 44px !important;
+    background: transparent !important;
+    border: 1.5px solid var(--ink, #0f172a) !important;
+    border-radius: 8px !important;
+    font-size: 24px !important;
+    color: var(--ink, #0f172a) !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transition: all 0.15s ease !important;
+  }
+  .btn-close-drawer:hover {
+    background: rgba(15, 23, 42, 0.06) !important;
+  }
+  [data-theme="dark"] .btn-close-drawer {
+    border-color: #cbd5e1 !important;
+    color: #f8fafc !important;
   }
   .sidebar .nav {
     font-size: 16px !important;
@@ -9693,10 +9730,29 @@ html:not(.is-admin) #btnHelpTabAdmin {
     gap: 8px;
   }
   .chem-search-row {
+    display: flex !important;
     flex-direction: column !important;
     gap: 8px !important;
   }
+  .search-field {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  .search-field label {
+    width: 65px !important;
+    min-width: 65px !important;
+    font-size: 12px !important;
+    color: var(--ink-light) !important;
+  }
+  .search-field input, .search-field select {
+    flex: 1 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
   .chem-search-row-bottom {
+    display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 10px !important;
@@ -9731,9 +9787,41 @@ html:not(.is-admin) #btnHelpTabAdmin {
     font-size: 12px !important;
     padding: 8px 6px !important;
   }
+  .mobile-table-scroll-hint {
+    display: block !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 7px 10px !important;
+    border-bottom: 1px solid #bfdbfe !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+  [data-theme="dark"] .mobile-table-scroll-hint {
+    background: #1e293b !important;
+    color: #93c5fd !important;
+    border-bottom-color: #334155 !important;
+  }
+  .chem-official-inventory-table-wrap {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .chem-inventory-table {
+    min-width: 860px !important;
+    width: 100% !important;
+  }
   .chem-inventory-table th, .chem-inventory-table td {
-    padding: 8px 6px !important;
-    font-size: 11.5px !important;
+    padding: 7px 5px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+  }
+  .chem-inventory-table td:nth-child(2) {
+    min-width: 170px !important;
+    max-width: 240px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
   }
   
   /* 캘린더 모바일 최적화 */
