@@ -196,32 +196,61 @@ button { cursor: pointer; }
   }
 }
 
-/* Hamburger Toggle Button (Mobile Drawer Trigger) */
+/* Hamburger Toggle Button (Mobile Drawer Trigger - 3-bar to X transition) */
 .btn-hamburger {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  flex-direction: column;
+  width: 44px;
+  height: 44px;
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--ink, #0f172a);
   border-radius: 8px;
-  font-size: 18px;
-  color: var(--ink);
   cursor: pointer;
-  margin-right: 8px;
+  padding: 0;
+  gap: 5px;
   flex-shrink: 0;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1002;
+}
+.btn-hamburger .hamburger-bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background-color: var(--ink, #0f172a);
+  border-radius: 2px;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease,
+              background-color 0.2s ease;
+  transform-origin: center;
 }
 .btn-hamburger:hover {
-  background: #f1f5f9;
+  background: rgba(15, 23, 42, 0.05);
 }
+
+/* 햄버거 3개 작대기 -> 'X' 교차 애니메이션 */
+.btn-hamburger.is-active .hamburger-bar.bar-top {
+  transform: translateY(7px) rotate(45deg);
+}
+.btn-hamburger.is-active .hamburger-bar.bar-mid {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.btn-hamburger.is-active .hamburger-bar.bar-bot {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
 [data-theme="dark"] .btn-hamburger {
-  border-color: #1e293b;
-  color: #f8fafc;
+  border-color: #cbd5e1;
+  background: transparent;
+}
+[data-theme="dark"] .btn-hamburger .hamburger-bar {
+  background-color: #f8fafc;
 }
 [data-theme="dark"] .btn-hamburger:hover {
-  background: #1e293b;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* Mobile Drawer Overlay */
@@ -1358,10 +1387,94 @@ tbody tr:hover .asset-thumb-box {
 @media(max-width: 700px) {
   .layout { display: block; }
   
-  /* 모바일 상단 바: 큼직하고 시원한 로고 & 돋보기 버튼 노출 */
+  /* 모바일 상단 바: 2DQH 로고(좌측) & 햄버거/X 애니메이션 버튼(우측) 미니멀 헤더 */
   .desktop-only, #loginBtn, #logoutBtn, #connection { display: none !important; }
-  .btn-toggle-search { display: inline-flex !important; }
-  
+  .btn-toggle-search { display: none !important; }
+  .topbar-center, #portalModuleSwitcher { display: none !important; }
+
+  .topbar {
+    height: 60px !important;
+    padding: 0 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--border, #e2e8f0) !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+  }
+  .topbar-left {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  .topbar-left .brand-sep,
+  .topbar-left .brand-sub {
+    display: none !important;
+  }
+  .topbar-left .brand-img-logo {
+    height: 32px !important;
+    max-height: 32px !important;
+    width: auto !important;
+    object-fit: contain !important;
+  }
+  .topbar-right {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  /* 모바일: 햄버거 토글 슬라이드 아웃 서랍(Drawer) 사이드바 - 우측 슬라이드 인 */
+  .btn-hamburger { display: inline-flex !important; }
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    bottom: 0 !important;
+    width: 290px !important;
+    max-width: 86vw !important;
+    z-index: 1001 !important;
+    background: #ffffff !important;
+    box-shadow: -6px 0 30px rgba(0, 0, 0, 0.16) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    transform: translateX(100%) !important;
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    padding: 72px 18px 80px 18px !important;
+    border-left: 1px solid var(--border, #e2e8f0) !important;
+    border-right: none !important;
+  }
+  .sidebar.drawer-open {
+    transform: translateX(0) !important;
+  }
+  .sidebar-mobile-head {
+    display: none !important;
+  }
+  .sidebar .nav {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    padding: 12px 14px !important;
+    border-radius: 8px !important;
+    color: var(--ink, #0f172a) !important;
+    letter-spacing: -0.3px !important;
+    margin-bottom: 4px !important;
+    transition: all 0.15s ease !important;
+  }
+  .sidebar .nav.active {
+    color: #2563eb !important;
+    background: rgba(37, 99, 235, 0.08) !important;
+  }
+  .sidebar-section-title {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    color: #64748b !important;
+    margin-top: 14px !important;
+    margin-bottom: 6px !important;
+  }
+
   /* 모바일 검색 & 카테고리 접기/펼치기 패널 */
   .search-collapsible-panel {
     display: none;
@@ -1374,30 +1487,6 @@ tbody tr:hover .asset-thumb-box {
   @keyframes panelSlideDown {
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* 모바일: 햄버거 토글 슬라이드 아웃 서랍(Drawer) 사이드바 */
-  .btn-hamburger { display: inline-flex !important; }
-  .sidebar {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    bottom: 0 !important;
-    width: 290px !important;
-    max-width: 86vw !important;
-    z-index: 1000 !important;
-    background: #ffffff !important;
-    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.18) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow-y: auto !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    padding: 16px 14px 80px 14px !important;
-    border-right: 1px solid var(--border) !important;
-  }
-  .sidebar.drawer-open {
-    transform: translateX(0) !important;
   }
   .layout { display: block !important; }
   .mobile-bar { display: none !important; }

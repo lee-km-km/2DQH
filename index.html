@@ -26,7 +26,7 @@
     })();
   </script>
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-  <link rel="stylesheet" href="style.css?v=20261111_1200_perfect">
+  <link rel="stylesheet" href="style.css?v=20261111_1350_mobile_ui">
   <script>
     (function(){
       try {
@@ -46,11 +46,8 @@
 
 <header class="topbar">
   <div class="topbar-left">
-    <button id="btnOpenMobileDrawer" class="btn-hamburger mobile-only" type="button" aria-label="메뉴 열기">
-      <span aria-hidden="true">☰</span>
-    </button>
     <a class="brand" href="#" id="brandLogoLink">
-      <img src="logo_2dqh.jpg" alt="2DQH" class="brand-img-logo">
+      <img src="logo_2dqh.png" alt="2DQH" class="brand-img-logo">
       <span class="brand-sep" aria-hidden="true"></span>
       <span class="brand-sub" id="brandSubText">연구장비 포털</span>
     </a>
@@ -71,16 +68,23 @@
   </div>
 
   <div class="topbar-right top-actions">
-    <button id="btnToggleSearch" class="btn-toggle-search" aria-label="검색 및 카테고리 필터 열기/닫기" type="button" title="검색">
+    <button id="btnToggleSearch" class="btn-toggle-search desktop-only" aria-label="검색 및 카테고리 필터 열기/닫기" type="button" title="검색">
       <span class="search-btn-icon" aria-hidden="true">🔍</span>
       <span class="search-btn-label">검색</span>
     </button>
-    <button id="btnToggleTheme" class="icon-btn btn-theme-toggle" type="button" title="다크 모드 / 라이트 모드 전환" aria-label="테마 전환" style="width:34px;height:34px;padding:0;font-size:15px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:var(--bg);">
+    <button id="btnToggleTheme" class="icon-btn btn-theme-toggle desktop-only" type="button" title="다크 모드 / 라이트 모드 전환" aria-label="테마 전환" style="width:34px;height:34px;padding:0;font-size:15px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:var(--bg);">
       <span id="themeToggleIcon">🌙</span>
     </button>
     <span id="connection" class="pill hidden"></span>
     <button id="loginBtn" class="btn desktop-only">관리자 로그인</button>
     <button id="logoutBtn" class="btn desktop-only hidden">로그아웃</button>
+
+    <!-- 모바일 전용 햄버거 메뉴 토글 버튼 (클릭 시 3선이 X로 애니메이션 전환) -->
+    <button id="btnOpenMobileDrawer" class="btn-hamburger mobile-only" type="button" aria-label="대시보드 메뉴 열기/닫기" aria-expanded="false">
+      <span class="hamburger-bar bar-top"></span>
+      <span class="hamburger-bar bar-mid"></span>
+      <span class="hamburger-bar bar-bot"></span>
+    </button>
   </div>
 </header>
 
@@ -92,7 +96,7 @@
     <!-- 모바일 전용 서랍 헤더 -->
     <div class="sidebar-mobile-head mobile-only">
       <div class="brand">
-        <img src="logo_2dqh.jpg" alt="2DQH" class="brand-img-logo">
+        <img src="logo_2dqh.png" alt="2DQH" class="brand-img-logo">
       </div>
       <button id="btnCloseMobileDrawer" class="btn-close-drawer" type="button" aria-label="메뉴 닫기">✕</button>
     </div>
@@ -1966,7 +1970,7 @@
   </button>
 </nav>
 
-<script src="consumables_catalog.js?v=20261111_1200_perfect"></script>
-<script src="app.js?v=20261111_1200_perfect"></script>
+<script src="consumables_catalog.js?v=20261111_1350_mobile_ui"></script>
+<script src="app.js?v=20261111_1350_mobile_ui"></script>
 </body>
 </html>

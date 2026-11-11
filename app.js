@@ -8599,21 +8599,31 @@ async function handleLogout(){
 }
 
 // ==========================================
-// [모바일 슬라이드 아웃 서랍(Drawer) 제어]
+// [모바일 슬라이드 아웃 서랍(Drawer) 제어 - 햄버거 to X 애니메이션 연동]
 // ==========================================
 function openMobileDrawer(){
   const sidebar = $('mainSidebar');
   const overlay = $('mobileDrawerOverlay');
+  const hamburger = $('btnOpenMobileDrawer');
   if(sidebar) sidebar.classList.add('drawer-open');
   if(overlay) overlay.classList.add('active');
+  if(hamburger){
+    hamburger.classList.add('is-active');
+    hamburger.setAttribute('aria-expanded', 'true');
+  }
   document.body.classList.add('drawer-locked');
 }
 
 function closeMobileDrawer(){
   const sidebar = $('mainSidebar');
   const overlay = $('mobileDrawerOverlay');
+  const hamburger = $('btnOpenMobileDrawer');
   if(sidebar) sidebar.classList.remove('drawer-open');
   if(overlay) overlay.classList.remove('active');
+  if(hamburger){
+    hamburger.classList.remove('is-active');
+    hamburger.setAttribute('aria-expanded', 'false');
+  }
   document.body.classList.remove('drawer-locked');
 }
 
@@ -9086,8 +9096,17 @@ function bindEvents(){
       return;
     }
 
-    // 모바일 슬라이드 아웃 서랍(Drawer) 열기
-    if(target.id === 'btnOpenMobileDrawer' || target.closest('#btnOpenMobileDrawer') || target.id === 'bottomTabMenu' || target.closest('#bottomTabMenu')){
+    // 모바일 슬라이드 아웃 서랍(Drawer) 토글 (햄버거 <-> X 전환)
+    if(target.id === 'btnOpenMobileDrawer' || target.closest('#btnOpenMobileDrawer')){
+      const isSidebarOpen = $('mainSidebar') && $('mainSidebar').classList.contains('drawer-open');
+      if(isSidebarOpen){
+        closeMobileDrawer();
+      } else {
+        openMobileDrawer();
+      }
+      return;
+    }
+    if(target.id === 'bottomTabMenu' || target.closest('#bottomTabMenu')){
       openMobileDrawer();
       return;
     }
