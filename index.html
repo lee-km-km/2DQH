@@ -390,7 +390,7 @@
         <div class="chem-main-tabs" role="tablist">
           <button type="button" class="chem-main-tab active" id="btnChemTabInventory">재고현황</button>
           <button type="button" class="chem-main-tab" id="btnChemTabCalendar">📅 취급 일지 캘린더</button>
-          <button type="button" class="chem-main-tab admin-only hidden" id="btnChemTabNewProduct">＋ 신규제품등록</button>
+          <button type="button" class="chem-main-tab" id="btnChemTabNewProduct" title="신규 화학물질 및 시약 등록 (관리자)">＋ 신규제품등록</button>
         </div>
         
       </div>
@@ -523,8 +523,8 @@
             <button type="button" class="btn-korea-action gray admin-only hidden" id="btnChemDetailedPerfLedger" title="취급세부실적대장 서식 다운로드">
               취급세부실적대장
             </button>
-            <button type="button" class="btn-korea-action dark admin-only hidden" id="btnChemOpenNewProductModal">
-              시약등록
+            <button type="button" class="btn-korea-action dark" id="btnChemOpenNewProductModal">
+              ＋ 시약등록
             </button>
             
             <!-- 일반 연구원도 사용 가능한 일지 작성 버튼 -->
@@ -870,6 +870,140 @@
           </div>
         </section>
       </div>
+
+      <!-- 12. 🧪 화학물질·시약 신규 등록 및 수정 모달 (관리자 전용) -->
+      <div id="modalChemProductBackdrop" class="backdrop">
+        <section class="modal" role="dialog" aria-modal="true" style="max-width:680px;width:min(680px,94vw);border-radius:12px;overflow:hidden;">
+          <div class="modal-head" style="border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <h3 id="chemProductModalTitle" style="margin:0;font-size:16px;color:var(--ink);">🧪 화학물질·시약 등록</h3>
+              <p id="chemProductModalSub" style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">N센터 291호 연구실 안전관리 재고 등록 및 수정</p>
+            </div>
+            <button class="icon-btn" id="btnCloseChemProductModal" aria-label="닫기" type="button"><span aria-hidden="true">×</span></button>
+          </div>
+          <form id="formChemProductModal" style="padding:18px;max-height:80vh;overflow-y:auto;">
+            <input type="hidden" id="chemProdId">
+
+            <div style="margin-bottom:12px;">
+              <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;color:var(--ink);">제품명 (공식명칭) *</label>
+              <input type="text" id="chemProdName" class="form-control" placeholder="예: Sulfuric acid(ACS reagent, 95.0-98.0%)" required style="width:100%;padding:8px 10px;font-size:13.5px;font-weight:600;">
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">한글명</label>
+                <input type="text" id="chemProdNameKo" class="form-control" placeholder="예: 황산" style="width:100%;padding:8px 10px;">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">제조사 *</label>
+                <input type="text" id="chemProdMfg" class="form-control" placeholder="예: Sigma-Aldrich, Thermo Fisher" required style="width:100%;padding:8px 10px;">
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">CAS 번호 *</label>
+                <input type="text" id="chemProdCas" class="form-control" placeholder="예: 7664-93-9" required style="width:100%;padding:8px 10px;font-family:monospace;">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">CAT No.</label>
+                <input type="text" id="chemProdCatNo" class="form-control" placeholder="예: 258105" style="width:100%;padding:8px 10px;font-family:monospace;">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">관리번호/코드</label>
+                <input type="text" id="chemProdCode" class="form-control" placeholder="예: P-01" style="width:100%;padding:8px 10px;">
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">수량 규격 *</label>
+                <input type="text" id="chemProdQty" class="form-control" placeholder="예: 1/1 또는 1병" value="1/1" required style="width:100%;padding:8px 10px;">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">재고량 (숫자) *</label>
+                <input type="number" id="chemProdStock" class="form-control" step="0.1" min="0" placeholder="500" value="500" required style="width:100%;padding:8px 10px;font-weight:700;">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">단위 *</label>
+                <select id="chemProdUnit" class="form-control" style="width:100%;padding:8px 10px;">
+                  <option value="mL">mL</option>
+                  <option value="L">L</option>
+                  <option value="g">g</option>
+                  <option value="kg">kg</option>
+                  <option value="ea">ea</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">보관 위치 *</label>
+                <input type="text" id="chemProdLocation" class="form-control" placeholder="예: N센터 291호 산시약장 A-01" value="N센터 291호" required style="width:100%;padding:8px 10px;">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">관리 담당자 *</label>
+                <input type="text" id="chemProdHandler" class="form-control" placeholder="예: 이강민" value="이강민" required style="width:100%;padding:8px 10px;">
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">입고일자</label>
+                <input type="date" id="chemProdInDate" class="form-control" style="width:100%;padding:8px 10px;">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">유효기간 (만료일)</label>
+                <input type="date" id="chemProdExpDate" class="form-control" style="width:100%;padding:8px 10px;">
+              </div>
+            </div>
+
+            <!-- 법정 분류 및 안전 관리 속성 -->
+            <div style="margin-bottom:14px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+              <div style="font-size:12px;font-weight:800;color:var(--ink);margin-bottom:8px;">⚖️ 법정 분류 및 유해성 구분</div>
+              <div style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:8px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:#dc2626;cursor:pointer;">
+                  <input type="checkbox" id="chemProdIsSpecial"> ⭐ 특별관리물질 (산안법 제439조)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+                  <input type="checkbox" id="chemProdCarcinogen"> 발암성 (1A/1B)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+                  <input type="checkbox" id="chemProdMutagen"> 변이원성
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+                  <input type="checkbox" id="chemProdReprotoxic"> 생식독성
+                </label>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;">
+                <div>
+                  <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--ink-light);">위험물 구분</label>
+                  <select id="chemProdHazard" class="form-control" style="width:100%;padding:6px 8px;font-size:12px;">
+                    <option value="D">D (독성/부식성 위험물)</option>
+                    <option value="F">F (인화성 액체/고체)</option>
+                    <option value="safe">비위험물 / 일반 시약</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;color:var(--ink-light);">상태</label>
+                  <select id="chemProdStatus" class="form-control" style="width:100%;padding:6px 8px;font-size:12px;">
+                    <option value="입고">입고 (사용 가능)</option>
+                    <option value="대기">대기</option>
+                    <option value="폐기">폐기</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+              <button type="button" class="btn" id="btnCancelChemProductModal">취소</button>
+              <button type="submit" class="btn primary" id="btnSubmitChemProductModal" style="background:#2563eb;color:#fff;font-weight:700;">등록 완료</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
     </section>
 <section class="view" id="view-logbook">
       <!-- 1. 장비 목록 허브 (Catalog Hub) -->

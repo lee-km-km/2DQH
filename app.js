@@ -1486,6 +1486,7 @@ function render(){
   renderLoans();
   renderHistory();
   if(ENABLE_CONSUMABLES) renderConsumables();
+  renderChemicalsView();
   setAdminUI();
 }
 
@@ -16403,8 +16404,9 @@ function render291InventoryTable(){
     html += '<td style="text-align:center;white-space:nowrap;">';
     html += '<button type="button" class="btn-table-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '" style="font-weight:700;color:#2563eb;">이력</button>';
     if(isAdmin()){
+      html += '<button type="button" class="btn-table-action btn-chem-edit" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;font-weight:700;color:#0284c7;" title="시약 정보 수정">수정</button>';
       html += '<button type="button" class="btn-table-action btn-chem-discard" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#d97706;" title="시약 폐기 처리">폐기</button>';
-      html += '<button type="button" class="btn-table-action danger btn-chem-delete" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#dc2626;">삭제</button>';
+      html += '<button type="button" class="btn-table-action danger btn-chem-delete" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#dc2626;" title="시약 삭제">삭제</button>';
     }
     html += '</td>';
     html += '</tr>';
@@ -16432,6 +16434,13 @@ function render291InventoryTable(){
     cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '">📜 이력</button>';
     cardsHtml += '    <button type="button" class="btn-m-action primary btn-chem-m-quick-log" data-chem-id="' + safe(c.id) + '">📝 일지작성</button>';
     cardsHtml += '  </div>';
+    if(isAdmin()){
+      cardsHtml += '  <div class="chem-m-card-admin-actions" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);display:flex;gap:6px;">';
+      cardsHtml += '    <button type="button" class="btn-m-action btn-chem-edit" data-chem-id="' + safe(c.id) + '" style="color:#0284c7;font-weight:700;">✏️ 수정</button>';
+      cardsHtml += '    <button type="button" class="btn-m-action btn-chem-discard" data-chem-id="' + safe(c.id) + '" style="color:#d97706;font-weight:700;">⚠️ 폐기</button>';
+      cardsHtml += '    <button type="button" class="btn-m-action danger btn-chem-delete" data-chem-id="' + safe(c.id) + '" style="color:#dc2626;font-weight:700;">🗑️ 삭제</button>';
+      cardsHtml += '  </div>';
+    }
     cardsHtml += '</div>';
   });
 
@@ -16471,24 +16480,52 @@ function render291InventoryTable(){
     });
   });
 
-  tbody.querySelectorAll('.btn-chem-discard').forEach(function(btn){
-    btn.addEventListener('click', function(e){
-      e.stopPropagation();
-      if(!isAdmin()){ toast('관리자 권한이 필요합니다.'); return; }
-      const chemId = btn.dataset.chemId;
-      if(confirm('이 시약을 공식 폐기 처리하시겠습니까?\n확인 시 잔량이 0으로 정산되고 상태가 [폐기]로 전환됩니다.')){
+  const setupContainerActions = function(container){
+    if(!container) return;
+    container.querySelectorAll('.btn-chem-edit').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        openChemProductModal(btn.dataset.chemId);
+      });
+    });
+    container.querySelectorAll('.btn-chem-discard').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(!isAdmin()){ toast('관리자 권한이 필요합니다.'); return; }
+        const chemId = btn.dataset.chemId;
+        if(confirm('이 시약을 공식 폐기 처리하시겠습니까?\n확인 시 잔량이 0으로 정산되고 상태가 [폐기]로 전환됩니다.')){
+          const chemicals = get291ChemicalsMaster();
+          const found = chemicals.find(function(c){ return c.id === chemId; });
+          if(found){
+            found.status = '폐기';
+            found.stock = 0;
+            save291ChemicalsMaster(chemicals);
+            render291InventoryTable();
+            toast('✓ 시약이 [폐기] 상태로 전환되었습니다.');
+          }
+        }
+      });
+    });
+    container.querySelectorAll('.btn-chem-delete').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(!isAdmin()){ toast('관리자 권한이 필요합니다.'); return; }
+        const chemId = btn.dataset.chemId;
         const chemicals = get291ChemicalsMaster();
         const found = chemicals.find(function(c){ return c.id === chemId; });
-        if(found){
-          found.status = '폐기';
-          found.stock = 0;
-          save291ChemicalsMaster(chemicals);
+        const name = found ? found.name : chemId;
+        if(confirm('정말 이 시약 [' + name + ']을(를) 목록에서 삭제하시겠습니까?')){
+          const chems = chemicals.filter(function(item){ return item.id !== chemId; });
+          save291ChemicalsMaster(chems);
+          toast('✓ 시약이 목록에서 삭제되었습니다.');
           render291InventoryTable();
-          toast('✓ 시약이 [폐기] 상태로 전환되었습니다.');
         }
-      }
+      });
     });
-  });
+  };
+
+  setupContainerActions(tbody);
+  setupContainerActions(cardListEl);
 
   tbody.querySelectorAll('.btn-chem-view-history').forEach(function(btn){
     btn.addEventListener('click', function(e){
@@ -16503,24 +16540,194 @@ function render291InventoryTable(){
       openChemQrModalForSingle(btn.dataset.chemId);
     });
   });
-
-  tbody.querySelectorAll('.btn-chem-delete').forEach(function(btn){
-    btn.addEventListener('click', function(e){
-      e.stopPropagation();
-      if(!isAdmin()){ toast('관리자 권한이 필요합니다.'); return; }
-      if(confirm('정말 이 시약을 목록에서 삭제하시겠습니까?')){
-        const chems = get291ChemicalsMaster().filter(function(item){ return item.id !== btn.dataset.chemId; });
-        save291ChemicalsMaster(chems);
-        toast('시약이 삭제되었습니다.');
-        render291InventoryTable();
-      }
-    });
-  });
 }
 
 // -------------------------------------------------------------
 // 2. 모달 열기 및 닫기 (X 버튼 & 외부 빈 공간 클릭 완벽 지원)
 // -------------------------------------------------------------
+// -------------------------------------------------------------
+// [화학물질·시약 신규등록 및 수정 관리자 전용 모달 함수]
+// -------------------------------------------------------------
+function openChemProductModal(chemId){
+  if(!isAdmin()){
+    toast('시약 등록 및 수정을 위해서는 관리자 로그인이 필요합니다.');
+    openModal('login');
+    return;
+  }
+  const modal = $('modalChemProductBackdrop');
+  if(!modal) return;
+
+  const form = $('formChemProductModal');
+  if(form) form.reset();
+
+  const titleEl = $('chemProductModalTitle');
+  const subEl = $('chemProductModalSub');
+  const submitBtn = $('btnSubmitChemProductModal');
+
+  const chemicals = get291ChemicalsMaster();
+
+  if(chemId){
+    // 수정 모드
+    const found = chemicals.find(function(c){ return c.id === chemId; });
+    if(!found){
+      toast('수정할 시약 정보를 찾을 수 없습니다.');
+      return;
+    }
+    if($('chemProdId')) $('chemProdId').value = found.id;
+    if($('chemProdName')) $('chemProdName').value = found.name || '';
+    if($('chemProdNameKo')) $('chemProdNameKo').value = found.nameKo || '';
+    if($('chemProdMfg')) $('chemProdMfg').value = found.mfg || '';
+    if($('chemProdCas')) $('chemProdCas').value = found.cas || '';
+    if($('chemProdCatNo')) $('chemProdCatNo').value = found.catNo || '';
+    if($('chemProdCode')) $('chemProdCode').value = found.code || '';
+    if($('chemProdQty')) $('chemProdQty').value = found.qty || '1/1';
+    if($('chemProdStock')) $('chemProdStock').value = found.stock !== undefined ? found.stock : 500;
+    if($('chemProdUnit')) $('chemProdUnit').value = found.unit || 'mL';
+    if($('chemProdLocation')) $('chemProdLocation').value = found.location || 'N센터 291호';
+    if($('chemProdHandler')) $('chemProdHandler').value = found.handler || '이강민';
+    if($('chemProdInDate')) $('chemProdInDate').value = found.inDate ? found.inDate.replace(/\./g, '-') : '';
+    if($('chemProdExpDate')) $('chemProdExpDate').value = found.expDate ? found.expDate.replace(/\./g, '-') : '';
+    if($('chemProdIsSpecial')) $('chemProdIsSpecial').checked = !!found.isSpecial;
+    if($('chemProdCarcinogen')) $('chemProdCarcinogen').checked = !!found.carcinogen;
+    if($('chemProdMutagen')) $('chemProdMutagen').checked = !!found.mutagen;
+    if($('chemProdReprotoxic')) $('chemProdReprotoxic').checked = !!found.reprotoxic;
+    if($('chemProdHazard')) $('chemProdHazard').value = found.hazard || 'safe';
+    if($('chemProdStatus')) $('chemProdStatus').value = found.status || '입고';
+
+    if(titleEl) titleEl.textContent = '✏️ 화학물질·시약 정보 수정';
+    if(subEl) subEl.textContent = found.name + ' (' + (found.cas || 'CAS 미기입') + ') 정보 수정';
+    if(submitBtn) submitBtn.textContent = '수정 완료';
+  } else {
+    // 신규 등록 모드
+    if($('chemProdId')) $('chemProdId').value = '';
+    const nextNo = chemicals.length + 1;
+    if($('chemProdCode')) $('chemProdCode').value = 'P-' + String(nextNo).padStart(2, '0');
+    if($('chemProdQty')) $('chemProdQty').value = '1/1';
+    if($('chemProdStock')) $('chemProdStock').value = '500';
+    if($('chemProdUnit')) $('chemProdUnit').value = 'mL';
+    if($('chemProdLocation')) $('chemProdLocation').value = 'N센터 291호 산시약장 A-01';
+    if($('chemProdHandler')) $('chemProdHandler').value = '이강민';
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if($('chemProdInDate')) $('chemProdInDate').value = todayStr;
+    const expDate = new Date();
+    expDate.setFullYear(expDate.getFullYear() + 2);
+    if($('chemProdExpDate')) $('chemProdExpDate').value = expDate.toISOString().slice(0, 10);
+    if($('chemProdIsSpecial')) $('chemProdIsSpecial').checked = false;
+    if($('chemProdHazard')) $('chemProdHazard').value = 'D';
+    if($('chemProdStatus')) $('chemProdStatus').value = '입고';
+
+    if(titleEl) titleEl.textContent = '🧪 화학물질·시약 신규 등록';
+    if(subEl) subEl.textContent = 'N센터 291호 연구실 안전관리 신규 재고 등록';
+    if(submitBtn) submitBtn.textContent = '신규 등록 완료';
+  }
+
+  modal.classList.add('open');
+  if(document.body) document.body.classList.add('modal-open');
+}
+
+function closeChemProductModal(){
+  const modal = $('modalChemProductBackdrop');
+  if(modal) modal.classList.remove('open');
+  if(document.body) document.body.classList.remove('modal-open');
+}
+
+async function handleChemProductSubmit(e){
+  e.preventDefault();
+  if(!isAdmin()){
+    toast('관리자 권한이 필요합니다.');
+    return;
+  }
+  const id = ($('chemProdId') ? $('chemProdId').value : '').trim();
+  const name = ($('chemProdName') ? $('chemProdName').value : '').trim();
+  if(!name){ toast('제품명을 입력해주세요.'); return; }
+  const mfg = ($('chemProdMfg') ? $('chemProdMfg').value : '').trim();
+  const cas = ($('chemProdCas') ? $('chemProdCas').value : '').trim();
+  if(!cas){ toast('CAS 번호를 입력해주세요.'); return; }
+  const nameKo = ($('chemProdNameKo') ? $('chemProdNameKo').value : '').trim();
+  const catNo = ($('chemProdCatNo') ? $('chemProdCatNo').value : '').trim();
+  const code = ($('chemProdCode') ? $('chemProdCode').value : '').trim();
+  const qty = ($('chemProdQty') ? $('chemProdQty').value : '').trim() || '1/1';
+  const stock = Number($('chemProdStock') ? $('chemProdStock').value : 0);
+  const unit = ($('chemProdUnit') ? $('chemProdUnit').value : 'mL').trim();
+  const location = ($('chemProdLocation') ? $('chemProdLocation').value : '').trim() || 'N센터 291호';
+  const handler = ($('chemProdHandler') ? $('chemProdHandler').value : '').trim() || '이강민';
+  const inDate = ($('chemProdInDate') ? $('chemProdInDate').value.replace(/-/g, '.') : '');
+  const expDate = ($('chemProdExpDate') ? $('chemProdExpDate').value.replace(/-/g, '.') : '');
+  const isSpecial = $('chemProdIsSpecial') ? $('chemProdIsSpecial').checked : false;
+  const carcinogen = $('chemProdCarcinogen') ? $('chemProdCarcinogen').checked : false;
+  const mutagen = $('chemProdMutagen') ? $('chemProdMutagen').checked : false;
+  const reprotoxic = $('chemProdReprotoxic') ? $('chemProdReprotoxic').checked : false;
+  const hazard = ($('chemProdHazard') ? $('chemProdHazard').value : 'safe');
+  const hazardDesc = hazard === 'D' ? '독성/부식성' : (hazard === 'F' ? '인화성' : '일반/비위험');
+  const status = ($('chemProdStatus') ? $('chemProdStatus').value : '입고');
+
+  const chemicals = get291ChemicalsMaster();
+
+  if(id){
+    // Update existing
+    const idx = chemicals.findIndex(function(c){ return c.id === id; });
+    if(idx >= 0){
+      chemicals[idx] = Object.assign(chemicals[idx], {
+        name: name,
+        nameKo: nameKo,
+        mfg: mfg,
+        cas: cas,
+        catNo: catNo,
+        code: code,
+        qty: qty,
+        stock: stock,
+        unit: unit,
+        location: location,
+        handler: handler,
+        inDate: inDate,
+        expDate: expDate,
+        isSpecial: isSpecial,
+        carcinogen: carcinogen,
+        mutagen: mutagen,
+        reprotoxic: reprotoxic,
+        hazard: hazard,
+        hazardDesc: hazardDesc,
+        status: status
+      });
+      save291ChemicalsMaster(chemicals);
+      toast('✓ 시약 [' + name + '] 정보가 성공적으로 수정되었습니다.');
+    }
+  } else {
+    // Insert new
+    const newId = 'CHEM-291-' + String(chemicals.length + 1).padStart(3, '0');
+    const newChem = {
+      id: newId,
+      name: name,
+      nameKo: nameKo,
+      mfg: mfg,
+      cas: cas,
+      catNo: catNo,
+      code: code || ('P-' + String(chemicals.length + 1).padStart(2, '0')),
+      hazard: hazard,
+      hazardDesc: hazardDesc,
+      qty: qty,
+      stock: stock,
+      unit: unit,
+      handler: handler,
+      location: location,
+      status: status,
+      inDate: inDate || new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
+      expDate: expDate,
+      isSpecial: isSpecial,
+      carcinogen: carcinogen,
+      mutagen: mutagen,
+      reprotoxic: reprotoxic,
+      specialNoticeSub: isSpecial ? ('(' + name.split('(')[0].trim() + ')') : ''
+    };
+    chemicals.unshift(newChem);
+    save291ChemicalsMaster(chemicals);
+    toast('✓ 신규 시약 [' + name + ']이(가) 등록되었습니다.');
+  }
+
+  closeChemProductModal();
+  render291InventoryTable();
+}
+
 function openChemHistoryModal(chemId){
   const modal = $('modalChemHistoryBackdrop');
   if(!modal) return;
@@ -17940,6 +18147,32 @@ function bindChemicalsEvents(){
   });
 
   // E. 검색 필터 액션
+    // 화학물질·시약 신규등록 및 수정 모달 이벤트 바인딩
+  addEvt('btnChemOpenNewProductModal', 'click', function(e){
+    e.preventDefault();
+    openChemProductModal();
+  });
+  addEvt('btnChemTabNewProduct', 'click', function(e){
+    e.preventDefault();
+    openChemProductModal();
+  });
+  addEvt('btnCloseChemProductModal', 'click', closeChemProductModal);
+  addEvt('btnCancelChemProductModal', 'click', closeChemProductModal);
+
+  const prodForm = $('formChemProductModal');
+  if(prodForm){
+    prodForm.addEventListener('submit', handleChemProductSubmit);
+  }
+
+  const prodBackdrop = $('modalChemProductBackdrop');
+  if(prodBackdrop){
+    prodBackdrop.addEventListener('click', function(e){
+      if(e.target === prodBackdrop){
+        triggerModalShake(prodBackdrop);
+      }
+    });
+  }
+
   addEvt('btnChemSearchSubmit', 'click', function(e){
     e.preventDefault();
     render291InventoryTable();
