@@ -9837,3 +9837,109 @@ html:not(.is-admin) #btnHelpTabAdmin {
     print-color-adjust: exact !important;
   }
 }
+
+
+/* ============================================================= */
+/* [모바일 UI 긴 세로 찌그러짐 원천 차단 & 취급일지 작성 폼 반응형 최적화] */
+/* ============================================================= */
+.chem-official-inventory-table-wrap {
+  width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  display: block !important;
+  border-radius: 6px;
+}
+
+.chem-inventory-table {
+  min-width: 1150px !important;
+  width: 100% !important;
+  table-layout: auto !important;
+  border-collapse: collapse !important;
+}
+
+.chem-inventory-table th,
+.chem-inventory-table td {
+  white-space: nowrap !important;
+  padding: 10px 12px !important;
+  font-size: 12.5px !important;
+  vertical-align: middle !important;
+}
+
+.chem-inventory-table td:nth-child(2) {
+  white-space: normal !important;
+  min-width: 220px !important;
+  max-width: 320px !important;
+  word-break: break-word !important;
+}
+
+/* 취급일지 작성 모달 폼 반응형: 모바일에서 세로로 글자 쪼개짐 방지 */
+@media (max-width: 640px) {
+  #modalChemWriteLogBackdrop .modal {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+  }
+
+  #formWriteChemicalLogModal {
+    padding: 14px !important;
+  }
+
+  #formWriteChemicalLogModal div[style*="grid-template-columns"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  #formWriteChemicalLogModal label {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+    white-space: nowrap !important;
+    display: block !important;
+  }
+
+  #formWriteChemicalLogModal input,
+  #formWriteChemicalLogModal select {
+    font-size: 14px !important;
+    padding: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 특별관리물질 법정 서식 모달 모바일 가로 스크롤 지원 */
+  #modalChemOfficialLedgerBackdrop .modal {
+    width: 96vw !important;
+    max-width: 96vw !important;
+  }
+
+  #modalChemOfficialLedgerBackdrop .modal-body {
+    padding: 12px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  #ledgerPrintCanvas {
+    min-width: 780px !important;
+    padding: 16px !important;
+  }
+
+  /* 특별관리물질 고지문 모바일 스택 */
+  #noticePrintCanvas {
+    min-width: 300px !important;
+  }
+  #noticePrintCanvas h1 {
+    font-size: 24px !important;
+    letter-spacing: 2px !important;
+  }
+  #noticePrintCanvas h2 {
+    font-size: 26px !important;
+    letter-spacing: 2px !important;
+  }
+  #noticeSubstanceNameDisplay {
+    font-size: 22px !important;
+  }
+  #noticeSubstanceSubDisplay {
+    font-size: 15px !important;
+  }
+}

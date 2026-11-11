@@ -15824,9 +15824,11 @@ function render291InventoryTable(){
   const nameQuery = ($('chemFilterName') ? $('chemFilterName').value : '').trim().toLowerCase();
   const casQuery = ($('chemFilterCas') ? $('chemFilterCas').value : '').trim().toLowerCase();
   const catQuery = ($('chemFilterCat') ? $('chemFilterCat').value : '').trim().toLowerCase();
+  const codeQuery = ($('chemFilterCode') ? $('chemFilterCode').value : '').trim().toLowerCase();
   const mfgQuery = ($('chemFilterMfg') ? $('chemFilterMfg').value : '').trim().toLowerCase();
   const handlerQuery = ($('chemFilterHandler') ? $('chemFilterHandler').value : '').trim();
   const locQuery = ($('chemFilterLoc') ? $('chemFilterLoc').value : '').trim();
+  const manageNoQuery = ($('chemFilterManageNo') ? $('chemFilterManageNo').value : '').trim().toLowerCase();
 
   const dangerRadio = document.querySelector('input[name="chemDangerType"]:checked');
   const dangerType = dangerRadio ? dangerRadio.value : 'all';
@@ -15834,33 +15836,79 @@ function render291InventoryTable(){
   const sortRadio = document.querySelector('input[name="chemSort"]:checked');
   const sortType = sortRadio ? sortRadio.value : 'latest';
 
+  const stateAll = $('chemStateAll') && $('chemStateAll').checked;
+  const stateWait = $('chemStateWait') && $('chemStateWait').checked;
+  const stateIn = $('chemStateIn') && $('chemStateIn').checked;
+  const stateOut = $('chemStateOut') && $('chemStateOut').checked;
+  const stateDel = $('chemStateDel') && $('chemStateDel').checked;
+
+  const condSpecial = $('chemCondSpecial') && $('chemCondSpecial').checked;
+  const condReagent = $('chemCondReagent') && $('chemCondReagent').checked;
+
+  // 사용자가 검색어(제품명, CAS, CAT, 제조사 등)를 하나라도 입력했는지 여부
+  const hasActiveQuery = !!(nameQuery || casQuery || catQuery || codeQuery || mfgQuery || handlerQuery || locQuery || manageNoQuery);
+
   let filtered = chemicals.filter(function(c){
-    // A. 스코프 필터
-    if(currentChemScope === 'special' && !c.isSpecial) return false;
-    if(currentChemScope === 'general' && c.isSpecial) return false;
+    const cName = (c.name || '').toLowerCase();
+    const cNameKo = (c.nameKo || '').toLowerCase();
+    const cCas = (c.cas || '').toLowerCase();
+    const cCat = (c.catNo || '').toLowerCase();
+    const cCode = (c.code || '').toLowerCase();
+    const cMfg = (c.mfg || '').toLowerCase();
+    const cHandler = c.handler || '';
+    const cLoc = c.location || '';
+    const cStatus = c.status || '입고';
 
-    // B. 검색어 필터
-    if(nameQuery && !c.name.toLowerCase().includes(nameQuery) && !c.nameKo.toLowerCase().includes(nameQuery)) return false;
-    if(casQuery && !c.cas.toLowerCase().includes(casQuery)) return false;
-    if(catQuery && !c.catNo.toLowerCase().includes(catQuery)) return false;
-    if(mfgQuery && !c.mfg.toLowerCase().includes(mfgQuery)) return false;
-    if(handlerQuery && c.handler !== handlerQuery) return false;
-    if(locQuery && !c.location.includes(locQuery)) return false;
+    // A. 검색어가 있을 때는 전체 시약 중에서 자유롭게 검색되도록 스코프를 자동 확장
+    if(!hasActiveQuery){
+      // 검색어가 없을 때는 상단 스코프 탭 또는 특성조건 체크박스 반영
+      if(currentChemScope === 'special' && !c.isSpecial) return false;
+      if(currentChemScope === 'general' && c.isSpecial) return false;
 
-    if(dangerType === 'danger' && (!c.hazard || c.hazard === 'safe')) return false;
-    if(dangerType === 'safe' && c.hazard && c.hazard !== 'safe') return false;
+      if(condSpecial && !condReagent && !c.isSpecial) return false;
+      if(!condSpecial && condReagent && c.isSpecial) return false;
+    } else {
+      // 검색어가 있을 때도 '특별관리물질만' 체크박스가 명시적으로 켜져 있다면 반영
+      if(condSpecial && !condReagent && !c.isSpecial) return false;
+    }
+
+    // B. 검색어 다중 필터 (부분 일치 및 대소문자 무시)
+    if(nameQuery && !cName.includes(nameQuery) && !cNameKo.includes(nameQuery)) return false;
+    if(casQuery && !cCas.includes(casQuery)) return false;
+    if(catQuery && !cCat.includes(catQuery)) return false;
+    if(codeQuery && !cCode.includes(codeQuery)) return false;
+    if(mfgQuery && !cMfg.includes(mfgQuery)) return false;
+    if(handlerQuery && cHandler !== handlerQuery) return false;
+    if(locQuery && !cLoc.includes(locQuery)) return false;
+    if(manageNoQuery && !cCode.includes(manageNoQuery) && !cCat.includes(manageNoQuery)) return false;
+
+    // C. 위험물 구분 라디오
+    if(dangerType === 'danger' && (!c.hazard || c.hazard === 'safe' || c.hazard === '-')) return false;
+    if(dangerType === 'safe' && (c.hazard === 'D' || c.hazard === 'F')) return false;
+
+    // D. 상태 필터 (전체 체크가 아니면 체크된 상태만 통과)
+    if(!stateAll){
+      const statusMatch = (stateWait && cStatus === '대기') ||
+                          (stateIn && cStatus === '입고') ||
+                          (stateOut && cStatus === '폐기') ||
+                          (stateDel && cStatus === '삭제');
+      if(!statusMatch && (stateWait || stateIn || stateOut || stateDel)) return false;
+    }
 
     return true;
   });
 
   if(sortType === 'name'){
-    filtered.sort(function(a, b){ return a.name.localeCompare(b.name); });
+    filtered.sort(function(a, b){ return (a.name || '').localeCompare(b.name || ''); });
   }
 
   if(countBadge) countBadge.textContent = filtered.length;
 
   if(filtered.length === 0){
-    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:36px;color:var(--ink-light);font-size:13.5px;">일치하는 시약이 없습니다. 상단 카테고리 [전체 화학물질] 탭을 누르시거나 검색어를 확인해주세요.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:48px 16px;color:var(--ink-light);font-size:14px;">' +
+      '🔍 검색 조건에 일치하는 시약이 없습니다.<br>' +
+      '<span style="font-size:12px;color:var(--ink-muted);margin-top:6px;display:inline-block;">검색어를 확인하시거나 상단 <b>[초기화]</b> 버튼을 눌러 전체 목록을 조회하세요.</span>' +
+      '</td></tr>';
     return;
   }
 
@@ -15868,28 +15916,31 @@ function render291InventoryTable(){
 
   let html = '';
   filtered.forEach(function(c){
-    const chemLogs = logs.filter(function(l){ return l.chemId === c.id || l.materialName.includes(c.name.split('(')[0].trim()); });
+    const chemLogs = logs.filter(function(l){
+      return (l.chemId && l.chemId === c.id) ||
+             (l.materialName && c.name && l.materialName.includes(c.name.split('(')[0].trim()));
+    });
     let currentStock = c.stock;
     if(chemLogs.length > 0){
-      chemLogs.sort(function(a, b){ return (b.date + ' ' + b.time).localeCompare(a.date + ' ' + a.time); });
-      currentStock = chemLogs[0].remainingStock;
+      chemLogs.sort(function(a, b){ return ((b.date || '') + ' ' + (b.time || '')).localeCompare((a.date || '') + ' ' + (a.time || '')); });
+      currentStock = chemLogs[0].remainingStock !== undefined ? chemLogs[0].remainingStock : c.stock;
     }
 
     const hazardBadge = c.hazard === 'F' ? '<span class="chem-badge-hazard hazard-f" title="인화성">F</span>' : (c.hazard === 'D' ? '<span class="chem-badge-hazard hazard-d" title="독성/위험">D</span>' : '-');
 
     html += '<tr data-chem-id="' + safe(c.id) + '">';
     html += '<td style="text-align:center;"><input type="checkbox" class="chem-row-checkbox" value="' + safe(c.id) + '"></td>';
-    html += '<td><b style="color:var(--ink);">' + safe(c.name) + '</b>' + (c.isSpecial ? ' <span style="font-size:10px;padding:1px 5px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;font-weight:700;">특별관리</span>' : '') + '</td>';
+    html += '<td style="min-width:200px;"><b style="color:var(--ink);">' + safe(c.name) + '</b>' + (c.isSpecial ? ' <span style="font-size:10px;padding:1px 5px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;font-weight:700;">특별관리</span>' : '') + '</td>';
     html += '<td style="white-space:nowrap;color:var(--ink-light);">' + safe(c.mfg) + '</td>';
     html += '<td style="white-space:nowrap;font-family:monospace;font-size:11.5px;">' + safe(c.catNo) + '</td>';
     html += '<td style="white-space:nowrap;font-family:monospace;font-weight:600;font-size:11.5px;">' + safe(c.cas) + '</td>';
     html += '<td style="text-align:center;"><button type="button" class="btn-table-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '" title="제조사 공식 MSDS 16대 필수 요약 정보">📄</button></td>';
     html += '<td style="text-align:center;">' + hazardBadge + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">' + safe(c.qty) + '</td>';
-    html += '<td style="text-align:right;white-space:nowrap;font-weight:800;color:#059669;font-size:13px;">' + currentStock + ' ' + safe(c.unit) + '</td>';
+    html += '<td style="text-align:right;white-space:nowrap;font-weight:800;color:' + (c.status === '폐기' ? '#94a3b8' : '#059669') + ';font-size:13px;">' + currentStock + ' ' + safe(c.unit) + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">' + safe(c.handler) + '</td>';
     html += '<td style="white-space:nowrap;font-size:11.5px;color:var(--ink-light);">' + safe(c.location) + '</td>';
-    html += '<td style="text-align:center;white-space:nowrap;"><span style="color:#15803d;font-weight:700;font-size:11px;">' + safe(c.status) + '</span></td>';
+    html += '<td style="text-align:center;white-space:nowrap;"><span style="color:' + (c.status === '폐기' ? '#dc2626' : '#15803d') + ';font-weight:700;font-size:11px;">' + safe(c.status) + '</span></td>';
     html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.inDate) + '</td>';
     html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.expDate) + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">';
@@ -17239,6 +17290,55 @@ function bindChemicalsEvents(){
     currentChemCalYear = 2026;
     currentChemCalMonth = 3;
     render291Calendar();
+  });
+
+  // E. 검색 필터 액션
+  
+  // 실시간 디바운스 검색 및 Enter 키 검색 지원
+  let chemSearchDebounceTimer = null;
+  function triggerChemSearchDebounced(){
+    if(chemSearchDebounceTimer) clearTimeout(chemSearchDebounceTimer);
+    chemSearchDebounceTimer = setTimeout(function(){
+      render291InventoryTable();
+    }, 120);
+  }
+
+  ['chemFilterName', 'chemFilterCas', 'chemFilterCat', 'chemFilterCode', 'chemFilterMfg', 'chemFilterManageNo'].forEach(function(id){
+    const el = $(id);
+    if(el){
+      el.addEventListener('input', triggerChemSearchDebounced);
+      el.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){
+          e.preventDefault();
+          render291InventoryTable();
+        }
+      });
+    }
+  });
+
+  ['chemFilterHandler', 'chemFilterLoc'].forEach(function(id){
+    const el = $(id);
+    if(el) el.addEventListener('change', function(){ render291InventoryTable(); });
+  });
+
+  ['chemStateAll', 'chemStateWait', 'chemStateIn', 'chemStateOut', 'chemStateDel', 'chemCondSpecial', 'chemCondReagent'].forEach(function(id){
+    const el = $(id);
+    if(el) el.addEventListener('change', function(){ render291InventoryTable(); });
+  });
+
+  document.querySelectorAll('input[name="chemDangerType"], input[name="chemSort"]').forEach(function(radio){
+    radio.addEventListener('change', function(){ render291InventoryTable(); });
+  });
+
+  // 전역 클릭 위임: MSDS 뷰어 모달 열기 보장
+  document.addEventListener('click', function(e){
+    const msdsBtn = e.target.closest('.btn-chem-view-msds');
+    if(msdsBtn){
+      e.preventDefault();
+      e.stopPropagation();
+      openChemMsdsModal(msdsBtn.dataset.chemId);
+      return;
+    }
   });
 
   // E. 검색 필터 액션
