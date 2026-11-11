@@ -9072,10 +9072,60 @@ body:not(.is-admin) .admin-only {
   color: #ffffff;
   border-color: #475569;
 }
-.btn-table-action.danger {
-  background: #dc2626;
-  color: #ffffff;
-  border-color: #dc2626;
+/* 관리자 시약 삭제 버튼 고대비 가독성 개선 (빨간 배경+빨간 글자 충돌 완벽 해결) */
+.btn-table-action.danger,
+.btn-table-action.btn-chem-delete {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fca5a5 !important;
+  font-weight: 700 !important;
+  padding: 2px 7px !important;
+  transition: all 0.15s ease !important;
+}
+.btn-table-action.danger:hover,
+.btn-table-action.btn-chem-delete:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #b91c1c !important;
+}
+
+[data-theme="dark"] .btn-table-action.danger,
+[data-theme="dark"] .btn-table-action.btn-chem-delete {
+  background: rgba(220, 38, 38, 0.18) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(220, 38, 38, 0.45) !important;
+}
+[data-theme="dark"] .btn-table-action.danger:hover,
+[data-theme="dark"] .btn-table-action.btn-chem-delete:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+}
+
+/* 모바일 카드 삭제 버튼 */
+.btn-m-action.danger,
+.btn-m-action.btn-chem-delete {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fca5a5 !important;
+  font-weight: 700 !important;
+  transition: all 0.15s ease !important;
+}
+.btn-m-action.danger:hover,
+.btn-m-action.btn-chem-delete:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #b91c1c !important;
+}
+[data-theme="dark"] .btn-m-action.danger,
+[data-theme="dark"] .btn-m-action.btn-chem-delete {
+  background: rgba(220, 38, 38, 0.18) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(220, 38, 38, 0.45) !important;
+}
+[data-theme="dark"] .btn-m-action.danger:hover,
+[data-theme="dark"] .btn-m-action.btn-chem-delete:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
 }
 
 /* 5. 특별관리물질 고지 A4 서식 (Image 2 서식 1:1 완벽 구현) */

@@ -16221,7 +16221,7 @@ function get291ChemicalsMaster(){
     const raw = localStorage.getItem('lab291_chemicals_master_v6');
     if(raw){
       const parsed = JSON.parse(raw);
-      if(Array.isArray(parsed) && parsed.length >= LAB_291_CHEMICALS_MASTER.length) return parsed;
+      if(Array.isArray(parsed)) return parsed;
     }
   } catch(e){}
   try {
@@ -16406,7 +16406,7 @@ function render291InventoryTable(){
     if(isAdmin()){
       html += '<button type="button" class="btn-table-action btn-chem-edit" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;font-weight:700;color:#0284c7;" title="시약 정보 수정">수정</button>';
       html += '<button type="button" class="btn-table-action btn-chem-discard" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#d97706;" title="시약 폐기 처리">폐기</button>';
-      html += '<button type="button" class="btn-table-action danger btn-chem-delete" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#dc2626;" title="시약 삭제">삭제</button>';
+      html += '<button type="button" class="btn-table-action btn-chem-delete" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;" title="시약 영구 삭제">삭제</button>';
     }
     html += '</td>';
     html += '</tr>';
@@ -16440,7 +16440,7 @@ function render291InventoryTable(){
       cardsHtml += '  <div class="chem-m-card-admin-actions" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);display:flex;gap:6px;">';
       cardsHtml += '    <button type="button" class="btn-m-action btn-chem-edit" data-chem-id="' + safe(c.id) + '" style="color:#0284c7;font-weight:700;">✏️ 수정</button>';
       cardsHtml += '    <button type="button" class="btn-m-action btn-chem-discard" data-chem-id="' + safe(c.id) + '" style="color:#d97706;font-weight:700;">⚠️ 폐기</button>';
-      cardsHtml += '    <button type="button" class="btn-m-action danger btn-chem-delete" data-chem-id="' + safe(c.id) + '" style="color:#dc2626;font-weight:700;">🗑️ 삭제</button>';
+      cardsHtml += '    <button type="button" class="btn-m-action btn-chem-delete" data-chem-id="' + safe(c.id) + '">🗑️ 삭제</button>';
       cardsHtml += '  </div>';
     }
     cardsHtml += '</div>';
