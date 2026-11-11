@@ -9963,3 +9963,115 @@ html:not(.is-admin) #btnHelpTabAdmin {
 [data-theme="dark"] .chem-inventory-table tr.chem-row-selected {
   background: rgba(59, 130, 246, 0.18) !important;
 }
+
+
+/* ============================================================= */
+/* [연구장비 로그북 시운전 팝업 - SOP 안전점검 및 파라미터 완벽 레이아웃] */
+/* ============================================================= */
+#modalTestDriveBackdrop .modal {
+  max-width: 680px !important;
+  width: min(680px, 94vw) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+  background: var(--bg, #ffffff) !important;
+}
+
+#testDriveFormDynamicContent {
+  padding: 16px 20px !important;
+  box-sizing: border-box !important;
+}
+
+/* SOP 안전점검 카드형 체크리스트 (텍스트-체크박스 분리 현상 원천 차단) */
+.sop-checklist-container {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border, #cbd5e1);
+}
+
+.sop-checklist-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink, #0f172a);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sop-checklist-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.sop-check-card {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  background: var(--bg-subtle, #f8fafc) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease-in-out !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.sop-check-card:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+.sop-check-card input[type="checkbox"] {
+  width: 18px !important;
+  min-width: 18px !important;
+  max-width: 18px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+  accent-color: #2563eb !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+.sop-check-card .sop-check-text {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--ink, #0f172a) !important;
+  line-height: 1.4 !important;
+  flex: 1 !important;
+  text-align: left !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+}
+
+.sop-check-card input[type="checkbox"]:checked + .sop-check-text {
+  color: #1e293b !important;
+}
+
+/* 파라미터 섹션 박스 */
+.param-section-box {
+  background: var(--bg, #ffffff) !important;
+  padding: 14px 16px !important;
+  border-radius: 10px !important;
+  margin-bottom: 14px !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+}
+
+.param-section-title {
+  margin: 0 0 12px !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  color: var(--ink, #0f172a) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}

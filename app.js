@@ -4191,82 +4191,93 @@ function openEquipmentTestDrive(code){
   let formHtml = '';
 
   // 1. 공통 필수 메타데이터 (시간, 사용자, 샘플)
-  formHtml += '<div style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:14px;border:1px solid var(--border);">';
-  formHtml += '<h4 style="margin:0 0 10px;font-size:13px;color:var(--ink);">📅 기본 세션 정보</h4>';
-  formHtml += '<div class="xrd-grid xrd-c3" style="margin-bottom:8px;">';
-  formHtml += '  <label class="xrd-mini">측정 날짜<input name="used_on" type="date" value="' + today() + '" required></label>';
-  formHtml += '  <label class="xrd-mini">시작 시간<input name="start_time" type="time" value="' + defTime + '" required></label>';
-  formHtml += '  <label class="xrd-mini">가동 시간(분)<input name="duration_min" type="number" min="5" step="5" value="60" required></label>';
-  formHtml += '</div>';
-  formHtml += '<div class="xrd-grid xrd-c3">';
-  formHtml += '  <label class="xrd-mini">사용자 이름<input name="user_name" value="' + safe(storedUser) + '" placeholder="사용자 성명" required></label>';
-  formHtml += '  <label class="xrd-mini">소속 연구실<input name="affiliation" value="' + safe(storedAffil) + '" placeholder="e.g. 2DQH"></label>';
-  formHtml += '  <label class="xrd-mini">지도교수<input name="professor" value="' + safe(storedProf) + '" placeholder="e.g. 신현석 교수님"></label>';
-  formHtml += '</div>';
+  formHtml += '<div class="param-section-box">';
+  formHtml += '  <h4 class="param-section-title"><span>📅</span> 기본 세션 정보</h4>';
+  formHtml += '  <div class="xrd-grid xrd-c3" style="margin-bottom:8px;">';
+  formHtml += '    <label class="xrd-mini">측정 날짜<input name="used_on" type="date" value="' + today() + '" required></label>';
+  formHtml += '    <label class="xrd-mini">시작 시간<input name="start_time" type="time" value="' + defTime + '" required></label>';
+  formHtml += '    <label class="xrd-mini">가동 시간(분)<input name="duration_min" type="number" min="5" step="5" value="60" required></label>';
+  formHtml += '  </div>';
+  formHtml += '  <div class="xrd-grid xrd-c3">';
+  formHtml += '    <label class="xrd-mini">사용자 이름<input name="user_name" value="' + safe(storedUser) + '" placeholder="사용자 성명" required></label>';
+  formHtml += '    <label class="xrd-mini">소속 연구실<input name="affiliation" value="' + safe(storedAffil) + '" placeholder="e.g. 2DQH"></label>';
+  formHtml += '    <label class="xrd-mini">지도교수<input name="professor" value="' + safe(storedProf) + '" placeholder="e.g. 신현석 교수님"></label>';
+  formHtml += '  </div>';
   formHtml += '</div>';
 
   // 2. 샘플 정보
-  formHtml += '<div style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:14px;border:1px solid var(--border);">';
-  formHtml += '<h4 style="margin:0 0 10px;font-size:13px;color:var(--ink);">🧪 샘플 및 공정 정보</h4>';
-  formHtml += '<div class="xrd-grid xrd-c2" style="margin-bottom:8px;">';
-  formHtml += '  <label class="xrd-full">샘플명 / 공정명<input name="sample_name" placeholder="e.g. WS2 monolayer on SiO2" required></label>';
-  formHtml += '  <label class="xrd-mini">샘플 수량<select name="sample_count"><option value="1" selected>1개</option><option value="2">2개</option><option value="3">3개</option><option value="4">4개</option><option value="5">5개 이상</option></select></label>';
-  formHtml += '</div>';
+  formHtml += '<div class="param-section-box">';
+  formHtml += '  <h4 class="param-section-title"><span>🧪</span> 샘플 및 공정 정보</h4>';
+  formHtml += '  <div class="xrd-grid xrd-c2" style="margin-bottom:8px;">';
+  formHtml += '    <label class="xrd-full">샘플명 / 공정명<input name="sample_name" placeholder="e.g. WS2 monolayer on SiO2" required></label>';
+  formHtml += '    <label class="xrd-mini">샘플 수량<select name="sample_count"><option value="1" selected>1개</option><option value="2">2개</option><option value="3">3개</option><option value="4">4개</option><option value="5">5개 이상</option></select></label>';
+  formHtml += '  </div>';
 
   if(schema.scanTypes && schema.scanTypes.length){
-    formHtml += '<label class="xrd-mini" style="display:block;margin-top:6px;">측정 / 스캔 모드<select name="scan_type">';
+    formHtml += '  <label class="xrd-mini" style="display:block;margin-top:6px;">측정 / 스캔 모드<select name="scan_type">';
     schema.scanTypes.forEach(function(st){
       formHtml += '<option value="' + safe(st) + '">' + safe(st) + '</option>';
     });
-    formHtml += '</select></label>';
+    formHtml += '  </select></label>';
   }
   formHtml += '</div>';
 
   // 3. 장비 고유 파라미터 (Dynamic Readings & Options)
-  formHtml += '<div style="background:var(--bg);padding:12px;border-radius:8px;margin-bottom:14px;border:1px solid var(--border);">';
-  formHtml += '<h4 style="margin:0 0 10px;font-size:13px;color:var(--primary);">⚡ ' + safe(schema.name) + ' 고유 측정 파라미터</h4>';
+  formHtml += '<div class="param-section-box">';
+  formHtml += '  <h4 class="param-section-title" style="color:#2563eb;"><span>⚡</span> ' + safe(schema.name) + ' 고유 측정 파라미터</h4>';
 
   if(schema.readings && schema.readings.length){
-    formHtml += '<div class="xrd-grid xrd-c2" style="margin-bottom:10px;">';
+    const colClass = schema.readings.length >= 3 ? 'xrd-c3' : (schema.readings.length === 2 ? 'xrd-c2' : 'xrd-c1');
+    formHtml += '  <div class="xrd-grid ' + colClass + '" style="margin-bottom:12px;">';
     schema.readings.forEach(function(r){
-      formHtml += '<label class="xrd-mini">' + safe(r.label) + ' (' + safe(r.unit) + ')';
-      formHtml += '<div class="xrd-input-wrap">';
-      formHtml += '<input name="param_reading_' + safe(r.key) + '" type="number" step="' + (r.step || 'any') + '" placeholder="' + (r.placeholder || '') + '" value="' + (r.placeholder || '') + '">';
-      formHtml += '<span class="xrd-unit">' + safe(r.unit) + '</span>';
-      formHtml += '</div></label>';
+      formHtml += '    <label class="xrd-mini" style="display:flex;flex-direction:column;gap:4px;">' + safe(r.label) + ' (' + safe(r.unit) + ')';
+      formHtml += '      <div class="xrd-input-wrap">';
+      formHtml += '        <input name="param_reading_' + safe(r.key) + '" type="number" step="' + (r.step || 'any') + '" placeholder="' + (r.placeholder || '') + '" value="' + (r.placeholder || '') + '">';
+      formHtml += '        <span class="xrd-unit">' + safe(r.unit) + '</span>';
+      formHtml += '      </div>';
+      formHtml += '    </label>';
     });
-    formHtml += '</div>';
+    formHtml += '  </div>';
   }
 
   if(schema.options && schema.options.length){
-    formHtml += '<div class="xrd-grid xrd-c2" style="margin-bottom:10px;">';
+    const colClass = schema.options.length >= 2 ? 'xrd-c2' : 'xrd-c1';
+    formHtml += '  <div class="xrd-grid ' + colClass + '" style="margin-bottom:12px;">';
     schema.options.forEach(function(opt){
-      formHtml += '<label class="xrd-mini">' + safe(opt.label);
-      formHtml += '<select name="param_opt_' + safe(opt.key) + '">';
+      const isFull = (schema.options.length === 1) ? ' style="grid-column: 1 / -1;"' : '';
+      formHtml += '    <label class="xrd-mini" style="display:flex;flex-direction:column;gap:4px;"' + isFull + '>' + safe(opt.label);
+      formHtml += '      <select name="param_opt_' + safe(opt.key) + '">';
       opt.choices.forEach(function(c){
         const sel = (c === opt.default) ? ' selected' : '';
         formHtml += '<option value="' + safe(c) + '"' + sel + '>' + safe(c) + '</option>';
       });
-      formHtml += '</select></label>';
+      formHtml += '      </select>';
+      formHtml += '    </label>';
     });
-    formHtml += '</div>';
+    formHtml += '  </div>';
   }
 
-  // 4. SOP 체크리스트
+  // 4. SOP 체크리스트 (카드형 레이아웃으로 텍스트 분리 현상 완벽 해결)
   if(schema.checks && schema.checks.length){
-    formHtml += '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);">';
-    formHtml += '<b style="font-size:12px;color:var(--ink);display:block;margin-bottom:6px;">✅ SOP 안전 점검</b>';
+    formHtml += '  <div class="sop-checklist-container">';
+    formHtml += '    <div class="sop-checklist-title"><span>✅</span> SOP 안전 점검 (필수 확인)</div>';
+    formHtml += '    <div class="sop-checklist-wrap">';
     schema.checks.forEach(function(chk){
-      formHtml += '<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:6px;cursor:pointer;">';
-      formHtml += '<input type="checkbox" name="param_chk_' + safe(chk.key) + '" checked> ' + safe(chk.label);
-      formHtml += '</label>';
+      formHtml += '      <label class="sop-check-card">';
+      formHtml += '        <input type="checkbox" name="param_chk_' + safe(chk.key) + '" checked>';
+      formHtml += '        <span class="sop-check-text">' + safe(chk.label) + '</span>';
+      formHtml += '      </label>';
     });
-    formHtml += '</div>';
+    formHtml += '    </div>';
+    formHtml += '  </div>';
   }
   formHtml += '</div>';
 
   // 5. 메모
-  formHtml += '<label class="xrd-mini" style="display:block;">비고 / 특이사항 (Memo)<textarea name="memo" rows="2" placeholder="측정 상태 및 특이사항 입력" style="width:100%;box-sizing:border-box;margin-top:4px;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:13px;background:var(--card);color:var(--ink);"></textarea></label>';
+  formHtml += '<div class="param-section-box" style="margin-bottom:0;">';
+  formHtml += '  <label class="xrd-mini" style="display:block;font-weight:700;color:var(--ink);margin-bottom:6px;">비고 / 특이사항 (Memo)</label>';
+  formHtml += '  <textarea name="memo" rows="2" placeholder="측정 상태 및 특이사항 입력" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13.5px;background:var(--card);color:var(--ink);line-height:1.5;"></textarea>';
+  formHtml += '</div>';
 
   container.innerHTML = formHtml;
   modal.classList.add('open');
