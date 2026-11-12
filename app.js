@@ -1199,10 +1199,6 @@ function isAdmin(){
   try {
     if(admin === true) return true;
     if(localStorage.getItem('labstock_is_admin') === 'true') return true;
-    if(typeof document !== 'undefined'){
-      if(document.body && document.body.classList.contains('is-admin')) return true;
-      if(document.documentElement && document.documentElement.classList.contains('is-admin')) return true;
-    }
   } catch(_) {}
   return false;
 }
@@ -1241,18 +1237,15 @@ function setAdminUI(){
     if(isAdm){
       localStorage.setItem('labstock_is_admin', 'true');
       if(document.documentElement) document.documentElement.classList.add('is-admin');
+      if(document.body) document.body.classList.add('is-admin');
     } else {
       localStorage.removeItem('labstock_is_admin');
       if(document.documentElement) document.documentElement.classList.remove('is-admin');
+      if(document.body) document.body.classList.remove('is-admin');
     }
   } catch(_){}
 
-  if(document.body) document.body.classList.toggle('is-admin', isAdm);
-  if($('loginBtn')) $('loginBtn').classList.toggle('hidden', isAdm);
-  if($('logoutBtn')) $('logoutBtn').classList.toggle('hidden', !isAdm);
-
-  if($('sidebarLoginBtn')) $('sidebarLoginBtn').classList.toggle('hidden', isAdm);
-  if($('sidebarAdminProfile')) $('sidebarAdminProfile').classList.toggle('hidden', !isAdm);
+  if(typeof updateUserUI === 'function') updateUserUI();
 
   const adminEls = document.querySelectorAll('.admin-only:not(.view)');
   for(let i=0; i<adminEls.length; i++){
@@ -9071,26 +9064,63 @@ async function handleLogout(){
   } finally {
     session = null;
     admin = false;
-    // 로컬스토리지 잔여 Supabase auth 토큰 캐시 확실히 정리
+
+    // 1. 사용자 세션 및 로컬스토리지 캐시 완전 삭제
+    if(typeof setCurrentUser === 'function'){
+      setCurrentUser(null);
+    } else {
+      try { localStorage.removeItem('labstock_current_user'); } catch(_){}
+    }
+
     try {
+      localStorage.removeItem('labstock_is_admin');
+      localStorage.removeItem('xrd_user_name');
+      localStorage.removeItem('xrd_affiliation');
+      localStorage.removeItem('xrd_professor');
+      localStorage.removeItem('labstock_last_borrower_name');
+      localStorage.removeItem('labstock_last_borrower_affil');
+      localStorage.removeItem('labstock_last_borrower_advisor');
+
       for(let i = localStorage.length - 1; i >= 0; i--){
         const key = localStorage.key(i);
         if(key && (key.startsWith('sb-') || key.includes('auth-token') || key === 'supabase.auth.token')){
           localStorage.removeItem(key);
         }
       }
+      if(document.documentElement) document.documentElement.classList.remove('is-admin');
+      if(document.body) document.body.classList.remove('is-admin');
     } catch(e){}
 
-    setAdminUI();
-    // 관리자 전용 화면에 머물고 있을 경우 즉시 비품 현황으로 복귀
+    // 2. 폼 입력값 초기화
+    try {
+      const f = $('xrdForm');
+      if(f){
+        if(f.user_name) f.user_name.value = '';
+        if(f.professor) f.professor.value = '';
+        if(f.affiliation) f.affiliation.value = '';
+      }
+      if($('modalChemHandler')) $('modalChemHandler').value = '';
+    } catch(e){}
+
+    // 3. UI 상태 전면 갱신
+    if(typeof setAdminUI === 'function') setAdminUI();
+    if(typeof updateUserUI === 'function') updateUserUI();
+
+    // 4. 관리자 전용 화면에 머물고 있을 경우 즉시 비품 현황으로 복귀
     const currentView = document.querySelector('.view.active');
     if(currentView && (currentView.id === 'view-history' || currentView.id === 'view-dashboard' || currentView.classList.contains('admin-only'))){
       showView('inventory');
     }
+
     closeMobileDrawer();
     toast('로그아웃되었습니다.');
     render();
   }
+}
+
+// userLogout alias
+function userLogout(){
+  return handleLogout();
 }
 
 // ==========================================
@@ -19116,13 +19146,19 @@ function setCurrentUser(userObj){
   if(userObj){
     localStorage.setItem('labstock_current_user', JSON.stringify(userObj));
     localStorage.setItem('xrd_user_name', userObj.name || '');
-    localStorage.setItem('xrd_affiliation', userObj.affiliation || '2DQH');
-    localStorage.setItem('xrd_professor', userObj.advisor || '신현석 교수님');
+    localStorage.setItem('xrd_affiliation', userObj.affiliation || '');
+    localStorage.setItem('xrd_professor', userObj.advisor || '');
     localStorage.setItem('labstock_last_borrower_name', userObj.name || '');
-    localStorage.setItem('labstock_last_borrower_affil', userObj.affiliation || '2DQH');
-    localStorage.setItem('labstock_last_borrower_advisor', userObj.advisor || '신현석 교수님');
+    localStorage.setItem('labstock_last_borrower_affil', userObj.affiliation || '');
+    localStorage.setItem('labstock_last_borrower_advisor', userObj.advisor || '');
   } else {
     localStorage.removeItem('labstock_current_user');
+    localStorage.removeItem('xrd_user_name');
+    localStorage.removeItem('xrd_affiliation');
+    localStorage.removeItem('xrd_professor');
+    localStorage.removeItem('labstock_last_borrower_name');
+    localStorage.removeItem('labstock_last_borrower_affil');
+    localStorage.removeItem('labstock_last_borrower_advisor');
   }
   updateUserUI();
   applyCurrentUserToForms();
@@ -19150,6 +19186,7 @@ function saveRegisteredUsers(list){
 
 function updateUserUI(){
   const u = getCurrentUser();
+  const isAdm = isAdmin();
   const topBadge = $('userProfileBadge');
   const topName = $('topUserName');
   const topAffil = $('topUserAffil');
@@ -19160,25 +19197,38 @@ function updateUserUI(){
   const sUserProfile = $('sidebarUserProfile');
   const sUserName = $('sidebarUserName');
   const sUserSub = $('sidebarUserSub');
+  const sAdminProfile = $('sidebarAdminProfile');
 
-  if(u){
-    if(topBadge) topBadge.classList.remove('hidden');
-    if(topName) topName.textContent = u.name;
-    if(topAffil) topAffil.textContent = '(' + (u.affiliation || '2DQH') + ')';
+  if(u || isAdm){
+    // 로그인 상태
     if(loginBtn) loginBtn.classList.add('hidden');
     if(logoutBtn) logoutBtn.classList.remove('hidden');
 
+    if(topBadge){
+      topBadge.classList.remove('hidden');
+      if(topName) topName.textContent = isAdm ? '관리자' : (u ? u.name : '연구원');
+      if(topAffil) topAffil.textContent = isAdm ? '(Admin)' : (u && u.affiliation ? '(' + u.affiliation + ')' : '');
+    }
+
     if(sLoginBtn) sLoginBtn.classList.add('hidden');
-    if(sUserProfile) sUserProfile.classList.remove('hidden');
-    if(sUserName) sUserName.textContent = u.name + ' 연구원';
-    if(sUserSub) sUserSub.textContent = (u.affiliation || '2DQH') + ' · ' + (u.advisor || '신현석 교수님');
+    if(isAdm){
+      if(sAdminProfile) sAdminProfile.classList.remove('hidden');
+      if(sUserProfile) sUserProfile.classList.add('hidden');
+    } else if(u){
+      if(sUserProfile) sUserProfile.classList.remove('hidden');
+      if(sUserName) sUserName.textContent = u.name + ' 연구원';
+      if(sUserSub) sUserSub.textContent = (u.affiliation || '') + (u.advisor ? (' · ' + u.advisor) : '');
+      if(sAdminProfile) sAdminProfile.classList.add('hidden');
+    }
   } else {
+    // 로그아웃 상태
     if(topBadge) topBadge.classList.add('hidden');
     if(loginBtn) loginBtn.classList.remove('hidden');
     if(logoutBtn) logoutBtn.classList.add('hidden');
 
     if(sLoginBtn) sLoginBtn.classList.remove('hidden');
     if(sUserProfile) sUserProfile.classList.add('hidden');
+    if(sAdminProfile) sAdminProfile.classList.add('hidden');
   }
 }
 
