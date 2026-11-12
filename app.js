@@ -6126,276 +6126,416 @@ function renderEquipmentAnalyticsOverview(periodSessions, targetSessions, allSes
 }
 
 function exportAnalyticsSummaryCsv(){
-  const allSessions = getUnifiedEquipmentSessions();
-  const isAll = (selectedAnalyticsEquipmentId === 'all');
-  const selectedEq = isAll ? null : researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
+  try {
+    const allSessions = getUnifiedEquipmentSessions();
+    const isAll = (!selectedAnalyticsEquipmentId || selectedAnalyticsEquipmentId === 'all');
+    const selectedEq = isAll ? null : (researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; }) || null);
+    const eqName = isAll ? '첨단 연구장비 10대 통합' : (selectedEq ? (selectedEq.name + ' [' + selectedEq.code + ']') : '선택 연구장비');
+    const eqCodeStr = isAll ? '전체장비통합' : (selectedEq ? selectedEq.code : '장비');
 
-  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-  const lines = [];
-  const periodLabel = selectedAnalyticsPeriod === 'week' ? '주간' : (selectedAnalyticsPeriod === 'month' ? '월별' : '연간');
-  const monthWeeks = getMonthWeeks(currentCalendarYear, currentCalendarMonth);
-  let curWeek = null;
-  if(timelineDateFilter){
-    curWeek = monthWeeks.find(function(w){ return timelineDateFilter >= w.startDate && timelineDateFilter <= w.endDate; });
-  }
-  if(!curWeek){
-    curWeek = monthWeeks.find(function(w){ return today() >= w.startDate && today() <= w.endDate; }) || monthWeeks[0];
-  }
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const lines = [];
+    const periodLabel = selectedAnalyticsPeriod === 'week' ? '주간' : (selectedAnalyticsPeriod === 'month' ? '월간' : '연간');
+    const monthWeeks = getMonthWeeks(currentCalendarYear, currentCalendarMonth);
 
-  const periodDesc = selectedAnalyticsPeriod === 'week'
-    ? (currentCalendarYear + '년 ' + currentCalendarMonth + '월 ' + curWeek.label)
-    : (selectedAnalyticsPeriod === 'month' ? (currentCalendarYear + '년 ' + currentCalendarMonth + '월') : (currentCalendarYear + '년 연간'));
-
-  let filename = '2DQH_연구장비_운영통계_' + periodLabel + '_' + today() + '.csv';
-
-  // 세션 스코프 필터링
-  const targetSessions = isAll ? allSessions : allSessions.filter(function(s){
-    return s.equipment_id === selectedAnalyticsEquipmentId || (selectedEq && s.equipment_code === selectedEq.code);
-  });
-
-  // 기간별 세션 추출
-  let periodSessions = [];
-  if(selectedAnalyticsPeriod === 'week'){
-    periodSessions = targetSessions.filter(function(s){
-      const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
-      return d >= curWeek.startDate && d <= curWeek.endDate;
-    });
-  } else if(selectedAnalyticsPeriod === 'month'){
-    const currentMonthStr = currentCalendarYear + '-' + pad(currentCalendarMonth);
-    periodSessions = targetSessions.filter(function(s){
-      const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
-      return d.startsWith(currentMonthStr);
-    });
-  } else {
-    const yrStr = String(currentCalendarYear);
-    periodSessions = targetSessions.filter(function(s){
-      const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
-      return d.startsWith(yrStr);
-    });
-  }
-
-  // 총괄 집계 계산
-  let grandPeriodMins = 0;
-  let grandPeriodSamples = 0;
-  const userSet = new Set();
-  const affilMap = {};
-
-  periodSessions.forEach(function(s){
-    grandPeriodMins += (s.duration_min || 0);
-    grandPeriodSamples += (s.sample_count || 1);
-    if(s.user_name) userSet.add(s.user_name);
-    const af = s.affiliation || '2DQH';
-    affilMap[af] = (affilMap[af] || 0) + (s.sample_count || 1);
-  });
-
-  let topAffilOverall = '-';
-  let maxAffOverall = 0;
-  for(const k in affilMap){
-    if(affilMap[k] > maxAffOverall){
-      maxAffOverall = affilMap[k];
-      const pct = grandPeriodSamples > 0 ? Math.round((affilMap[k] / grandPeriodSamples) * 100) : 0;
-      topAffilOverall = k + ' (' + maxAffOverall + '개, ' + pct + '%)';
+    let curWeek = null;
+    if(timelineDateFilter && monthWeeks && monthWeeks.length){
+      curWeek = monthWeeks.find(function(w){ return timelineDateFilter >= w.startDate && timelineDateFilter <= w.endDate; });
     }
-  }
+    if(!curWeek && monthWeeks && monthWeeks.length){
+      curWeek = monthWeeks.find(function(w){ return today() >= w.startDate && today() <= w.endDate; }) || monthWeeks[0];
+    }
+    if(!curWeek){
+      const startD = currentCalendarYear + '-' + pad(currentCalendarMonth) + '-01';
+      const endD = currentCalendarYear + '-' + pad(currentCalendarMonth) + '-07';
+      curWeek = { label: '1주차', startDate: startD, endDate: endD };
+    }
 
-  // ====================================================
-  // [헤더 및 메타데이터]
-  // ====================================================
-  lines.push('"[IBS 2DQH 연구단 연구장비 운영통계 및 분석 실적 리포트]"');
-  lines.push('"보고서 생성일시: ' + today() + '","분석 기준 주기: ' + periodLabel + ' 통계 (' + periodDesc + ')","대상: ' + (isAll ? '첨단 연구장비 통합' : (selectedEq.name + ' [' + selectedEq.code + ']')) + '"');
-  lines.push('""');
-
-  // ====================================================
-  // 1. 전체 장비 총괄 운영 서머리
-  // ====================================================
-  lines.push('"[1. 연구장비 총괄 운영 서머리]"');
-  lines.push('"항목","통계 집계 수치"');
-  lines.push('"대상 연구장비","' + (isAll ? (researchEquipments.length + '대 통합 운영') : selectedEq.name) + '"');
-  lines.push('"분석 기준 기간","' + periodDesc + ' (' + periodLabel + ')"');
-  lines.push('"총 분석·가동 건수","' + periodSessions.length + '건 (전체 누적 ' + targetSessions.length + '건)"');
-  lines.push('"총 가동시간 (시간)","' + (grandPeriodMins / 60).toFixed(1) + '시간"');
-  lines.push('"총 가동시간 (분)","' + grandPeriodMins.toLocaleString() + '분"');
-  lines.push('"총 측정 시료수","' + grandPeriodSamples + '개"');
-  lines.push('"참여 연구원 수","' + userSet.size + '명"');
-  lines.push('"최다 분석처 (소속)","' + topAffilOverall + '"');
-  lines.push('""');
-
-  // ====================================================
-  // 2. 장비별 분석 실적 및 운영 현황 (핵심 필드만 깔끔하게 정돈)
-  // ====================================================
-  lines.push('"[2. 연구장비별 분석 실적 및 가동 현황]"');
-  lines.push([
-    '장비코드',
-    '장비명',
-    '설치위치',
-    '운영상태',
-    '분석·가동건수',
-    '가동시간(h)',
-    '가동(분)',
-    '가동비중(%)',
-    '측정시료수',
-    '최다 분석처 (비중)',
-    '주요 사용자'
-  ].map(function(c){ return '"' + c + '"'; }).join(','));
-
-  const targetEquipList = isAll ? researchEquipments : [selectedEq].filter(Boolean);
-
-  targetEquipList.forEach(function(eq){
-    const eqSessions = allSessions.filter(function(s){
-      return s.equipment_id === eq.id || s.equipment_code === eq.code;
+    // 대상 장비 필터링
+    const targetSessions = isAll ? allSessions : allSessions.filter(function(s){
+      return s.equipment_id === selectedAnalyticsEquipmentId || (selectedEq && s.equipment_code === selectedEq.code);
     });
 
-    let pSessions = [];
-    if(selectedAnalyticsPeriod === 'week'){
-      pSessions = eqSessions.filter(function(s){
+    let periodDesc = '';
+    let filename = '';
+    let periodSessions = [];
+
+    if(selectedAnalyticsPeriod === 'year'){
+      periodDesc = currentCalendarYear + '년 연간 통계 (1월 ~ 12월)';
+      filename = '2DQH_연구장비운영통계_연간_월별집계_' + eqCodeStr + '_' + currentCalendarYear + '년.csv';
+      const yrStr = String(currentCalendarYear);
+      periodSessions = targetSessions.filter(function(s){
         const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
-        return d >= curWeek.startDate && d <= curWeek.endDate;
+        return d.startsWith(yrStr);
       });
     } else if(selectedAnalyticsPeriod === 'month'){
       const currentMonthStr = currentCalendarYear + '-' + pad(currentCalendarMonth);
-      pSessions = eqSessions.filter(function(s){
+      periodDesc = currentCalendarYear + '년 ' + currentCalendarMonth + '월 월간 통계 (주차별 집계)';
+      filename = '2DQH_연구장비운영통계_월간_주차별집계_' + eqCodeStr + '_' + currentCalendarYear + '년' + pad(currentCalendarMonth) + '월.csv';
+      periodSessions = targetSessions.filter(function(s){
         const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
         return d.startsWith(currentMonthStr);
       });
     } else {
-      const yrStr = String(currentCalendarYear);
-      pSessions = eqSessions.filter(function(s){
+      // week
+      periodDesc = currentCalendarYear + '년 ' + currentCalendarMonth + '월 ' + curWeek.label + ' (' + curWeek.startDate + ' ~ ' + curWeek.endDate + ')';
+      filename = '2DQH_연구장비운영통계_주간_요일별집계_' + eqCodeStr + '_' + currentCalendarYear + '년' + pad(currentCalendarMonth) + '월_' + curWeek.label + '.csv';
+      periodSessions = targetSessions.filter(function(s){
         const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
-        return d.startsWith(yrStr);
+        return d >= curWeek.startDate && d <= curWeek.endDate;
       });
     }
 
-    let pMins = 0;
-    let pSamples = 0;
-    const eqAffMap = {};
-    const eqUserMap = {};
+    // 총괄 집계 계산
+    let grandPeriodMins = 0;
+    let grandPeriodSamples = 0;
+    const userSet = new Set();
+    const affilMap = {};
 
-    pSessions.forEach(function(s){
-      pMins += (s.duration_min || 0);
-      pSamples += (s.sample_count || 1);
-      const a = s.affiliation || '2DQH';
-      eqAffMap[a] = (eqAffMap[a] || 0) + (s.sample_count || 1);
-      const u = s.user_name || '연구원';
-      eqUserMap[u] = (eqUserMap[u] || 0) + 1;
+    periodSessions.forEach(function(s){
+      grandPeriodMins += (s.duration_min || 0);
+      grandPeriodSamples += (s.sample_count || 1);
+      if(s.user_name) userSet.add(s.user_name);
+      const af = s.affiliation || '2DQH';
+      affilMap[af] = (affilMap[af] || 0) + (s.sample_count || 1);
     });
 
-    let topEqAff = '-';
-    let maxA = 0;
-    for(const a in eqAffMap){
-      if(eqAffMap[a] > maxA){
-        maxA = eqAffMap[a];
-        const pct = pSamples > 0 ? Math.round((eqAffMap[a] / pSamples) * 100) : 0;
-        topEqAff = a + ' (' + maxA + '개, ' + pct + '%)';
+    let topAffilOverall = '-';
+    let maxAffOverall = 0;
+    for(const k in affilMap){
+      if(affilMap[k] > maxAffOverall){
+        maxAffOverall = affilMap[k];
+        const pct = grandPeriodSamples > 0 ? Math.round((affilMap[k] / grandPeriodSamples) * 100) : 0;
+        topAffilOverall = k + ' (' + maxAffOverall + '개, ' + pct + '%)';
       }
     }
 
-    const sortedUsers = Object.keys(eqUserMap).sort(function(a, b){ return eqUserMap[b] - eqUserMap[a]; });
-    const userSummary = sortedUsers.slice(0, 2).map(function(u){ return u + '(' + eqUserMap[u] + '건)'; }).join(', ') || '-';
+    // ====================================================
+    // [헤더 및 메타데이터]
+    // ====================================================
+    lines.push('"[IBS 2DQH 연구단 연구장비 운영통계 및 분석 실적 리포트]"');
+    lines.push('"보고서 생성일시: ' + today() + '","분석 주기: ' + periodLabel + ' 통계","조회 기준: ' + periodDesc + '","대상 장비: ' + eqName + '"');
+    lines.push('""');
 
-    const pctOfGrand = grandPeriodMins > 0 ? Math.round((pMins / grandPeriodMins) * 100) : 0;
+    // ====================================================
+    // 1. 총괄 운영 서머리
+    // ====================================================
+    lines.push('"[1. 연구장비 총괄 운영 서머리]"');
+    lines.push('"구분 항목","운영 통계 수치"');
+    lines.push('"분석 대상 장비","' + eqName + '"');
+    lines.push('"분석 기준 기간","' + periodDesc + '"');
+    lines.push('"총 분석·가동 건수","' + periodSessions.length + '건 (전체 누적 ' + targetSessions.length + '건 중)"');
+    lines.push('"총 가동 시간 (시간)","' + (grandPeriodMins / 60).toFixed(1) + '시간"');
+    lines.push('"총 가동 시간 (분)","' + grandPeriodMins.toLocaleString() + '분"');
+    lines.push('"총 측정 시료수","' + grandPeriodSamples + '개"');
+    lines.push('"참여 연구원 수","' + userSet.size + '명"');
+    lines.push('"최다 분석처 (소속/연구실)","' + topAffilOverall + '"');
+    lines.push('""');
 
-    lines.push([
-      eq.code,
-      eq.name,
-      eq.location || '연구실',
-      eq.status === 'active' ? '정상 가동' : '대기 중',
-      pSessions.length,
-      (pMins / 60).toFixed(1),
-      pMins,
-      pctOfGrand + '%',
-      pSamples,
-      topEqAff,
-      userSummary
-    ].map(formatCsvCell).join(','));
-  });
+    // ====================================================
+    // 2. 주기별 세부 분석 테이블 (연간->월별, 월간->주별, 주간->요일별)
+    // ====================================================
+    if(selectedAnalyticsPeriod === 'year'){
+      // [연간 통계 선택 시]: 1월 ~ 12월 월별 정리 집계
+      lines.push('"[2. ' + currentCalendarYear + '년 월별(1월~12월) 운영 실적 분석 (연간 상세 집계)]"');
+      lines.push('"해당 월","가동 건수(건)","가동 시간(시간)","가동 시간(분)","가동 비중(%)","측정 시료수(개)","참여 연구원 수(명)","주요 사용자","최다 분석처 (소속)"');
 
-  if(isAll){
-    lines.push([
-      '합계(TOTAL)',
-      '첨단 연구장비 통합 총계',
-      '2DQH 연구단',
-      '정상 가동',
-      periodSessions.length,
-      (grandPeriodMins / 60).toFixed(1),
-      grandPeriodMins,
-      '100%',
-      grandPeriodSamples,
-      topAffilOverall,
-      Array.from(userSet).slice(0, 3).join(', ') + (userSet.size > 3 ? ' 외 ' + (userSet.size - 3) + '명' : '')
-    ].map(formatCsvCell).join(','));
-  }
-  lines.push('""');
+      for(let m = 1; m <= 12; m++){
+        const mPrefix = currentCalendarYear + '-' + pad(m);
+        const mSessions = periodSessions.filter(function(s){
+          const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+          return d.startsWith(mPrefix);
+        });
 
-  // ====================================================
-  // 3. 소속/연구실별 측정 비중 (어디에서 많이 찍었는지)
-  // ====================================================
-  lines.push('"[3. 소속/연구실별 측정 비중 요약 (어디에서 가장 많이 찍었는지)]"');
-  lines.push(['순위', '소속/연구실명', '측정 시료수(개)', '측정 비중(%)'].map(function(c){ return '"' + c + '"'; }).join(','));
+        let mMins = 0;
+        let mSamples = 0;
+        const mUsers = {};
+        const mAffils = {};
 
-  const sortedAffils = Object.keys(affilMap).sort(function(a, b){ return affilMap[b] - affilMap[a]; });
-  if(sortedAffils.length > 0){
-    sortedAffils.forEach(function(af, idx){
-      const cnt = affilMap[af];
-      const pct = grandPeriodSamples > 0 ? Math.round((cnt / grandPeriodSamples) * 100) : 0;
+        mSessions.forEach(function(s){
+          mMins += (s.duration_min || 0);
+          mSamples += (s.sample_count || 1);
+          const u = s.user_name || '연구원';
+          mUsers[u] = (mUsers[u] || 0) + 1;
+          const a = s.affiliation || '2DQH';
+          mAffils[a] = (mAffils[a] || 0) + (s.sample_count || 1);
+        });
+
+        const mUsersList = Object.keys(mUsers).sort(function(a, b){ return mUsers[b] - mUsers[a]; });
+        const mTopUsers = mUsersList.slice(0, 2).map(function(u){ return u + '(' + mUsers[u] + '건)'; }).join(', ') || '-';
+
+        let mTopAff = '-';
+        let maxAff = 0;
+        for(const a in mAffils){
+          if(mAffils[a] > maxAff){
+            maxAff = mAffils[a];
+            mTopAff = a + ' (' + maxAff + '개)';
+          }
+        }
+
+        const pctOfYr = grandPeriodMins > 0 ? Math.round((mMins / grandPeriodMins) * 100) : 0;
+
+        lines.push([
+          m + '월 (' + mPrefix + ')',
+          mSessions.length,
+          (mMins / 60).toFixed(1),
+          mMins,
+          pctOfYr + '%',
+          mSamples,
+          mUsersList.length,
+          mTopUsers,
+          mTopAff
+        ].map(function(v){ return formatCsvCell(v); }).join(','));
+      }
+
+      // 연간 합계 행
       lines.push([
-        (idx + 1) + '위',
-        af,
-        cnt,
-        pct + '%'
-      ].map(formatCsvCell).join(','));
+        '연간 총계(TOTAL)',
+        periodSessions.length,
+        (grandPeriodMins / 60).toFixed(1),
+        grandPeriodMins,
+        '100%',
+        grandPeriodSamples,
+        userSet.size,
+        Array.from(userSet).slice(0, 3).join(', ') + (userSet.size > 3 ? ' 외 ' + (userSet.size - 3) + '명' : ''),
+        topAffilOverall
+      ].map(function(v){ return formatCsvCell(v); }).join(','));
+
+    } else if(selectedAnalyticsPeriod === 'month'){
+      // [월간 통계 선택 시]: 해당 달 주차별(1주차~5주차) 정리 집계
+      lines.push('"[2. ' + currentCalendarYear + '년 ' + currentCalendarMonth + '월 주차별 운영 실적 분석 (월간 주별 상세 집계)]"');
+      lines.push('"주차 구분","해당 기간","가동 건수(건)","가동 시간(시간)","가동 시간(분)","가동 비중(%)","측정 시료수(개)","참여 연구원 수(명)","주요 사용자","최다 분석처 (소속)"');
+
+      monthWeeks.forEach(function(wk){
+        const wkSessions = periodSessions.filter(function(s){
+          const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+          return d >= wk.startDate && d <= wk.endDate;
+        });
+
+        let wMins = 0;
+        let wSamples = 0;
+        const wUsers = {};
+        const wAffils = {};
+
+        wkSessions.forEach(function(s){
+          wMins += (s.duration_min || 0);
+          wSamples += (s.sample_count || 1);
+          const u = s.user_name || '연구원';
+          wUsers[u] = (wUsers[u] || 0) + 1;
+          const a = s.affiliation || '2DQH';
+          wAffils[a] = (wAffils[a] || 0) + (s.sample_count || 1);
+        });
+
+        const wUsersList = Object.keys(wUsers).sort(function(a, b){ return wUsers[b] - wUsers[a]; });
+        const wTopUsers = wUsersList.slice(0, 2).map(function(u){ return u + '(' + wUsers[u] + '건)'; }).join(', ') || '-';
+
+        let wTopAff = '-';
+        let maxAff = 0;
+        for(const a in wAffils){
+          if(wAffils[a] > maxAff){
+            maxAff = wAffils[a];
+            wTopAff = a + ' (' + maxAff + '개)';
+          }
+        }
+
+        const pctOfMo = grandPeriodMins > 0 ? Math.round((wMins / grandPeriodMins) * 100) : 0;
+
+        lines.push([
+          wk.label,
+          wk.startDate + ' ~ ' + wk.endDate,
+          wkSessions.length,
+          (wMins / 60).toFixed(1),
+          wMins,
+          pctOfMo + '%',
+          wSamples,
+          wUsersList.length,
+          wTopUsers,
+          wTopAff
+        ].map(function(v){ return formatCsvCell(v); }).join(','));
+      });
+
+      // 월간 합계 행
+      lines.push([
+        '당월 총계(TOTAL)',
+        currentCalendarYear + '년 ' + currentCalendarMonth + '월 전체',
+        periodSessions.length,
+        (grandPeriodMins / 60).toFixed(1),
+        grandPeriodMins,
+        '100%',
+        grandPeriodSamples,
+        userSet.size,
+        Array.from(userSet).slice(0, 3).join(', ') + (userSet.size > 3 ? ' 외 ' + (userSet.size - 3) + '명' : ''),
+        topAffilOverall
+      ].map(function(v){ return formatCsvCell(v); }).join(','));
+
+    } else {
+      // [주간 통계 선택 시]: 현재 주간 요일별(월~일) 정리 집계
+      lines.push('"[2. ' + curWeek.label + ' 요일별 운영 실적 분석 (주간 상세 집계: ' + curWeek.startDate + ' ~ ' + curWeek.endDate + ')]"');
+      lines.push('"요일","일자","가동 건수(건)","가동 시간(시간)","가동 시간(분)","가동 비중(%)","측정 시료수(개)","사용 연구원","측정 시료 요약"');
+
+      const startD = new Date(curWeek.startDate + 'T00:00:00');
+      const endD = new Date(curWeek.endDate + 'T00:00:00');
+      const curD = new Date(startD);
+      const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+
+      while(curD <= endD){
+        const y = curD.getFullYear();
+        const m = pad(curD.getMonth() + 1);
+        const dayNum = pad(curD.getDate());
+        const dateKey = y + '-' + m + '-' + dayNum;
+        const dayLabel = dayNames[curD.getDay()];
+
+        const daySessions = periodSessions.filter(function(s){
+          const d = normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : ''));
+          return d === dateKey;
+        });
+
+        let dMins = 0;
+        let dSamples = 0;
+        const dUsers = new Set();
+        const dSampleNames = [];
+
+        daySessions.forEach(function(s){
+          dMins += (s.duration_min || 0);
+          dSamples += (s.sample_count || 1);
+          if(s.user_name) dUsers.add(s.user_name);
+          if(s.sample_name) dSampleNames.push(s.sample_name);
+        });
+
+        const pctOfWk = grandPeriodMins > 0 ? Math.round((dMins / grandPeriodMins) * 100) : 0;
+        const sampleSummary = dSampleNames.slice(0, 2).join(', ') + (dSampleNames.length > 2 ? ' 외 ' + (dSampleNames.length - 2) + '건' : '') || '-';
+
+        lines.push([
+          dayLabel,
+          dateKey,
+          daySessions.length,
+          (dMins / 60).toFixed(1),
+          dMins,
+          pctOfWk + '%',
+          dSamples,
+          Array.from(dUsers).join(', ') || '-',
+          sampleSummary
+        ].map(function(v){ return formatCsvCell(v); }).join(','));
+
+        curD.setDate(curD.getDate() + 1);
+      }
+
+      // 주간 합계 행
+      lines.push([
+        '금주 총계(TOTAL)',
+        curWeek.startDate + ' ~ ' + curWeek.endDate,
+        periodSessions.length,
+        (grandPeriodMins / 60).toFixed(1),
+        grandPeriodMins,
+        '100%',
+        grandPeriodSamples,
+        Array.from(userSet).join(', ') || '-',
+        '총 ' + grandPeriodSamples + '개 시료 측정'
+      ].map(function(v){ return formatCsvCell(v); }).join(','));
+    }
+    lines.push('""');
+
+    // ====================================================
+    // 3. (전체 장비 조회 시) 10대 연구장비별 실적 비교 테이블
+    // ====================================================
+    if(isAll){
+      lines.push('"[3. 연구장비별 세부 운영 현황 비교 (10대 연구장비)]"');
+      lines.push('"장비코드","장비명","설치위치","상태","가동건수(건)","가동시간(시간)","가동시간(분)","가동비중(%)","측정시료수(개)","최다분석처","주요사용자"');
+
+      researchEquipments.forEach(function(eq){
+        const eqSessions = periodSessions.filter(function(s){
+          return s.equipment_id === eq.id || s.equipment_code === eq.code;
+        });
+
+        let pMins = 0;
+        let pSamples = 0;
+        const eqAffMap = {};
+        const eqUserMap = {};
+
+        eqSessions.forEach(function(s){
+          pMins += (s.duration_min || 0);
+          pSamples += (s.sample_count || 1);
+          const a = s.affiliation || '2DQH';
+          eqAffMap[a] = (eqAffMap[a] || 0) + (s.sample_count || 1);
+          const u = s.user_name || '연구원';
+          eqUserMap[u] = (eqUserMap[u] || 0) + 1;
+        });
+
+        let topEqAff = '-';
+        let maxA = 0;
+        for(const a in eqAffMap){
+          if(eqAffMap[a] > maxA){
+            maxA = eqAffMap[a];
+            topEqAff = a + ' (' + maxA + '개)';
+          }
+        }
+
+        const sortedUsers = Object.keys(eqUserMap).sort(function(a, b){ return eqUserMap[b] - eqUserMap[a]; });
+        const userSummary = sortedUsers.slice(0, 2).map(function(u){ return u + '(' + eqUserMap[u] + '건)'; }).join(', ') || '-';
+        const pctOfGrand = grandPeriodMins > 0 ? Math.round((pMins / grandPeriodMins) * 100) : 0;
+
+        lines.push([
+          eq.code,
+          eq.name,
+          eq.location || '연구실',
+          eq.status === 'active' ? '정상 가동' : '대기 중',
+          eqSessions.length,
+          (pMins / 60).toFixed(1),
+          pMins,
+          pctOfGrand + '%',
+          pSamples,
+          topEqAff,
+          userSummary
+        ].map(function(v){ return formatCsvCell(v); }).join(','));
+      });
+      lines.push('""');
+    }
+
+    // ====================================================
+    // 4. 개별 가동 세션 상세 내역 (최신 100건)
+    // ====================================================
+    lines.push('"[4. ' + periodDesc + ' 개별 가동 세션 상세 로그 (최신순)]"');
+    lines.push('"사용일자","시작시간","종료시간","장비명","장비코드","사용자","소속/연구실","책임교수","가동시간(분)","측정시료","시료수","측정목적/스캔타입"');
+
+    const sortedPeriodSessions = periodSessions.slice().sort(function(a, b){
+      const da = normalizeExportDate(a.used_on || (a.created_at ? a.created_at.slice(0, 10) : ''));
+      const db = normalizeExportDate(b.used_on || (b.created_at ? b.created_at.slice(0, 10) : ''));
+      return db.localeCompare(da);
     });
-  } else {
-    lines.push(['-', '측정 기록 없음', 0, '0%'].map(formatCsvCell).join(','));
+
+    sortedPeriodSessions.slice(0, 100).forEach(function(s){
+      lines.push([
+        normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : '')),
+        s.start_time || '10:00',
+        s.end_time || '-',
+        s.equipment_name || s.equipment_code || '연구장비',
+        s.equipment_code || '',
+        s.user_name || '연구원',
+        s.affiliation || '2DQH',
+        s.professor || '',
+        s.duration_min || 0,
+        s.sample_name || '-',
+        s.sample_count || 1,
+        s.purpose || s.scan_type || '연구장비 가동'
+      ].map(function(v){ return formatCsvCell(v); }).join(','));
+    });
+
+    const csvContent = lines.join('\r\n');
+    const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('✓ ' + filename + ' (' + periodLabel + ' 통계) 다운로드 완료');
+  } catch(err){
+    console.error('장비운영통계 CSV 내보내기 오류:', err);
+    alert('장비운영통계 CSV 생성 중 오류가 발생했습니다: ' + err.message);
   }
-  lines.push('""');
-
-  // ====================================================
-  // 4. 최근 개별 가동 세션 상세 내역
-  // ====================================================
-  lines.push('"[4. 최근 개별 가동 세션 상세 내역]"');
-  lines.push([
-    '사용일자',
-    '시작시간',
-    '장비명',
-    '장비코드',
-    '사용자',
-    '소속/연구실',
-    '책임교수',
-    '가동시간(분)',
-    '측정시료',
-    '시료수',
-    '측정목적'
-  ].map(function(c){ return '"' + c + '"'; }).join(','));
-
-  periodSessions.slice(0, 50).forEach(function(s){
-    lines.push([
-      normalizeExportDate(s.used_on || (s.created_at ? s.created_at.slice(0, 10) : '')),
-      s.start_time || '10:00',
-      s.equipment_name || s.equipment_code || '연구장비',
-      s.equipment_code || '',
-      s.user_name || '연구원',
-      s.affiliation || '2DQH',
-      s.professor || '',
-      s.duration_min || 0,
-      s.sample_name || '',
-      s.sample_count || 1,
-      s.purpose || s.scan_type || '연구장비 가동'
-    ].map(formatCsvCell).join(','));
-  });
-
-  const csvContent = lines.join('\r\n');
-  const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('✓ ' + filename + ' 운영통계 CSV 파일이 다운로드되었습니다.');
 }
-
 function renderEquipmentCalendar(allSessions){
   const container = $('eqCalendarContainer');
   const labelEl = $('eqCurrentMonthLabel');
@@ -20047,6 +20187,15 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }
 
+  // 장비운영통계 CSV 다운로드 직통 이벤트 바인딩 보장
+  const btnExportAnalytics = $('btnExportAnalyticsCsv');
+  if(btnExportAnalytics){
+    btnExportAnalytics.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      exportAnalyticsSummaryCsv();
+    });
+  }
   // 1. 비품 통계 서브탭 바인딩
   document.querySelectorAll('.dash-main-tab[data-dash-tab]').forEach(function(btn){
     btn.addEventListener('click', function(e){
