@@ -17494,7 +17494,7 @@ function render291InventoryTable(){
     html += '<td style="text-align:center;white-space:nowrap;">' + safe(c.qty) + '</td>';
     html += '<td style="text-align:right;white-space:nowrap;font-weight:800;color:' + (c.status === '폐기' ? '#94a3b8' : '#059669') + ';font-size:13px;">' + currentStock + ' ' + safe(c.unit) + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">' + safe(c.handler) + '</td>';
-    html += '<td style="white-space:nowrap;font-size:11.5px;color:var(--ink-light);">' + safe(c.location) + '</td>';
+    html += '<td style="white-space:nowrap;font-size:11.5px;color:var(--ink-light);" title="' + safe(c.location) + '">' + safe(c.location) + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;"><span style="color:' + (c.status === '폐기' ? '#dc2626' : '#15803d') + ';font-weight:700;font-size:11px;">' + safe(c.status) + '</span></td>';
     html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.inDate) + '</td>';
     html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.expDate) + '</td>';
