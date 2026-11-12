@@ -8649,7 +8649,11 @@ async function saveForm(e){
       const rAffil = (v.affiliation || '').trim();
 
       if(!uName || !uPass || !rName){
-        throw new Error('아이디, 비밀번호, 유저명을 모두 입력해주세요.');
+        throw new Error('아이디, 비밀번호, 성명을 모두 입력해주세요.');
+      }
+
+      if(uName.toLowerCase() === '2dqh' || uName.toLowerCase() === 'admin'){
+        throw new Error('관리자 전용 아이디입니다. 로그인 화면에서 로그인해주세요.');
       }
 
       const registered = getRegisteredUsers();
@@ -8707,20 +8711,50 @@ async function saveForm(e){
         throw new Error('아이디를 입력해주세요.');
       }
 
-      // A. 관리자 특별 계정
-      if(inputId.toLowerCase() === 'admin'){
+      // A. 관리자 계정 (2DQH / admin) - 비밀번호: 86276@
+      const is2DQH = (inputId.toLowerCase() === '2dqh');
+      const isAdminId = (inputId.toLowerCase() === 'admin');
+
+      if(is2DQH || isAdminId){
+        if(is2DQH){
+          if(inputPass !== '86276@'){
+            throw new Error('비밀번호가 일치하지 않습니다. (관리자 비밀번호 확인)');
+          }
+        } else if(isAdminId){
+          if(inputPass && inputPass !== '86276@' && inputPass !== '11'){
+            throw new Error('비밀번호가 일치하지 않습니다. (관리자 비밀번호 확인)');
+          }
+        }
+
         admin = true;
+        try {
+          localStorage.setItem('labstock_is_admin', 'true');
+        } catch(_){}
+
         const adminObj = {
-          username: 'admin',
+          username: is2DQH ? '2DQH' : 'admin',
           name: '연구실 관리자',
           advisor: '신현석 교수님',
           affiliation: 'IBS 2DQH',
           role: 'admin'
         };
         setCurrentUser(adminObj);
+        if(db && !isLocalMode){
+          try {
+            db.from('user_profiles').upsert({
+              id: adminObj.username,
+              username: adminObj.username,
+              password: '86276@',
+              name: adminObj.name,
+              advisor: adminObj.advisor,
+              affiliation: adminObj.affiliation,
+              role: 'admin'
+            });
+          } catch(_){}
+        }
         if(typeof setAdminUI === 'function') setAdminUI();
         closeModal();
-        toast('👑 관리자로 로그인되었습니다.');
+        toast('👑 관리자(' + adminObj.username + ')로 로그인되었습니다.');
         btn.disabled = false;
         await loadData();
         return;
@@ -19182,17 +19216,40 @@ function setCurrentUser(userObj){
 }
 
 function getRegisteredUsers(){
+  let list = [];
   try {
     const raw = localStorage.getItem('labstock_registered_users');
     if(raw){
-      const list = JSON.parse(raw);
-      if(Array.isArray(list)) return list;
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)) list = parsed;
     }
   } catch(e){}
-  return [
-    { username: 'kmlee', password: '11', name: '이강민', advisor: '신현석 교수님', affiliation: '2DQH', role: 'researcher' },
-    { username: 'admin', password: '11', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' }
-  ];
+
+  const admin2dqh = { username: '2DQH', password: '86276@', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' };
+  const adminAlias = { username: 'admin', password: '86276@', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' };
+  const defaultResearcher = { username: 'kmlee', password: '11', name: '이강민', advisor: '신현석 교수님', affiliation: '2DQH', role: 'researcher' };
+
+  const idx2dqh = list.findIndex(function(u){ return u.username && u.username.toLowerCase() === '2dqh'; });
+  if(idx2dqh >= 0){
+    list[idx2dqh].password = '86276@';
+    list[idx2dqh].role = 'admin';
+  } else {
+    list.unshift(admin2dqh);
+  }
+
+  const idxAdmin = list.findIndex(function(u){ return u.username && u.username.toLowerCase() === 'admin'; });
+  if(idxAdmin >= 0){
+    list[idxAdmin].password = '86276@';
+    list[idxAdmin].role = 'admin';
+  } else {
+    list.push(adminAlias);
+  }
+
+  if(!list.some(function(u){ return u.username && u.username.toLowerCase() === 'kmlee'; })){
+    list.push(defaultResearcher);
+  }
+
+  return list;
 }
 
 function saveRegisteredUsers(list){
