@@ -828,87 +828,77 @@
 
       <!-- 8. 실시간 취급일지 작성 모달 -->
       <div id="modalChemWriteLogBackdrop" class="backdrop">
-        <section class="modal chem-write-modal" role="dialog" aria-modal="true" style="max-width:620px;width:min(620px,94vw);max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.22);">
-          <div class="modal-head" style="flex-shrink:0;border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+        <section class="modal chem-write-modal" role="dialog" aria-modal="true" style="max-width:520px;width:min(520px,92vw);max-height:85vh;max-height:85dvh;display:flex;flex-direction:column;border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.22);position:relative;">
+          <div class="modal-head" style="flex-shrink:0;border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
             <div>
-              <h3 style="margin:0;font-size:16px;color:var(--ink);">📝 특별관리물질 취급일지 작성</h3>
-              <p style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">산안법 제439조 법정 양식 · N센터 86291호 이차원 소재 합성 실험실</p>
+              <h3 style="margin:0;font-size:15.5px;font-weight:800;color:var(--ink);">📝 취급일지 작성</h3>
+              <p style="margin:2px 0 0;font-size:11.5px;color:var(--ink-light);">N센터 86291호 연구실</p>
             </div>
             <div style="display:flex;align-items:center;gap:6px;">
               <button type="button" class="btn admin-only hidden" id="btnChemWriteModalQr" style="padding:4px 8px;font-size:12px;font-weight:700;border:1px solid #059669;color:#059669;background:#ffffff;" title="시약장 부착용 취급일지 직통 QR 라벨">📱 QR</button>
               <button class="icon-btn" id="btnCloseChemWriteLog" aria-label="닫기" type="button"><span aria-hidden="true">✕</span></button>
             </div>
           </div>
-          <form id="formWriteChemicalLogModal" style="flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:18px;touch-action:pan-y;">
-            <div style="margin-bottom:12px;">
-              <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급 물질 *</label>
-              <select id="modalChemSelect" class="form-control" style="width:100%;padding:8px 10px;font-size:13.5px;font-weight:600;">
+          <form id="formWriteChemicalLogModal" style="flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px 20px;touch-action:pan-y;">
+            <div style="margin-bottom:10px;">
+              <label for="modalChemSelect" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급 물질 *</label>
+              <select id="modalChemSelect" class="form-control" style="width:100%;min-height:46px;height:46px;padding:8px 12px;font-size:14px;font-weight:600;border-radius:8px;line-height:1.4;">
                 <!-- Populated by JS -->
               </select>
             </div>
 
-            <div id="modalChemStockNotice" style="background:var(--bg-subtle);border:1px dashed #059669;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--ink);">
-              현재 잔여량: <b>500.0 mL</b> (초기 500.0 mL)
+            <div id="modalChemStockNotice" style="background:var(--bg-subtle);border:1px dashed #059669;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;">
+              <span>현재 잔여량: <b style="color:#059669;font-size:14px;">500.0 mL</b></span>
+              <span style="color:var(--ink-light);font-size:11.5px;">(초기 입고량: 500.0 mL)</span>
             </div>
 
-            <div class="chem-handler-date-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-              <div class="chem-handler-col">
-                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);white-space:nowrap;word-break:keep-all;">취급자 성명 *</label>
-                <div class="chem-user-compact-bar hidden" id="chemUserCompactBar">
-                  <div class="chem-user-compact-left">
-                    <span class="chem-user-compact-label">취급자</span>
-                    <span class="chem-user-compact-name" id="chemCompactName"></span>
-                    <span class="chem-user-compact-meta" id="chemCompactMeta"></span>
-                    <span class="chem-user-compact-badge">자동 연동</span>
-                  </div>
-                  <button type="button" class="chem-user-toggle-btn" id="btnToggleChemUserEdit">수정</button>
-                </div>
-                <div id="chemUserInputWrap">
-                  <input type="text" id="modalChemHandler" class="form-control" placeholder="성명 (예: 이강민)" value="이강민" required style="width:100%;padding:8px 10px;">
-                </div>
-              </div>
-              <div class="chem-date-col">
-                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);white-space:nowrap;word-break:keep-all;">취급 일시 *</label>
-                <input type="datetime-local" id="modalChemDate" class="form-control" required style="width:100%;padding:8px 10px;">
-              </div>
-            </div>
-
-            <div class="chem-qty-unit-row" style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px;">
+            <div class="chem-handler-date-row" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;">
               <div>
-                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">금회 사용량 *</label>
-                <input type="number" id="modalChemQty" step="0.1" min="0.1" value="10" class="form-control" required style="width:100%;padding:8px 10px;font-weight:700;">
+                <label for="modalChemHandler" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급자 성명 *</label>
+                <input type="text" id="modalChemHandler" class="form-control" placeholder="성명 (예: 이강민)" value="이강민" required style="width:100%;height:40px;padding:8px 12px;font-size:13.5px;font-weight:600;border-radius:8px;box-sizing:border-box;">
               </div>
               <div>
-                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">단위</label>
-                <input type="text" id="modalChemUnit" class="form-control" value="mL" readonly style="width:100%;padding:8px 10px;background:var(--bg-subtle);font-weight:700;">
+                <label for="modalChemDate" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급 일시 *</label>
+                <input type="datetime-local" id="modalChemDate" class="form-control" required style="width:100%;height:40px;padding:8px 12px;font-size:13.5px;font-weight:600;border-radius:8px;box-sizing:border-box;">
               </div>
             </div>
 
-            <div style="margin-bottom:12px;">
-              <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">작업 내용 및 실험 목적 *</label>
-              <input type="text" id="modalChemDesc" class="form-control" value="시편 세정 및 합성 반응" placeholder="작업 목적 구체적 기재" required style="width:100%;padding:8px 10px;">
+            <div class="chem-qty-unit-row" style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px;">
+              <div>
+                <label for="modalChemQty" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">금회 사용량 *</label>
+                <input type="number" id="modalChemQty" step="0.1" min="0.1" value="10" class="form-control" required style="width:100%;height:40px;padding:8px 12px;font-size:14px;font-weight:700;border-radius:8px;box-sizing:border-box;">
+              </div>
+              <div>
+                <label for="modalChemUnit" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">단위</label>
+                <input type="text" id="modalChemUnit" class="form-control" value="mL" readonly style="width:100%;height:40px;padding:8px 12px;background:var(--bg-subtle);font-weight:700;border-radius:8px;box-sizing:border-box;">
+              </div>
             </div>
 
-            <div class="chem-safety-check-section">
-              <div class="chem-safety-check-title" style="word-break:keep-all;white-space:nowrap;">
-                <span>🛡️</span> 산안법 제439조 안전 준수 점검 (필수)
+            <div style="margin-bottom:10px;">
+              <label for="modalChemDesc" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">작업 내용 및 실험 목적 *</label>
+              <input type="text" id="modalChemDesc" class="form-control" value="시편 세정 및 합성 반응" placeholder="작업 목적 구체적 기재" required style="width:100%;height:40px;padding:8px 12px;font-size:13px;border-radius:8px;box-sizing:border-box;">
+            </div>
+
+            <div class="chem-safety-check-section" style="margin-bottom:14px;padding:10px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;">
+              <div class="chem-safety-check-title" style="word-break:keep-all;white-space:nowrap;font-size:12px;font-weight:700;margin-bottom:8px;color:var(--ink);display:flex;align-items:center;gap:6px;">
+                <span>🛡️</span> 필수 안전 수칙 점검
               </div>
-              <div class="chem-safety-check-list">
-                <label class="chem-safety-check-card">
+              <div class="chem-safety-check-list" style="display:flex;flex-direction:column;gap:6px;">
+                <label class="chem-safety-check-card" style="margin:0;padding:6px 10px;font-size:12px;">
                   <input type="checkbox" id="modalChemCheckVent" checked required class="chem-safety-checkbox">
                   <div class="chem-safety-check-info">
                     <span class="chem-safety-check-badge">환기설비</span>
                     <span class="chem-safety-check-text">흄후드 배기 정상 가동 및 풍속 확인</span>
                   </div>
                 </label>
-                <label class="chem-safety-check-card">
+                <label class="chem-safety-check-card" style="margin:0;padding:6px 10px;font-size:12px;">
                   <input type="checkbox" id="modalChemCheckPpe" checked required class="chem-safety-checkbox">
                   <div class="chem-safety-check-info">
                     <span class="chem-safety-check-badge">보호구</span>
                     <span class="chem-safety-check-text">방독마스크·보안경·내화학장갑 착용</span>
                   </div>
                 </label>
-                <label class="chem-safety-check-card">
+                <label class="chem-safety-check-card" style="margin:0;padding:6px 10px;font-size:12px;">
                   <input type="checkbox" id="modalChemCheckSafe" checked required class="chem-safety-checkbox">
                   <div class="chem-safety-check-info">
                     <span class="chem-safety-check-badge">안전확인</span>
@@ -918,8 +908,8 @@
               </div>
             </div>
 
-            <button type="submit" class="btn primary" style="width:100%;padding:12px;font-size:14.5px;font-weight:700;background:#059669;border-color:#059669;">
-              🚀 취급일지 전자 서명 등록 (30년 영구 보존)
+            <button type="submit" class="btn primary" id="btnSubmitChemLog" style="width:100%;height:46px;padding:12px;font-size:14.5px;font-weight:700;background:#059669;border-color:#059669;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 10px rgba(5,150,105,0.25);">
+              ✓ 취급일지 등록
             </button>
           </form>
         </section>

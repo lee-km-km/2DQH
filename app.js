@@ -18046,26 +18046,11 @@ function openChemWriteLogModal(chemId){
 
   const handlerEl = $('modalChemHandler');
   const curAuth = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
-  const chemCompactBar = $('chemUserCompactBar');
-  const chemInputWrap = $('chemUserInputWrap');
-  const chemBtnToggle = $('btnToggleChemUserEdit');
-
-  if(curAuth && curAuth.name){
-    if(handlerEl) handlerEl.value = curAuth.name;
-    if(chemCompactBar){
-      chemCompactBar.classList.remove('hidden');
-      const cn = $('chemCompactName');
-      const cm = $('chemCompactMeta');
-      if(cn) cn.innerHTML = '<strong>' + safe(curAuth.name) + '</strong>';
-      if(cm) cm.textContent = curAuth.affiliation ? ('(' + curAuth.affiliation + ')') : '';
-    }
-    if(chemInputWrap) chemInputWrap.classList.add('hidden');
-    if(chemBtnToggle) chemBtnToggle.textContent = '수정';
-  } else {
-    if(chemCompactBar) chemCompactBar.classList.add('hidden');
-    if(chemInputWrap) chemInputWrap.classList.remove('hidden');
-    if(handlerEl && !handlerEl.value){
-      handlerEl.value = localStorage.getItem('labstock_last_borrower_name') || '';
+  if(handlerEl){
+    if(curAuth && curAuth.name){
+      handlerEl.value = curAuth.name;
+    } else if(!handlerEl.value || handlerEl.value === '이강민'){
+      handlerEl.value = localStorage.getItem('labstock_last_borrower_name') || '이강민';
     }
   }
 
@@ -18118,7 +18103,7 @@ function updateModalChemStockPreview(){
     curStock = matched[0].remainingStock;
   }
 
-  notice.innerHTML = '💡 <b>' + safe(c.name) + '</b>: 현재 잔여량: <b style="color:#059669;font-size:14px;">' + curStock + ' ' + c.unit + '</b> (초기 입고량: ' + c.stock + ' ' + c.unit + ')';
+  notice.innerHTML = '<span>현재 잔여량: <b style="color:#059669;font-size:14px;">' + curStock + ' ' + safe(c.unit) + '</b></span> <span style="color:var(--ink-light);font-size:11.5px;">(초기 입고량: ' + safe(c.stock) + ' ' + safe(c.unit) + ')</span>';
 }
 
 async function handleModalChemLogSubmit(e){
@@ -19584,8 +19569,7 @@ function bindChemicalsEvents(){
   });
   addEvt('modalChemWriteLogBackdrop', 'click', function(e){
     if(e.target === $('modalChemWriteLogBackdrop')){
-      // 취급일지 작성 중 데이터 유실 방지: 배경 클릭 시 닫히지 않고 안내 진동 효과
-      triggerModalShake($('modalChemWriteLogBackdrop'));
+      closeChemWriteLogModal();
     }
   });
   addEvt('modalChemSelect', 'change', updateModalChemStockPreview);

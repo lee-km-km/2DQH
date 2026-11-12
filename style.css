@@ -11093,39 +11093,65 @@ html:not(.is-admin) #btnHelpTabAdmin {
    [모바일 취급일지 작성 & XRD 워크스테이션 반응형 UI 최적화 패치]
    ========================================================================== */
 
-/* 1. 특별관리물질 취급일지 작성 모달 상단 잘림 방지 (align-items: flex-start) */
+/* 1. 취급일지 작성 모달 반응형 및 크기 최적화 (모바일 쾌적화) */
 #modalChemWriteLogBackdrop {
-  align-items: flex-start !important;
-  padding: 10px 8px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px 12px !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
 #modalChemWriteLogBackdrop .modal {
-  margin: 8px auto 24px !important;
-  max-height: calc(100dvh - 16px) !important;
-  width: min(620px, 96vw) !important;
+  margin: auto !important;
+  max-height: 85vh !important;
+  max-height: 85dvh !important;
+  width: min(520px, 92vw) !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+#formWriteChemicalLogModal {
+  overflow-y: scroll !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #059669 rgba(0, 0, 0, 0.08) !important;
+}
+#formWriteChemicalLogModal::-webkit-scrollbar {
+  width: 6px !important;
+  display: block !important;
+}
+#formWriteChemicalLogModal::-webkit-scrollbar-thumb {
+  background: #059669 !important;
+  border-radius: 4px !important;
+}
+#formWriteChemicalLogModal::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04) !important;
 }
 
-/* 2. 취급자 성명과 취급 일시 2열 그리드 배치 (일시 칸 과도한 길이 방지) */
+/* 2. 취급자 성명과 일시 단일 컬럼 세로 스택 (너비 잘림 방지) */
 .chem-handler-date-row {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 12px !important;
-  margin-bottom: 12px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  margin-bottom: 10px !important;
 }
 @media (max-width: 640px) {
+  #modalChemWriteLogBackdrop {
+    padding: 12px 8px !important;
+  }
+  #modalChemWriteLogBackdrop .modal {
+    max-height: 85vh !important;
+    max-height: 85dvh !important;
+    width: min(500px, 92vw) !important;
+  }
   .chem-handler-date-row {
-    display: grid !important;
-    grid-template-columns: 110px 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
     gap: 8px !important;
-    margin-bottom: 10px !important;
   }
-  .chem-handler-col input {
-    text-align: center;
-  }
-  .chem-date-col input {
+  .chem-handler-date-row input {
     font-size: 13.5px !important;
-    padding: 8px 6px !important;
+    width: 100% !important;
   }
 }
 
