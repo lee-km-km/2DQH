@@ -4106,15 +4106,24 @@ function downloadEquipmentQrImage(){
     id: eqId, code: 'HR-XRD', name: 'HR-XRD'
   };
 
-  const container = $('equipmentQrCanvasContainer');
-  if(!container){ toast('QR 요소를 찾을 수 없습니다.'); return; }
-
   let shortName = cur.code || 'HR-XRD';
   if(shortName === 'XRD') shortName = 'HR-XRD';
   const titleString = shortName + ' Logbook';
   const fileName = shortName + '_Logbook_QR.png';
 
-  // QR 렌더링 엘리먼트 (Canvas 또는 Image) 안전한 추출
+  downloadGenericQrImage(titleString, $('equipmentQrCanvasContainer'), fileName);
+}
+
+// [QR 라벨 전용 80mm x 80mm 정사각형 클린 인쇄 핸들러]
+function printEquipmentQrLabel(){
+  const title = ($('qrLabelEquipName') ? $('qrLabelEquipName').textContent : 'HR-XRD Logbook');
+  printGenericQrSticker(title, $('equipmentQrCanvasContainer'), 'equipmentQrPrintArea');
+}
+
+// [공통 1:1 정사각형 고해상도 QR 라벨 다운로드 헬퍼 (600x600)]
+function downloadGenericQrImage(titleString, container, fileName){
+  if(!container){ toast('QR 요소를 찾을 수 없습니다.'); return; }
+
   function getQrDrawable(){
     const cvs = container.querySelector('canvas');
     if(cvs && cvs.width > 0) return Promise.resolve(cvs);
@@ -4133,7 +4142,6 @@ function downloadEquipmentQrImage(){
   }
 
   getDrawableSafe(getQrDrawable).then(function(qrDrawable){
-    // 600x600 순수 정사각형 1:1 고해상도 라벨 카드 캔버스 합성
     const w = 600;
     const h = 600;
     const cvs = document.createElement('canvas');
@@ -4141,11 +4149,11 @@ function downloadEquipmentQrImage(){
     cvs.height = h;
     const ctx = cvs.getContext('2d');
 
-    // 1. 순백색 배경
+    // 순백색 배경
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, w, h);
 
-    // 2. 외곽 테두리 (2.5px 상당 8px 두께 라운드 테두리)
+    // 외곽 테두리 (8px)
     ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = 8;
     if(ctx.roundRect){
@@ -4156,20 +4164,19 @@ function downloadEquipmentQrImage(){
       ctx.strokeRect(14, 14, w - 28, h - 28);
     }
 
-    // 3. 타이틀: "[장비명] Logbook" (예: HR-XRD Logbook) - 상단 단독 배치
+    // 상단 타이틀
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 40px Pretendard, -apple-system, sans-serif';
+    ctx.font = 'bold 38px Pretendard, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(titleString, 300, 75);
 
-    // 4. 대형 정사각형 QR 코드 정중앙 배치 (440x440) - 위치/모델/IBS 하단문구 일체 배제
+    // 대형 정사각형 QR 코드 정중앙 배치 (440x440)
     const qrSize = 440;
     const qrX = (w - qrSize) / 2;
     const qrY = 118;
     ctx.drawImage(qrDrawable, qrX, qrY, qrSize, qrSize);
 
-    // 5. 직접 다운로드 트리거
     const dataUrl = cvs.toDataURL('image/png');
     const a = document.createElement('a');
     a.download = fileName;
@@ -4187,37 +4194,24 @@ function downloadEquipmentQrImage(){
   });
 }
 
-function getDrawableSafe(getter){
-  try {
-    return getter();
-  } catch(e){
-    return Promise.reject(e);
-  }
-}
-
-// [QR 라벨 전용 80mm x 80mm 정사각형 클린 인쇄 핸들러]
-function printEquipmentQrLabel(){
-  const printArea = $('equipmentQrPrintArea');
-  if(!printArea){ window.print(); return; }
-
-  // 1. QR 이미지 소스 확보 (Canvas 또는 Img)
+// [공통 80mm x 80mm 정사각형 클린 스티커 인쇄 헬퍼]
+function printGenericQrSticker(title, container, printAreaId){
   let qrImgSrc = '';
-  const cvs = printArea.querySelector('canvas');
-  if(cvs){
-    try { qrImgSrc = cvs.toDataURL('image/png'); } catch(e){}
-  }
-  if(!qrImgSrc){
-    const img = printArea.querySelector('img');
-    if(img) qrImgSrc = img.src;
+  if(container){
+    const cvs = container.querySelector('canvas');
+    if(cvs){
+      try { qrImgSrc = cvs.toDataURL('image/png'); } catch(e){}
+    }
+    if(!qrImgSrc){
+      const img = container.querySelector('img');
+      if(img) qrImgSrc = img.src;
+    }
   }
 
-  const title = ($('qrLabelEquipName') ? $('qrLabelEquipName').textContent : 'HR-XRD Logbook');
-
-  // 2. 단독 인쇄용 숨김 iframe 생성 및 80mm x 80mm 정사각형 스티커 규격 전송 (위치/모델/IBS 일체 배제)
-  let printFrame = document.getElementById('equipmentQrPrintIframe');
+  let printFrame = document.getElementById('genericQrPrintIframe');
   if(!printFrame){
     printFrame = document.createElement('iframe');
-    printFrame.id = 'equipmentQrPrintIframe';
+    printFrame.id = 'genericQrPrintIframe';
     printFrame.style.position = 'fixed';
     printFrame.style.right = '0';
     printFrame.style.bottom = '0';
@@ -4261,7 +4255,7 @@ function printEquipmentQrLabel(){
 '}' +
 '.label-title {' +
 '  margin: 0;' +
-'  font-size: 17pt;' +
+'  font-size: 16.5pt;' +
 '  font-weight: 900;' +
 '  color: #0f172a;' +
 '  line-height: 1.2;' +
@@ -4295,17 +4289,111 @@ function printEquipmentQrLabel(){
         printFrame.contentWindow.focus();
         printFrame.contentWindow.print();
       } catch(e){
-        console.warn('Iframe print failed, falling back to window.print():', e);
-        document.body.classList.add('printing-equipment-qr');
         window.print();
-        setTimeout(function(){ document.body.classList.remove('printing-equipment-qr'); }, 1200);
       }
     }, 250);
   } catch(err){
-    console.warn('Iframe setup failed, falling back to window.print():', err);
-    document.body.classList.add('printing-equipment-qr');
     window.print();
-    setTimeout(function(){ document.body.classList.remove('printing-equipment-qr'); }, 1200);
+  }
+}
+
+// [시약장 부착용 특별관리물질 취급일지 직통 QR 모달 열기]
+function openChemicalQrModal(){
+  if(!isAdmin()){
+    toast('시약장 부착용 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
+    if(typeof openLoginModal === 'function') openLoginModal();
+    return;
+  }
+  const modal = $('modalChemicalQrBackdrop');
+  if(!modal) return;
+
+  const targetUrl = window.location.origin + window.location.pathname + '#chemicalLog?action=quick_chem_log';
+  const qrBox = $('chemicalQrCanvasContainer');
+  if(qrBox){
+    renderQrCodeInto(qrBox, targetUrl, 190);
+  }
+
+  const printBtn = $('btnPrintChemicalQr');
+  if(printBtn && !printBtn._hasBound){
+    printBtn._hasBound = true;
+    printBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      printGenericQrSticker('특별관리물질 취급일지', qrBox, 'chemicalQrPrintArea');
+    });
+  }
+  const downloadBtn = $('btnDownloadChemicalQr');
+  if(downloadBtn && !downloadBtn._hasBound){
+    downloadBtn._hasBound = true;
+    downloadBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      downloadGenericQrImage('특별관리물질 취급일지', qrBox, 'Special_Chemical_Log_QR.png');
+    });
+  }
+  const closeBtn = $('btnCloseChemicalQr');
+  if(closeBtn && !closeBtn._hasBound){
+    closeBtn._hasBound = true;
+    closeBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+  }
+  const closeBottomBtn = $('btnCloseChemicalQrBottom');
+  if(closeBottomBtn && !closeBottomBtn._hasBound){
+    closeBottomBtn._hasBound = true;
+    closeBottomBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+  }
+
+  modal.classList.add('open');
+}
+
+// [비품 대여 직통 QR 모달 열기]
+function openLoanQrModal(){
+  if(!isAdmin()){
+    toast('비품 대여 직통 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
+    if(typeof openLoginModal === 'function') openLoginModal();
+    return;
+  }
+  const modal = $('modalLoanQrBackdrop');
+  if(!modal) return;
+
+  const targetUrl = window.location.origin + window.location.pathname + '#loan?action=quick_loan';
+  const qrBox = $('loanQrCanvasContainer');
+  if(qrBox){
+    renderQrCodeInto(qrBox, targetUrl, 190);
+  }
+
+  const printBtn = $('btnPrintLoanQr');
+  if(printBtn && !printBtn._hasBound){
+    printBtn._hasBound = true;
+    printBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      printGenericQrSticker('비품 대여 신청', qrBox, 'loanQrPrintArea');
+    });
+  }
+  const downloadBtn = $('btnDownloadLoanQr');
+  if(downloadBtn && !downloadBtn._hasBound){
+    downloadBtn._hasBound = true;
+    downloadBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      downloadGenericQrImage('비품 대여 신청', qrBox, 'Equipment_Loan_QR.png');
+    });
+  }
+  const closeBtn = $('btnCloseLoanQr');
+  if(closeBtn && !closeBtn._hasBound){
+    closeBtn._hasBound = true;
+    closeBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+  }
+  const closeBottomBtn = $('btnCloseLoanQrBottom');
+  if(closeBottomBtn && !closeBottomBtn._hasBound){
+    closeBottomBtn._hasBound = true;
+    closeBottomBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+  }
+
+  modal.classList.add('open');
+}
+
+function getDrawableSafe(getter){
+  try {
+    return getter();
+  } catch(e){
+    return Promise.reject(e);
   }
 }
 
@@ -9389,6 +9477,32 @@ function bindEvents(){
       return;
     }
 
+        // 화학물질 직통 QR 모달 열기
+    if(target.id === 'btnChemShowDirectQr' || target.closest('#btnChemShowDirectQr') || target.id === 'btnChemWriteModalQr' || target.closest('#btnChemWriteModalQr')){
+      e.preventDefault();
+      openChemicalQrModal();
+      return;
+    }
+
+    // 비품 대여 직통 QR 모달 열기
+    if(target.id === 'btnShowLoanDirectQr' || target.closest('#btnShowLoanDirectQr') || target.id === 'btnLoanModalQr' || target.closest('#btnLoanModalQr')){
+      e.preventDefault();
+      openLoanQrModal();
+      return;
+    }
+
+    if(target.id === 'btnCloseChemicalQr' || target.id === 'btnCloseChemicalQrBottom' || target.closest('#btnCloseChemicalQr')){
+      const cm = $('modalChemicalQrBackdrop');
+      if(cm) cm.classList.remove('open');
+      return;
+    }
+
+    if(target.id === 'btnCloseLoanQr' || target.id === 'btnCloseLoanQrBottom' || target.closest('#btnCloseLoanQr')){
+      const lm = $('modalLoanQrBackdrop');
+      if(lm) lm.classList.remove('open');
+      return;
+    }
+
     if(target.id === 'btnCloseEquipmentQr' || target.id === 'btnCloseEquipmentQrBottom' || target.closest('#btnCloseEquipmentQr')){
       closeEquipmentQrModal();
       return;
@@ -10050,72 +10164,93 @@ function subscribeRealtime(){
 // QR 코드 스캔 및 URL 딥링크 다이렉트 액션 진입 (Sortly/Snipe-IT 스타일 Fast Track)
 function handleUrlFastTrack(){
   try {
-    const params = new URLSearchParams(window.location.search);
-    const hash = (window.location.hash || '').replace(/^#\/?/, '').trim();
+    const searchParams = new URLSearchParams(window.location.search || '');
+    let hashQuery = '';
+    const hashRaw = window.location.hash || '';
+    const qIdx = hashRaw.indexOf('?');
+    const hashPath = (qIdx !== -1 ? hashRaw.slice(0, qIdx) : hashRaw).replace(/^#\/?/, '').trim().toLowerCase();
+    if(qIdx !== -1) hashQuery = hashRaw.slice(qIdx + 1);
+    const hashParams = new URLSearchParams(hashQuery);
+
+    const getParam = function(k){ return searchParams.get(k) || hashParams.get(k); };
 
     // 0. 재발주 패널 스크롤 (#reorder or #consumables/reorder)
-    if(hash === 'reorder' || hash === 'consumables/reorder'){
+    if(hashPath === 'reorder' || hashPath === 'consumables/reorder'){
       scrollToReorderPanel();
       return;
     }
 
-    // 1. 특별관리물질 취급일지 다이렉트 진입 (?log=CS-041 or ?action=chemicalLog&id=CS-041 or #chemicalLog/CS-041)
-    const hashLogMatch = hash.match(/^(?:log|chemicallog)[\/\-](.+)$/i);
-    const logId = params.get('log') || (params.get('action') === 'chemicalLog' ? params.get('id') : null) || (hashLogMatch ? hashLogMatch[1] : null);
-    if(logId){
+    // 1. 특별관리물질 취급일지 작성 다이렉트 진입 (#chemicalLog or #chem-log or ?action=quick_chem_log or ?action=chemicalLog)
+    const hashLogMatch = hashRaw.match(/^(?:#?\/?)(?:log|chemicallog|chem-log)[\/\-](.+)$/i);
+    const directChemId = getParam('chem') || getParam('chemId') || getParam('id') || (hashLogMatch ? hashLogMatch[1] : null);
+    const isChemLogAction = hashPath === 'chemicallog' || hashPath === 'chem-log' || hashPath === 'chem_log' ||
+                            getParam('action') === 'quick_chem_log' || getParam('action') === 'chemicalLog' ||
+                            getParam('action') === 'write_chem_log';
+
+    if(isChemLogAction || directChemId){
       showView('consumables', { updateUrl: false });
       selectedConsumableCategory = '시약';
-      displayedConsumablesCount = CONSUMABLES_PAGE_SIZE;
-      renderConsumables();
+      if(typeof renderConsumables === 'function') renderConsumables();
+      if(typeof render291InventoryTable === 'function') render291InventoryTable();
       setTimeout(function(){
-        openModal('chemicalLog', logId);
-      }, 150);
+        openChemWriteLogModal(directChemId);
+        toast('⚡ 특별관리물질 취급일지 작성 화면으로 직행했습니다.');
+      }, 200);
       return;
     }
 
-    // 2. 비품 대여 다이렉트 진입 (?loan=A-001 or ?action=borrow&id=A-001 or #borrow/A-001)
-    const hashLoanMatch = hash.match(/^(?:loan|borrow)[\/\-](.+)$/i);
-    const loanId = params.get('loan') || (params.get('action') === 'borrow' ? params.get('id') : null) || (hashLoanMatch ? hashLoanMatch[1] : null);
-    if(loanId){
+    // 2. 비품 대여 다이렉트 진입 (#loan or #borrow or ?action=quick_loan or ?action=borrow)
+    const hashLoanMatch = hashRaw.match(/^(?:#?\/?)(?:loan|borrow)[\/\-](.+)$/i);
+    const loanAssetId = getParam('loan') || (getParam('action') === 'borrow' ? getParam('id') : null) || (hashLoanMatch ? hashLoanMatch[1] : null);
+    const isLoanAction = hashPath === 'loan' || hashPath === 'borrow' || getParam('action') === 'quick_loan' || getParam('action') === 'borrow';
+
+    if(isLoanAction || loanAssetId){
       showView('inventory', { updateUrl: false });
       setTimeout(function(){
-        openModal('borrow', loanId);
-      }, 150);
+        openModal('borrow', loanAssetId);
+        toast('⚡ 비품 대여 신청 화면으로 직행했습니다.');
+      }, 200);
       return;
     }
 
     // 3. 비품 반납 다이렉트 진입 (?return=EQ-001 or ?action=return&id=EQ-001 or #return/EQ-001)
-    const hashReturnMatch = hash.match(/^(?:return)[\/\-](.+)$/i);
-    const returnAssetId = params.get('return') || (params.get('action') === 'return' ? params.get('id') : null) || (hashReturnMatch ? hashReturnMatch[1] : null);
+    const hashReturnMatch = hashRaw.match(/^(?:#?\/?)(?:return)[\/\-](.+)$/i);
+    const returnAssetId = getParam('return') || (getParam('action') === 'return' ? getParam('id') : null) || (hashReturnMatch ? hashReturnMatch[1] : null);
     if(returnAssetId){
       showView('inventory', { updateUrl: false });
       const act = activeLoanFor(returnAssetId) || loans.find(function(l){ return String(l.id) === String(returnAssetId); });
       setTimeout(function(){
         openModal('return', act ? act.id : returnAssetId);
-      }, 150);
+      }, 200);
       return;
     }
 
-    // 4. 연구장비 전자 로그북 다이렉트 진입 (?logbook=XRD or #logbook/XRD or ?eq=EQ-XRD-01 or #logbook or #xrd)
-    const hashEqLogMatch = hash.match(/^(?:logbook|equipmentlog)[\/\-](.+)$/i);
-    const logbookCode = params.get('logbook') || params.get('eq') || (params.get('action') === 'logbook' ? params.get('id') : null) || (hashEqLogMatch ? hashEqLogMatch[1] : null);
-    if(logbookCode || hash.startsWith('logbook') || hash.startsWith('xrd')){
+    // 4. 연구장비 전자 로그북 다이렉트 진입 (?logbook=XRD or #logbook?eq=EQ-XRD-01 or ?eq=EQ-XRD-01 or #xrd)
+    const hashEqLogMatch = hashRaw.match(/^(?:#?\/?)(?:logbook|equipmentlog)[\/\-](.+)$/i);
+    const logbookCode = getParam('logbook') || getParam('eq') || (getParam('action') === 'logbook' ? getParam('id') : null) || (hashEqLogMatch ? hashEqLogMatch[1] : null);
+    const isLogbookAction = hashPath === 'logbook' || hashPath === 'xrd' || Boolean(logbookCode);
+
+    if(isLogbookAction){
       showView('logbook', { updateUrl: false });
+      const targetCode = (logbookCode || 'EQ-XRD-01').trim();
       const found = researchEquipments.find(function(e){
-        return logbookCode && (e.id.toLowerCase() === logbookCode.toLowerCase() || e.code.toLowerCase() === logbookCode.toLowerCase());
-      });
+        return e.id.toLowerCase() === targetCode.toLowerCase() || e.code.toLowerCase() === targetCode.toLowerCase();
+      }) || researchEquipments[0];
+
       if(found){
         selectResearchEquipment(found.id);
       }
-      if(params.get('action') === 'quick_start' || window.location.href.includes('quick_start')){
-        showXrdMode('start');
-        toast('⚡ HR-XRD 세션 시작 화면으로 직행했습니다.');
-      }
+
+      // 장비 목록에 머무르지 않고 바로 로그북 사용기록 작성 모달(modalTestDriveBackdrop) 직행!
+      setTimeout(function(){
+        openEquipmentTestDrive(found ? found.code : 'XRD');
+        toast('⚡ ' + (found ? (found.code || found.name) : 'HR-XRD') + ' 로그북 작성 화면으로 즉시 연결되었습니다.');
+      }, 250);
       return;
     }
 
-    // 5. 단독 로그북 키오스크 모드 (#standalone-logbook or ?mode=logbook or ?standalone=true)
-    if(hash === 'standalone-logbook' || hash === 'logbook' || params.get('mode') === 'logbook' || params.get('standalone') === 'true'){
+    // 5. 단독 로그북 키오스크 모드
+    if(hashPath === 'standalone-logbook'){
       showView('logbook', { updateUrl: false });
       return;
     }

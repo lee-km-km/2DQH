@@ -5371,7 +5371,8 @@ tr.row-overdue:hover {
     visibility: visible !important;
   }
   #modalEquipmentQrBackdrop.open #equipmentQrPrintArea,
-  #modalChemicalQrBackdrop.open #chemicalQrPrintArea {
+  #modalChemicalQrBackdrop.open #chemicalQrPrintArea,
+  #modalLoanQrBackdrop.open #loanQrPrintArea {
     position: fixed !important;
     left: calc(50% - 40mm) !important;
     top: calc(50% - 40mm) !important;

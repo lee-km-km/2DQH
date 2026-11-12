@@ -514,14 +514,8 @@
             <button type="button" class="btn-korea-action green admin-only hidden" id="btnChemProductExcel" title="전체 재고현황 엑셀 다운로드">
               제품 통합 EXCEL
             </button>
-            <button type="button" class="btn-korea-action gray admin-only hidden" id="btnChemCombinedHazardsLedger" title="통합유해인자치급및관리대장 서식 다운로드">
-              통합유해인자치급및관리대장
-            </button>
-            <button type="button" class="btn-korea-action gray admin-only hidden" id="btnChemHazardsLedger" title="유해인자치급및관리대장 서식 다운로드">
-              유해인자치급및관리대장
-            </button>
-            <button type="button" class="btn-korea-action gray admin-only hidden" id="btnChemDetailedPerfLedger" title="취급세부실적대장 서식 다운로드">
-              취급세부실적대장
+            <button type="button" class="btn-korea-action admin-only" id="btnChemShowDirectQr" title="시약장 부착용 취급일지 직통 QR 라벨 (관리자 전용)" style="background:#ffffff;border:1.5px solid #059669;color:#059669;font-weight:700;">
+              📱 일지작성 QR
             </button>
             <button type="button" class="btn-korea-action dark" id="btnChemOpenNewProductModal">
               ＋ 시약등록
@@ -2018,33 +2012,52 @@
 
 <!-- 📱 시약장·시약병 부착용 특별관리물질 모바일 직통 QR 라벨 모달 -->
 <div id="modalChemicalQrBackdrop" class="backdrop">
-  <section class="modal equipment-qr-modal" role="dialog" aria-modal="true" aria-labelledby="chemicalQrTitle" style="max-width:460px;border-radius:14px;overflow:hidden;">
-    <div class="modal-head" style="border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
-      <h2 id="chemicalQrTitle" style="font-size:16px;margin:0;display:flex;align-items:center;gap:6px;">📱 시약장 모바일 직통 QR 라벨</h2>
-      <button class="icon-btn" id="btnCloseChemicalQr" aria-label="닫기" type="button"><span aria-hidden="true">×</span></button>
+  <section class="modal equipment-qr-modal" role="dialog" aria-modal="true" aria-labelledby="chemicalQrTitle" style="max-width:380px;border-radius:14px;overflow:hidden;">
+    <div class="modal-head" style="border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+      <h2 id="chemicalQrTitle" style="font-size:15px;margin:0;font-weight:700;">시약장 부착용 취급일지 QR</h2>
+      <button class="icon-btn" id="btnCloseChemicalQr" aria-label="닫기" type="button"><span aria-hidden="true">✕</span></button>
     </div>
-    <div class="modal-body" style="padding:20px;text-align:center;">
-      <div id="chemicalQrPrintArea" class="equipment-qr-label-card" style="border:2px dashed #059669;padding:16px;border-radius:10px;background:white;color:#1e293b;">
-        <div class="qr-label-badge" style="background:#059669;color:white;display:inline-block;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;margin-bottom:8px;">
-          IBS 2DQH 특별관리물질 취급일지
+    <div class="modal-body" style="padding:18px 16px;text-align:center;">
+      <div id="chemicalQrPrintArea" class="equipment-qr-label-card square-label" style="border:2.5px solid #0f172a;border-radius:14px;padding:20px 16px;background:#ffffff;box-sizing:border-box;width:270px;height:270px;margin:0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,0.08);overflow:hidden;">
+        <h3 class="qr-label-title" id="chemicalQrLabelTitle" style="margin:0;font-size:20px;font-weight:900;color:#0f172a;letter-spacing:-0.5px;line-height:1.2;text-align:center;">특별관리물질 취급일지</h3>
+        <div class="qr-label-canvas-box" style="display:flex;justify-content:center;align-items:center;width:190px;height:190px;background:#ffffff;margin:0 auto;overflow:hidden;">
+          <div id="chemicalQrCanvasContainer" style="width:190px;height:190px;display:flex;align-items:center;justify-content:center;"></div>
         </div>
-        <h3 class="qr-label-title" style="margin:4px 0 2px;font-size:17px;font-weight:800;color:#0f172a;">시약장 모바일 취급일지 직통 QR</h3>
-        <p class="qr-label-sub" style="margin:0 0 12px;font-size:12px;color:#64748b;">스마트폰 카메라로 스캔 시 즉시 모바일 취급일지 등록 화면으로 직행</p>
-        <div class="qr-label-canvas-box" style="display:flex;justify-content:center;margin:12px 0;">
-          <div id="chemicalQrCanvasContainer"></div>
-        </div>
-        <p class="qr-label-desc" style="font-size:11px;color:#059669;font-weight:700;margin:6px 0 2px;">⚡ 산안법 제420조 특별관리물질 44종 법정 30년 전산 보존</p>
-        <div class="qr-label-url" id="chemicalQrLabelUrlText" style="font-size:10.5px;color:#94a3b8;word-break:break-all;"></div>
       </div>
 
-      <div class="qr-modal-actions" style="margin-top:20px;display:flex;gap:8px;justify-content:center;">
-        <button class="btn primary" id="btnPrintChemicalQr" type="button" style="background:#059669;border-color:#059669;font-weight:700;flex:1;">🖨️ 시약장 부착용 라벨 인쇄</button>
-        <button class="btn" id="btnDownloadChemicalQr" type="button" style="flex:1;">📥 이미지 저장</button>
-        <button class="btn" id="btnCloseChemicalQrBottom" type="button" style="padding:0 14px;">닫기</button>
+      <div class="qr-modal-actions" style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
+        <button class="btn primary" id="btnPrintChemicalQr" type="button" style="background:#059669;border-color:#059669;font-weight:700;flex:1;padding:9px 12px;font-size:13.5px;">🖨️ QR 인쇄</button>
+        <button class="btn" id="btnDownloadChemicalQr" type="button" style="flex:1;padding:9px 12px;font-size:13.5px;font-weight:600;">💾 이미지 저장</button>
+        <button class="btn" id="btnCloseChemicalQrBottom" type="button" style="padding:9px 14px;font-size:13.5px;">닫기</button>
       </div>
     </div>
   </section>
 </div>
+
+<!-- 📱 비품 대여 직통 QR 라벨 모달 -->
+<div id="modalLoanQrBackdrop" class="backdrop">
+  <section class="modal equipment-qr-modal" role="dialog" aria-modal="true" aria-labelledby="loanQrTitle" style="max-width:380px;border-radius:14px;overflow:hidden;">
+    <div class="modal-head" style="border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+      <h2 id="loanQrTitle" style="font-size:15px;margin:0;font-weight:700;">비품 대여 직통 QR 라벨</h2>
+      <button class="icon-btn" id="btnCloseLoanQr" aria-label="닫기" type="button"><span aria-hidden="true">✕</span></button>
+    </div>
+    <div class="modal-body" style="padding:18px 16px;text-align:center;">
+      <div id="loanQrPrintArea" class="equipment-qr-label-card square-label" style="border:2.5px solid #0f172a;border-radius:14px;padding:20px 16px;background:#ffffff;box-sizing:border-box;width:270px;height:270px;margin:0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,0.08);overflow:hidden;">
+        <h3 class="qr-label-title" id="loanQrLabelTitle" style="margin:0;font-size:20px;font-weight:900;color:#0f172a;letter-spacing:-0.5px;line-height:1.2;text-align:center;">비품 대여 신청</h3>
+        <div class="qr-label-canvas-box" style="display:flex;justify-content:center;align-items:center;width:190px;height:190px;background:#ffffff;margin:0 auto;overflow:hidden;">
+          <div id="loanQrCanvasContainer" style="width:190px;height:190px;display:flex;align-items:center;justify-content:center;"></div>
+        </div>
+      </div>
+
+      <div class="qr-modal-actions" style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
+        <button class="btn primary" id="btnPrintLoanQr" type="button" style="background:#2457d6;border-color:#2457d6;font-weight:700;flex:1;padding:9px 12px;font-size:13.5px;">🖨️ QR 인쇄</button>
+        <button class="btn" id="btnDownloadLoanQr" type="button" style="flex:1;padding:9px 12px;font-size:13.5px;font-weight:600;">💾 이미지 저장</button>
+        <button class="btn" id="btnCloseLoanQrBottom" type="button" style="padding:9px 14px;font-size:13.5px;">닫기</button>
+      </div>
+    </div>
+  </section>
+</div>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <!-- 모바일 하단 플로팅 퀵 탭 바 (언제든 1탭 즉시 이동) -->
