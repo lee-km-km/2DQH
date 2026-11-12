@@ -76,7 +76,12 @@
       <span id="themeToggleIcon">🌙</span>
     </button>
     <span id="connection" class="pill hidden"></span>
-    <button id="loginBtn" class="btn desktop-only">관리자 로그인</button>
+    <div id="userProfileBadge" class="user-profile-badge desktop-only hidden" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--bg-subtle);border:1px solid var(--border);font-size:12.5px;font-weight:700;color:var(--ink);">
+      <span class="user-badge-icon">👤</span>
+      <span id="topUserName" class="user-badge-name"></span>
+      <span id="topUserAffil" class="user-badge-affil" style="font-size:11px;color:var(--ink-light);font-weight:600;"></span>
+    </div>
+    <button id="loginBtn" class="btn desktop-only">로그인 / 회원가입</button>
     <button id="logoutBtn" class="btn desktop-only hidden">로그아웃</button>
 
     <!-- 모바일 전용 햄버거 메뉴 토글 버튼 (클릭 시 3선이 X로 애니메이션 전환) -->
@@ -171,11 +176,23 @@
 
     <!-- D. 사이드바 하단 관리자 로그인/로그아웃 바 (모바일 및 데스크톱 공통) -->
     <div class="sidebar-auth-box" style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
-      <button id="sidebarLoginBtn" class="btn btn-sidebar-login" type="button" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;font-size:12.5px;font-weight:600;border-radius:8px;background:var(--bg-subtle);border:1px solid var(--border);color:var(--ink);">
-        <span>🔒</span>
-        <span>관리자 로그인</span>
+      <button id="sidebarLoginBtn" class="btn btn-sidebar-login" type="button" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;font-size:13px;font-weight:700;border-radius:8px;background:#2563eb;border:1px solid #2563eb;color:#ffffff;box-shadow:0 2px 6px rgba(37,99,235,0.25);">
+        <span>👤</span>
+        <span>로그인 / 회원가입</span>
       </button>
-      <div id="sidebarAdminProfile" class="sidebar-admin-profile hidden" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+      <div id="sidebarUserProfile" class="sidebar-user-profile hidden" style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:4px;">
+            <span>👤</span> <span id="sidebarUserName">이강민 연구원</span>
+          </div>
+          <button id="sidebarUserLogoutBtn" class="btn btn-sm" type="button" style="padding:2px 8px;font-size:11px;height:auto;background:transparent;border:1px solid var(--border);color:var(--ink-light);">로그아웃</button>
+        </div>
+        <div id="sidebarUserSub" style="font-size:11px;color:var(--ink-light);line-height:1.3;">2DQH · 신현석 교수님</div>
+        <div style="font-size:10.5px;color:#059669;font-weight:700;background:rgba(5,150,105,0.08);padding:3px 6px;border-radius:4px;display:inline-block;margin-top:2px;">
+          ✓ 로그북·대여·취급일지 자동 연동 중
+        </div>
+      </div>
+      <div id="sidebarAdminProfile" class="sidebar-admin-profile hidden" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;margin-top:6px;">
         <span style="font-size:12px;font-weight:700;color:#991b1b;display:flex;align-items:center;gap:4px;">👑 관리자</span>
         <button id="sidebarLogoutBtn" class="btn" type="button" style="padding:4px 8px;font-size:11px;height:auto;background:#ffffff;border:1px solid #fca5a5;color:#991b1b;">로그아웃</button>
       </div>

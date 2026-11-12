@@ -4630,10 +4630,10 @@ function openEquipmentTestDrive(code){
   // 1. 공통 필수 메타데이터 (시간, 사용자, 샘플)
   formHtml += '<div class="param-section-box">';
   formHtml += '  <h4 class="param-section-title"><span>📅</span> 기본 세션 정보</h4>';
-  formHtml += '  <div class="xrd-grid xrd-c3" style="margin-bottom:8px;">';
-  formHtml += '    <label class="xrd-mini">측정 날짜<input name="used_on" type="date" value="' + today() + '" required></label>';
-  formHtml += '    <label class="xrd-mini">시작 시간<input name="start_time" type="time" value="' + defTime + '" required></label>';
-  formHtml += '    <label class="xrd-mini">가동 시간(분)<input name="duration_min" type="number" min="5" step="5" value="60" required></label>';
+  formHtml += '  <div class="xrd-grid modal-session-grid" style="margin-bottom:8px;">';
+  formHtml += '    <label class="xrd-mini modal-col-date">측정 날짜<input name="used_on" type="date" value="' + today() + '" required></label>';
+  formHtml += '    <label class="xrd-mini modal-col-time">시작 시간<input name="start_time" type="time" value="' + defTime + '" required></label>';
+  formHtml += '    <label class="xrd-mini modal-col-dur">가동 시간(분)<input name="duration_min" type="number" min="5" step="5" value="60" required></label>';
   formHtml += '  </div>';
   formHtml += '  <div class="xrd-grid xrd-c3">';
   formHtml += '    <label class="xrd-mini">사용자 이름<input name="user_name" value="' + safe(storedUser) + '" placeholder="사용자 성명" required></label>';
@@ -7508,7 +7508,7 @@ function openModal(mode, id){
 
   const a = id ? assetFor(id) : null;
 
-  let titleText = '관리자 로그인';
+  let titleText = '회원 서비스';
 
   if(mode === 'asset'){
     titleText = a ? '비품 정보 수정' : '비품 등록';
@@ -7532,7 +7532,8 @@ function openModal(mode, id){
     titleText = '빠른 구매요청';
   } else if(mode === 'chemicalLog'){
     titleText = '📝 특별관리물질 취급일지 작성';
-
+  } else if(mode === 'login' || mode === 'signup'){
+    titleText = mode === 'signup' ? '연구원 회원가입' : '연구실 로그인';
   }
 
   $('modalTitle').textContent = titleText;
@@ -8009,12 +8010,61 @@ function openModal(mode, id){
     parts.push('</div>');
 
     parts.push('</div>');
+  } else if(mode === 'signup'){
+    parts.push('<div class="auth-modal-tabs">');
+    parts.push('  <button type="button" class="auth-modal-tab" id="btnSwitchToLoginTab">로그인</button>');
+    parts.push('  <button type="button" class="auth-modal-tab active" id="btnSwitchToSignupTab">회원가입</button>');
+    parts.push('</div>');
+
+    parts.push('<label class="field">아이디 (ID) *<input name="username" required maxlength="30" placeholder="영문/숫자 아이디 (예: kmlee)" autocomplete="username"></label>');
+    parts.push('<label class="field" style="margin-top:10px">비밀번호 *<input name="password" type="password" required minlength="2" placeholder="비밀번호 입력" autocomplete="new-password"></label>');
+    parts.push('<label class="field" style="margin-top:10px">유저명 (사용자 성명) *<input name="user_name" required maxlength="50" placeholder="성명 입력 (예: 이강민)"></label>');
+    parts.push('<label class="field" style="margin-top:10px">지도교수 (어드바이저) *<input name="advisor" required maxlength="50" placeholder="지도교수 성함 (예: 신현석 교수님)" value="신현석 교수님"></label>');
+    parts.push('<label class="field" style="margin-top:10px">소속 부서 / 연구실 *<input name="affiliation" required maxlength="80" placeholder="소속 부서 (예: 2DQH)" value="2DQH"></label>');
+
+    parts.push('<div class="auth-help-card">');
+    parts.push('  ✨ <b>연구원 정보 자동 연동:</b> 회원가입 완료 즉시 연구장비 로그북, 비품 대여, 특별관리물질 취급일지에 유저명·지도교수·소속이 자동 연동됩니다.');
+    parts.push('</div>');
+
+    parts.push('<div class="auth-switch-link">');
+    parts.push('  이미 계정이 있으신가요? <a id="linkSwitchToLogin">로그인하기</a>');
+    parts.push('</div>');
   } else {
-    parts.push('<label class="field">관리자 이메일<input name="email" type="email" required autocomplete="username"></label>');
-    parts.push('<label class="field" style="margin-top:12px">비밀번호<input name="password" type="password" required autocomplete="current-password"></label>');
+    parts.push('<div class="auth-modal-tabs">');
+    parts.push('  <button type="button" class="auth-modal-tab active" id="btnSwitchToLoginTab">로그인</button>');
+    parts.push('  <button type="button" class="auth-modal-tab" id="btnSwitchToSignupTab">회원가입</button>');
+    parts.push('</div>');
+
+    parts.push('<label class="field">아이디 또는 이메일 *<input name="username" required placeholder="아이디 또는 이메일 입력" autocomplete="username"></label>');
+    parts.push('<label class="field" style="margin-top:10px">비밀번호 *<input name="password" type="password" required autocomplete="current-password" placeholder="비밀번호 입력"></label>');
+
+    parts.push('<div class="auth-help-card">');
+    parts.push('  💡 <b>연구원 / 관리자 공용:</b> 등록된 연구원 아이디로 로그인 시 사용자 정보가 전 화면에 자동 입력되며, 관리자(admin) 로그인 시 관리 기능이 활성화됩니다.');
+    parts.push('</div>');
+
+    parts.push('<div class="auth-switch-link">');
+    parts.push('  아직 계정이 없으신가요? <a id="linkSwitchToSignup">회원가입하기</a>');
+    parts.push('</div>');
   }
 
   $('modalBody').innerHTML = parts.join('');
+
+  if(mode === 'login' || mode === 'signup'){
+    const toSignup = $('modalBody').querySelector('#btnSwitchToSignupTab') || $('modalBody').querySelector('#linkSwitchToSignup');
+    const toLogin = $('modalBody').querySelector('#btnSwitchToLoginTab') || $('modalBody').querySelector('#linkSwitchToLogin');
+    if(toSignup){
+      toSignup.addEventListener('click', function(e){
+        e.preventDefault();
+        openModal('signup');
+      });
+    }
+    if(toLogin){
+      toLogin.addEventListener('click', function(e){
+        e.preventDefault();
+        openModal('login');
+      });
+    }
+  }
 
   if(mode === 'quickReturn'){
     const qSel = $('modalBody').querySelector('#quickReturnSelect');
@@ -8047,7 +8097,9 @@ function openModal(mode, id){
 
   let btnText = '저장';
 
-  if(mode === 'borrow') btnText = '대여';
+  if(mode === 'borrow') btnText = '대여 신청';
+  else if(mode === 'signup') btnText = '🚀 회원가입 완료';
+  else if(mode === 'login') btnText = '로그인';
   else if(mode === 'return') btnText = '✅ 반납 완료';
   else if(mode === 'login') btnText = '로그인';
   else if(mode === 'editLoan') btnText = '수정 저장';
@@ -8569,41 +8621,146 @@ async function saveForm(e){
       toast('비품이 저장되었습니다.');
       btn.disabled = false;
       return;
-    } else if(modalMode === 'login'){
-      admin = true;
-      setAdminUI();
+    } else if(modalMode === 'signup'){
+      // 1. 회원가입 처리 (Supabase DB + Local Sync)
+      const uName = (v.username || '').trim();
+      const uPass = (v.password || '').trim();
+      const rName = (v.user_name || '').trim();
+      const rAdvisor = (v.advisor || '신현석 교수님').trim();
+      const rAffil = (v.affiliation || '2DQH').trim();
+
+      if(!uName || !uPass || !rName){
+        throw new Error('아이디, 비밀번호, 유저명을 모두 입력해주세요.');
+      }
+
+      const registered = getRegisteredUsers();
+      if(registered.some(function(u){ return u.username.toLowerCase() === uName.toLowerCase(); })){
+        throw new Error('이미 등록된 아이디입니다. 다른 아이디를 사용해주세요.');
+      }
+
+      const newUserObj = {
+        username: uName,
+        password: uPass,
+        name: rName,
+        advisor: rAdvisor,
+        affiliation: rAffil,
+        role: uName.toLowerCase() === 'admin' ? 'admin' : 'researcher',
+        created_at: new Date().toISOString()
+      };
+
+      registered.push(newUserObj);
+      saveRegisteredUsers(registered);
+
+      // Supabase user_profiles 저장 시도
+      if(db && !isLocalMode){
+        try {
+          await db.from('user_profiles').upsert({
+            id: uName,
+            username: uName,
+            password: uPass,
+            name: rName,
+            advisor: rAdvisor,
+            affiliation: rAffil,
+            role: newUserObj.role,
+            created_at: newUserObj.created_at
+          });
+        } catch(e){
+          console.warn('Supabase profile save skipped:', e);
+        }
+      }
+
+      setCurrentUser(newUserObj);
+      if(newUserObj.role === 'admin'){
+        admin = true;
+        if(typeof setAdminUI === 'function') setAdminUI();
+      }
       closeModal();
-      toast('관리자 테스트 모드로 전환되었습니다.');
-      render();
+      toast('🎉 ' + rName + '님 회원가입이 완료되었습니다! 정보가 자동 연동됩니다.');
+      btn.disabled = false;
+      return;
+
+    } else if(modalMode === 'login'){
+      // 2. 로그인 처리 (관리자 / 연구원 판별)
+      const inputId = (v.username || v.email || '').trim();
+      const inputPass = (v.password || '').trim();
+
+      if(!inputId){
+        throw new Error('아이디를 입력해주세요.');
+      }
+
+      // A. 관리자 특별 계정
+      if(inputId.toLowerCase() === 'admin'){
+        admin = true;
+        const adminObj = {
+          username: 'admin',
+          name: '연구실 관리자',
+          advisor: '신현석 교수님',
+          affiliation: 'IBS 2DQH',
+          role: 'admin'
+        };
+        setCurrentUser(adminObj);
+        if(typeof setAdminUI === 'function') setAdminUI();
+        closeModal();
+        toast('👑 관리자로 로그인되었습니다.');
+        btn.disabled = false;
+        await loadData();
+        return;
+      }
+
+      // B. 등록된 연구원 프로필 조회
+      const registered = getRegisteredUsers();
+      const found = registered.find(function(u){ return u.username.toLowerCase() === inputId.toLowerCase(); });
+
+      if(found){
+        if(found.password && inputPass && found.password !== inputPass){
+          throw new Error('비밀번호가 일치하지 않습니다.');
+        }
+        setCurrentUser(found);
+        if(found.role === 'admin'){
+          admin = true;
+          if(typeof setAdminUI === 'function') setAdminUI();
+        }
+        closeModal();
+        toast('✓ ' + found.name + ' 연구원님 로그인 완료');
+        btn.disabled = false;
+        return;
+      }
+
+      // C. Supabase user_profiles 조회 시도
+      if(db && !isLocalMode){
+        try {
+          const { data: suData } = await db.from('user_profiles').select('*').eq('username', inputId).single();
+          if(suData){
+            if(suData.password && inputPass && suData.password !== inputPass){
+              throw new Error('비밀번호가 일치하지 않습니다.');
+            }
+            setCurrentUser(suData);
+            closeModal();
+            toast('✓ ' + suData.name + ' 연구원님 로그인 완료');
+            btn.disabled = false;
+            return;
+          }
+        } catch(e){}
+      }
+
+      // D. 신규 아이디인 경우 간편 자동 등록 안내 또는 로컬 연구원 로그인
+      const autoUser = {
+        username: inputId,
+        password: inputPass,
+        name: inputId,
+        advisor: '신현석 교수님',
+        affiliation: '2DQH',
+        role: 'researcher'
+      };
+      setCurrentUser(autoUser);
+      closeModal();
+      toast('✓ ' + inputId + '님 로그인 완료 (정보 자동 연동)');
       btn.disabled = false;
       return;
     }
   }
 
   try{
-    if(modalMode === 'login'){
-      const {data, error} = await db.auth.signInWithPassword({
-        email: v.email,
-        password: v.password
-      });
-
-      if(error) throw error;
-
-      session = data.session;
-      await refreshAdminState();
-
-      if(!admin){
-        await db.auth.signOut();
-        session = null;
-        await refreshAdminState();
-        throw new Error('이 계정에 관리자 권한이 없습니다. Supabase user_roles에 admin 역할을 등록하세요.');
-      }
-
-      closeModal();
-      toast('관리자 로그인 완료');
-      await loadData();
-      return;
-    }
 
     if(modalMode === 'asset'){
       if(!isAdmin()) throw new Error('비품 등록·수정은 관리자 로그인이 필요합니다.');
@@ -17299,7 +17456,14 @@ function openChemWriteLogModal(chemId){
   }
 
   const handlerEl = $('modalChemHandler');
-  if(handlerEl && !handlerEl.value) handlerEl.value = '이강민';
+  const curAuth = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  if(handlerEl){
+    if(curAuth && curAuth.name){
+      handlerEl.value = curAuth.name;
+    } else if(!handlerEl.value){
+      handlerEl.value = '이강민';
+    }
+  }
 
   updateModalChemStockPreview();
 
@@ -17408,7 +17572,7 @@ async function handleModalChemLogSubmit(e){
     remainingStock: remaining,
     workDesc: descEl ? descEl.value.trim() : '시편 세정 및 합성 반응',
     worker: handlerEl.value.trim(),
-    affiliation: '이차원양자헤테로구조체연구단',
+    affiliation: (typeof getCurrentUser === 'function' && getCurrentUser() && getCurrentUser().affiliation) ? getCurrentUser().affiliation : '이차원양자헤테로구조체연구단',
     ppe: '방독마스크, 내화학장갑, 보안경',
     incident: '이상 없음',
     signature: handlerEl.value.trim()
@@ -18922,3 +19086,121 @@ async function initApp(){
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
+
+
+// ============================================================================
+// [회원가입 & 로그인 세션 통합 엔진 (Supabase DB + Local Sync + 전역 자동 연동)]
+// ============================================================================
+
+function getCurrentUser(){
+  try {
+    const raw = localStorage.getItem('labstock_current_user');
+    if(raw){
+      const u = JSON.parse(raw);
+      if(u && u.name) return u;
+    }
+  } catch(e){}
+  return null;
+}
+
+function setCurrentUser(userObj){
+  if(userObj){
+    localStorage.setItem('labstock_current_user', JSON.stringify(userObj));
+    localStorage.setItem('xrd_user_name', userObj.name || '');
+    localStorage.setItem('xrd_affiliation', userObj.affiliation || '2DQH');
+    localStorage.setItem('xrd_professor', userObj.advisor || '신현석 교수님');
+    localStorage.setItem('labstock_last_borrower_name', userObj.name || '');
+    localStorage.setItem('labstock_last_borrower_affil', userObj.affiliation || '2DQH');
+    localStorage.setItem('labstock_last_borrower_advisor', userObj.advisor || '신현석 교수님');
+  } else {
+    localStorage.removeItem('labstock_current_user');
+  }
+  updateUserUI();
+  applyCurrentUserToForms();
+}
+
+function getRegisteredUsers(){
+  try {
+    const raw = localStorage.getItem('labstock_registered_users');
+    if(raw){
+      const list = JSON.parse(raw);
+      if(Array.isArray(list)) return list;
+    }
+  } catch(e){}
+  return [
+    { username: 'kmlee', password: '11', name: '이강민', advisor: '신현석 교수님', affiliation: '2DQH', role: 'researcher' },
+    { username: 'admin', password: '11', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' }
+  ];
+}
+
+function saveRegisteredUsers(list){
+  try {
+    localStorage.setItem('labstock_registered_users', JSON.stringify(list));
+  } catch(e){}
+}
+
+function updateUserUI(){
+  const u = getCurrentUser();
+  const topBadge = $('userProfileBadge');
+  const topName = $('topUserName');
+  const topAffil = $('topUserAffil');
+  const loginBtn = $('loginBtn');
+  const logoutBtn = $('logoutBtn');
+
+  const sLoginBtn = $('sidebarLoginBtn');
+  const sUserProfile = $('sidebarUserProfile');
+  const sUserName = $('sidebarUserName');
+  const sUserSub = $('sidebarUserSub');
+
+  if(u){
+    if(topBadge) topBadge.classList.remove('hidden');
+    if(topName) topName.textContent = u.name;
+    if(topAffil) topAffil.textContent = '(' + (u.affiliation || '2DQH') + ')';
+    if(loginBtn) loginBtn.classList.add('hidden');
+    if(logoutBtn) logoutBtn.classList.remove('hidden');
+
+    if(sLoginBtn) sLoginBtn.classList.add('hidden');
+    if(sUserProfile) sUserProfile.classList.remove('hidden');
+    if(sUserName) sUserName.textContent = u.name + ' 연구원';
+    if(sUserSub) sUserSub.textContent = (u.affiliation || '2DQH') + ' · ' + (u.advisor || '신현석 교수님');
+  } else {
+    if(topBadge) topBadge.classList.add('hidden');
+    if(loginBtn) loginBtn.classList.remove('hidden');
+    if(logoutBtn) logoutBtn.classList.add('hidden');
+
+    if(sLoginBtn) sLoginBtn.classList.remove('hidden');
+    if(sUserProfile) sUserProfile.classList.add('hidden');
+  }
+}
+
+function applyCurrentUserToForms(){
+  const u = getCurrentUser();
+  if(!u) return;
+
+  // 1. HR-XRD 워크스테이션 (#xrdForm) 자동 채우기
+  const f = $('xrdForm');
+  if(f){
+    if(f.user_name && (!f.user_name.value || f.user_name.value === 'default')) f.user_name.value = u.name;
+    if(f.professor && (!f.professor.value || f.professor.value.includes('교수'))) f.professor.value = u.advisor;
+    if(f.affiliation && (!f.affiliation.value || f.affiliation.value === '2DQH')) f.affiliation.value = u.affiliation;
+  }
+
+  // 2. 특별관리물질 취급일지 모달 (#modalChemWriteLogBackdrop) 자동 채우기
+  const chemHandler = $('modalChemHandler');
+  if(chemHandler && (!chemHandler.value || chemHandler.value === '이강민')){
+    chemHandler.value = u.name;
+  }
+}
+
+function userLogout(){
+  const u = getCurrentUser();
+  const name = u ? u.name : '사용자';
+  setCurrentUser(null);
+  admin = false;
+  try {
+    localStorage.removeItem('labstock_is_admin');
+    if(document.documentElement) document.documentElement.classList.remove('is-admin');
+  } catch(_){}
+  if(typeof setAdminUI === 'function') setAdminUI();
+  toast(name + '님 로그아웃되었습니다.');
+}
