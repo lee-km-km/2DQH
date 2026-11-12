@@ -4015,21 +4015,62 @@ function openEquipmentQrModal(eqId){
 
   const modal = $('modalEquipmentQrBackdrop');
   if(!modal) return;
+  modal.dataset.equipmentId = eq.id;
+  modal.dataset.equipmentCode = eq.code || eq.id;
+
+  // 장비명/코드 기반 "HR-XRD Logbook" 형식의 명확한 타이틀 (미사여구 배제)
+  let shortName = eq.code || 'HR-XRD';
+  if(shortName === 'XRD') shortName = 'HR-XRD';
+  const logbookTitle = shortName + ' Logbook';
 
   const titleEl = $('qrLabelEquipName');
   const modelEl = $('qrLabelEquipModel');
-  const urlEl = $('qrLabelUrlText');
   const container = $('equipmentQrCanvasContainer');
 
-  if(titleEl) titleEl.textContent = eq.name || eq.code;
+  if(titleEl) titleEl.textContent = logbookTitle;
   if(modelEl) modelEl.textContent = (eq.model || '') + (eq.location ? ' · ' + eq.location : '');
 
   // 생성될 직행 URL (HTTPS origin + 경로 + 해시 쿼리)
   const targetUrl = window.location.origin + window.location.pathname + '#logbook?eq=' + encodeURIComponent(eq.id) + '&action=quick_start';
-  if(urlEl) urlEl.textContent = targetUrl;
 
   if(container){
-    renderQrCodeInto(container, targetUrl, 148);
+    renderQrCodeInto(container, targetUrl, 150);
+  }
+
+  // 액션 버튼 직접 바인딩 (이벤트 누락 방지)
+  const printBtn = $('btnPrintEquipmentQr');
+  if(printBtn && !printBtn._hasBound){
+    printBtn._hasBound = true;
+    printBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      printEquipmentQrLabel();
+    });
+  }
+  const downloadBtn = $('btnDownloadEquipmentQr');
+  if(downloadBtn && !downloadBtn._hasBound){
+    downloadBtn._hasBound = true;
+    downloadBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      downloadEquipmentQrImage();
+    });
+  }
+  const closeBtn = $('btnCloseEquipmentQr');
+  if(closeBtn && !closeBtn._hasBound){
+    closeBtn._hasBound = true;
+    closeBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      closeEquipmentQrModal();
+    });
+  }
+  const closeBottomBtn = $('btnCloseEquipmentQrBottom');
+  if(closeBottomBtn && !closeBottomBtn._hasBound){
+    closeBottomBtn._hasBound = true;
+    closeBottomBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      closeEquipmentQrModal();
+    });
   }
 
   modal.classList.add('open');
@@ -4044,141 +4085,247 @@ function closeEquipmentQrModal(){
   }
 }
 
-// [본체 부착용 완성형 QR 라벨 고해상도 PNG 합성 및 다운로드]
+// [본체 부착용 완성형 1:1 정사각형 고해상도 QR 라벨 PNG 생성 및 직접 저장]
 function downloadEquipmentQrImage(){
-  const cur = researchEquipments.find(function(e){ return e.id === currentSelectedEquipment; }) || {
-    id: 'EQ-XRD-01', code: 'HR-XRD', name: 'HR-XRD (고분해능 X선 회절분석기)', model: 'SmartLab · Rigaku', location: 'IBS XRD실'
+  const modal = $('modalEquipmentQrBackdrop');
+  const eqId = (modal && modal.dataset.equipmentId) ? modal.dataset.equipmentId : (currentSelectedEquipment || 'EQ-XRD-01');
+  const cur = researchEquipments.find(function(e){ return e.id === eqId || e.code === eqId; }) || {
+    id: eqId, code: 'HR-XRD', name: 'HR-XRD', model: 'SmartLab · Rigaku', location: 'IBS XRD실'
   };
+
   const container = $('equipmentQrCanvasContainer');
   if(!container){ toast('QR 요소를 찾을 수 없습니다.'); return; }
-  
-  const qrSource = container.querySelector('canvas') || container.querySelector('img');
-  if(!qrSource){ toast('QR 이미지가 아직 생성되지 않았습니다.'); return; }
 
-  const fileName = (cur.code || 'Equipment') + '_QR_Label.png';
+  let shortName = cur.code || 'HR-XRD';
+  if(shortName === 'XRD') shortName = 'HR-XRD';
+  const titleString = shortName + ' Logbook';
+  const subString = (cur.model || '') + (cur.location ? ' · ' + cur.location : '');
+  const fileName = shortName + '_Logbook_QR.png';
 
-  try {
-    // 600x640 고해상도 라벨 카드 캔버스 합성
+  // QR 렌더링 엘리먼트 (Canvas 또는 Image) 안전한 추출
+  function getQrDrawable(){
+    const cvs = container.querySelector('canvas');
+    if(cvs && cvs.width > 0) return Promise.resolve(cvs);
+    const img = container.querySelector('img');
+    if(img){
+      if(img.complete && img.naturalWidth > 0) return Promise.resolve(img);
+      return new Promise(function(resolve, reject){
+        const testImg = new Image();
+        testImg.crossOrigin = 'anonymous';
+        testImg.onload = function(){ resolve(testImg); };
+        testImg.onerror = function(){ resolve(img); };
+        testImg.src = img.src;
+      });
+    }
+    return Promise.reject(new Error('QR 요소를 찾을 수 없습니다.'));
+  }
+
+  getDrawableSafe(getQrDrawable).then(function(qrDrawable){
+    // 600x600 순수 정사각형 1:1 고해상도 라벨 카드 캔버스 합성
     const w = 600;
-    const h = 640;
+    const h = 600;
     const cvs = document.createElement('canvas');
     cvs.width = w;
     cvs.height = h;
     const ctx = cvs.getContext('2d');
 
-    // 1. 배경 (흰색 라운드 사각형)
+    // 1. 순백색 배경
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, w, h);
 
-    // 2. 외곽 테두리 (2겹 라벨 디자인)
+    // 2. 모던하고 깔끔한 외곽 테두리 (2.5px 상당 8px 두께 라운드 테두리)
     ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = 8;
-    ctx.strokeRect(16, 16, w - 32, h - 32);
-
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(26, 26, w - 52, h - 52);
-
-    // 3. 상단 뱃지
-    ctx.fillStyle = '#0f172a';
     if(ctx.roundRect){
       ctx.beginPath();
-      ctx.roundRect(160, 42, 280, 44, 22);
-      ctx.fill();
+      ctx.roundRect(14, 14, w - 28, h - 28, 20);
+      ctx.stroke();
     } else {
-      ctx.fillRect(160, 42, 280, 44);
+      ctx.strokeRect(14, 14, w - 28, h - 28);
     }
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 20px Pretendard, sans-serif';
+
+    // 3. 타이틀: "[장비명] Logbook" (예: HR-XRD Logbook) - 미사여구 배제
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 34px Pretendard, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('IBS 2DQH 연구장비', 300, 64);
+    ctx.fillText(titleString, 300, 68);
 
-    // 4. 장비명
-    ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 26px Pretendard, sans-serif';
-    let title = cur.name || cur.code;
-    if(title.length > 25) title = title.substring(0, 24) + '...';
-    ctx.fillText(title, 300, 122);
-
-    // 5. 모델명 및 위치
+    // 4. 서브타이틀: 모델명 및 위치
     ctx.fillStyle = '#475569';
-    ctx.font = '600 19px Pretendard, sans-serif';
-    const sub = (cur.model || '') + (cur.location ? ' · ' + cur.location : '');
-    ctx.fillText(sub, 300, 158);
+    ctx.font = '600 18px Pretendard, -apple-system, sans-serif';
+    let sub = subString;
+    if(sub.length > 36) sub = sub.substring(0, 35) + '...';
+    ctx.fillText(sub, 300, 108);
 
-    // 6. 정사각형 QR 코드 그리기 (정중앙 320x320)
-    const qrSize = 320;
+    // 5. 대형 정사각형 QR 코드 정중앙 배치 (360x360)
+    const qrSize = 360;
     const qrX = (w - qrSize) / 2;
-    const qrY = 190;
-    ctx.drawImage(qrSource, qrX, qrY, qrSize, qrSize);
+    const qrY = 138;
+    ctx.drawImage(qrDrawable, qrX, qrY, qrSize, qrSize);
 
-    // 7. 하단 안내문 및 식별자
-    ctx.fillStyle = '#2563eb';
-    ctx.font = 'bold 20px Pretendard, sans-serif';
-    ctx.fillText('스마트폰 카메라 스캔 → 즉시 세션 시작', 300, 545);
+    // 6. 하단 공식 기관 푸터 (미사여구 배제)
+    ctx.fillStyle = '#64748b';
+    ctx.font = 'bold 18px Pretendard, -apple-system, sans-serif';
+    ctx.fillText('IBS 2DQH LIMS', 300, 545);
 
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '15px monospace';
-    ctx.fillText('Equipment Code: ' + (cur.code || cur.id), 300, 585);
+    // 7. 직접 다운로드 트리거
+    const dataUrl = cvs.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.download = fileName;
+    a.href = dataUrl;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      if(a.parentNode) a.parentNode.removeChild(a);
+    }, 500);
 
-    // 8. 다운로드 실행 (Blob 우선 지원)
-    if(cvs.toBlob){
-      cvs.toBlob(function(blob){
-        if(!blob){
-          downloadViaDataUrl(cvs.toDataURL('image/png'), fileName, cur.code);
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.download = fileName;
-        a.href = url;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(function(){
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 800);
-        toast('📷 ' + (cur.code || '장비') + ' 본체 부착용 QR 라벨 이미지가 저장되었습니다.');
-      }, 'image/png');
-    } else {
-      downloadViaDataUrl(cvs.toDataURL('image/png'), fileName, cur.code);
-    }
-  } catch(err){
-    console.warn('Composite canvas failed, fallback to raw QR:', err);
-    // 기본 QR 다운로드 fallback
-    if(qrSource.tagName.toLowerCase() === 'canvas'){
-      downloadViaDataUrl(qrSource.toDataURL('image/png'), fileName, cur.code);
-    } else {
-      const a = document.createElement('a');
-      a.download = fileName;
-      a.href = qrSource.src;
-      a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      toast('📷 ' + (cur.code || '장비') + ' QR 라벨 이미지를 저장합니다.');
-    }
+    toast('📷 ' + titleString + ' 정사각형 QR 라벨 이미지가 저장되었습니다.');
+  }).catch(function(err){
+    console.error('QR download failed:', err);
+    toast('QR 이미지 저장 중 오류가 발생했습니다: ' + (err.message || '다시 시도해주세요.'));
+  });
+}
+
+function getDrawableSafe(getter){
+  try {
+    return getter();
+  } catch(e){
+    return Promise.reject(e);
   }
 }
 
-function downloadViaDataUrl(dataUrl, fileName, code){
-  const a = document.createElement('a');
-  a.download = fileName;
-  a.href = dataUrl;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  toast('📷 ' + (code || '장비') + ' 본체 부착용 QR 라벨 이미지가 저장되었습니다.');
-}
-
-// [QR 라벨 전용 깔끔한 인쇄 핸들러]
+// [QR 라벨 전용 80mm x 80mm 정사각형 클린 인쇄 핸들러]
 function printEquipmentQrLabel(){
-  document.body.classList.add('printing-equipment-qr');
-  window.print();
-  setTimeout(function(){
-    document.body.classList.remove('printing-equipment-qr');
-  }, 1200);
+  const printArea = $('equipmentQrPrintArea');
+  if(!printArea){ window.print(); return; }
+
+  // 1. QR 이미지 소스 확보 (Canvas 또는 Img)
+  let qrImgSrc = '';
+  const cvs = printArea.querySelector('canvas');
+  if(cvs){
+    try { qrImgSrc = cvs.toDataURL('image/png'); } catch(e){}
+  }
+  if(!qrImgSrc){
+    const img = printArea.querySelector('img');
+    if(img) qrImgSrc = img.src;
+  }
+
+  const title = ($('qrLabelEquipName') ? $('qrLabelEquipName').textContent : 'HR-XRD Logbook');
+  const model = ($('qrLabelEquipModel') ? $('qrLabelEquipModel').textContent : '');
+
+  // 2. 단독 인쇄용 숨김 iframe 생성 및 80mm x 80mm 정사각형 스티커 규격 전송
+  let printFrame = document.getElementById('equipmentQrPrintIframe');
+  if(!printFrame){
+    printFrame = document.createElement('iframe');
+    printFrame.id = 'equipmentQrPrintIframe';
+    printFrame.style.position = 'fixed';
+    printFrame.style.right = '0';
+    printFrame.style.bottom = '0';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = '0';
+    document.body.appendChild(printFrame);
+  }
+
+  try {
+    const doc = printFrame.contentWindow.document;
+    doc.open();
+    doc.write('<!DOCTYPE html>' +
+'<html><head><meta charset="utf-8">' +
+'<title>' + title + '</title>' +
+'<style>' +
+'@page { size: auto; margin: 0; }' +
+'html, body {' +
+'  margin: 0; padding: 0;' +
+'  width: 100%; height: 100%;' +
+'  display: flex; align-items: center; justify-content: center;' +
+'  background: #ffffff;' +
+'  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Pretendard", sans-serif;' +
+'  -webkit-print-color-adjust: exact;' +
+'  print-color-adjust: exact;' +
+'}' +
+'.square-sticker {' +
+'  width: 80mm;' +
+'  height: 80mm;' +
+'  box-sizing: border-box;' +
+'  border: 2.5px solid #0f172a;' +
+'  border-radius: 6mm;' +
+'  padding: 6mm;' +
+'  display: flex;' +
+'  flex-direction: column;' +
+'  justify-content: space-between;' +
+'  align-items: center;' +
+'  text-align: center;' +
+'  background: #ffffff;' +
+'  page-break-inside: avoid;' +
+'}' +
+'.label-title {' +
+'  margin: 0;' +
+'  font-size: 15.5pt;' +
+'  font-weight: 800;' +
+'  color: #0f172a;' +
+'  line-height: 1.2;' +
+'  letter-spacing: -0.3px;' +
+'}' +
+'.label-sub {' +
+'  margin: 2mm 0 0;' +
+'  font-size: 9.5pt;' +
+'  color: #475569;' +
+'  font-weight: 600;' +
+'  line-height: 1.2;' +
+'}' +
+'.qr-box {' +
+'  width: 44mm;' +
+'  height: 44mm;' +
+'  display: flex;' +
+'  align-items: center;' +
+'  justify-content: center;' +
+'  margin: auto 0;' +
+'}' +
+'.qr-box img {' +
+'  width: 44mm;' +
+'  height: 44mm;' +
+'  display: block;' +
+'  image-rendering: pixelated;' +
+'}' +
+'.label-footer {' +
+'  font-size: 8.5pt;' +
+'  font-weight: 700;' +
+'  color: #64748b;' +
+'  letter-spacing: 0.5px;' +
+'  margin: 0;' +
+'}' +
+'</style></head><body>' +
+'<div class="square-sticker">' +
+'  <div style="text-align:center;">' +
+'    <h1 class="label-title">' + title + '</h1>' +
+'    <p class="label-sub">' + model + '</p>' +
+'  </div>' +
+'  <div class="qr-box">' +
+(qrImgSrc ? '    <img src="' + qrImgSrc + '" alt="QR Code">' : '') +
+'  </div>' +
+'  <p class="label-footer">IBS 2DQH LIMS</p>' +
+'</div></body></html>');
+    doc.close();
+
+    setTimeout(function(){
+      try {
+        printFrame.contentWindow.focus();
+        printFrame.contentWindow.print();
+      } catch(e){
+        console.warn('Iframe print failed, falling back to window.print():', e);
+        document.body.classList.add('printing-equipment-qr');
+        window.print();
+        setTimeout(function(){ document.body.classList.remove('printing-equipment-qr'); }, 1200);
+      }
+    }, 250);
+  } catch(err){
+    console.warn('Iframe setup failed, falling back to window.print():', err);
+    document.body.classList.add('printing-equipment-qr');
+    window.print();
+    setTimeout(function(){ document.body.classList.remove('printing-equipment-qr'); }, 1200);
+  }
 }
 
 // ========================================================
