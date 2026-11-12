@@ -12729,3 +12729,23 @@ html:not(.is-admin) #btnHelpTabAdmin {
   .chem-inventory-table td:nth-child(12) { text-align: center !important; }
   .chem-inventory-table td:nth-child(15) { overflow: visible !important; }
 }
+
+/* 모바일 서랍 헤더 ✕ 버튼을 상단바 햄버거 버튼과 정확히 같은 위치에 정렬
+   (상단바: 높이 60px, 좌우 패딩 16px / 버튼 44x44) */
+@media (max-width: 700px) {
+  .sidebar .sidebar-mobile-head {
+    box-sizing: border-box !important;
+    height: 60px !important;
+    min-height: 60px !important;
+    margin: -16px -18px 14px -18px !important;
+    padding: 0 16px !important;
+    width: calc(100% + 36px) !important;
+    align-items: center !important;
+  }
+  .sidebar-mobile-head .btn-close-drawer {
+    width: 44px !important;
+    height: 44px !important;
+    flex-shrink: 0 !important;
+  }
+  .sidebar-mobile-head .drawer-head-actions { gap: 8px !important; }
+}
