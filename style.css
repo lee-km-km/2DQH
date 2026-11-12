@@ -1389,7 +1389,7 @@ tbody tr:hover .asset-thumb-box {
   
   /* 모바일 상단 바: 2DQH 로고(좌측) & 햄버거/X 애니메이션 버튼(우측) 미니멀 헤더 */
   .desktop-only, #loginBtn, #logoutBtn, #connection { display: none !important; }
-  .btn-toggle-search { display: none !important; }
+  #btnToggleSearch { display: none !important; }
   .topbar-center, #portalModuleSwitcher { display: none !important; }
 
   .topbar {
@@ -12186,11 +12186,37 @@ html:not(.is-admin) #btnHelpTabAdmin {
 .search-toggle-bar,
 .chem-search-toggle-bar {
   display: flex !important;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  width: 100%;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 10px !important;
+  width: 100% !important;
 }
+.btn-toggle-search-bar,
+.btn-toggle-chem-search {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 14px !important;
+  background: var(--card, #ffffff) !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--ink, #0f172a) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+}
+.btn-toggle-search-bar:hover,
+.btn-toggle-search-bar.active,
+.btn-toggle-chem-search:hover,
+.btn-toggle-chem-search.active {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  color: #1d4ed8 !important;
+}
+
 .search-collapsible-panel.collapsed,
 .chem-search-box.collapsed {
   display: none !important;
@@ -12198,6 +12224,40 @@ html:not(.is-admin) #btnHelpTabAdmin {
 .search-collapsible-panel.open,
 .chem-search-box.open {
   display: block !important;
+}
+
+/* 비품 대여 모달 폼 레이아웃 고도화 (PC에서 수정 클릭 시 가림 및 겹침 100% 방지) */
+#modalBackdrop .modal {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 90vh !important;
+  max-height: 90dvh !important;
+}
+#modalBackdrop #modalForm {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+#modalBackdrop .modal-body {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  min-height: 0 !important;
+}
+#modalBackdrop .modal-foot {
+  flex-shrink: 0 !important;
+}
+.borrow-form-fields {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+.borrow-user-compact-bar,
+#borrowUserInputWrap {
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* ==========================================================================
@@ -12349,6 +12409,7 @@ html:not(.is-admin) #btnHelpTabAdmin {
 }
 
 /* 원터치 검색 접기/펼치기 버튼 다크모드 */
+[data-theme="dark"] .btn-toggle-search-bar,
 [data-theme="dark"] .btn-toggle-search,
 [data-theme="dark"] .btn-toggle-chem-search,
 [data-theme="dark"] .btn-toggle-mobile-search {
@@ -12356,6 +12417,8 @@ html:not(.is-admin) #btnHelpTabAdmin {
   border-color: #232f46 !important;
   color: #f1f5f9 !important;
 }
+[data-theme="dark"] .btn-toggle-search-bar:hover,
+[data-theme="dark"] .btn-toggle-search-bar.active,
 [data-theme="dark"] .btn-toggle-search:hover,
 [data-theme="dark"] .btn-toggle-chem-search:hover,
 [data-theme="dark"] .btn-toggle-mobile-search:hover {

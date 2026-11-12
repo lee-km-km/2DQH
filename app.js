@@ -7823,11 +7823,11 @@ function openModal(mode, id){
     const borrowerName = curBorrowUser ? (curBorrowUser.name || '') : lastBorrower;
     const borrowerMeta = curBorrowUser ? ((curBorrowUser.affiliation || '') + (curBorrowUser.advisor ? (' · ' + curBorrowUser.advisor) : '')) : '';
 
-    parts.push('<div class="form-grid" style="margin-top:10px;">');
     parts.push('<input type="hidden" name="due_date" value="' + defaultDueDate + '">');
+    parts.push('<div class="borrow-form-fields" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;width:100%;">');
 
     if(curBorrowUser){
-      parts.push('<div class="borrow-user-compact-bar" id="borrowUserCompactBar">');
+      parts.push('<div class="borrow-user-compact-bar" id="borrowUserCompactBar" style="width:100%;box-sizing:border-box;">');
       parts.push('  <div class="borrow-user-compact-left">');
       parts.push('    <span class="borrow-user-compact-label">대여자</span>');
       parts.push('    <span class="borrow-user-compact-name"><strong>' + safe(borrowerName) + '</strong></span>');
@@ -7836,13 +7836,13 @@ function openModal(mode, id){
       parts.push('  </div>');
       parts.push('  <button type="button" class="borrow-user-toggle-btn" id="btnToggleBorrowUserEdit">수정</button>');
       parts.push('</div>');
-      parts.push('<div class="hidden" id="borrowUserInputWrap" style="margin-bottom:8px;">');
-      parts.push('  <label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(borrowerName) + '"></label>');
+      parts.push('<div class="hidden" id="borrowUserInputWrap" style="width:100%;box-sizing:border-box;">');
+      parts.push('  <label class="field" style="width:100%;">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(borrowerName) + '" style="width:100%;box-sizing:border-box;"></label>');
       parts.push('</div>');
     } else {
-      parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(borrowerName) + '"></label>');
+      parts.push('<label class="field" style="width:100%;">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(borrowerName) + '" style="width:100%;box-sizing:border-box;"></label>');
     }
-    parts.push('<label class="field full">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)"></label>');
+    parts.push('<label class="field" style="width:100%;">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)" style="width:100%;box-sizing:border-box;"></label>');
     parts.push('</div>');
   } else if(mode === 'consumable'){
     if(!isAdmin()){
@@ -8315,6 +8315,10 @@ function openModal(mode, id){
         const isHidden = wrap.classList.contains('hidden');
         wrap.classList.toggle('hidden', !isHidden);
         btnToggleBorrow.textContent = isHidden ? '접기' : '수정';
+        if(isHidden){
+          const inp = wrap.querySelector('input');
+          if(inp) inp.focus();
+        }
       });
     }
   }
@@ -20141,11 +20145,13 @@ function renderDashHistory(){
 }
 
 // PC 및 모바일 공통 원터치 검색창 접기/펼치기 제어 함수
-function setupUniversalSearchToggle(btnId, panelId, arrowId){
+function setupUniversalSearchToggle(btnId, panelId, arrowId, focusInputId){
   const btn = $(btnId);
   const panel = $(panelId);
   const arrow = $(arrowId);
   if(!btn || !panel) return;
+  if(btn.__searchToggleBound) return;
+  btn.__searchToggleBound = true;
 
   // 모바일 및 PC 모두 기본적으로 접어있는 상태 (접힘 유지)
   let isOpen = false;
@@ -20166,6 +20172,10 @@ function setupUniversalSearchToggle(btnId, panelId, arrowId){
     e.preventDefault();
     isOpen = !isOpen;
     applyState();
+    if(isOpen && focusInputId){
+      const inp = $(focusInputId);
+      if(inp) inp.focus();
+    }
   });
 }
 

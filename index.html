@@ -230,16 +230,16 @@
       <!-- 1) 비품 목록 패널 -->
       <div id="invSubViewCatalog" class="inv-subview">
         <div class="search-toggle-bar">
-          <button type="button" class="btn-toggle-search" id="btnToggleMobileInventorySearch" aria-expanded="true">
+          <button type="button" class="btn-toggle-search-bar btn-toggle-search" id="btnToggleMobileInventorySearch" aria-expanded="false">
             <span class="search-toggle-left">
               <span>🔍</span>
               <span>비품 검색 및 상세 필터</span>
             </span>
-            <span class="search-toggle-arrow" id="invSearchToggleArrow">▲ 검색 접기</span>
+            <span class="search-toggle-arrow" id="invSearchToggleArrow">▼ 검색 펼치기</span>
           </button>
         </div>
         <section class="panel">
-          <div id="searchFilterCollapsible" class="search-collapsible-panel">
+          <div id="searchFilterCollapsible" class="search-collapsible-panel collapsed">
           <div class="toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <div class="search-input-box" style="flex:1;min-width:200px;">
               <span class="search-input-icon" aria-hidden="true">🔍</span>
@@ -500,12 +500,12 @@
       </div>
       <section class="panel">
         <div class="search-toggle-bar">
-          <button type="button" class="btn-toggle-search" id="btnToggleMobileConsumableSearch" aria-expanded="true">
+          <button type="button" class="btn-toggle-search-bar btn-toggle-search" id="btnToggleMobileConsumableSearch" aria-expanded="false">
             <span class="search-toggle-left"><span>🔍</span><span>소모품 검색 및 필터</span></span>
-            <span class="search-toggle-arrow" id="consumableSearchToggleArrow">▲ 검색 접기</span>
+            <span class="search-toggle-arrow" id="consumableSearchToggleArrow">▼ 검색 펼치기</span>
           </button>
         </div>
-        <div id="consumableSearchPanel" class="search-collapsible-panel">
+        <div id="consumableSearchPanel" class="search-collapsible-panel collapsed">
           <div class="toolbar">
             <div class="search-input-box">
               <span class="search-input-icon" aria-hidden="true">🔍</span>
@@ -2153,10 +2153,9 @@
     </section>
   </div>
 
-    <!-- 모바일 전용 보조 링크 (대여 현황 및 관리자 기능 격리) -->
+    <!-- 모바일 전용 보조 링크 (관리자 기능 격리) -->
     <footer class="mobile-sub-footer">
-      <button type="button" class="text-link-sub" id="btnToggleLoans">대여 현황</button>
-      <span class="sub-dot">·</span>
+      <button type="button" class="text-link-sub hidden" id="btnToggleLoans" style="display:none !important;">대여 현황</button>
       <button type="button" class="text-link-sub" id="btnMobileLogbook" data-goto="logbook">📖 장비 로그북</button>
       <span class="sub-dot">·</span>
       <button type="button" class="text-link-sub" id="btnMobileLogin">관리자 로그인</button>
@@ -2261,23 +2260,23 @@
 <nav class="mobile-bottom-nav mobile-only" aria-label="모바일 하단 내비게이션">
   <button type="button" class="bottom-nav-tab active" data-view="inventory" id="bottomTabInventory">
     <span class="bottom-tab-icon">🛠️</span>
-    <span class="bottom-tab-label">비품목록</span>
+    <span class="bottom-tab-label">비품</span>
   </button>
   <button type="button" class="bottom-nav-tab" data-view="consumables" id="bottomTabConsumables">
     <span class="bottom-tab-icon">📦</span>
     <span class="bottom-tab-label">소모품</span>
   </button>
+  <button type="button" class="bottom-nav-tab" data-view="chemicals" id="bottomTabChemicals">
+    <span class="bottom-tab-icon">🧪</span>
+    <span class="bottom-tab-label">시약</span>
+  </button>
   <button type="button" class="bottom-nav-tab" data-view="logbook" id="bottomTabLogbook">
     <span class="bottom-tab-icon">🔬</span>
     <span class="bottom-tab-label">연구장비</span>
   </button>
-  <button type="button" class="bottom-nav-tab" data-view="loans" id="bottomTabLoans">
-    <span class="bottom-tab-icon">📋</span>
-    <span class="bottom-tab-label">대여현황</span>
-  </button>
   <button type="button" class="bottom-nav-tab" id="bottomTabMenu">
     <span class="bottom-tab-icon">☰</span>
-    <span class="bottom-tab-label">전체메뉴</span>
+    <span class="bottom-tab-label">메뉴</span>
   </button>
 </nav>
 
