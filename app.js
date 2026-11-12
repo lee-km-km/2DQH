@@ -3962,7 +3962,7 @@ function applyTheme(theme){
   document.documentElement.setAttribute('data-theme', theme);
   const isDark = (theme === 'dark');
   const icon = $('themeToggleIcon');
-  if(icon) icon.textContent = isDark ? '☀️' : '🌙';
+  if(icon) icon.textContent = isDark ? '☀️' : '🌙'; const dIcon = $('drawerThemeIcon'); if(dIcon) dIcon.textContent = isDark ? '☀️' : '🌙';
 }
 
 function toggleTheme(){
@@ -10046,7 +10046,7 @@ function bindEvents(){
     }
 
     // 테마 토글 (다크모드 / 라이트모드 / 암실 모드)
-    if(target.id === 'btnToggleTheme' || target.closest('#btnToggleTheme') || target.id === 'btnLogbookThemeToggle' || target.closest('#btnLogbookThemeToggle')){
+    if(target.id === 'btnToggleTheme' || target.closest('#btnToggleTheme') || target.id === 'btnLogbookThemeToggle' || target.closest('#btnLogbookThemeToggle') || target.closest('#btnDrawerThemeToggle')){
       toggleTheme();
       return;
     }
