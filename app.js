@@ -2584,9 +2584,12 @@ function renderConsumables(){
     if(q){
       // 검색어 입력 시 소모품과 327종 시약 전체에서 통합 검색
       matchCategory = true;
-    } else if(selectedConsumableCategory === '자주찾는 소모품'){
-      // 기본 화면: 일상 핵심 소모품만 노출 (시약 제외)
+    } else if(selectedConsumableCategory === '전체 소모품' || selectedConsumableCategory === 'all' || !selectedConsumableCategory){
+      // 전체 소모품: 시약을 제외한 모든 연구실 소모품 전체 노출
       matchCategory = !isReagentCategory(c.category);
+    } else if(selectedConsumableCategory === '자주찾는 소모품'){
+      // 자주찾는 소모품: 일상 핵심 소모품만 노출 (CS-001 ~ CS-010 등)
+      matchCategory = !isReagentCategory(c.category) && (c.is_common || c.isCommon || (c.code && /^CS-00[1-9]/.test(c.code)) || (c.id && /^CS-00[1-9]/.test(c.id)));
     } else if(isReagentCategory(selectedConsumableCategory)){
       const isReagent = isReagentCategory(c.category);
       if(!isReagent) return false;
@@ -4736,13 +4739,13 @@ function openEquipmentTestDrive(code){
 
   // 4. SOP 체크리스트 (가로 일체형 카드 레이아웃 + 인라인 스타일로 텍스트 분리 현상 원천 차단)
   if(schema.checks && schema.checks.length){
-    formHtml += '  <div class="sop-checklist-container" style="margin-top:14px;padding-top:14px;border-top:1px dashed #cbd5e1;">';
+    formHtml += '  <div class="sop-checklist-container" style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border,#cbd5e1);">';
     formHtml += '    <div class="sop-checklist-title" style="font-size:13px;font-weight:800;color:var(--ink,#0f172a);margin-bottom:10px;display:flex;align-items:center;gap:6px;"><span>✅</span> SOP 안전 점검 (필수 확인)</div>';
     formHtml += '    <div class="sop-checklist-wrap" style="display:flex;flex-direction:column;gap:8px;width:100%;">';
     schema.checks.forEach(function(chk){
-      formHtml += '      <label class="sop-check-card" style="display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;background:#f8fafc!important;border:1.5px solid #cbd5e1!important;border-radius:8px!important;padding:10px 14px!important;cursor:pointer!important;width:100%!important;box-sizing:border-box!important;margin:0!important;text-align:left!important;">';
+      formHtml += '      <label class="sop-check-card" style="display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:12px!important;border-radius:8px!important;padding:10px 14px!important;cursor:pointer!important;width:100%!important;box-sizing:border-box!important;margin:0!important;text-align:left!important;">';
       formHtml += '        <input type="checkbox" name="param_chk_' + safe(chk.key) + '" checked style="width:19px!important;min-width:19px!important;height:19px!important;min-height:19px!important;margin:0!important;padding:0!important;flex-shrink:0!important;accent-color:#2563eb!important;cursor:pointer!important;">';
-      formHtml += '        <span class="sop-check-text" style="font-size:13px!important;font-weight:600!important;color:#0f172a!important;line-height:1.45!important;flex:1!important;text-align:left!important;white-space:normal!important;word-break:keep-all!important;">' + safe(chk.label) + '</span>';
+      formHtml += '        <span class="sop-check-text" style="font-size:13px!important;font-weight:600!important;line-height:1.45!important;flex:1!important;text-align:left!important;white-space:normal!important;word-break:keep-all!important;">' + safe(chk.label) + '</span>';
       formHtml += '      </label>';
     });
     formHtml += '    </div>';
@@ -20144,9 +20147,8 @@ function setupUniversalSearchToggle(btnId, panelId, arrowId){
   const arrow = $(arrowId);
   if(!btn || !panel) return;
 
-  // 모바일은 기본 접힘, PC는 기본 펼쳐짐 지원
-  const isMobile = window.innerWidth <= 768;
-  let isOpen = !isMobile;
+  // 모바일 및 PC 모두 기본적으로 접어있는 상태 (접힘 유지)
+  let isOpen = false;
 
   function applyState(){
     panel.classList.toggle('collapsed', !isOpen);

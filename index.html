@@ -542,7 +542,6 @@
           <span class="count-badge" id="chemCountBadge">안전관리</span>
         </div>
         <div class="head-actions">
-          <button type="button" class="btn user-only hidden" id="btnChemPageHeadNewProduct" style="background:#2563eb;color:#fff;border:none;font-weight:700;">＋ 신규 시약 등록</button>
         </div>
       </div>
       <!-- 1. 상단 탭 (재고현황 | 월별 취급 캘린더 | 신규제품등록) & 가이드 다운로드 -->
@@ -586,7 +585,7 @@
         </div>
 
         <!-- 검색 필터 박스 (86291호 시스템 규격) -->
-        <div class="panel chem-search-box" id="chemSearchBox">
+        <div class="panel chem-search-box collapsed" id="chemSearchBox">
           <div class="chem-search-row">
             <div class="search-field">
               <label for="chemFilterName">제품명</label>
@@ -727,7 +726,7 @@
                   <th style="width:50px;text-align:center;">상태</th>
                   <th style="white-space:nowrap;">입고일</th>
                   <th style="white-space:nowrap;">유효기간</th>
-                  <th style="white-space:nowrap;text-align:center;width:120px;">관리</th>
+                  <th style="white-space:nowrap;text-align:center;min-width:180px;width:180px;">관리</th>
                 </tr>
               </thead>
               <tbody id="chemInventoryTableBody">
