@@ -1537,6 +1537,9 @@ function renderMetrics(){
 }
 
 function renderDashboard(){
+  renderDashboardOverview();
+  if(currentDashTab === "loans") renderDashLoans();
+  if(currentDashTab === "history") renderDashHistory();
   const lowStockItems = consumables.filter(function(c){
     return Number(c.quantity) <= Number(c.min_quantity);
   });
@@ -8365,6 +8368,11 @@ function showView(name, options){
     name = 'inventory';
   }
 
+  if(name === 'history'){
+    name = 'dashboard';
+    if(typeof switchDashboardTab === 'function') switchDashboardTab('history');
+  }
+
   if(!isValidView(name)){
     name = 'inventory';
   }
@@ -10424,62 +10432,10 @@ function bindEvents(){
     });
   }
 
-  // [모바일 검색창 기본 접힘 & 원터치 토글 바인딩]
-  // A. 시약·물질 검색 토글 바
-  const btnToggleChemSearch = $('btnToggleChemSearch');
-  const chemSearchBox = $('chemSearchBox');
-  const chemSearchToggleArrow = $('chemSearchToggleArrow');
-  if(btnToggleChemSearch && chemSearchBox){
-    btnToggleChemSearch.addEventListener('click', function(e){
-      e.preventDefault();
-      const isOpen = chemSearchBox.classList.toggle('open');
-      btnToggleChemSearch.classList.toggle('active', isOpen);
-      btnToggleChemSearch.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      if(chemSearchToggleArrow){
-        chemSearchToggleArrow.textContent = isOpen ? '▲ 접기' : '▼ 펼치기';
-      }
-    });
-  }
-
-  // B. 비품 대여 검색 토글 바 (모바일)
-  const btnToggleMobileInv = $('btnToggleMobileInventorySearch');
-  const invPanel = $('searchFilterCollapsible');
-  const invArrow = $('invSearchToggleArrow');
-  if(btnToggleMobileInv && invPanel){
-    btnToggleMobileInv.addEventListener('click', function(e){
-      e.preventDefault();
-      const isOpen = invPanel.classList.toggle('open');
-      btnToggleMobileInv.classList.toggle('active', isOpen);
-      btnToggleMobileInv.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      if(invArrow){
-        invArrow.textContent = isOpen ? '▲ 접기' : '▼ 펼치기';
-      }
-      if(isOpen){
-        const inp = $('assetSearch');
-        if(inp) setTimeout(function(){ inp.focus(); }, 120);
-      }
-    });
-  }
-
-  // C. 소모품 재고 검색 토글 바 (모바일)
-  const btnToggleMobileConsumable = $('btnToggleMobileConsumableSearch');
-  const consumablePanel = $('consumableSearchPanel');
-  const consumableArrow = $('consumableSearchToggleArrow');
-  if(btnToggleMobileConsumable && consumablePanel){
-    btnToggleMobileConsumable.addEventListener('click', function(e){
-      e.preventDefault();
-      const isOpen = consumablePanel.classList.toggle('open');
-      btnToggleMobileConsumable.classList.toggle('active', isOpen);
-      btnToggleMobileConsumable.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      if(consumableArrow){
-        consumableArrow.textContent = isOpen ? '▲ 접기' : '▼ 펼치기';
-      }
-      if(isOpen){
-        const inp = $('consumableSearch');
-        if(inp) setTimeout(function(){ inp.focus(); }, 120);
-      }
-    });
-  }
+  // [PC 및 모바일 공통 원터치 검색창 접기/펼치기 바인딩]
+  setupUniversalSearchToggle('btnToggleChemSearch', 'chemSearchBox', 'chemSearchToggleArrow', 'chemFilterName');
+  setupUniversalSearchToggle('btnToggleMobileInventorySearch', 'searchFilterCollapsible', 'invSearchToggleArrow', 'assetSearch');
+  setupUniversalSearchToggle('btnToggleMobileConsumableSearch', 'consumableSearchPanel', 'consumableSearchToggleArrow', 'consumableSearch');
 
   // D. 상단 2DQH 브랜드 로고 직접 클릭 보장 리스너
   ['brandLogoLink', 'drawerBrandLogo'].forEach(function(id){
@@ -19779,3 +19735,348 @@ function userLogout(){
   if(typeof setAdminUI === 'function') setAdminUI();
   toast(name + '님 로그아웃되었습니다.');
 }
+
+// ==========================================================================
+// 비품 통계 & 통합 대여 관리 탭 전환 및 렌더링 로직 (장비운영 통계 규격 일치)
+// ==========================================================================
+let currentDashTab = 'overview';
+
+function switchDashboardTab(tabName){
+  currentDashTab = tabName || 'overview';
+  const tabs = document.querySelectorAll('.dash-main-tab');
+  tabs.forEach(function(t){
+    const isActive = (t.dataset.dashTab === currentDashTab);
+    t.classList.toggle('active', isActive);
+    t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+
+  const panels = {
+    overview: $('dashTabContentOverview'),
+    loans: $('dashTabContentLoans'),
+    history: $('dashTabContentHistory')
+  };
+
+  Object.keys(panels).forEach(function(k){
+    if(panels[k]){
+      panels[k].classList.toggle('hidden', k !== currentDashTab);
+    }
+  });
+
+  if(currentDashTab === 'overview'){
+    renderDashboardOverview();
+  } else if(currentDashTab === 'loans'){
+    renderDashLoans();
+  } else if(currentDashTab === 'history'){
+    renderDashHistory();
+  }
+}
+
+function renderDashboardOverview(){
+  // 1. 핵심 KPI 요약 카드 4종 산출 (장비 운영 통계와 동일한 UI/UX 구조)
+  const active = loans.filter(function(l){ return !l.returned_at; });
+  const overdue = active.filter(function(l){ return getLoanDeadlineInfo(l).isOverdue; });
+  const returned = loans.filter(function(l){ return !!l.returned_at; });
+  const availCount = assets.filter(function(a){ return statusFor(a) === 'available'; }).length;
+
+  if($('kpiDashAssetTotal')) $('kpiDashAssetTotal').textContent = assets.length + '개';
+  if($('kpiDashAssetSub')) $('kpiDashAssetSub').textContent = '사용 가능 ' + availCount + '개';
+
+  if($('kpiDashLoanActive')) $('kpiDashLoanActive').textContent = active.length + '건';
+  if($('kpiDashLoanActiveSub')) $('kpiDashLoanActiveSub').textContent = active.length > 0 ? '실시간 대여 중' : '대여 없음';
+
+  if($('kpiDashLoanOverdue')) $('kpiDashLoanOverdue').textContent = overdue.length + '건';
+  if($('kpiDashLoanOverdueSub')) $('kpiDashLoanOverdueSub').textContent = overdue.length > 0 ? '확인 및 반납 안내 필요' : '연체 없음 (양호)';
+
+  if($('kpiDashLoanTotal')) $('kpiDashLoanTotal').textContent = loans.length + '건';
+  if($('kpiDashLoanReturnSub')) $('kpiDashLoanReturnSub').textContent = '반납 완료 ' + returned.length + '건';
+
+  if($('statsSubBadge')) $('statsSubBadge').textContent = '총 비품 ' + assets.length + '종 · 실시간 대여 ' + active.length + '건';
+
+  // 2. 소모품 부족 알림 (관리자용)
+  const lowStockItems = consumables.filter(function(c){
+    return Number(c.quantity) <= Number(c.min_quantity);
+  });
+  const notice = $('lowStockNotice');
+  if(notice){
+    if(!isAdmin() || !ENABLE_CONSUMABLES){
+      notice.innerHTML = '';
+    } else if(lowStockItems.length){
+      const preview = lowStockItems.slice(0,4).map(function(c){
+        const out = Number(c.quantity) <= 0;
+        const label = out ? '재고 0 · 구매요청' : '구매요청';
+        return '<button class="low-stock-chip" type="button" data-reorder="' +
+          safe(c.id) + '"><b>' + safe(c.name) +
+          '</b><small>' + safe(c.quantity) + ' ' + safe(c.unit || '개') +
+          ' 남음 · ' + safe(c.location || '위치 미등록') +
+          ' · ' + label + '</small></button>';
+      }).join('');
+
+      notice.innerHTML = '<section class="stock-alert"><div class="stock-alert-icon">!</div><div class="stock-alert-content"><b>소모품 재고 확인이 필요합니다</b><p>' +
+        lowStockItems.length + '개 품목이 최소 보유량 이하입니다.</p><div class="low-stock-list">' +
+        preview + '</div></div><button class="btn" data-goto="consumables">소모품 확인</button></section>';
+    } else if(consumablesAvailable && consumables.length){
+      notice.innerHTML = '<section class="stock-ok"><span>✓</span><div><b>소모품 재고 양호</b><p>현재 최소 보유량 이하인 품목이 없습니다.</p></div><button class="text-btn" data-goto="consumables">재고 보기</button></section>';
+    } else {
+      notice.innerHTML = '';
+    }
+  }
+
+  // 3. 반납 임박 비품 리스트
+  if(active.length > 0){
+    let rowsHtml = '';
+    const limit = Math.min(active.length, 7);
+    for(let i=0; i<limit; i++){
+      const l = active[i];
+      const isOverdue = l.due_date && l.due_date < today();
+      rowsHtml += '<tr><td data-label="비품"><b>' + safe(fmtName(l.asset_id)) +
+        '</b><div class="asset-id">' + safe(l.asset_id) +
+        '</div></td><td data-label="대여자">' + safe(l.borrower_name) +
+        '</td><td data-label="대여일">' + dateText(l.borrowed_at) +
+        '</td><td data-label="상태">' + (isOverdue ? '<span class="status-chip overdue-chip">⚠️ 기간 지남</span>' : '<span class="status borrowed">대여 중</span>') + '</td></tr>';
+    }
+    if($('dashboardLoans')){
+      $('dashboardLoans').innerHTML = '<table aria-label="현재 대여 중인 비품"><thead><tr><th scope="col">비품</th><th scope="col">대여자</th><th scope="col">대여일</th><th scope="col">상태</th></tr></thead><tbody>' +
+        rowsHtml + '</tbody></table>';
+    }
+  } else {
+    if($('dashboardLoans')) $('dashboardLoans').innerHTML = '<div class="empty">현재 대여 중인 비품이 없습니다.</div>';
+  }
+
+  // 4. 최근 활동 기록
+  const getTime = function(item){
+    if(item.updated_at) return item.updated_at;
+    if(item.borrowed_at) return item.borrowed_at;
+    return '';
+  };
+  const recent = [].concat(loans).sort(function(a,b){
+    return getTime(b).localeCompare(getTime(a));
+  }).slice(0,5);
+
+  let recentHtml = '';
+  for(let i=0; i<recent.length; i++){
+    const l = recent[i];
+    const targetDate = l.returned_at ? l.returned_at : l.borrowed_at;
+    const labelText = l.returned_at ? '반납 완료' : '대여 등록';
+    recentHtml += '<div class="activity-item"><b>' +
+      safe(l.borrower_name) + '</b> · ' + safe(fmtName(l.asset_id)) +
+      '<small>' + dateText(targetDate) + ' · ' + labelText +
+      '</small></div>';
+  }
+  if($('recentActivity')) $('recentActivity').innerHTML = recentHtml || '<div class="empty">아직 활동이 없습니다.</div>';
+
+  // 5. 통계 차트 렌더링
+  renderTopAssetsChart();
+}
+
+function renderDashLoans(){
+  const searchEl = $('dashLoanSearch');
+  const filterEl = $('dashLoanFilter');
+  const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const f = filterEl ? filterEl.value : 'active';
+
+  const list = loans.filter(function(l){
+    let matchFilter = false;
+    if(f === 'all') matchFilter = true;
+    else if(f === 'active') matchFilter = !l.returned_at;
+    else if(f === 'returned') matchFilter = !!l.returned_at;
+    const textTarget = [l.asset_id, l.borrower_name, fmtName(l.asset_id)].join(' ').toLowerCase();
+    return matchFilter && textTarget.includes(q);
+  });
+
+  if($('dashLoansBadge')) $('dashLoansBadge').textContent = list.length + '건';
+
+  const container = $('dashLoanRows');
+  if(!container) return;
+
+  if(!list.length){
+    container.innerHTML = '<div class="empty">조건에 일치하는 대여 내역이 없습니다.</div>';
+    return;
+  }
+
+  let html = '<table><thead><tr><th>비품</th><th>대여자</th><th>대여일</th><th>반납 예정일</th><th>상태</th><th>관리</th></tr></thead><tbody>';
+  list.forEach(function(l){
+    const deadlineInfo = getLoanDeadlineInfo(l);
+    const isReturned = !!l.returned_at;
+    let statusBadge = '';
+    if(isReturned){
+      statusBadge = '<span class="status available">반납 완료</span>';
+    } else if(deadlineInfo.isOverdue){
+      statusBadge = '<span class="status-chip overdue-chip">⚠️ 반납 지연</span>';
+    } else {
+      statusBadge = '<span class="status borrowed">대여 중</span>';
+    }
+
+    let actionBtn = '';
+    if(!isReturned){
+      actionBtn = '<button class="btn btn-sm" type="button" data-return="' + safe(l.id) + '">반납 처리</button>';
+    }
+
+    html += '<tr>' +
+      '<td><b>' + safe(fmtName(l.asset_id)) + '</b><div class="asset-id">' + safe(l.asset_id) + '</div></td>' +
+      '<td>' + safe(l.borrower_name) + '</td>' +
+      '<td>' + dateText(l.borrowed_at) + '</td>' +
+      '<td>' + (l.due_date ? dateText(l.due_date) : '-') + '</td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td>' + actionBtn + '</td>' +
+      '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function renderDashHistory(){
+  const searchEl = $('dashHistorySearch');
+  const assetFilterEl = $('dashHistoryAssetFilter');
+  const monthFilterEl = $('dashHistoryMonthFilter');
+  const statusFilterEl = $('dashHistoryStatusFilter');
+
+  const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const selectedAsset = assetFilterEl ? assetFilterEl.value : 'all';
+  const selectedMonth = monthFilterEl ? monthFilterEl.value.trim() : '';
+  const selectedStatus = statusFilterEl ? statusFilterEl.value : 'all';
+
+  // 옵션 채우기
+  if(assetFilterEl && assetFilterEl.options && assetFilterEl.options.length <= 1){
+    const sortedAssets = assets.slice().sort(function(a, b){
+      return (a.name || '').localeCompare(b.name || '', 'ko');
+    });
+    sortedAssets.forEach(function(a){
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = a.name + ' (' + a.id + ')';
+      assetFilterEl.appendChild(opt);
+    });
+  }
+
+  const list = loans.filter(function(l){
+    const matchesSearch = !q || [l.asset_id, l.borrower_name, fmtName(l.asset_id), l.note || ''].join(' ').toLowerCase().includes(q);
+    const matchesAsset = (selectedAsset === 'all') || (l.asset_id === selectedAsset);
+    let matchesMonth = true;
+    if(selectedMonth){
+      const datePart = (l.borrowed_at || '').substring(0, 7);
+      matchesMonth = (datePart === selectedMonth);
+    }
+    let matchesStatus = true;
+    if(selectedStatus === 'returned') matchesStatus = !!l.returned_at;
+    else if(selectedStatus === 'active') matchesStatus = !l.returned_at;
+
+    return matchesSearch && matchesAsset && matchesMonth && matchesStatus;
+  });
+
+  if($('dashHistoryBadge')) $('dashHistoryBadge').textContent = '총 ' + list.length + '건';
+
+  const container = $('dashHistoryRows');
+  if(!container) return;
+
+  if(!list.length){
+    container.innerHTML = '<div class="empty">조회 조건에 맞는 이력이 없습니다.</div>';
+    return;
+  }
+
+  let html = '<div class="table-wrap"><table><thead><tr><th>비품</th><th>대여자</th><th>대여일시</th><th>반납일시</th><th>상태</th><th>비고</th></tr></thead><tbody>';
+  list.forEach(function(l){
+    const isReturned = !!l.returned_at;
+    const statusLabel = isReturned ? '<span class="status available">반납 완료</span>' : '<span class="status borrowed">대여 중</span>';
+    html += '<tr>' +
+      '<td><b>' + safe(fmtName(l.asset_id)) + '</b><div class="asset-id">' + safe(l.asset_id) + '</div></td>' +
+      '<td>' + safe(l.borrower_name) + '</td>' +
+      '<td>' + dateText(l.borrowed_at) + '</td>' +
+      '<td>' + (l.returned_at ? dateText(l.returned_at) : '-') + '</td>' +
+      '<td>' + statusLabel + '</td>' +
+      '<td><small>' + safe(l.note || '-') + '</small></td>' +
+      '</tr>';
+  });
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+// PC 및 모바일 공통 원터치 검색창 접기/펼치기 제어 함수
+function setupUniversalSearchToggle(btnId, panelId, arrowId){
+  const btn = $(btnId);
+  const panel = $(panelId);
+  const arrow = $(arrowId);
+  if(!btn || !panel) return;
+
+  // 모바일은 기본 접힘, PC는 기본 펼쳐짐 지원
+  const isMobile = window.innerWidth <= 768;
+  let isOpen = !isMobile;
+
+  function applyState(){
+    panel.classList.toggle('collapsed', !isOpen);
+    panel.classList.toggle('open', isOpen);
+    btn.classList.toggle('active', isOpen);
+    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    if(arrow){
+      arrow.textContent = isOpen ? '▲ 검색 접기' : '▼ 검색 펼치기';
+    }
+  }
+
+  applyState();
+
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    isOpen = !isOpen;
+    applyState();
+  });
+}
+
+// ==========================================================================
+// 비품 통계 서브탭 & 검색 접기/펼치기 & 시약등록 신규 버튼 바인딩
+// ==========================================================================
+document.addEventListener('DOMContentLoaded', function(){
+  // 1. 비품 통계 서브탭 바인딩
+  document.querySelectorAll('.dash-main-tab[data-dash-tab]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      switchDashboardTab(this.dataset.dashTab);
+    });
+  });
+
+  if($('btnDashGotoLoans')){
+    $('btnDashGotoLoans').addEventListener('click', function(e){
+      e.preventDefault();
+      switchDashboardTab('loans');
+    });
+  }
+  if($('btnDashGotoHistory')){
+    $('btnDashGotoHistory').addEventListener('click', function(e){
+      e.preventDefault();
+      switchDashboardTab('history');
+    });
+  }
+
+  // 실시간 대여 필터 리스너
+  if($('dashLoanSearch')) $('dashLoanSearch').addEventListener('input', renderDashLoans);
+  if($('dashLoanFilter')) $('dashLoanFilter').addEventListener('change', renderDashLoans);
+
+  // 이력 필터 리스너
+  if($('dashHistorySearch')) $('dashHistorySearch').addEventListener('input', renderDashHistory);
+  if($('dashHistoryAssetFilter')) $('dashHistoryAssetFilter').addEventListener('change', renderDashHistory);
+  if($('dashHistoryMonthFilter')) $('dashHistoryMonthFilter').addEventListener('change', renderDashHistory);
+  if($('dashHistoryStatusFilter')) $('dashHistoryStatusFilter').addEventListener('change', renderDashHistory);
+  if($('btnDashResetHistoryFilters')){
+    $('btnDashResetHistoryFilters').addEventListener('click', function(){
+      if($('dashHistorySearch')) $('dashHistorySearch').value = '';
+      if($('dashHistoryAssetFilter')) $('dashHistoryAssetFilter').value = 'all';
+      if($('dashHistoryMonthFilter')) $('dashHistoryMonthFilter').value = '';
+      if($('dashHistoryStatusFilter')) $('dashHistoryStatusFilter').value = 'all';
+      renderDashHistory();
+    });
+  }
+  if($('btnExportDashHistoryCsv')){
+    $('btnExportDashHistoryCsv').addEventListener('click', function(e){
+      e.preventDefault();
+      exportHistoryCsv();
+    });
+  }
+
+  // 검색 접기 토글은 bindEvents()에서 일괄 초기화 완료
+
+  // 3. 신규 시약 등록 버튼 리스너 바인딩
+  if($('btnChemMobileNewProduct')){
+    $('btnChemMobileNewProduct').addEventListener('click', function(e){
+      e.preventDefault();
+      openChemProductModal();
+    });
+  }
+});

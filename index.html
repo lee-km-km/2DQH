@@ -154,12 +154,8 @@
         <span>장비 운영 통계</span>
       </button>
       <button class="nav" data-view="dashboard" id="sidebarNavDashboard">
-        <span class="nav-icon" aria-hidden="true">📈</span>
-        <span>비품 현황 대시보드</span>
-      </button>
-      <button class="nav" data-view="history" id="sidebarNavHistory">
-        <span class="nav-icon" aria-hidden="true">📜</span>
-        <span>비품 대여·반납 이력</span>
+        <span class="nav-icon" aria-hidden="true">📊</span>
+        <span>비품 통계</span>
       </button>
     </div>
 
@@ -223,7 +219,7 @@
         </div>
       </div>
       <section class="panel">
-        <div class="search-toggle-bar mobile-only">
+        <div class="search-toggle-bar">
           <button type="button" class="btn-toggle-mobile-search" id="btnToggleMobileInventorySearch" aria-expanded="false">
             <span>🔍 비품 검색 및 필터</span>
             <span class="search-toggle-arrow" id="invSearchToggleArrow">▼ 펼치기</span>
@@ -277,53 +273,154 @@
       </section>
     </section>
 
-    <!-- 대시보드 뷰 (연구실 비품 및 소모품 대시보드) -->
+    <!-- 비품 통계 뷰 (비품 운영 통계 및 통합 대여 관리) -->
     <section class="view" id="view-dashboard">
       <div class="page-head" style="flex-wrap:wrap;gap:10px;">
         <div class="head-title">
-          <h1>📊 연구실 비품 및 소모품 대시보드</h1>
-          <span class="count-badge" id="statsSubBadge">실시간 모니터링</span>
+          <h1>📊 비품 통계</h1>
+          <span class="count-badge" id="statsSubBadge">비품·대여 종합 현황</span>
         </div>
         <div class="head-actions" style="display:flex;gap:8px;align-items:center;">
           <button class="btn primary" id="quickBorrow">＋ 새 비품 대여</button>
+          <button class="btn" id="btnExportDashHistoryCsv" title="대여 이력 CSV 내보내기">📥 이력 CSV 다운로드</button>
+        </div>
+      </div>
+
+      <!-- 상단 서브탭 네비게이션 바 (장비운영 통계 및 시약 포털과 동일 규격) -->
+      <div class="dash-portal-nav-bar" style="margin-bottom:16px;">
+        <div class="dash-main-tabs" role="tablist">
+          <button type="button" class="dash-main-tab active" id="btnDashTabOverview" data-dash-tab="overview">
+            📈 비품 대여 통계
+          </button>
+          <button type="button" class="dash-main-tab" id="btnDashTabLoans" data-dash-tab="loans">
+            📋 실시간 대여 현황
+          </button>
+          <button type="button" class="dash-main-tab" id="btnDashTabHistory" data-dash-tab="history">
+            📜 전체 대여·반납 이력
+          </button>
         </div>
       </div>
       
-      <!-- 핵심 통계 지표 -->
-      <div class="metrics" id="metrics"><div class="metric">데이터 집계 중...</div></div>
-      <div id="lowStockNotice"></div>
-
-      <!-- 통계 차트 위젯 -->
-      <section class="panel chart-panel">
-        <div class="panel-head">
-          <b>📊 인기 비품 TOP 5 & 평균 대여 기간</b>
-          <span class="stat-badge" id="statTotalLoans">총 대여 0건</span>
-        </div>
-        <div class="chart-container" style="position: relative; height: 220px; padding: 12px 16px;">
-          <div id="topAssetsEmptyNotice" class="empty hidden">대여 기록이 충분하지 않습니다.</div>
-          <canvas id="topAssetsChart" role="img" aria-label="연구실 비품별 누적 대여 빈도 TOP 5 차트"></canvas>
-        </div>
-      </section>
-
-      <div class="grid2">
-        <section class="panel">
-          <div class="panel-head">
-            <b>반납 임박 비품</b>
-            <button class="text-btn" data-goto="loans">전체 보기</button>
+      <!-- 1. 비품 대여 통계 탭 내용 -->
+      <div id="dashTabContentOverview" class="dash-tab-content">
+        <!-- 핵심 KPI 지표 그리드 (장비 운영 통계의 eq-kpi-grid와 100% 동일 UI 규격) -->
+        <div class="eq-kpi-grid" id="dashKpiGrid">
+          <div class="eq-kpi-card">
+            <div class="kpi-icon-wrap" style="background:#eff6ff;color:#2563eb;">🛠️</div>
+            <div class="kpi-info">
+              <span class="kpi-label">전체 비품</span>
+              <div class="kpi-num" id="kpiDashAssetTotal">0개</div>
+              <span class="kpi-sub" id="kpiDashAssetSub">보유 비품</span>
+            </div>
           </div>
-          <div id="dashboardLoans" class="table-wrap"></div>
+          <div class="eq-kpi-card">
+            <div class="kpi-icon-wrap" style="background:#ecfdf5;color:#059669;">📋</div>
+            <div class="kpi-info">
+              <span class="kpi-label">현재 대여 중</span>
+              <div class="kpi-num" id="kpiDashLoanActive">0건</div>
+              <span class="kpi-sub" id="kpiDashLoanActiveSub">실시간 운용</span>
+            </div>
+          </div>
+          <div class="eq-kpi-card">
+            <div class="kpi-icon-wrap" style="background:#fef2f2;color:#dc2626;">⚠️</div>
+            <div class="kpi-info">
+              <span class="kpi-label">반납 지연 / 임박</span>
+              <div class="kpi-num" id="kpiDashLoanOverdue">0건</div>
+              <span class="kpi-sub" id="kpiDashLoanOverdueSub">기한 확인 필요</span>
+            </div>
+          </div>
+          <div class="eq-kpi-card">
+            <div class="kpi-icon-wrap" style="background:#f3e8ff;color:#7c3aed;">📊</div>
+            <div class="kpi-info">
+              <span class="kpi-label">누적 대여 건수</span>
+              <div class="kpi-num" id="kpiDashLoanTotal">0건</div>
+              <span class="kpi-sub" id="kpiDashLoanReturnSub">반납 완료</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 하위 호환용 metrics 슬롯 -->
+        <div class="metrics hidden" id="metrics" style="display:none;"></div>
+        <div id="lowStockNotice"></div>
+
+        <!-- 통계 차트 위젯 -->
+        <section class="panel chart-panel">
+          <div class="panel-head">
+            <b>📊 인기 비품 TOP 5 &amp; 누적 대여 빈도</b>
+            <span class="stat-badge" id="statTotalLoans">총 대여 0건</span>
+          </div>
+          <div class="chart-container" style="position: relative; height: 220px; padding: 12px 16px;">
+            <div id="topAssetsEmptyNotice" class="empty hidden">대여 기록이 충분하지 않습니다.</div>
+            <canvas id="topAssetsChart" role="img" aria-label="연구실 비품별 누적 대여 빈도 TOP 5 차트"></canvas>
+          </div>
         </section>
+
+        <div class="grid2">
+          <section class="panel">
+            <div class="panel-head">
+              <b>반납 임박 비품</b>
+              <button class="text-btn" type="button" id="btnDashGotoLoans">대여 현황 바로가기</button>
+            </div>
+            <div id="dashboardLoans" class="table-wrap"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <b>최근 활동 기록</b>
+              <button class="text-btn" type="button" id="btnDashGotoHistory">이력 전체보기</button>
+            </div>
+            <div id="recentActivity" class="activity"></div>
+          </section>
+        </div>
+      </div>
+
+      <!-- 2. 실시간 대여 현황 탭 내용 -->
+      <div id="dashTabContentLoans" class="dash-tab-content hidden">
         <section class="panel">
-          <div class="panel-head">
-            <b>최근 활동 기록</b>
-            <button class="text-btn" data-goto="history">이력 보기</button>
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;">
+            <b>📋 실시간 비품 대여 및 반납 관리</b>
+            <span class="count-badge" id="dashLoansBadge">0건</span>
           </div>
-          <div id="recentActivity" class="activity"></div>
+          <div class="toolbar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px;">
+            <input id="dashLoanSearch" aria-label="대여 검색" placeholder="비품명, 식별번호, 대여자 검색..." style="flex:1 1 200px;">
+            <select id="dashLoanFilter" aria-label="대여 상태 필터" style="width:130px;">
+              <option value="active">대여 중</option>
+              <option value="all">전체</option>
+              <option value="returned">반납 완료</option>
+            </select>
+          </div>
+          <div id="dashLoanRows" class="table-wrap" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <!-- 3. 전체 대여·반납 이력 탭 내용 -->
+      <div id="dashTabContentHistory" class="dash-tab-content hidden">
+        <section class="panel">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;">
+            <b>📜 전체 비품 대여 및 반납 히스토리</b>
+            <span class="count-badge" id="dashHistoryBadge">총 0건</span>
+          </div>
+          <div class="toolbar" style="flex-wrap:wrap;gap:10px;align-items:center;padding:12px 16px;">
+            <input id="dashHistorySearch" aria-label="이력 검색" placeholder="비품명, 식별번호, 대여자 검색..." style="flex:1 1 200px;min-width:180px;">
+            <select id="dashHistoryAssetFilter" aria-label="비품별 필터" style="flex:1 1 180px;min-width:160px;">
+              <option value="all">모든 비품 (전체)</option>
+            </select>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;">📅 월별:</span>
+              <input type="month" id="dashHistoryMonthFilter" aria-label="월별 이력 필터" style="width:145px;height:38px;padding:4px 8px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--ink);">
+            </div>
+            <select id="dashHistoryStatusFilter" aria-label="상태 필터" style="width:110px;">
+              <option value="all">전체 상태</option>
+              <option value="returned">반납 완료</option>
+              <option value="active">대여 중</option>
+            </select>
+            <button type="button" class="btn" id="btnDashResetHistoryFilters" title="모든 필터 초기화" style="padding:6px 12px;font-size:12.5px;height:38px;">초기화</button>
+          </div>
+          <div id="dashHistoryRows"></div>
         </section>
       </div>
     </section>
 
-    <!-- 대여 이력 뷰 (관리자) -->
+    <!-- 대여 이력 뷰 (하위 호환 유지) -->
     <section class="view hidden" id="view-history">
       <div class="page-head" style="flex-wrap:wrap;gap:10px;">
         <div class="head-title">
@@ -367,7 +464,7 @@
         </div>
       </div>
       <section class="panel">
-        <div class="search-toggle-bar mobile-only">
+        <div class="search-toggle-bar">
           <button type="button" class="btn-toggle-mobile-search" id="btnToggleMobileConsumableSearch" aria-expanded="false">
             <span>🔍 소모품 검색 및 필터</span>
             <span class="search-toggle-arrow" id="consumableSearchToggleArrow">▼ 펼치기</span>
@@ -435,9 +532,13 @@
       <!-- 1. 상단 탭 (재고현황 | 월별 취급 캘린더 | 신규제품등록) & 가이드 다운로드 -->
       <div class="chem-portal-nav-bar">
         <div class="chem-main-tabs" role="tablist">
-          <button type="button" class="chem-main-tab active" id="btnChemTabInventory">재고현황</button>
+          <button type="button" class="chem-main-tab active" id="btnChemTabInventory">📦 재고현황</button>
           <button type="button" class="chem-main-tab" id="btnChemTabCalendar">📅 취급 일지 캘린더</button>
-          <button type="button" class="chem-main-tab user-only hidden" id="btnChemTabNewProduct" title="신규 화학물질 및 시약 등록">＋ 신규제품등록</button>
+        </div>
+        <div class="chem-nav-actions mobile-only">
+          <button type="button" class="btn-sm user-only hidden" id="btnChemMobileNewProduct" style="background:#2563eb;color:#ffffff;font-weight:700;border:none;border-radius:6px;padding:6px 12px;font-size:12px;">
+            ＋ 시약 등록
+          </button>
         </div>
         
       </div>
