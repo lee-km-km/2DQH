@@ -9569,6 +9569,7 @@ function closeMobileDrawer(){
   const sidebar = $('mainSidebar');
   const overlay = $('mobileDrawerOverlay');
   const hamburger = $('btnOpenMobileDrawer');
+  const closeBtn = $('btnCloseMobileDrawer');
   if(sidebar) sidebar.classList.remove('drawer-open');
   if(overlay) overlay.classList.remove('active');
   if(hamburger){
@@ -9576,6 +9577,16 @@ function closeMobileDrawer(){
     hamburger.setAttribute('aria-expanded', 'false');
   }
   document.body.classList.remove('drawer-locked');
+  if(closeBtn){
+    closeBtn.style.removeProperty('position');
+    closeBtn.style.removeProperty('top');
+    closeBtn.style.removeProperty('left');
+    closeBtn.style.removeProperty('right');
+    closeBtn.style.removeProperty('width');
+    closeBtn.style.removeProperty('height');
+    closeBtn.style.removeProperty('margin');
+    closeBtn.style.removeProperty('z-index');
+  }
 }
 
 function bindEvents(){
@@ -20355,14 +20366,13 @@ function alignDrawerCloseToHamburger(){
   if(!hamburger || !closeBtn) return;
   const r = hamburger.getBoundingClientRect();
   if(!r.width) return;
-  const vw = document.documentElement.clientWidth;
-  closeBtn.style.setProperty('position', 'absolute', 'important');
-  closeBtn.style.setProperty('top', r.top + 'px', 'important');
-  closeBtn.style.setProperty('right', (vw - r.right) + 'px', 'important');
-  closeBtn.style.setProperty('width', r.width + 'px', 'important');
-  closeBtn.style.setProperty('height', r.height + 'px', 'important');
+  closeBtn.style.setProperty('position', 'fixed', 'important');
+  closeBtn.style.setProperty('top', Math.round(r.top) + 'px', 'important');
+  closeBtn.style.setProperty('left', Math.round(r.left) + 'px', 'important');
+  closeBtn.style.setProperty('width', Math.round(r.width) + 'px', 'important');
+  closeBtn.style.setProperty('height', Math.round(r.height) + 'px', 'important');
   closeBtn.style.setProperty('margin', '0', 'important');
-  closeBtn.style.setProperty('z-index', '5', 'important');
+  closeBtn.style.setProperty('z-index', '1005', 'important');
 }
 window.addEventListener('resize', function(){
   const sb = $('mainSidebar');

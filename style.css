@@ -12730,8 +12730,7 @@ html:not(.is-admin) #btnHelpTabAdmin {
   .chem-inventory-table td:nth-child(15) { overflow: visible !important; }
 }
 
-/* 모바일 서랍 헤더 ✕ 버튼을 상단바 햄버거 버튼과 정확히 같은 위치에 정렬
-   (상단바: 높이 60px, 좌우 패딩 16px / 버튼 44x44) */
+/* 모바일 서랍 헤더 ✕ 버튼을 상단바 햄버거 버튼과 정확히 같은 위치에 정렬 */
 @media (max-width: 700px) {
   .sidebar .sidebar-mobile-head {
     box-sizing: border-box !important;
@@ -12747,26 +12746,37 @@ html:not(.is-admin) #btnHelpTabAdmin {
     height: 44px !important;
     flex-shrink: 0 !important;
   }
-  .sidebar-mobile-head .drawer-head-actions { gap: 8px !important; }
 }
 
-/* 모바일 서랍: 테마 전환 버튼을 서랍 오른쪽 아래로 이동 (✕ 버튼과 겹침 방지) */
-@media (max-width: 700px) {
-  .sidebar .btn-drawer-theme {
-    position: fixed !important; /* 서랍(transform) 기준 고정 → 스크롤해도 항상 우하단 */
-    right: 16px !important;
-    bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
-    width: 48px !important;
-    height: 48px !important;
-    border-radius: 50% !important;
-    font-size: 22px !important;
-    background: var(--bg, #ffffff) !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.18) !important;
-    z-index: 10 !important;
-  }
-  [data-theme="dark"] .sidebar .btn-drawer-theme { background: #1e293b !important; }
-  .sidebar .sidebar-mobile-head { position: static !important; }
+/* 사이드바 하단 테마 전환 버튼 (로그인/회원가입 버튼 옆 배치) */
+.btn-drawer-theme {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  border: 1.5px solid var(--border, #e2e8f0) !important;
+  background: var(--card, #ffffff) !important;
+  color: var(--ink, #0f172a) !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
-@media (min-width: 701px) {
-  .sidebar .btn-drawer-theme { display: none !important; }
+.btn-drawer-theme:hover {
+  background: var(--bg-subtle, #f8fafc) !important;
+  border-color: #3b82f6 !important;
+}
+[data-theme="dark"] .btn-drawer-theme {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .btn-drawer-theme:hover {
+  background: #27354f !important;
+  border-color: #60a5fa !important;
 }
