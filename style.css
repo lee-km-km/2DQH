@@ -5706,12 +5706,15 @@ tr.row-overdue:hover {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: nowrap;
 }
 .eq-secondary-title {
   margin: 0;
-  font-size: 16.5px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink);
+  white-space: nowrap;
+  letter-spacing: -0.02em;
 }
 
 /* 콤팩트 카드 그리드 */
@@ -6208,10 +6211,12 @@ tr.row-overdue:hover {
     align-items: center !important;
     justify-content: space-between !important;
     gap: 8px !important;
+    flex-wrap: nowrap !important;
   }
   .eq-secondary-title {
-    font-size: 14px !important;
-    word-break: keep-all !important;
+    font-size: 14.5px !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.02em !important;
     margin: 0 !important;
   }
   .eq-search-box {

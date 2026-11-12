@@ -5109,7 +5109,7 @@ function renderEquipmentPortalGrid(){
   if($('catCntStructural')) $('catCntStructural').textContent = cntStructural;
   if($('catCntOptical')) $('catCntOptical').textContent = cntOptical;
   if($('catCntDeposition')) $('catCntDeposition').textContent = cntDeposition;
-  if($('eqSecondaryCountBadge')) $('eqSecondaryCountBadge').textContent = '정밀 첨단 분석 연구장비';
+  if($('eqSecondaryCountBadge')) $('eqSecondaryCountBadge').textContent = '정밀 분석장비';
 
   const searchInput = $('eqSearchInput');
   const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
