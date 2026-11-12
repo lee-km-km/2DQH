@@ -12199,3 +12199,293 @@ html:not(.is-admin) #btnHelpTabAdmin {
 .chem-search-box.open {
   display: block !important;
 }
+
+/* ==========================================================================
+   비품 서브탭 & 다크모드 대응 고도화 (비품, 소모품, 시약 분리 규격)
+   ========================================================================== */
+.inv-portal-nav-bar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-end;
+  border-bottom: 2px solid #0f172a;
+  margin-bottom: 14px;
+  gap: 6px;
+}
+.inv-main-tabs {
+  display: flex;
+  gap: 4px;
+}
+.inv-main-tab {
+  padding: 10px 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: var(--bg-subtle);
+  color: var(--ink-light);
+  cursor: pointer;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.inv-main-tab:hover {
+  color: var(--ink);
+}
+.inv-main-tab.active {
+  background: var(--card, #ffffff);
+  border-color: #0f172a;
+  border-top: 3px solid #2563eb;
+  color: var(--ink);
+  font-weight: 800;
+}
+[data-theme="dark"] .inv-portal-nav-bar {
+  border-bottom-color: #3b82f6;
+}
+[data-theme="dark"] .inv-main-tab.active {
+  background: #151c2e;
+  border-color: #3b82f6;
+  border-top: 3px solid #3b82f6;
+}
+.tab-count-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+[data-theme="dark"] .tab-count-pill {
+  background: #1e3a8a;
+  color: #93c5fd;
+}
+
+/* 캘린더 '오늘' 표시 정상화 (22px 원형 뭉개짐 해결 및 명확한 하이라이트) */
+.chem-cal-cell.today {
+  border: 2px solid #2563eb !important;
+  background: rgba(37, 99, 235, 0.05) !important;
+}
+[data-theme="dark"] .chem-cal-cell.today {
+  border: 2px solid #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+.cal-date-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.chem-cal-cell.today .cal-date-num {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-radius: 50% !important;
+  font-weight: 800 !important;
+}
+.cal-today-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   다크모드 전용 컬러 보정 (시약, 비품, 소모품, XPS 표준 파라미터)
+   ========================================================================== */
+[data-theme="dark"] {
+  --bg-card: #151c2e;
+  --card-subtle: #1e293b;
+  --ink-light: #94a3b8;
+}
+
+/* 시약 버튼군 다크모드 하얀배경 제거 및 어두운 테마 조화 */
+[data-theme="dark"] .btn-chem-scope {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .btn-chem-scope:hover {
+  background: #27354a !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .btn-chem-scope.active {
+  background: #2563eb !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.4) !important;
+}
+
+[data-theme="dark"] .chem-search-box {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .chem-search-box input,
+[data-theme="dark"] .chem-search-box select {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .btn-chem-search {
+  background: #2563eb !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+[data-theme="dark"] .btn-chem-reset {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .btn-chem-reset:hover {
+  background: #27354a !important;
+  color: #ffffff !important;
+}
+
+/* 원터치 검색 접기/펼치기 버튼 다크모드 */
+[data-theme="dark"] .btn-toggle-search,
+[data-theme="dark"] .btn-toggle-chem-search,
+[data-theme="dark"] .btn-toggle-mobile-search {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .btn-toggle-search:hover,
+[data-theme="dark"] .btn-toggle-chem-search:hover,
+[data-theme="dark"] .btn-toggle-mobile-search:hover {
+  background: #1e293b !important;
+  border-color: #3b82f6 !important;
+  color: #60a5fa !important;
+}
+
+/* 비품 및 소모품 카테고리 칩 및 버튼 다크모드 */
+[data-theme="dark"] .inv-cat-chip,
+[data-theme="dark"] .consumable-cat-chip,
+[data-theme="dark"] .category-chip {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .inv-cat-chip.active,
+[data-theme="dark"] .consumable-cat-chip.active,
+[data-theme="dark"] .category-chip.active {
+  background: #2563eb !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* XPS 및 연구장비 표준 파라미터 규격 & 측정지표 하단 박스 다크모드 적용 */
+.eq-meta-summary-box {
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--ink-light);
+}
+[data-theme="dark"] .eq-meta-summary-box {
+  background: #151c2e !important;
+  border-color: #232f46 !important;
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .eq-meta-summary-box b {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .eq-schema-details {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .eq-schema-badge {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .eq-schema-badge b {
+  color: #60a5fa !important;
+}
+[data-theme="dark"] .eq-schema-badge.reading {
+  background: #172554 !important;
+  border-color: #1e40af !important;
+  color: #93c5fd !important;
+}
+[data-theme="dark"] .eq-schema-badge.option {
+  background: #2e1065 !important;
+  border-color: #5b21b6 !important;
+  color: #c4b5fd !important;
+}
+[data-theme="dark"] .eq-schema-badge.scan {
+  background: #022c22 !important;
+  border-color: #065f46 !important;
+  color: #6ee7b7 !important;
+}
+[data-theme="dark"] #eqSchemaContent {
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] #eqSchemaContent b {
+  color: #e2e8f0 !important;
+}
+
+/* ==========================================================================
+   추가 다크모드 대응: 소모품, 비품, 시약, 연구장비 표준 규격 일괄 보정
+   ========================================================================== */
+[data-theme="dark"] .category-tab {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .category-tab:hover {
+  background: #27354a !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+[data-theme="dark"] .category-tab.active {
+  background: #2563eb !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.4) !important;
+}
+[data-theme="dark"] .btn-view-mode {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .btn-view-mode.active {
+  background: #2563eb !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .search-input-box input,
+[data-theme="dark"] #assetSearch,
+[data-theme="dark"] #consumableSearch,
+[data-theme="dark"] #loanSearch,
+[data-theme="dark"] #assetFilter,
+[data-theme="dark"] #loanFilter,
+[data-theme="dark"] #invSubLoanSearch,
+[data-theme="dark"] #invSubLoanFilter {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] #btnShowLoanDirectQr {
+  background: #1e293b !important;
+  border-color: #3b82f6 !important;
+  color: #60a5fa !important;
+}
+
+[data-theme="dark"] #btnChemShowDirectQr {
+  background: #1e293b !important;
+  border-color: #059669 !important;
+  color: #34d399 !important;
+}

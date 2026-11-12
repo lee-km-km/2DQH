@@ -2276,8 +2276,8 @@ function renderLoans(){
 // [소모품 및 시약 목록 모듈]
 // ==========================================
 const CONSUMABLE_CATEGORIES = [
+  '전체 소모품',
   '자주찾는 소모품',
-  '시약',
   '보호구',
   '배관·테이프'
 ];
@@ -2295,12 +2295,12 @@ function consumableCategoryTabsHtml(selected){
     CONSUMABLE_CATEGORIES.map(function(cat){
       const icon = (
         cat === '자주찾는 소모품' ? '⭐' :
-        cat === '시약' ? '🧪' :
+        cat === '전체 소모품' ? '📦' :
         cat === '보호구' ? '🧤' :
         cat === '배관·테이프' ? '🔧' : '📦'
       );
       const isReagent = isReagentCategory(cat);
-      const isActive = (selected === cat) || (cat === '시약' && (selected === '시약·화학' || selected === '화학·시약')) || (cat === '보호구' && selected === '보호·클린룸');
+      const isActive = (selected === cat) || (cat === '전체 소모품' && (selected === 'all' || !selected || selected === '전체 소모품')) || (cat === '보호구' && selected === '보호·클린룸');
       return '<button type="button" class="category-tab' +
         (isReagent ? ' tab-reagent' : '') +
         (isActive ? ' active' : '') + '" data-consumable-category="' + safe(cat) +
@@ -4479,7 +4479,7 @@ function renderEquipmentSchemaPreview(code){
   let html = '<div class="eq-schema-preview-box">';
 
   if(eq){
-    html += '<div style="margin-bottom:14px;padding:10px 14px;background:var(--card-subtle, #f8fafc);border-radius:8px;border:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--ink-light);">';
+    html += '<div class="eq-meta-summary-box">';
     html += '<span>🏛️ <b>SESS 관리번호:</b> <code style="color:var(--primary);font-weight:700;">' + safe(eq.assetNo || eq.id) + '</code></span>';
     html += '<span>🏷️ <b>장비모델:</b> ' + safe(eq.model) + '</span>';
     html += '<span>📍 <b>설치장소:</b> ' + safe(eq.location) + '</span>';
@@ -8371,6 +8371,10 @@ function showView(name, options){
   if(name === 'history'){
     name = 'dashboard';
     if(typeof switchDashboardTab === 'function') switchDashboardTab('history');
+  }
+  if(name === 'loans'){
+    name = 'inventory';
+    if(typeof switchInventorySubTab === 'function') switchInventorySubTab('loans');
   }
 
   if(!isValidView(name)){
@@ -18675,7 +18679,10 @@ function render291Calendar(){
     const dayLogs = monthLogs.filter(function(l){ return l.date === fullDate; });
     const isToday = (fullDate === todayDot);
 
-    let cellContent = '<div class="cal-date-num">' + d + (isToday ? ' <span style="font-size:9.5px;padding:1px 4px;background:#2563eb;color:#fff;border-radius:3px;font-weight:700;margin-left:3px;">오늘</span>' : '') + '</div>';
+    let cellContent = '<div class="cal-date-header">' +
+      '<span class="cal-date-num">' + d + '</span>' +
+      (isToday ? '<span class="cal-today-badge">오늘</span>' : '') +
+      '</div>';
     if(dayLogs.length > 0){
       cellContent += '<div class="cal-badge-box">';
       dayLogs.slice(0, 2).forEach(function(l){
@@ -20024,6 +20031,22 @@ function setupUniversalSearchToggle(btnId, panelId, arrowId){
 // 비품 통계 서브탭 & 검색 접기/펼치기 & 시약등록 신규 버튼 바인딩
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', function(){
+
+  // 비품 탭 전환 리스너
+  document.querySelectorAll('.inv-main-tab[data-inv-tab]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      switchInventorySubTab(this.dataset.invTab);
+    });
+  });
+  if($('invSubLoanSearch')) $('invSubLoanSearch').addEventListener('input', renderInvSubLoans);
+  if($('invSubLoanFilter')) $('invSubLoanFilter').addEventListener('change', renderInvSubLoans);
+  if($('btnInvQuickBorrow')){
+    $('btnInvQuickBorrow').addEventListener('click', function(){
+      openModal('borrow');
+    });
+  }
+
   // 1. 비품 통계 서브탭 바인딩
   document.querySelectorAll('.dash-main-tab[data-dash-tab]').forEach(function(btn){
     btn.addEventListener('click', function(e){
@@ -20080,3 +20103,86 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }
 });
+
+// ==========================================================================
+// 비품 화면 내 목록 & 대여 현황 서브탭 전환 로직
+// ==========================================================================
+let currentInvSubTab = 'catalog';
+
+function switchInventorySubTab(tabName){
+  currentInvSubTab = tabName || 'catalog';
+  document.querySelectorAll('.inv-main-tab').forEach(function(btn){
+    const isActive = (btn.dataset.invTab === currentInvSubTab);
+    btn.classList.toggle('active', isActive);
+  });
+
+  const catalogView = $('invSubViewCatalog');
+  const loansView = $('invSubViewLoans');
+
+  if(catalogView) catalogView.classList.toggle('hidden', currentInvSubTab !== 'catalog');
+  if(loansView) loansView.classList.toggle('hidden', currentInvSubTab !== 'loans');
+
+  if(currentInvSubTab === 'loans'){
+    renderInvSubLoans();
+  } else {
+    renderInventory();
+  }
+}
+
+function renderInvSubLoans(){
+  const searchEl = $('invSubLoanSearch');
+  const filterEl = $('invSubLoanFilter');
+  const q = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const f = filterEl ? filterEl.value : 'active';
+
+  const list = loans.filter(function(l){
+    let matchFilter = false;
+    if(f === 'all') matchFilter = true;
+    else if(f === 'active') matchFilter = !l.returned_at;
+    else if(f === 'returned') matchFilter = !!l.returned_at;
+    const textTarget = [l.asset_id, l.borrower_name, fmtName(l.asset_id)].join(' ').toLowerCase();
+    return matchFilter && textTarget.includes(q);
+  });
+
+  const activeCount = loans.filter(function(l){ return !l.returned_at; }).length;
+  if($('invActiveLoansCountBadge')) $('invActiveLoansCountBadge').textContent = activeCount;
+  if($('invLoansSummaryBadge')) $('invLoansSummaryBadge').textContent = list.length + '건';
+
+  const container = $('invSubLoanRows');
+  if(!container) return;
+
+  if(!list.length){
+    container.innerHTML = '<div class="empty">대여 내역이 없습니다.</div>';
+    return;
+  }
+
+  let html = '<table><thead><tr><th>비품</th><th>대여자</th><th>대여일</th><th>반납 예정일</th><th>상태</th><th>관리</th></tr></thead><tbody>';
+  list.forEach(function(l){
+    const deadlineInfo = getLoanDeadlineInfo(l);
+    const isReturned = !!l.returned_at;
+    let statusBadge = '';
+    if(isReturned){
+      statusBadge = '<span class="status available">반납 완료</span>';
+    } else if(deadlineInfo.isOverdue){
+      statusBadge = '<span class="status-chip overdue-chip">⚠️ 기한 초과</span>';
+    } else {
+      statusBadge = '<span class="status borrowed">대여 중</span>';
+    }
+
+    let actionBtn = '';
+    if(!isReturned){
+      actionBtn = '<button class="btn btn-sm" type="button" data-return="' + safe(l.id) + '">반납 처리</button>';
+    }
+
+    html += '<tr>' +
+      '<td><b>' + safe(fmtName(l.asset_id)) + '</b><div class="asset-id">' + safe(l.asset_id) + '</div></td>' +
+      '<td>' + safe(l.borrower_name) + '</td>' +
+      '<td>' + dateText(l.borrowed_at) + '</td>' +
+      '<td>' + (l.due_date ? dateText(l.due_date) : '-') + '</td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td>' + actionBtn + '</td>' +
+      '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}

@@ -115,19 +115,15 @@
     <div class="sidebar-nav-group" id="sidebarGroupInventory">
       <button class="nav active" data-view="inventory" id="sidebarNavInventory">
         <span class="nav-icon" aria-hidden="true">🛠️</span>
-        <span>비품 대여</span>
-      </button>
-      <button class="nav" data-view="chemicals" id="sidebarNavChemicals">
-        <span class="nav-icon" aria-hidden="true">🧪</span>
-        <span>특별관리물질·시약</span>
+        <span>비품</span>
       </button>
       <button class="nav" data-view="consumables" id="sidebarNavConsumables">
         <span class="nav-icon" aria-hidden="true">📦</span>
-        <span>소모품 재고</span>
+        <span>소모품</span>
       </button>
-      <button class="nav" data-view="loans" id="sidebarNavLoans">
-        <span class="nav-icon" aria-hidden="true">📋</span>
-        <span>대여 현황</span>
+      <button class="nav" data-view="chemicals" id="sidebarNavChemicals">
+        <span class="nav-icon" aria-hidden="true">🧪</span>
+        <span>시약</span>
       </button>
     </div>
 
@@ -206,26 +202,44 @@
   </nav>
 
   <main>
-    <!-- 전체 비품 뷰 -->
+    <!-- 비품 관리 뷰 (비품 목록 & 실시간 대여 현황 통합) -->
     <section class="view active" id="view-inventory">
       <div class="page-head hide-mobile">
         <div class="head-title">
-          <h1>전체 비품</h1>
+          <h1>비품</h1>
           <span class="count-badge" id="inventoryCountBadge">0</span>
         </div>
         <div class="head-actions">
-          <button class="btn admin-only hidden" id="btnShowLoanDirectQr" type="button" title="비품 대여 직통 QR 라벨 (관리자 전용)" style="background:#ffffff;border:1.5px solid #2563eb;color:#2563eb;font-weight:700;">📱 대여 QR</button>
+          <button class="btn admin-only hidden" id="btnShowLoanDirectQr" type="button" title="비품 대여 직통 QR 라벨 (관리자 전용)" style="border:1.5px solid #2563eb;color:#2563eb;font-weight:700;">📱 대여 QR</button>
           <button class="btn admin-only hidden" id="addAsset">＋ 비품 등록</button>
         </div>
       </div>
-      <section class="panel">
-        <div class="search-toggle-bar">
-          <button type="button" class="btn-toggle-mobile-search" id="btnToggleMobileInventorySearch" aria-expanded="false">
-            <span>🔍 비품 검색 및 필터</span>
-            <span class="search-toggle-arrow" id="invSearchToggleArrow">▼ 펼치기</span>
+
+      <!-- 비품 상단 서브탭 (비품 목록 vs 대여 현황 원클릭 통합) -->
+      <div class="inv-portal-nav-bar" style="margin-bottom:14px;">
+        <div class="inv-main-tabs" role="tablist">
+          <button type="button" class="inv-main-tab active" id="btnInvTabCatalog" data-inv-tab="catalog">
+            🛠️ 비품 목록
+          </button>
+          <button type="button" class="inv-main-tab" id="btnInvTabLoans" data-inv-tab="loans">
+            📋 대여 현황 <span class="tab-count-pill" id="invActiveLoansCountBadge">0</span>
           </button>
         </div>
-        <div id="searchFilterCollapsible" class="search-collapsible-panel">
+      </div>
+
+      <!-- 1) 비품 목록 패널 -->
+      <div id="invSubViewCatalog" class="inv-subview">
+        <div class="search-toggle-bar">
+          <button type="button" class="btn-toggle-search" id="btnToggleMobileInventorySearch" aria-expanded="true">
+            <span class="search-toggle-left">
+              <span>🔍</span>
+              <span>비품 검색 및 상세 필터</span>
+            </span>
+            <span class="search-toggle-arrow" id="invSearchToggleArrow">▲ 검색 접기</span>
+          </button>
+        </div>
+        <section class="panel">
+          <div id="searchFilterCollapsible" class="search-collapsible-panel">
           <div class="toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <div class="search-input-box" style="flex:1;min-width:200px;">
               <span class="search-input-icon" aria-hidden="true">🔍</span>
@@ -238,13 +252,34 @@
               <option value="borrowed">대여 중</option>
               <option value="maintenance">수리 중</option>
             </select>
-            <button class="btn admin-only hidden" id="btnShowLoanDirectQrToolbar" type="button" title="비품 대여 직통 QR 라벨 (관리자 전용)" style="background:#ffffff;border:1.5px solid #2563eb;color:#2563eb;font-weight:700;white-space:nowrap;padding:7px 12px;font-size:12.5px;">📱 대여 QR</button>
+            
           </div>
           <div id="inventoryCategories" class="inventory-categories"></div>
         </div>
         <div id="inventoryBannerSlot"></div>
         <div id="inventoryRows" class="table-wrap" aria-live="polite"></div>
-      </section>
+        </section>
+      </div>
+
+      <!-- 2) 비품 대여 현황 패널 (비품 화면 내 즉시 확인 및 반납 지원) -->
+      <div id="invSubViewLoans" class="inv-subview hidden">
+        <section class="panel">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;">
+            <b>📋 실시간 비품 대여 현황</b>
+            <span class="count-badge" id="invLoansSummaryBadge">0건 대여 중</span>
+          </div>
+          <div class="toolbar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px;">
+            <input id="invSubLoanSearch" aria-label="대여 검색" placeholder="비품명, 식별번호, 대여자 검색..." style="flex:1 1 200px;">
+            <select id="invSubLoanFilter" aria-label="대여 상태 필터" style="width:130px;">
+              <option value="active">대여 중</option>
+              <option value="all">전체</option>
+              <option value="returned">반납 완료</option>
+            </select>
+            <button type="button" class="btn primary" id="btnInvQuickBorrow">＋ 비품 대여 신청</button>
+          </div>
+          <div id="invSubLoanRows" class="table-wrap" aria-live="polite"></div>
+        </section>
+      </div>
     </section>
 
     <!-- 대여 현황 뷰 -->
@@ -465,16 +500,16 @@
       </div>
       <section class="panel">
         <div class="search-toggle-bar">
-          <button type="button" class="btn-toggle-mobile-search" id="btnToggleMobileConsumableSearch" aria-expanded="false">
-            <span>🔍 소모품 검색 및 필터</span>
-            <span class="search-toggle-arrow" id="consumableSearchToggleArrow">▼ 펼치기</span>
+          <button type="button" class="btn-toggle-search" id="btnToggleMobileConsumableSearch" aria-expanded="true">
+            <span class="search-toggle-left"><span>🔍</span><span>소모품 검색 및 필터</span></span>
+            <span class="search-toggle-arrow" id="consumableSearchToggleArrow">▲ 검색 접기</span>
           </button>
         </div>
         <div id="consumableSearchPanel" class="search-collapsible-panel">
           <div class="toolbar">
             <div class="search-input-box">
               <span class="search-input-icon" aria-hidden="true">🔍</span>
-              <input id="consumableSearch" aria-label="소모품 및 시약 검색" placeholder="소모품명, 시약명, CAS, 제조사, 위치 검색...">
+              <input id="consumableSearch" aria-label="소모품 및 시약 검색" placeholder="소모품명, 모델명, 제조사, 보관위치 검색...">
               <button id="btnClearConsumableSearch" class="btn-clear-search hidden" type="button" aria-label="검색어 지우기">✕</button>
             </div>
             <div class="view-mode-toggle" id="consumableViewModeToggle" role="group" aria-label="보기 모드 전환">
@@ -487,26 +522,7 @@
         </div>
         <div id="consumableRows" class="consumables-container"></div>
       </section>
-      <!-- 🚨 특별관리물질 공용 취급대장 (법정 보존 일지 및 월간 사용량 대장) -->
-      <section class="panel" id="chemicalLedgerPanel" style="margin-top:20px;">
-        <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <h3 style="margin:0;font-size:16px;color:var(--ink);">🚨 특별관리물질 공용 취급대장</h3>
-            <span class="count-badge" id="chemicalLogTotalCountBadge" style="background:#fee2e2;color:#991b1b;font-weight:700;">총 0건</span>
-          </div>
-          <div class="head-actions" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <button type="button" class="btn btn-export-log-csv" id="btnExportChemicalLogsMonth" title="이번 달 취급일지 엑셀 다운로드" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
-              📥 이번 달 취급대장 엑셀 (CSV)
-            </button>
-            <button type="button" class="btn btn-export-log-csv" id="btnExportChemicalLogsYear" title="연간 전체 취급일지 엑셀 다운로드" style="font-size:12px;display:inline-flex;align-items:center;gap:4px;">
-              📆 연간 전체 취급대장 엑셀 (CSV)
-            </button>
-          </div>
-        </div>
-        <div id="chemicalLedgerSummary" style="padding:12px 16px;background:var(--bg-subtle);border-bottom:1px solid var(--border);font-size:12.5px;color:var(--ink);"></div>
-        <div id="chemicalLedgerTableWrap" class="table-wrap" style="max-height:420px;overflow-y:auto;"></div>
       </section>
-    </section>
 
     <!-- 🔬 연구장비 포털 & 로그북 뷰 (Phase 1: 9대 연구장비 포털 및 독립 스테이션 모델) -->
     
@@ -533,7 +549,7 @@
       <div class="chem-portal-nav-bar">
         <div class="chem-main-tabs" role="tablist">
           <button type="button" class="chem-main-tab active" id="btnChemTabInventory">📦 재고현황</button>
-          <button type="button" class="chem-main-tab" id="btnChemTabCalendar">📅 취급 일지 캘린더</button>
+          <button type="button" class="chem-main-tab" id="btnChemTabCalendar">📅 취급 이력</button>
         </div>
         <div class="chem-nav-actions mobile-only">
           <button type="button" class="btn-sm user-only hidden" id="btnChemMobileNewProduct" style="background:#2563eb;color:#ffffff;font-weight:700;border:none;border-radius:6px;padding:6px 12px;font-size:12px;">
@@ -727,9 +743,9 @@
         <div class="panel chem-calendar-panel" style="border-radius:10px;padding:20px;">
           <!-- 캘린더 / 월별통계 / 연간통계 서브 탭 바 -->
           <div class="chem-cal-subtabs-bar">
-            <button type="button" class="btn-cal-subtab active" id="btnChemSubTabCalendar">📅 월간 취급 달력</button>
+            <button type="button" class="btn-cal-subtab active" id="btnChemSubTabCalendar">📅 일자별 취급 이력</button>
             <button type="button" class="btn-cal-subtab" id="btnChemSubTabMonthly">📊 월별 취급 통계</button>
-            <button type="button" class="btn-cal-subtab" id="btnChemSubTabYearly">📈 2026 연간 통계</button>
+            <button type="button" class="btn-cal-subtab" id="btnChemSubTabYearly">📈 연간 누적 통계</button>
           </div>
 
           <!-- 서브뷰 1: 캘린더 달력 뷰 -->
@@ -1926,7 +1942,7 @@
           <div class="help-card-body">
             <ul class="help-card-list">
               <li><b>N센터 86291호 연구실 비치 시약 관리</b>: 황산, 벤젠, DMF, 요오드화납, PCC 등 실제 보유 특별관리물질 수불 관리</li>
-              <li><b>취급 일지 캘린더</b>: 캘린더를 통해 특정 일자에 누가 사용했고 잔량이 얼마 남았는지 직관적으로 조회</li>
+              <li><b>취급 이력</b>: 캘린더를 통해 특정 일자에 누가 사용했고 잔량이 얼마 남았는지 직관적으로 조회</li>
               <li><b>시약별 이력 열람</b>: 각 시약 카드의 <code>[이력]</code>을 눌러 이전 사용자와 잔여량 실시간 확인</li>
             </ul>
           </div>
@@ -2020,7 +2036,7 @@
             </button>
             <div class="faq-accordion-answer">
               <p>1. <b>시약별 개별 이력 조회</b>: 재고 목록 테이블 우측의 <code>[이력]</code> 버튼을 클릭하면 해당 물질의 최초 입고량부터 역대 사용자별 사용량과 잔여량 변동 그래프가 팝업으로 투명하게 공개됩니다.</p>
-              <p>2. <b>취급 일지 캘린더</b>: 상단 탭에서 <code>[📅 취급 일지 캘린더]</code>를 누르면 달력 날짜별로 어떤 연구원이 무슨 시약을 몇 g/mL 사용했는지 컬러 배지로 표시되며, 일자를 클릭하여 당일 상세 내역을 즉시 확인할 수 있습니다.</p>
+              <p>2. <b>취급 이력</b>: 상단 탭에서 <code>[📅 취급 이력]</code>를 누르면 달력 날짜별로 어떤 연구원이 무슨 시약을 몇 g/mL 사용했는지 컬러 배지로 표시되며, 일자를 클릭하여 당일 상세 내역을 즉시 확인할 수 있습니다.</p>
             </div>
           </div>
 
