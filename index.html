@@ -652,8 +652,8 @@
 
       <!-- 8. 실시간 취급일지 작성 모달 -->
       <div id="modalChemWriteLogBackdrop" class="backdrop">
-        <section class="modal" role="dialog" aria-modal="true" style="max-width:620px;width:min(620px,94vw);border-radius:10px;overflow:hidden;">
-          <div class="modal-head" style="border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+        <section class="modal chem-write-modal" role="dialog" aria-modal="true" style="max-width:620px;width:min(620px,94vw);max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.22);">
+          <div class="modal-head" style="flex-shrink:0;border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
             <div>
               <h3 style="margin:0;font-size:16px;color:var(--ink);">📝 특별관리물질 취급일지 작성</h3>
               <p style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">산안법 제439조 법정 양식 · N센터 291호 이차원 소재 합성 실험실</p>
@@ -663,7 +663,7 @@
               <button class="icon-btn" id="btnCloseChemWriteLog" aria-label="닫기" type="button"><span aria-hidden="true">✕</span></button>
             </div>
           </div>
-          <form id="formWriteChemicalLogModal" style="padding:18px;">
+          <form id="formWriteChemicalLogModal" style="flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:18px;touch-action:pan-y;">
             <div style="margin-bottom:12px;">
               <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급 물질 *</label>
               <select id="modalChemSelect" class="form-control" style="width:100%;padding:8px 10px;font-size:13.5px;font-weight:600;">
@@ -686,7 +686,7 @@
               </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px;">
+            <div class="chem-qty-unit-row" style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px;">
               <div>
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">금회 사용량 *</label>
                 <input type="number" id="modalChemQty" step="0.1" min="0.1" value="10" class="form-control" required style="width:100%;padding:8px 10px;font-weight:700;">

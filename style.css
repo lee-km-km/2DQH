@@ -10466,23 +10466,95 @@ html:not(.is-admin) #btnHelpTabAdmin {
   color: #f1f5f9 !important;
 }
 
-/* 취급일지 작성 모달 폼 반응형: 모바일에서 세로로 글자 쪼개짐 방지 */
+/* 취급일지 작성 모달 데스크톱 & 모바일 스크롤 완벽 지원 */
+#modalChemWriteLogBackdrop.open {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  overscroll-behavior: contain !important;
+}
+
+#modalChemWriteLogBackdrop .modal {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 90vh !important;
+  max-height: 90dvh !important;
+  overflow: hidden !important;
+  background: var(--bg-card, #ffffff) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22) !important;
+}
+
+#modalChemWriteLogBackdrop .modal-head {
+  flex-shrink: 0 !important;
+  border-bottom: 1px solid var(--border) !important;
+  background: var(--bg-card, #ffffff) !important;
+  z-index: 2 !important;
+}
+
+#formWriteChemicalLogModal {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
+  padding: 18px !important;
+}
+
 @media (max-width: 640px) {
+  #modalChemWriteLogBackdrop {
+    padding: 10px 8px !important;
+    align-items: center !important;
+  }
+
   #modalChemWriteLogBackdrop .modal {
-    width: 95vw !important;
-    max-width: 95vw !important;
-    max-height: 90vh !important;
+    width: 96vw !important;
+    max-width: 96vw !important;
+    max-height: 92vh !important;
+    max-height: 92dvh !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  #modalChemWriteLogBackdrop .modal-head {
+    padding: 12px 14px !important;
+    flex-shrink: 0 !important;
   }
 
   #formWriteChemicalLogModal {
-    padding: 14px !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    touch-action: pan-y !important;
+    padding: 14px 14px 32px !important;
   }
 
-  #formWriteChemicalLogModal div[style*="grid-template-columns"] {
+  #formWriteChemicalLogModal div[style*="grid-template-columns"]:not(.chem-qty-unit-row) {
     display: flex !important;
     flex-direction: column !important;
     gap: 10px !important;
     margin-bottom: 10px !important;
+  }
+
+  #formWriteChemicalLogModal .chem-qty-unit-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    align-items: flex-end !important;
+    margin-bottom: 10px !important;
+  }
+  #formWriteChemicalLogModal .chem-qty-unit-row > div:first-child {
+    flex: 1 !important;
+  }
+  #formWriteChemicalLogModal .chem-qty-unit-row > div:last-child {
+    width: 72px !important;
+    flex-shrink: 0 !important;
   }
 
   #formWriteChemicalLogModal label {
@@ -10495,10 +10567,42 @@ html:not(.is-admin) #btnHelpTabAdmin {
 
   #formWriteChemicalLogModal input,
   #formWriteChemicalLogModal select {
-    font-size: 14px !important;
-    padding: 10px !important;
+    font-size: 16px !important;
+    min-height: 44px !important;
+    padding: 10px 12px !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    border-radius: 8px !important;
+  }
+
+  .chem-safety-check-section {
+    padding: 12px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .chem-safety-check-card {
+    padding: 10px 12px !important;
+    gap: 10px !important;
+    align-items: flex-start !important;
+  }
+
+  .chem-safety-checkbox {
+    margin-top: 2px !important;
+  }
+
+  .chem-safety-check-text {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    word-break: keep-all !important;
+  }
+
+  #formWriteChemicalLogModal button[type="submit"] {
+    min-height: 48px !important;
+    font-size: 15px !important;
+    padding: 12px 14px !important;
+    border-radius: 8px !important;
+    margin-top: 10px !important;
+    margin-bottom: 8px !important;
   }
 
   /* 특별관리물질 법정 서식 모달 모바일 가로 스크롤 지원 */

@@ -17315,11 +17315,19 @@ function openChemWriteLogModal(chemId){
   }
 
   modal.classList.add('open');
+  modal.style.display = 'flex';
+  if(document.body) document.body.classList.add('modal-open');
+  const formEl = $('formWriteChemicalLogModal');
+  if(formEl) formEl.scrollTop = 0;
 }
 
 function closeChemWriteLogModal(){
   const modal = $('modalChemWriteLogBackdrop');
-  if(modal) modal.classList.remove('open');
+  if(modal){
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
+  if(document.body) document.body.classList.remove('modal-open');
 }
 
 function updateModalChemStockPreview(){
