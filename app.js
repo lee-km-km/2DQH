@@ -4039,7 +4039,7 @@ function getAppBaseUrl(){
 function openEquipmentQrModal(eqId){
   if(!isAdmin()){
     toast('장비 본체 부착용 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
-    if(typeof openLoginModal === 'function') openLoginModal();
+    if(typeof openModal === 'function') openModal('login');
     return;
   }
   eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
@@ -4320,7 +4320,7 @@ function printGenericQrSticker(title, container, printAreaId){
 function openChemicalQrModal(){
   if(!isAdmin()){
     toast('시약장 부착용 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
-    if(typeof openLoginModal === 'function') openLoginModal();
+    if(typeof openModal === 'function') openModal('login');
     return;
   }
   const modal = $('modalChemicalQrBackdrop');
@@ -4351,22 +4351,37 @@ function openChemicalQrModal(){
   const closeBtn = $('btnCloseChemicalQr');
   if(closeBtn && !closeBtn._hasBound){
     closeBtn._hasBound = true;
-    closeBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+    closeBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      closeChemicalQrModal();
+    });
   }
   const closeBottomBtn = $('btnCloseChemicalQrBottom');
   if(closeBottomBtn && !closeBottomBtn._hasBound){
     closeBottomBtn._hasBound = true;
-    closeBottomBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+    closeBottomBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      closeChemicalQrModal();
+    });
   }
 
   modal.classList.add('open');
+  modal.style.display = 'flex';
+}
+
+function closeChemicalQrModal(){
+  const modal = $('modalChemicalQrBackdrop');
+  if(modal){
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
 }
 
 // [비품 대여 직통 QR 모달 열기]
 function openLoanQrModal(){
   if(!isAdmin()){
     toast('비품 대여 직통 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
-    if(typeof openLoginModal === 'function') openLoginModal();
+    if(typeof openModal === 'function') openModal('login');
     return;
   }
   const modal = $('modalLoanQrBackdrop');
@@ -4397,15 +4412,30 @@ function openLoanQrModal(){
   const closeBtn = $('btnCloseLoanQr');
   if(closeBtn && !closeBtn._hasBound){
     closeBtn._hasBound = true;
-    closeBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+    closeBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      closeLoanQrModal();
+    });
   }
   const closeBottomBtn = $('btnCloseLoanQrBottom');
   if(closeBottomBtn && !closeBottomBtn._hasBound){
     closeBottomBtn._hasBound = true;
-    closeBottomBtn.addEventListener('click', function(){ modal.classList.remove('open'); });
+    closeBottomBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      closeLoanQrModal();
+    });
   }
 
   modal.classList.add('open');
+  modal.style.display = 'flex';
+}
+
+function closeLoanQrModal(){
+  const modal = $('modalLoanQrBackdrop');
+  if(modal){
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
 }
 
 function getDrawableSafe(getter){
@@ -9489,14 +9519,14 @@ function bindEvents(){
       e.stopPropagation();
       if(!isAdmin()){
         toast('장비 본체 부착용 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
-        if(typeof openLoginModal === 'function') openLoginModal();
+        if(typeof openModal === 'function') openModal('login');
         return;
       }
       openEquipmentQrModal(currentSelectedEquipment);
       return;
     }
 
-        // 화학물질 직통 QR 모달 열기
+    // 화학물질 직통 QR 모달 열기
     if(target.id === 'btnChemShowDirectQr' || target.closest('#btnChemShowDirectQr') || target.id === 'btnChemWriteModalQr' || target.closest('#btnChemWriteModalQr')){
       e.preventDefault();
       openChemicalQrModal();
@@ -9504,21 +9534,22 @@ function bindEvents(){
     }
 
     // 비품 대여 직통 QR 모달 열기
-    if(target.id === 'btnShowLoanDirectQr' || target.closest('#btnShowLoanDirectQr') || target.id === 'btnLoanModalQr' || target.closest('#btnLoanModalQr')){
+    if(target.id === 'btnShowLoanDirectQr' || target.closest('#btnShowLoanDirectQr') ||
+       target.id === 'btnShowLoanDirectQrToolbar' || target.closest('#btnShowLoanDirectQrToolbar') ||
+       target.id === 'btnLoanHeadQr' || target.closest('#btnLoanHeadQr') ||
+       target.id === 'btnLoanModalQr' || target.closest('#btnLoanModalQr')){
       e.preventDefault();
       openLoanQrModal();
       return;
     }
 
-    if(target.id === 'btnCloseChemicalQr' || target.id === 'btnCloseChemicalQrBottom' || target.closest('#btnCloseChemicalQr')){
-      const cm = $('modalChemicalQrBackdrop');
-      if(cm) cm.classList.remove('open');
+    if(target.id === 'btnCloseChemicalQr' || target.id === 'btnCloseChemicalQrBottom' || target.closest('#btnCloseChemicalQr') || target.closest('#btnCloseChemicalQrBottom')){
+      closeChemicalQrModal();
       return;
     }
 
-    if(target.id === 'btnCloseLoanQr' || target.id === 'btnCloseLoanQrBottom' || target.closest('#btnCloseLoanQr')){
-      const lm = $('modalLoanQrBackdrop');
-      if(lm) lm.classList.remove('open');
+    if(target.id === 'btnCloseLoanQr' || target.id === 'btnCloseLoanQrBottom' || target.closest('#btnCloseLoanQr') || target.closest('#btnCloseLoanQrBottom')){
+      closeLoanQrModal();
       return;
     }
 
@@ -9842,6 +9873,72 @@ function bindEvents(){
       e.preventDefault();
       e.stopPropagation();
       openEquipmentQrModal(currentSelectedEquipment);
+    });
+  }
+
+  // 특별관리물질 직통 QR 버튼 직접 바인딩
+  const chemDirectQrBtn = $('btnChemShowDirectQr');
+  if(chemDirectQrBtn){
+    chemDirectQrBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openChemicalQrModal();
+    });
+  }
+  const chemWriteModalQrBtn = $('btnChemWriteModalQr');
+  if(chemWriteModalQrBtn){
+    chemWriteModalQrBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openChemicalQrModal();
+    });
+  }
+
+  // 비품 대여 직통 QR 버튼 직접 바인딩
+  const loanDirectQrBtn = $('btnShowLoanDirectQr');
+  if(loanDirectQrBtn){
+    loanDirectQrBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openLoanQrModal();
+    });
+  }
+  const loanDirectQrToolbarBtn = $('btnShowLoanDirectQrToolbar');
+  if(loanDirectQrToolbarBtn){
+    loanDirectQrToolbarBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openLoanQrModal();
+    });
+  }
+  const loanHeadQrBtn = $('btnLoanHeadQr');
+  if(loanHeadQrBtn){
+    loanHeadQrBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openLoanQrModal();
+    });
+  }
+  const loanModalQrBtn = $('btnLoanModalQr');
+  if(loanModalQrBtn){
+    loanModalQrBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openLoanQrModal();
+    });
+  }
+
+  const chemQrBackdrop = $('modalChemicalQrBackdrop');
+  if(chemQrBackdrop){
+    chemQrBackdrop.addEventListener('click', function(e){
+      if(e.target === chemQrBackdrop) closeChemicalQrModal();
+    });
+  }
+
+  const loanQrBackdrop = $('modalLoanQrBackdrop');
+  if(loanQrBackdrop){
+    loanQrBackdrop.addEventListener('click', function(e){
+      if(e.target === loanQrBackdrop) closeLoanQrModal();
     });
   }
 
@@ -10206,9 +10303,7 @@ function handleUrlFastTrack(){
     const directChemId = getParam('chem') || getParam('chemId') || getParam('id');
 
     if(isChemLogAction || directChemId){
-      showView('consumables', { updateUrl: false });
-      selectedConsumableCategory = '시약';
-      if(typeof renderConsumables === 'function') renderConsumables();
+      showView('chemicals', { updateUrl: false });
       if(typeof render291InventoryTable === 'function') render291InventoryTable();
       setTimeout(function(){
         openChemWriteLogModal(directChemId);
@@ -18688,14 +18783,25 @@ function bindChemicalsEvents(){
   addEvt('formWriteChemicalLogModal', 'submit', handleModalChemLogSubmit);
 
   // L. QR 모달 조작
+  addEvt('btnChemShowDirectQr', 'click', function(e){
+    e.preventDefault();
+    openChemicalQrModal();
+  });
+  addEvt('btnChemWriteModalQr', 'click', function(e){
+    e.preventDefault();
+    openChemicalQrModal();
+  });
   addEvt('btnCloseChemicalQr', 'click', function(e){
     e.preventDefault();
-    const modal = $('modalChemicalQrBackdrop');
-    if(modal) modal.classList.remove('open');
+    closeChemicalQrModal();
+  });
+  addEvt('btnCloseChemicalQrBottom', 'click', function(e){
+    e.preventDefault();
+    closeChemicalQrModal();
   });
   addEvt('modalChemicalQrBackdrop', 'click', function(e){
     if(e.target === $('modalChemicalQrBackdrop')){
-      $('modalChemicalQrBackdrop').classList.remove('open');
+      closeChemicalQrModal();
     }
   });
 }

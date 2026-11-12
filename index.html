@@ -197,13 +197,14 @@
           <span class="count-badge" id="inventoryCountBadge">0</span>
         </div>
         <div class="head-actions">
+          <button class="btn admin-only hidden" id="btnShowLoanDirectQr" type="button" title="비품 대여 직통 QR 라벨 (관리자 전용)" style="background:#ffffff;border:1.5px solid #2563eb;color:#2563eb;font-weight:700;">📱 대여 QR</button>
           <button class="btn admin-only hidden" id="addAsset">＋ 비품 등록</button>
         </div>
       </div>
       <section class="panel">
         <div id="searchFilterCollapsible" class="search-collapsible-panel">
-          <div class="toolbar">
-            <div class="search-input-box">
+          <div class="toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <div class="search-input-box" style="flex:1;min-width:200px;">
               <span class="search-input-icon" aria-hidden="true">🔍</span>
               <input id="assetSearch" aria-label="비품 검색" placeholder="비품명, 이니셜(m=멀티미터), 위치 검색...">
               <button id="btnClearSearch" class="btn-clear-search hidden" type="button" aria-label="검색어 지우기">✕</button>
@@ -214,6 +215,7 @@
               <option value="borrowed">대여 중</option>
               <option value="maintenance">수리 중</option>
             </select>
+            <button class="btn admin-only hidden" id="btnShowLoanDirectQrToolbar" type="button" title="비품 대여 직통 QR 라벨 (관리자 전용)" style="background:#ffffff;border:1.5px solid #2563eb;color:#2563eb;font-weight:700;white-space:nowrap;padding:7px 12px;font-size:12.5px;">📱 대여 QR</button>
           </div>
           <div id="inventoryCategories" class="inventory-categories"></div>
         </div>
@@ -230,7 +232,10 @@
           <h1>대여 현황</h1>
           <span class="count-badge" id="activeLoansCountBadge">0</span>
         </div>
-        <button type="button" class="btn primary" id="loanAdd" style="display:inline-flex;align-items:center;gap:6px;">⚡ 비품 대여 신청</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button type="button" class="btn admin-only hidden" id="btnLoanHeadQr" title="비품 대여 직통 QR 라벨 (관리자 전용)" style="border:1.5px solid #2563eb;color:#2563eb;background:#ffffff;font-weight:700;">📱 대여 QR</button>
+          <button type="button" class="btn primary" id="loanAdd" style="display:inline-flex;align-items:center;gap:6px;">⚡ 비품 대여 신청</button>
+        </div>
       </div>
       <section class="panel">
         <div class="toolbar">
@@ -514,10 +519,10 @@
             <button type="button" class="btn-korea-action green admin-only hidden" id="btnChemProductExcel" title="전체 재고현황 엑셀 다운로드">
               제품 통합 EXCEL
             </button>
-            <button type="button" class="btn-korea-action admin-only" id="btnChemShowDirectQr" title="시약장 부착용 취급일지 직통 QR 라벨 (관리자 전용)" style="background:#ffffff;border:1.5px solid #059669;color:#059669;font-weight:700;">
+            <button type="button" class="btn-korea-action admin-only hidden" id="btnChemShowDirectQr" title="시약장 부착용 취급일지 직통 QR 라벨 (관리자 전용)" style="background:#ffffff;border:1.5px solid #059669;color:#059669;font-weight:700;">
               📱 일지작성 QR
             </button>
-            <button type="button" class="btn-korea-action dark" id="btnChemOpenNewProductModal">
+            <button type="button" class="btn-korea-action dark admin-only hidden" id="btnChemOpenNewProductModal">
               ＋ 시약등록
             </button>
             
@@ -653,7 +658,10 @@
               <h3 style="margin:0;font-size:16px;color:var(--ink);">📝 특별관리물질 취급일지 작성</h3>
               <p style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">산안법 제439조 법정 양식 · N센터 291호 이차원 소재 합성 실험실</p>
             </div>
-            <button class="icon-btn" id="btnCloseChemWriteLog" aria-label="닫기" type="button"><span aria-hidden="true">×</span></button>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" class="btn admin-only hidden" id="btnChemWriteModalQr" style="padding:4px 8px;font-size:12px;font-weight:700;border:1px solid #059669;color:#059669;background:#ffffff;" title="시약장 부착용 취급일지 직통 QR 라벨">📱 QR</button>
+              <button class="icon-btn" id="btnCloseChemWriteLog" aria-label="닫기" type="button"><span aria-hidden="true">✕</span></button>
+            </div>
           </div>
           <form id="formWriteChemicalLogModal" style="padding:18px;">
             <div style="margin-bottom:12px;">
@@ -1186,7 +1194,7 @@
           <div class="eq-detail-badges" style="display:flex;align-items:center;gap:8px;">
             <span class="eq-badge-cat" id="detailEqCategory">분석·측정</span>
             <span class="eq-badge-status" id="detailEqStatus">운영 중</span>
-            <button type="button" class="btn btn-show-eq-qr admin-only" id="btnDetailTopShowQr" title="장비 본체 부착용 QR 라벨 (관리자 전용)" style="padding:4px 12px;font-weight:800;border:1.5px solid #2563eb;color:#2563eb;background:#ffffff;border-radius:6px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">📱 QR</button>
+            <button type="button" class="btn btn-show-eq-qr admin-only hidden" id="btnDetailTopShowQr" title="장비 본체 부착용 QR 라벨 (관리자 전용)" style="padding:4px 12px;font-weight:800;border:1.5px solid #2563eb;color:#2563eb;background:#ffffff;border-radius:6px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">📱 QR</button>
           </div>
         </div>
 
@@ -1972,7 +1980,10 @@
   <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-head">
       <h2 id="modalTitle">대여</h2>
-      <button type="button" class="icon-btn" id="closeModal" aria-label="닫기"><span aria-hidden="true">✕</span></button>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button type="button" class="btn admin-only hidden" id="btnLoanModalQr" style="padding:4px 8px;font-size:12px;font-weight:700;border:1px solid #2563eb;color:#2563eb;background:#ffffff;" title="비품 대여 직통 QR 라벨">📱 QR</button>
+        <button type="button" class="icon-btn" id="closeModal" aria-label="닫기"><span aria-hidden="true">✕</span></button>
+      </div>
     </div>
     <form id="modalForm">
       <div id="modalBody" class="modal-body"></div>
