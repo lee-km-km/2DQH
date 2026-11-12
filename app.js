@@ -1196,7 +1196,15 @@ function activeLoanFor(id){
 }
 
 function isAdmin(){
-  return admin;
+  try {
+    if(admin === true) return true;
+    if(localStorage.getItem('labstock_is_admin') === 'true') return true;
+    if(typeof document !== 'undefined'){
+      if(document.body && document.body.classList.contains('is-admin')) return true;
+      if(document.documentElement && document.documentElement.classList.contains('is-admin')) return true;
+    }
+  } catch(_) {}
+  return false;
 }
 
 function statusFor(a){
@@ -3995,6 +4003,11 @@ function renderQrCodeInto(container, text, size){
 
 // [장비 본체 부착용 QR 라벨 생성 및 인쇄 모달 (관리자 전용)]
 function openEquipmentQrModal(eqId){
+  if(!isAdmin()){
+    toast('장비 본체 부착용 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
+    if(typeof openLoginModal === 'function') openLoginModal();
+    return;
+  }
   eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
   const eq = researchEquipments.find(function(e){ return e.id === eqId || e.code === eqId; }) || {
     id: eqId, code: eqId, name: eqId, model: 'IBS 2DQH 연구장비', location: 'N센터 실험실'
@@ -9235,8 +9248,15 @@ function bindEvents(){
       }
     }
 
-    // 장비 본체 부착용 QR 모달 제어 (우측 상단 단일 QR 버튼 & 사용기록 작성 모달 내 QR 버튼)
+    // 장비 본체 부착용 QR 모달 제어 (우측 상단 단일 QR 버튼 & 사용기록 작성 모달 내 QR 버튼 - 관리자 전용)
     if(target.id === 'btnDetailTopShowQr' || target.closest('#btnDetailTopShowQr') || target.id === 'btnTestDriveModalQr' || target.closest('#btnTestDriveModalQr')){
+      e.preventDefault();
+      e.stopPropagation();
+      if(!isAdmin()){
+        toast('장비 본체 부착용 QR 코드는 관리자 전용 기능입니다. 관리자 로그인이 필요합니다.');
+        if(typeof openLoginModal === 'function') openLoginModal();
+        return;
+      }
       openEquipmentQrModal(currentSelectedEquipment);
       return;
     }
@@ -9543,6 +9563,24 @@ function bindEvents(){
   if(eqQrBackdrop){
     eqQrBackdrop.addEventListener('click', function(e){
       if(e.target === eqQrBackdrop) closeEquipmentQrModal();
+    });
+  }
+
+  // 전자 로그북 상단 및 작성 모달 내 QR 버튼 직접 바인딩 (이벤트 누락 방지)
+  const topQrBtn = $('btnDetailTopShowQr');
+  if(topQrBtn){
+    topQrBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openEquipmentQrModal(currentSelectedEquipment);
+    });
+  }
+  const modalQrBtn = $('btnTestDriveModalQr');
+  if(modalQrBtn){
+    modalQrBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      openEquipmentQrModal(currentSelectedEquipment);
     });
   }
 
