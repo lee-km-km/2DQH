@@ -4620,8 +4620,8 @@ function openEquipmentTestDrive(code){
   const now = new Date();
   const defTime = pad(now.getHours()) + ':' + pad(now.getMinutes());
   const storedUser = localStorage.getItem('xrd_user_name') || '';
-  const storedAffil = localStorage.getItem('xrd_affiliation') || '2DQH';
-  const storedProf = localStorage.getItem('xrd_professor') || '신현석 교수님';
+  const storedAffil = localStorage.getItem('xrd_affiliation') || '';
+  const storedProf = localStorage.getItem('xrd_professor') || '';
 
   let formHtml = '';
   formHtml += '<input type="hidden" name="equipment_id" value="' + safe(targetEq.id) + '">';
@@ -7533,7 +7533,7 @@ function openModal(mode, id){
   } else if(mode === 'chemicalLog'){
     titleText = '📝 특별관리물질 취급일지 작성';
   } else if(mode === 'login' || mode === 'signup'){
-    titleText = mode === 'signup' ? '연구원 회원가입' : '연구실 로그인';
+    titleText = mode === 'signup' ? 'Sign Up (회원가입)' : 'Log In (로그인)';
   }
 
   $('modalTitle').textContent = titleText;
@@ -8012,56 +8012,65 @@ function openModal(mode, id){
     parts.push('</div>');
   } else if(mode === 'signup'){
     parts.push('<div class="auth-modal-tabs">');
-    parts.push('  <button type="button" class="auth-modal-tab" id="btnSwitchToLoginTab">로그인</button>');
-    parts.push('  <button type="button" class="auth-modal-tab active" id="btnSwitchToSignupTab">회원가입</button>');
+    parts.push('  <button type="button" class="auth-modal-tab" id="btnSwitchToLoginTab">Log In (로그인)</button>');
+    parts.push('  <button type="button" class="auth-modal-tab active" id="btnSwitchToSignupTab">Sign Up (회원가입)</button>');
     parts.push('</div>');
 
-    parts.push('<label class="field">아이디 (ID) *<input name="username" required maxlength="30" placeholder="영문/숫자 아이디 (예: kmlee)" autocomplete="username"></label>');
-    parts.push('<label class="field" style="margin-top:10px">비밀번호 *<input name="password" type="password" required minlength="2" placeholder="비밀번호 입력" autocomplete="new-password"></label>');
-    parts.push('<label class="field" style="margin-top:10px">유저명 (사용자 성명) *<input name="user_name" required maxlength="50" placeholder="성명 입력 (예: 이강민)"></label>');
-    parts.push('<label class="field" style="margin-top:10px">지도교수 (어드바이저) *<input name="advisor" required maxlength="50" placeholder="지도교수 성함 (예: 신현석 교수님)" value="신현석 교수님"></label>');
-    parts.push('<label class="field" style="margin-top:10px">소속 부서 / 연구실 *<input name="affiliation" required maxlength="80" placeholder="소속 부서 (예: 2DQH)" value="2DQH"></label>');
+    parts.push('<label class="field">User ID (아이디) *<input name="username" required maxlength="30" placeholder="e.g. kmlee" autocomplete="username"></label>');
+    parts.push('<label class="field" style="margin-top:10px">Password (비밀번호) *<input name="password" type="password" required minlength="2" placeholder="Password" autocomplete="new-password"></label>');
+    parts.push('<label class="field" style="margin-top:10px">Name (유저명 / 성명) *<input name="user_name" required maxlength="50" placeholder="e.g. 이강민 (Kangmin Lee)"></label>');
+    parts.push('<label class="field" style="margin-top:10px">Advisor (지도교수) *<input name="advisor" required maxlength="50" placeholder="e.g. 신현석 교수님 (Prof. Shin)"></label>');
+    parts.push('<label class="field" style="margin-top:10px">Affiliation / Department (소속 부서 / 연구실) *<input name="affiliation" required maxlength="80" placeholder="e.g. 2DQH / Department"></label>');
 
-    parts.push('<div class="auth-help-card">');
-    parts.push('  ✨ <b>연구원 정보 자동 연동:</b> 회원가입 완료 즉시 연구장비 로그북, 비품 대여, 특별관리물질 취급일지에 유저명·지도교수·소속이 자동 연동됩니다.');
-    parts.push('</div>');
-
-    parts.push('<div class="auth-switch-link">');
-    parts.push('  이미 계정이 있으신가요? <a id="linkSwitchToLogin">로그인하기</a>');
+    parts.push('<div class="auth-switch-link" style="margin-top:16px;">');
+    parts.push('  Already have an account? (이미 계정이 있으신가요?) <a id="linkSwitchToLogin" role="button">Log In (로그인하기)</a>');
     parts.push('</div>');
   } else {
     parts.push('<div class="auth-modal-tabs">');
-    parts.push('  <button type="button" class="auth-modal-tab active" id="btnSwitchToLoginTab">로그인</button>');
-    parts.push('  <button type="button" class="auth-modal-tab" id="btnSwitchToSignupTab">회원가입</button>');
+    parts.push('  <button type="button" class="auth-modal-tab active" id="btnSwitchToLoginTab">Log In (로그인)</button>');
+    parts.push('  <button type="button" class="auth-modal-tab" id="btnSwitchToSignupTab">Sign Up (회원가입)</button>');
     parts.push('</div>');
 
-    parts.push('<label class="field">아이디 또는 이메일 *<input name="username" required placeholder="아이디 또는 이메일 입력" autocomplete="username"></label>');
-    parts.push('<label class="field" style="margin-top:10px">비밀번호 *<input name="password" type="password" required autocomplete="current-password" placeholder="비밀번호 입력"></label>');
+    parts.push('<label class="field">User ID / Email (아이디 또는 이메일) *<input name="username" required placeholder="User ID or Email" autocomplete="username"></label>');
+    parts.push('<label class="field" style="margin-top:10px">Password (비밀번호) *<input name="password" type="password" required autocomplete="current-password" placeholder="Password"></label>');
 
-    parts.push('<div class="auth-help-card">');
-    parts.push('  💡 <b>연구원 / 관리자 공용:</b> 등록된 연구원 아이디로 로그인 시 사용자 정보가 전 화면에 자동 입력되며, 관리자(admin) 로그인 시 관리 기능이 활성화됩니다.');
+    parts.push('<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:10px;">');
+    parts.push('  <a id="btnForgotPassword" role="button" style="font-size:12px;color:#2563eb;font-weight:600;text-decoration:underline;cursor:pointer;">Forgot password? (비밀번호 찾기)</a>');
     parts.push('</div>');
 
-    parts.push('<div class="auth-switch-link">');
-    parts.push('  아직 계정이 없으신가요? <a id="linkSwitchToSignup">회원가입하기</a>');
+    parts.push('<div class="auth-switch-link" style="margin-top:16px;">');
+    parts.push('  Don\'t have an account? (계정이 없으신가요?) <a id="linkSwitchToSignup" role="button">Sign Up (회원가입하기)</a>');
     parts.push('</div>');
   }
 
   $('modalBody').innerHTML = parts.join('');
 
   if(mode === 'login' || mode === 'signup'){
-    const toSignup = $('modalBody').querySelector('#btnSwitchToSignupTab') || $('modalBody').querySelector('#linkSwitchToSignup');
-    const toLogin = $('modalBody').querySelector('#btnSwitchToLoginTab') || $('modalBody').querySelector('#linkSwitchToLogin');
-    if(toSignup){
-      toSignup.addEventListener('click', function(e){
+    const signupTriggers = $('modalBody').querySelectorAll('#btnSwitchToSignupTab, #linkSwitchToSignup');
+    signupTriggers.forEach(function(el){
+      el.addEventListener('click', function(e){
         e.preventDefault();
+        e.stopPropagation();
         openModal('signup');
       });
-    }
-    if(toLogin){
-      toLogin.addEventListener('click', function(e){
+    });
+
+    const loginTriggers = $('modalBody').querySelectorAll('#btnSwitchToLoginTab, #linkSwitchToLogin');
+    loginTriggers.forEach(function(el){
+      el.addEventListener('click', function(e){
         e.preventDefault();
+        e.stopPropagation();
         openModal('login');
+      });
+    });
+
+    const forgotBtn = $('modalBody').querySelector('#btnForgotPassword');
+    if(forgotBtn){
+      forgotBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        alert('비밀번호를 분실하신 경우 시스템 관리자 또는 연구실 담당자에게 문의하세요.');
+        if(typeof toast === 'function') toast('비밀번호 분실 시 연구실 관리자에게 문의하세요.');
       });
     }
   }
@@ -8098,8 +8107,8 @@ function openModal(mode, id){
   let btnText = '저장';
 
   if(mode === 'borrow') btnText = '대여 신청';
-  else if(mode === 'signup') btnText = '🚀 회원가입 완료';
-  else if(mode === 'login') btnText = '로그인';
+  else if(mode === 'signup') btnText = 'Sign Up (회원가입)';
+  else if(mode === 'login') btnText = 'Log In (로그인)';
   else if(mode === 'return') btnText = '✅ 반납 완료';
   else if(mode === 'login') btnText = '로그인';
   else if(mode === 'editLoan') btnText = '수정 저장';
@@ -8626,8 +8635,8 @@ async function saveForm(e){
       const uName = (v.username || '').trim();
       const uPass = (v.password || '').trim();
       const rName = (v.user_name || '').trim();
-      const rAdvisor = (v.advisor || '신현석 교수님').trim();
-      const rAffil = (v.affiliation || '2DQH').trim();
+      const rAdvisor = (v.advisor || '').trim();
+      const rAffil = (v.affiliation || '').trim();
 
       if(!uName || !uPass || !rName){
         throw new Error('아이디, 비밀번호, 유저명을 모두 입력해주세요.');
