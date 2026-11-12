@@ -12756,8 +12756,14 @@ html:not(.is-admin) #btnHelpTabAdmin {
   .chem-inventory-table td:nth-child(15) { overflow: visible !important; }
 }
 
-/* 모바일 서랍 헤더 ✕ 버튼을 상단바 햄버거 버튼과 정확히 같은 위치에 정렬 */
-@media (max-width: 700px) {
+/* 모바일 서랍 ✕ 버튼: 상단바 햄버거 버튼(우측 16px, 상단 8px, 44x44px)과 100% 완벽 일치 및 시인성 보장 */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+  }
   .sidebar .sidebar-mobile-head {
     box-sizing: border-box !important;
     height: 60px !important;
@@ -12765,12 +12771,45 @@ html:not(.is-admin) #btnHelpTabAdmin {
     margin: -16px -18px 14px -18px !important;
     padding: 0 16px !important;
     width: calc(100% + 36px) !important;
+    display: flex !important;
     align-items: center !important;
+    justify-content: space-between !important;
+    position: relative !important;
   }
+  .sidebar .btn-close-drawer,
   .sidebar-mobile-head .btn-close-drawer {
+    position: absolute !important;
+    top: 8px !important;
+    right: 16px !important;
     width: 44px !important;
     height: 44px !important;
-    flex-shrink: 0 !important;
+    margin: 0 !important;
+    z-index: 1005 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: 1.5px solid var(--ink, #0f172a) !important;
+    border-radius: 8px !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    color: var(--ink, #0f172a) !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+  [data-theme="dark"] .sidebar .btn-close-drawer,
+  [data-theme="dark"] .sidebar-mobile-head .btn-close-drawer {
+    border-color: #cbd5e1 !important;
+    color: #f8fafc !important;
+    background: rgba(30, 41, 59, 0.4) !important;
+  }
+  .sidebar .btn-close-drawer:hover,
+  .sidebar-mobile-head .btn-close-drawer:hover {
+    background: rgba(15, 23, 42, 0.08) !important;
   }
 }
 

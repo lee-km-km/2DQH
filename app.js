@@ -9562,7 +9562,7 @@ function openMobileDrawer(){
     hamburger.classList.add('is-active');
     hamburger.setAttribute('aria-expanded', 'true');
   }
-  document.body.classList.add('drawer-locked'); if(typeof alignDrawerCloseToHamburger === 'function') alignDrawerCloseToHamburger();
+  document.body.classList.add('drawer-locked');
 }
 
 function closeMobileDrawer(){
@@ -20342,23 +20342,3 @@ function renderInvSubLoans(){
   html += '</tbody></table>';
   container.innerHTML = html;
 }
-
-// 서랍의 ✕ 버튼을 상단바 햄버거 버튼의 실제 화면 좌표에 픽셀 단위로 정확히 겹치도록 배치
-function alignDrawerCloseToHamburger(){
-  const hamburger = $('btnOpenMobileDrawer');
-  const closeBtn = $('btnCloseMobileDrawer');
-  if(!hamburger || !closeBtn) return;
-  const r = hamburger.getBoundingClientRect();
-  if(!r.width) return;
-  closeBtn.style.setProperty('position', 'fixed', 'important');
-  closeBtn.style.setProperty('top', Math.round(r.top) + 'px', 'important');
-  closeBtn.style.setProperty('left', Math.round(r.left) + 'px', 'important');
-  closeBtn.style.setProperty('width', Math.round(r.width) + 'px', 'important');
-  closeBtn.style.setProperty('height', Math.round(r.height) + 'px', 'important');
-  closeBtn.style.setProperty('margin', '0', 'important');
-  closeBtn.style.setProperty('z-index', '1005', 'important');
-}
-window.addEventListener('resize', function(){
-  const sb = $('mainSidebar');
-  if(sb && sb.classList.contains('drawer-open')) alignDrawerCloseToHamburger();
-});
