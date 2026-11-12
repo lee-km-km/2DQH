@@ -11082,3 +11082,194 @@ html:not(.is-admin) #btnHelpTabAdmin {
   border-color: #10b981 !important;
   background: rgba(5, 150, 105, 0.15) !important;
 }
+
+
+/* ==========================================================================
+   [모바일 취급일지 작성 & XRD 워크스테이션 반응형 UI 최적화 패치]
+   ========================================================================== */
+
+/* 1. 특별관리물질 취급일지 작성 모달 상단 잘림 방지 (align-items: flex-start) */
+#modalChemWriteLogBackdrop {
+  align-items: flex-start !important;
+  padding: 10px 8px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+#modalChemWriteLogBackdrop .modal {
+  margin: 8px auto 24px !important;
+  max-height: calc(100dvh - 16px) !important;
+  width: min(620px, 96vw) !important;
+}
+
+/* 2. 취급자 성명과 취급 일시 2열 그리드 배치 (일시 칸 과도한 길이 방지) */
+.chem-handler-date-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+}
+@media (max-width: 640px) {
+  .chem-handler-date-row {
+    display: grid !important;
+    grid-template-columns: 110px 1fr !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+  }
+  .chem-handler-col input {
+    text-align: center;
+  }
+  .chem-date-col input {
+    font-size: 13.5px !important;
+    padding: 8px 6px !important;
+  }
+}
+
+/* 3. 산안법 안전점검 리스트 모바일 칸 넘침 방지 및 깔끔한 줄바꿈 */
+.chem-safety-check-section {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  padding: 12px 14px !important;
+}
+.chem-safety-check-card {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  padding: 8px 10px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+.chem-safety-check-info {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 6px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+.chem-safety-check-badge {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+  margin-top: 1px !important;
+}
+.chem-safety-check-text {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  word-break: keep-all !important;
+  white-space: normal !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+/* 4. 모바일 취급일지 리스트 표(Table) 세로 찌그러짐 원천 차단 */
+.chem-official-inventory-table-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  display: block !important;
+}
+.chem-inventory-table {
+  min-width: 1200px !important;
+  width: 100% !important;
+  border-collapse: collapse !important;
+  table-layout: fixed !important;
+}
+.chem-inventory-table th,
+.chem-inventory-table td {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+/* 5. HR-XRD 워크스테이션 Session 그리드 (날짜 & 시작시간 겹침 방지) */
+.xrd-session-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px 12px !important;
+}
+.xrd-session-col-res {
+  grid-column: 1 / -1 !important;
+}
+.xrd-session-col-date {
+  grid-column: 1 / 2 !important;
+  min-width: 0 !important;
+}
+.xrd-session-col-start {
+  grid-column: 2 / 3 !important;
+  min-width: 0 !important;
+}
+.xrd-session-col-end {
+  grid-column: 1 / -1 !important;
+  min-width: 0 !important;
+}
+#xrdForm:not(.mode-start) .xrd-session-grid {
+  grid-template-columns: 1fr 1fr !important;
+}
+#xrdForm:not(.mode-start) .xrd-session-col-start {
+  grid-column: 1 / 2 !important;
+}
+#xrdForm:not(.mode-start) .xrd-session-col-end {
+  grid-column: 2 / 3 !important;
+}
+
+.xrd-mode-tab {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+#xrdSaveBtn {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+
+
+/* 6. 장비/시약/비품 QR 라벨 모달 1:1 완벽 정사각형 및 캔버스 왜곡 방지 */
+.equipment-qr-label-card.square-label {
+  width: 260px !important;
+  height: 260px !important;
+  max-width: 260px !important;
+  max-height: 260px !important;
+  aspect-ratio: 1 / 1 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin: 0 auto !important;
+  padding: 18px 14px !important;
+}
+.equipment-qr-label-card.square-label .qr-label-title {
+  margin: 0 !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  color: #0f172a !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+.equipment-qr-label-card.square-label .qr-label-canvas-box {
+  width: 180px !important;
+  height: 180px !important;
+  max-width: 180px !important;
+  max-height: 180px !important;
+  aspect-ratio: 1 / 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: auto !important;
+  padding: 0 !important;
+  border: none !important;
+}
+.equipment-qr-label-card.square-label .qr-label-canvas-box canvas,
+.equipment-qr-label-card.square-label .qr-label-canvas-box img {
+  width: 180px !important;
+  height: 180px !important;
+  max-width: 180px !important;
+  max-height: 180px !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 auto !important;
+}

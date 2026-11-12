@@ -387,7 +387,7 @@
     <!-- ================================================================= -->
     
     <!-- ================================================================= -->
-    <!-- 🧪 특별관리물질 & 시약 안전관리 포털 (IBS 2DQH N센터 291호 연구실) -->
+    <!-- 🧪 특별관리물질 & 시약 안전관리 포털 (IBS 2DQH N센터 86291호 연구실) -->
     <!-- ================================================================= -->
     <section class="view hidden" id="view-chemicals">
       <!-- 1. 상단 탭 (재고현황 | 월별 취급 캘린더 | 신규제품등록) & 가이드 다운로드 -->
@@ -415,7 +415,7 @@
           </button>
         </div>
 
-        <!-- 검색 필터 박스 (291호 시스템 규격) -->
+        <!-- 검색 필터 박스 (86291호 시스템 규격) -->
         <div class="panel chem-search-box">
           <div class="chem-search-row">
             <div class="search-field">
@@ -453,7 +453,7 @@
               <label for="chemFilterLoc">보관위치</label>
               <select id="chemFilterLoc">
                 <option value="">-- 선택 --</option>
-                <option value="N센터 291호">N센터 291호</option>
+                <option value="N센터 86291호">N센터 86291호</option>
                 <option value="산시약장">산시약장</option>
                 <option value="유기용매장">유기용매장</option>
                 <option value="글러브박스">글러브박스</option>
@@ -513,7 +513,7 @@
             <button type="button" class="btn-korea-action red admin-only hidden" id="btnChemNoticeExtract" title="선택한 물질의 특별관리물질 고지문 자동 작성 및 인쇄">
               특별관리물질고지
             </button>
-            <button type="button" class="btn-korea-action blue admin-only hidden" id="btnChemOfficialLedgerModal" title="N센터 291호 법정 특별관리물질 취급일지 서식 열람 및 인쇄">
+            <button type="button" class="btn-korea-action blue admin-only hidden" id="btnChemOfficialLedgerModal" title="N센터 86291호 법정 특별관리물질 취급일지 서식 열람 및 인쇄">
               특별관리물질취급일지
             </button>
             <button type="button" class="btn-korea-action green admin-only hidden" id="btnChemProductExcel" title="전체 재고현황 엑셀 다운로드">
@@ -616,7 +616,7 @@
           <div id="chemSubViewYearly" class="chem-subview hidden">
             <div class="cal-stat-header">
               <h3 style="margin:0 0 4px;font-size:17px;font-weight:800;color:var(--ink);">2026 연간 누적 특별관리물질 현황</h3>
-              <p style="margin:0;font-size:13px;color:var(--ink-light);">N센터 291호 연간 누적 취급 실적 및 시약별 잔여율 모니터링</p>
+              <p style="margin:0;font-size:13px;color:var(--ink-light);">N센터 86291호 연간 누적 취급 실적 및 시약별 잔여율 모니터링</p>
             </div>
             <div class="cal-stat-cards-grid" id="yearlyStatCardsGrid">
               <!-- Cards rendered via JS -->
@@ -634,7 +634,7 @@
           <div class="modal-head" style="border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
             <div>
               <h3 id="chemHistoryModalTitle" style="margin:0;font-size:16px;color:var(--ink);">시약 취급 이력 및 잔여량 추적</h3>
-              <p id="chemHistoryModalSub" style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">N센터 291호 연구실 비치 시약</p>
+              <p id="chemHistoryModalSub" style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">N센터 86291호 연구실 비치 시약</p>
             </div>
             <button class="icon-btn" id="btnCloseChemHistory" aria-label="닫기" type="button"><span aria-hidden="true">×</span></button>
           </div>
@@ -656,7 +656,7 @@
           <div class="modal-head" style="flex-shrink:0;border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
             <div>
               <h3 style="margin:0;font-size:16px;color:var(--ink);">📝 특별관리물질 취급일지 작성</h3>
-              <p style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">산안법 제439조 법정 양식 · N센터 291호 이차원 소재 합성 실험실</p>
+              <p style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">산안법 제439조 법정 양식 · N센터 86291호 이차원 소재 합성 실험실</p>
             </div>
             <div style="display:flex;align-items:center;gap:6px;">
               <button type="button" class="btn admin-only hidden" id="btnChemWriteModalQr" style="padding:4px 8px;font-size:12px;font-weight:700;border:1px solid #059669;color:#059669;background:#ffffff;" title="시약장 부착용 취급일지 직통 QR 라벨">📱 QR</button>
@@ -675,13 +675,13 @@
               현재 잔여량: <b>500.0 mL</b> (초기 500.0 mL)
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-              <div>
-                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급자 성명 *</label>
+            <div class="chem-handler-date-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div class="chem-handler-col">
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);white-space:nowrap;word-break:keep-all;">취급자 성명 *</label>
                 <input type="text" id="modalChemHandler" class="form-control" placeholder="성명 (예: 이강민)" value="이강민" required style="width:100%;padding:8px 10px;">
               </div>
-              <div>
-                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급 일시 *</label>
+              <div class="chem-date-col">
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);white-space:nowrap;word-break:keep-all;">취급 일시 *</label>
                 <input type="datetime-local" id="modalChemDate" class="form-control" required style="width:100%;padding:8px 10px;">
               </div>
             </div>
@@ -703,29 +703,29 @@
             </div>
 
             <div class="chem-safety-check-section">
-              <div class="chem-safety-check-title">
-                <span>🛡️</span> 산안법 제439조 안전 준수 점검 (필수 확인)
+              <div class="chem-safety-check-title" style="word-break:keep-all;white-space:nowrap;">
+                <span>🛡️</span> 산안법 제439조 안전 준수 점검 (필수)
               </div>
               <div class="chem-safety-check-list">
                 <label class="chem-safety-check-card">
                   <input type="checkbox" id="modalChemCheckVent" checked required class="chem-safety-checkbox">
                   <div class="chem-safety-check-info">
                     <span class="chem-safety-check-badge">환기설비</span>
-                    <span class="chem-safety-check-text">국소배기장치(흄후드) 배기 정상 가동 및 제어풍속(0.4m/s 이상) 확인</span>
+                    <span class="chem-safety-check-text">흄후드 배기 정상 가동 및 풍속 확인</span>
                   </div>
                 </label>
                 <label class="chem-safety-check-card">
                   <input type="checkbox" id="modalChemCheckPpe" checked required class="chem-safety-checkbox">
                   <div class="chem-safety-check-info">
                     <span class="chem-safety-check-badge">보호구</span>
-                    <span class="chem-safety-check-text">방독마스크(유기가스/산성가스용)·보안경·내화학장갑 착용 완료</span>
+                    <span class="chem-safety-check-text">방독마스크·보안경·내화학장갑 착용</span>
                   </div>
                 </label>
                 <label class="chem-safety-check-card">
                   <input type="checkbox" id="modalChemCheckSafe" checked required class="chem-safety-checkbox">
                   <div class="chem-safety-check-info">
                     <span class="chem-safety-check-badge">안전확인</span>
-                    <span class="chem-safety-check-text">시약 용기 밀봉 상태, 누출 및 이상 없음 확인 (사고 예방 조치)</span>
+                    <span class="chem-safety-check-text">시약 용기 밀봉 및 누출 이상 없음</span>
                   </div>
                 </label>
               </div>
@@ -837,7 +837,7 @@
                 <div>
                   <div><b>· 건 물 명 :</b> N센터</div>
                   <div><b>· 소 &nbsp;&nbsp;&nbsp; 속 :</b> 이차원양자헤테로구조체연구단</div>
-                  <div><b>· 연구실명 :</b> 이차원 소재 합성 실험실 (291호)</div>
+                  <div><b>· 연구실명 :</b> 이차원 소재 합성 실험실 (86291호)</div>
                 </div>
                 <div style="text-align:right;">
                   <div><b>· 연구실책임자 :</b> 신현석 &nbsp;&nbsp;<b>(서명)</b></div>
@@ -895,7 +895,7 @@
           <div class="modal-head" style="border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
             <div>
               <h3 id="chemProductModalTitle" style="margin:0;font-size:16px;color:var(--ink);">🧪 화학물질·시약 등록</h3>
-              <p id="chemProductModalSub" style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">N센터 291호 연구실 안전관리 재고 등록 및 수정</p>
+              <p id="chemProductModalSub" style="margin:2px 0 0;font-size:12px;color:var(--ink-light);">N센터 86291호 연구실 안전관리 재고 등록 및 수정</p>
             </div>
             <button class="icon-btn" id="btnCloseChemProductModal" aria-label="닫기" type="button"><span aria-hidden="true">×</span></button>
           </div>
@@ -957,7 +957,7 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
               <div>
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">보관 위치 *</label>
-                <input type="text" id="chemProdLocation" class="form-control" placeholder="예: N센터 291호 산시약장 A-01" value="N센터 291호" required style="width:100%;padding:8px 10px;">
+                <input type="text" id="chemProdLocation" class="form-control" placeholder="예: N센터 86291호 산시약장 A-01" value="N센터 86291호" required style="width:100%;padding:8px 10px;">
               </div>
               <div>
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">관리 담당자 *</label>
@@ -1254,27 +1254,27 @@
             <section class="panel xrd-panel">
           <!-- 모드 전환 탭 (측정 시작 vs 완료 일지 작성) -->
           <div class="xrd-mode-switcher">
-            <button type="button" class="xrd-mode-tab active" id="btnXrdModeStart">⚡ 측정 시작 (Start session)</button>
-            <button type="button" class="xrd-mode-tab" id="btnXrdModeFull">📝 완료 일지 작성 (Log finished session)</button>
+            <button type="button" class="xrd-mode-tab active" id="btnXrdModeStart">⚡ 측정 세션 시작</button>
+            <button type="button" class="xrd-mode-tab" id="btnXrdModeFull">📝 완료 일지 직접 작성</button>
           </div>
 
           <div class="xrd-modebar hidden" id="xrdModeBar">
-            <b id="xrdModeTitle">Start session (세션 시작)</b>
-            <button type="button" class="text-btn hidden" id="xrdModeLink">Log finished session (완료 일지 작성) →</button>
+            <b id="xrdModeTitle" style="white-space:nowrap;word-break:keep-all;">측정 세션 시작</b>
+            <button type="button" class="text-btn hidden" id="xrdModeLink" style="white-space:nowrap;word-break:keep-all;">완료 일지 작성 →</button>
           </div>
 
           <form id="xrdForm" class="mode-start">
             <!-- 1. Session -->
             <div class="xrd-sec">
               <h2>Session</h2>
-              <div class="xrd-grid xrd-c4">
-                <label>Reservation no. (SESS)
+              <div class="xrd-grid xrd-session-grid">
+                <label class="xrd-session-col-res">Reservation no. (SESS)
                   <input name="reservation_no" maxlength="30" inputmode="numeric" placeholder="e.g. 255236">
                 </label>
-                <label>Date *
+                <label class="xrd-session-col-date">Date *
                   <input name="used_on" type="date" required>
                 </label>
-                <label>Start *
+                <label class="xrd-session-col-start">Start *
                   <select name="start_time" required>
                     <option value="00:00">00:00</option>
                     <option value="00:30">00:30</option>
@@ -1326,7 +1326,7 @@
                     <option value="23:30">23:30</option>
                   </select>
                 </label>
-                <label class="xrd-fin">End *
+                <label class="xrd-session-col-end xrd-fin">End *
                   <select name="end_time" required>
                     <option value="00:00">00:00</option>
                     <option value="00:30">00:30</option>
@@ -1538,7 +1538,7 @@
             </div>
 
             <div class="xrd-actions">
-              <button class="btn primary" id="xrdSaveBtn" type="submit" style="background:#2457d6;border-color:#2457d6;font-weight:700;">Start session</button>
+              <button class="btn primary" id="xrdSaveBtn" type="submit" style="background:#2457d6;border-color:#2457d6;font-weight:700;white-space:nowrap;word-break:keep-all;">⚡ 측정 세션 시작</button>
               <button class="btn hidden" id="xrdCancelEditBtn" type="button">Cancel edit</button>
             </div>
           </form>
@@ -1751,7 +1751,7 @@
           </div>
           <div class="help-card-body">
             <ul class="help-card-list">
-              <li><b>N센터 291호 연구실 비치 시약 관리</b>: 황산, 벤젠, DMF, 요오드화납, PCC 등 실제 보유 특별관리물질 수불 관리</li>
+              <li><b>N센터 86291호 연구실 비치 시약 관리</b>: 황산, 벤젠, DMF, 요오드화납, PCC 등 실제 보유 특별관리물질 수불 관리</li>
               <li><b>취급 일지 캘린더</b>: 캘린더를 통해 특정 일자에 누가 사용했고 잔량이 얼마 남았는지 직관적으로 조회</li>
               <li><b>시약별 이력 열람</b>: 각 시약 카드의 <code>[이력]</code>을 눌러 이전 사용자와 잔여량 실시간 확인</li>
             </ul>
@@ -1833,7 +1833,7 @@
               <span class="faq-accordion-chevron">▼</span>
             </button>
             <div class="faq-accordion-answer">
-              <p>좌측 사이드바의 <code>[특별관리물질]</code> 메뉴로 진입하면 N센터 291호 연구실 보유 시약 목록이 표시됩니다.</p>
+              <p>좌측 사이드바의 <code>[특별관리물질]</code> 메뉴로 진입하면 N센터 86291호 연구실 보유 시약 목록이 표시됩니다.</p>
               <p>사용 전/후 본인이 취급한 시약 행의 <code>[📝 취급일지 작성]</code> 버튼을 누르고 사용량(g 또는 mL)을 입력하면, <b>현재 재고량에서 사용량이 실시간 자동 차감</b>되어 남은 잔여량이 계산됩니다. 필수 개인보호구(방독마스크, 보안경, 내화학장갑) 착용을 체크하고 등록하면 산업안전보건법 제439조에 따라 30년간 보존됩니다.</p>
             </div>
           </div>
@@ -1859,7 +1859,7 @@
             <div class="faq-accordion-answer">
               <p>고용노동부 및 연구실안전관리원 법정 감사 서식 출력은 <b>관리자 로그인 상태에서만 버튼이 노출</b>됩니다.</p>
               <p>• <b>특별관리물질 고지문</b>: 시약 체크박스를 선택하고 <code>[특별관리물질고지]</code>를 누르면 '관계자 외 출입금지', 붉은색 물질명, 발암성/생식세포 변이원성/생식독성 표가 기재된 표준 A4 고지문이 팝업되며 즉시 인쇄/PDF 저장이 가능합니다.</p>
-              <p>• <b>특별관리물질 취급일지</b>: <code>[특별관리물질취급일지]</code>를 누르면 N센터 291호 연구실 공식 규격의 엑셀 CSV가 즉시 다운로드됩니다.</p>
+              <p>• <b>특별관리물질 취급일지</b>: <code>[특별관리물질취급일지]</code>를 누르면 N센터 86291호 연구실 공식 규격의 엑셀 CSV가 즉시 다운로드됩니다.</p>
             </div>
           </div>
 
@@ -1928,7 +1928,7 @@
           <h4 class="admin-card-title"><span>📊</span> 2. 연구실 안전 점검 대비 법정 서식 및 엑셀 출력</h4>
           <div class="admin-card-body">
             <p>• <b>특별관리물질고지 추출</b>: 재고 목록에서 원하는 물질을 체크박스로 선택 후 <code>[특별관리물질고지]</code>를 누르면 법정 고지문(관계자 외 출입금지)이 자동 생성되어 즉시 A4 인쇄/PDF 저장이 가능합니다.</p>
-            <p>• <b>산업안전보건법 제439조 특별관리물질 취급일지 서식</b>: <code>[특별관리물질취급일지]</code>를 눌러 N센터 291호 연구실 공인 서식의 엑셀 CSV를 즉시 내려받습니다.</p>
+            <p>• <b>산업안전보건법 제439조 특별관리물질 취급일지 서식</b>: <code>[특별관리물질취급일지]</code>를 눌러 N센터 86291호 연구실 공인 서식의 엑셀 CSV를 즉시 내려받습니다.</p>
           </div>
         </div>
 
