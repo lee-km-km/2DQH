@@ -1394,7 +1394,7 @@ tbody tr:hover .asset-thumb-box {
 
   .topbar {
     height: 60px !important;
-    padding: 0 16px !important;
+    padding: 0 12px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -2548,7 +2548,7 @@ tbody tr:hover .asset-thumb-box {
 
 @media (max-width: 700px) {
   .topbar {
-    height: 52px;
+    height: 60px !important;
     padding: 0 12px !important;
     gap: 8px !important;
     width: 100% !important;
@@ -12769,7 +12769,7 @@ html:not(.is-admin) #btnHelpTabAdmin {
     height: 60px !important;
     min-height: 60px !important;
     margin: -16px -18px 14px -18px !important;
-    padding: 0 16px !important;
+    padding: 0 12px !important;
     width: calc(100% + 36px) !important;
     display: flex !important;
     align-items: center !important;
@@ -12780,7 +12780,7 @@ html:not(.is-admin) #btnHelpTabAdmin {
   .sidebar-mobile-head .btn-close-drawer {
     position: absolute !important;
     top: 8px !important;
-    right: 16px !important;
+    right: 12px !important;
     width: 44px !important;
     height: 44px !important;
     margin: 0 !important;
