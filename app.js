@@ -7553,7 +7553,7 @@ function openModal(mode, id){
   modalMode = mode;
   modalId = id;
 
-  const isAuth = (mode === 'login' || mode === 'signup');
+  const isAuth = (mode === 'login' || mode === 'signup' || mode === 'profile');
   const modalBoxEl = $('modalBackdrop').querySelector('.modal');
   if(modalBoxEl){
     modalBoxEl.classList.toggle('auth-modal-box', isAuth);
@@ -7588,6 +7588,8 @@ function openModal(mode, id){
     titleText = '빠른 구매요청';
   } else if(mode === 'chemicalLog'){
     titleText = '📝 특별관리물질 취급일지 작성';
+  } else if(mode === 'profile'){
+    titleText = '👤 회원정보 수정 (Edit Profile)';
   } else if(mode === 'login' || mode === 'signup'){
     titleText = mode === 'signup' ? 'Sign Up (회원가입)' : 'Log In (로그인)';
   }
@@ -8085,6 +8087,32 @@ function openModal(mode, id){
     parts.push('</div>');
 
     parts.push('</div>');
+  } else if(mode === 'profile'){
+    const curU = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+    if(!curU){
+      toast('로그인이 필요합니다.');
+      openModal('login');
+      return;
+    }
+
+    parts.push('<div class="auth-login-brand-banner" style="margin-bottom:12px;">');
+    parts.push('  <span class="auth-login-brand-icon">⚙️</span>');
+    parts.push('  <div class="auth-login-brand-text">');
+    parts.push('    <span class="auth-login-brand-title">회원정보 수정 (Edit Profile)</span>');
+    parts.push('    <span class="auth-login-brand-sub">본인 확인을 위해 현재 비밀번호를 입력해주세요.</span>');
+    parts.push('  </div>');
+    parts.push('</div>');
+
+    parts.push('<label class="field">User ID (아이디)<input name="username" value="' + safe(curU.username || '') + '" readonly style="background:var(--bg-subtle,#f1f5f9);color:var(--ink-light,#64748b);cursor:not-allowed;font-weight:600;"></label>');
+    parts.push('<label class="field" style="margin-top:8px">Current Password (현재 비밀번호 확인) *<input name="current_password" type="password" required placeholder="현재 비밀번호를 입력하세요" autocomplete="current-password"></label>');
+    parts.push('<label class="field" style="margin-top:8px">Name (성명) *<input name="user_name" required maxlength="50" value="' + safe(curU.name || '') + '" placeholder="성명 입력"></label>');
+
+    parts.push('<div class="auth-two-col-grid">');
+    parts.push('  <label class="field">Advisor (지도교수) *<input name="advisor" required maxlength="50" value="' + safe(curU.advisor || '') + '" placeholder="지도교수 성함"></label>');
+    parts.push('  <label class="field">Department (소속 부서) *<input name="affiliation" required maxlength="80" value="' + safe(curU.affiliation || '') + '" placeholder="소속 부서/연구실"></label>');
+    parts.push('</div>');
+
+    parts.push('<label class="field" style="margin-top:8px">New Password (새 비밀번호 변경 - 선택사항)<input name="new_password" type="password" minlength="2" placeholder="변경할 경우에만 입력하세요" autocomplete="new-password"></label>');
   } else if(mode === 'signup'){
     parts.push('<div class="auth-modal-tabs">');
     parts.push('  <button type="button" class="auth-modal-tab" id="btnSwitchToLoginTab">Log In (로그인)</button>');
@@ -8208,6 +8236,7 @@ function openModal(mode, id){
 
   if(mode === 'borrow') btnText = '대여 신청';
   else if(mode === 'signup') btnText = 'Sign Up (회원가입)';
+  else if(mode === 'profile') btnText = '수정 내용 저장 (Save Changes)';
   else if(mode === 'login') btnText = 'Log In (로그인)';
   else if(mode === 'return') btnText = '✅ 반납 완료';
   else if(mode === 'login') btnText = '로그인';
@@ -8566,6 +8595,87 @@ async function saveForm(e){
   // =========================================================================
   // [회원가입 및 로그인 전역 핸들러] (Supabase DB 연결 여부와 무관하게 최우선 처리)
   // =========================================================================
+  if(modalMode === 'profile'){
+    try {
+      const curU = getCurrentUser();
+      if(!curU) throw new Error('로그인 세션이 만료되었습니다. 다시 로그인해주세요.');
+
+      const curPass = (v.current_password || '').trim();
+      const rName = (v.user_name || '').trim();
+      const rAdvisor = (v.advisor || '').trim();
+      const rAffil = (v.affiliation || '').trim();
+      const newPass = (v.new_password || '').trim();
+
+      if(!curPass){
+        throw new Error('본인 확인을 위해 현재 비밀번호를 입력해주세요.');
+      }
+      if(!rName || !rAdvisor || !rAffil){
+        throw new Error('성명, 지도교수, 소속 부서를 모두 입력해주세요.');
+      }
+
+      // 비밀번호 검증
+      const registered = getRegisteredUsers();
+      const target = registered.find(function(u){
+        return u.username.toLowerCase() === curU.username.toLowerCase();
+      });
+
+      const is2DQH = (curU.username.toLowerCase() === '2dqh' || curU.username.toLowerCase() === 'admin');
+      const expectedPass = is2DQH ? '86276@' : (target ? target.password : (curU.password || ''));
+
+      if(expectedPass && curPass !== expectedPass){
+        throw new Error('현재 비밀번호가 일치하지 않습니다.');
+      }
+
+      // 정보 업데이트
+      curU.name = rName;
+      curU.advisor = rAdvisor;
+      curU.affiliation = rAffil;
+      if(newPass){
+        curU.password = newPass;
+      }
+
+      if(target){
+        target.name = rName;
+        target.advisor = rAdvisor;
+        target.affiliation = rAffil;
+        if(newPass){
+          target.password = newPass;
+        }
+      } else {
+        registered.push(curU);
+      }
+      saveRegisteredUsers(registered);
+      setCurrentUser(curU);
+
+      // Supabase user_profiles 업데이트 시도
+      if(db && !isLocalMode){
+        try {
+          await db.from('user_profiles').upsert({
+            id: curU.username,
+            username: curU.username,
+            name: rName,
+            advisor: rAdvisor,
+            affiliation: rAffil,
+            role: curU.role || 'researcher',
+            updated_at: new Date().toISOString()
+          });
+        } catch(e){
+          console.warn('Supabase profile update skipped:', e);
+        }
+      }
+
+      updateUserUI();
+      applyCurrentUserToForms();
+      closeModal();
+      toast('✓ 회원정보가 성공적으로 수정되었습니다.');
+    } catch(err){
+      toast(err.message || '회원정보 수정에 실패했습니다.');
+    } finally {
+      btn.disabled = false;
+    }
+    return;
+  }
+
   if(modalMode === 'signup'){
     try {
       const uName = (v.username || '').trim();
@@ -10381,6 +10491,20 @@ function bindEvents(){
     openModal('login');
   });
   addEvt('logoutBtn', 'click', handleLogout);
+
+  addEvt('userProfileBadge', 'click', function(){
+    if(typeof openModal === 'function') openModal('profile');
+  });
+
+  addEvt('sidebarEditProfileBtn', 'click', function(){
+    closeMobileDrawer();
+    if(typeof openModal === 'function') openModal('profile');
+  });
+
+  addEvt('sidebarAdminEditProfileBtn', 'click', function(){
+    closeMobileDrawer();
+    if(typeof openModal === 'function') openModal('profile');
+  });
   addEvt('sidebarLogoutBtn', 'click', handleLogout);
 
   addEvt('btnTestDriveEquipment', 'click', function(e){

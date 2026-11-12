@@ -11858,3 +11858,18 @@ html:not(.is-admin) #btnHelpTabAdmin {
 .chem-user-toggle-btn:hover {
   background: #dbeafe !important;
 }
+
+
+.user-profile-badge {
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.user-profile-badge:hover {
+  background: var(--bg-hover, #e2e8f0) !important;
+  border-color: #94a3b8 !important;
+  transform: translateY(-1px) !important;
+}
+[data-theme="dark"] .user-profile-badge:hover {
+  background: #334155 !important;
+  border-color: #64748b !important;
+}
