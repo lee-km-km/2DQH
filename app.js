@@ -5109,7 +5109,7 @@ function renderEquipmentPortalGrid(){
   if($('catCntStructural')) $('catCntStructural').textContent = cntStructural;
   if($('catCntOptical')) $('catCntOptical').textContent = cntOptical;
   if($('catCntDeposition')) $('catCntDeposition').textContent = cntDeposition;
-  if($('eqSecondaryCountBadge')) $('eqSecondaryCountBadge').textContent = cntAll + '대 보유';
+  if($('eqSecondaryCountBadge')) $('eqSecondaryCountBadge').textContent = '정밀 첨단 분석 연구장비';
 
   const searchInput = $('eqSearchInput');
   const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
@@ -5388,7 +5388,7 @@ function renderEquipmentAnalyticsScopeChips(){
 
   const isAll = (selectedAnalyticsEquipmentId === 'all');
   if(isAll){
-    if(descEl) descEl.textContent = '전체 10대 연구장비 통합 운영 관리 오버뷰';
+    if(descEl) descEl.textContent = '첨단 연구장비 통합 운영 관리 오버뷰';
   } else {
     const selectedEq = researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
     if(descEl && selectedEq) {
@@ -6199,7 +6199,7 @@ function exportAnalyticsSummaryCsv(){
   // [헤더 및 메타데이터]
   // ====================================================
   lines.push('"[IBS 2DQH 연구단 연구장비 운영통계 및 분석 실적 리포트]"');
-  lines.push('"보고서 생성일시: ' + today() + '","분석 기준 주기: ' + periodLabel + ' 통계 (' + periodDesc + ')","대상: ' + (isAll ? '전체 10대 연구장비 통합' : (selectedEq.name + ' [' + selectedEq.code + ']')) + '"');
+  lines.push('"보고서 생성일시: ' + today() + '","분석 기준 주기: ' + periodLabel + ' 통계 (' + periodDesc + ')","대상: ' + (isAll ? '첨단 연구장비 통합' : (selectedEq.name + ' [' + selectedEq.code + ']')) + '"');
   lines.push('""');
 
   // ====================================================
@@ -6309,7 +6309,7 @@ function exportAnalyticsSummaryCsv(){
   if(isAll){
     lines.push([
       '합계(TOTAL)',
-      '10대 연구장비 통합 총계',
+      '첨단 연구장비 통합 총계',
       '2DQH 연구단',
       '정상 가동',
       periodSessions.length,
@@ -9956,15 +9956,20 @@ function bindEvents(){
       return;
     }
 
-    // 브랜드 로고 클릭 시 홈 뷰 이동 (비품·소모품 모드에서는 비품 대여 직행)
-    if(target.id === 'brandLogoLink' || target.closest('#brandLogoLink')){
+    // 브랜드 2DQH 로고 클릭 시 홈페이지 기본 화면으로 이동 (상단바 / 모바일 드로어 일체)
+    const brandTarget = target.closest('#brandLogoLink, #drawerBrandLogo, .brand, .brand-img-logo');
+    if(brandTarget){
+      if(e && e.preventDefault) e.preventDefault();
+      if(e && e.stopPropagation) e.stopPropagation();
+      closeMobileDrawer();
       if(currentPortalModule === 'lims'){
         showEquipmentCatalogHub();
         switchEquipmentHubView('catalog');
-        showView('logbook');
+        showView('logbook', { updateUrl: true, pushState: true });
       } else {
-        showView('inventory');
+        showView('inventory', { updateUrl: true, pushState: true });
       }
+      if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -10418,6 +10423,83 @@ function bindEvents(){
       if(e.target === loanQrBackdrop) closeLoanQrModal();
     });
   }
+
+  // [모바일 검색창 기본 접힘 & 원터치 토글 바인딩]
+  // A. 시약·물질 검색 토글 바
+  const btnToggleChemSearch = $('btnToggleChemSearch');
+  const chemSearchBox = $('chemSearchBox');
+  const chemSearchToggleArrow = $('chemSearchToggleArrow');
+  if(btnToggleChemSearch && chemSearchBox){
+    btnToggleChemSearch.addEventListener('click', function(e){
+      e.preventDefault();
+      const isOpen = chemSearchBox.classList.toggle('open');
+      btnToggleChemSearch.classList.toggle('active', isOpen);
+      btnToggleChemSearch.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if(chemSearchToggleArrow){
+        chemSearchToggleArrow.textContent = isOpen ? '▲ 접기' : '▼ 펼치기';
+      }
+    });
+  }
+
+  // B. 비품 대여 검색 토글 바 (모바일)
+  const btnToggleMobileInv = $('btnToggleMobileInventorySearch');
+  const invPanel = $('searchFilterCollapsible');
+  const invArrow = $('invSearchToggleArrow');
+  if(btnToggleMobileInv && invPanel){
+    btnToggleMobileInv.addEventListener('click', function(e){
+      e.preventDefault();
+      const isOpen = invPanel.classList.toggle('open');
+      btnToggleMobileInv.classList.toggle('active', isOpen);
+      btnToggleMobileInv.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if(invArrow){
+        invArrow.textContent = isOpen ? '▲ 접기' : '▼ 펼치기';
+      }
+      if(isOpen){
+        const inp = $('assetSearch');
+        if(inp) setTimeout(function(){ inp.focus(); }, 120);
+      }
+    });
+  }
+
+  // C. 소모품 재고 검색 토글 바 (모바일)
+  const btnToggleMobileConsumable = $('btnToggleMobileConsumableSearch');
+  const consumablePanel = $('consumableSearchPanel');
+  const consumableArrow = $('consumableSearchToggleArrow');
+  if(btnToggleMobileConsumable && consumablePanel){
+    btnToggleMobileConsumable.addEventListener('click', function(e){
+      e.preventDefault();
+      const isOpen = consumablePanel.classList.toggle('open');
+      btnToggleMobileConsumable.classList.toggle('active', isOpen);
+      btnToggleMobileConsumable.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if(consumableArrow){
+        consumableArrow.textContent = isOpen ? '▲ 접기' : '▼ 펼치기';
+      }
+      if(isOpen){
+        const inp = $('consumableSearch');
+        if(inp) setTimeout(function(){ inp.focus(); }, 120);
+      }
+    });
+  }
+
+  // D. 상단 2DQH 브랜드 로고 직접 클릭 보장 리스너
+  ['brandLogoLink', 'drawerBrandLogo'].forEach(function(id){
+    const el = $(id);
+    if(el){
+      el.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        closeMobileDrawer();
+        if(currentPortalModule === 'lims'){
+          showEquipmentCatalogHub();
+          switchEquipmentHubView('catalog');
+          showView('logbook', { updateUrl: true, pushState: true });
+        } else {
+          showView('inventory', { updateUrl: true, pushState: true });
+        }
+        if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  });
 
   // 모바일 헤더 돋보기 검색 토글 (현재 활성 뷰에 맞게 패널 토글)
   const btnToggleSearch = $('btnToggleSearch');

@@ -46,7 +46,7 @@
 
 <header class="topbar">
   <div class="topbar-left">
-    <a class="brand" href="#" id="brandLogoLink">
+    <a class="brand" href="javascript:void(0)" id="brandLogoLink" role="button" aria-label="홈 화면으로 이동">
       <img src="logo_2dqh.png" alt="2DQH" class="brand-img-logo">
       <span class="brand-sep" aria-hidden="true"></span>
       <span class="brand-sub" id="brandSubText">연구장비 포털</span>
@@ -101,7 +101,7 @@
   <nav class="sidebar" id="mainSidebar" aria-label="주 메뉴">
     <!-- 모바일 전용 서랍 헤더 -->
     <div class="sidebar-mobile-head mobile-only">
-      <div class="brand">
+      <div class="brand" id="drawerBrandLogo" role="button" aria-label="홈 화면으로 이동" style="cursor:pointer;">
         <img src="logo_2dqh.png" alt="2DQH" class="brand-img-logo">
       </div>
       <button id="btnCloseMobileDrawer" class="btn-close-drawer" type="button" aria-label="메뉴 닫기">✕</button>
@@ -223,6 +223,12 @@
         </div>
       </div>
       <section class="panel">
+        <div class="search-toggle-bar mobile-only">
+          <button type="button" class="btn-toggle-mobile-search" id="btnToggleMobileInventorySearch" aria-expanded="false">
+            <span>🔍 비품 검색 및 필터</span>
+            <span class="search-toggle-arrow" id="invSearchToggleArrow">▼ 펼치기</span>
+          </button>
+        </div>
         <div id="searchFilterCollapsible" class="search-collapsible-panel">
           <div class="toolbar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <div class="search-input-box" style="flex:1;min-width:200px;">
@@ -361,7 +367,13 @@
         </div>
       </div>
       <section class="panel">
-        <div id="consumableSearchPanel" class="search-collapsible-panel open">
+        <div class="search-toggle-bar mobile-only">
+          <button type="button" class="btn-toggle-mobile-search" id="btnToggleMobileConsumableSearch" aria-expanded="false">
+            <span>🔍 소모품 검색 및 필터</span>
+            <span class="search-toggle-arrow" id="consumableSearchToggleArrow">▼ 펼치기</span>
+          </button>
+        </div>
+        <div id="consumableSearchPanel" class="search-collapsible-panel">
           <div class="toolbar">
             <div class="search-input-box">
               <span class="search-input-icon" aria-hidden="true">🔍</span>
@@ -436,8 +448,19 @@
           </button>
         </div>
 
+        <!-- 검색 필터 토글 바 (모바일 기본 접힘) -->
+        <div class="chem-search-toggle-bar">
+          <button type="button" class="btn-toggle-chem-search" id="btnToggleChemSearch" aria-expanded="false">
+            <span class="chem-search-toggle-left" style="display:flex;align-items:center;gap:6px;">
+              <span>🔍</span>
+              <span>시약·물질 상세 검색 및 필터</span>
+            </span>
+            <span id="chemSearchToggleArrow" class="chem-search-toggle-arrow">▼ 펼치기</span>
+          </button>
+        </div>
+
         <!-- 검색 필터 박스 (86291호 시스템 규격) -->
-        <div class="panel chem-search-box">
+        <div class="panel chem-search-box" id="chemSearchBox">
           <div class="chem-search-row">
             <div class="search-field">
               <label for="chemFilterName">제품명</label>
@@ -522,10 +545,10 @@
               <label><input type="radio" name="chemSort" value="latest" checked> 최신순</label>
               <label><input type="radio" name="chemSort" value="name"> 제품명순</label>
             </span>
-            <!-- 모바일 전용 카드/표 뷰 전환 스위처 -->
-            <div class="chem-view-mode-toggle mobile-only" role="group" aria-label="보기 모드">
-              <button type="button" class="btn-chem-view-mode active" id="btnChemViewCard" data-view-mode="card">📱 카드</button>
-              <button type="button" class="btn-chem-view-mode" id="btnChemViewTable" data-view-mode="table">📊 표</button>
+            <!-- 모바일 전용 카드/표 뷰 전환 스위처 (가로 스크롤 표 모드가 기본) -->
+            <div class="chem-view-mode-toggle mobile-only" role="group" aria-label="보기 모드" style="display:none !important;">
+              <button type="button" class="btn-chem-view-mode" id="btnChemViewCard" data-view-mode="card">📱 카드</button>
+              <button type="button" class="btn-chem-view-mode active" id="btnChemViewTable" data-view-mode="table">📊 표</button>
             </div>
           </div>
 
@@ -560,7 +583,7 @@
         <!-- 4-B. 재고 테이블 (Image 1 규격 15개 컬럼, 데스크톱 기본 및 모바일 표 전환 시 표시) -->
         <div class="panel chem-table-panel" id="chemTablePanel" style="padding:0;overflow:hidden;border-radius:6px;">
           <div class="mobile-table-scroll-hint mobile-only">👉 좌우로 스크롤하여 상세 정보(MSDS, 수량, 잔량 등)를 확인하세요</div>
-          <div class="table-wrap chem-official-inventory-table-wrap">
+          <div class="chem-official-inventory-table-wrap">
             <table class="chem-inventory-table" id="chemInventoryTable">
               <thead>
                 <tr>
@@ -1072,8 +1095,8 @@
           <div class="eq-secondary-section" style="margin-top:0;">
             <div class="eq-secondary-header">
               <div class="eq-secondary-title-box">
-                <h3 class="eq-secondary-title">성균관대 양자기술첨단기기센터(SESS) 연구장비 (10대)</h3>
-                <span class="count-badge" id="eqSecondaryCountBadge">10대 보유</span>
+                <h3 class="eq-secondary-title">성균관대 양자기술첨단기기센터(SESS) 연구장비</h3>
+                <span class="count-badge" id="eqSecondaryCountBadge">정밀 첨단 분석 연구장비</span>
               </div>
               <div class="search-input-box eq-search-box">
                 <span class="search-input-icon">🔍</span>
@@ -1138,7 +1161,7 @@
               <div class="kpi-icon-wrap" style="background:#eff6ff;color:#2563eb;">🔬</div>
               <div class="kpi-info">
                 <span class="kpi-label" id="kpiEqLabel">대상 연구장비</span>
-                <div class="kpi-num" id="kpiEqTotal">10대 통합</div>
+                <div class="kpi-num" id="kpiEqTotal">정밀 연구장비</div>
                 <span class="kpi-sub" id="kpiEqSub">분석 5 · 증착 4 · 공정 1</span>
               </div>
             </div>
@@ -1173,7 +1196,7 @@
             <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
               <div>
                 <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqAnalyticsMainTitle">🔬 연구장비 운용 관리 오버뷰</h3>
-                <span style="font-size:12px;color:var(--ink-light);" id="eqAnalyticsMainSub">전체 10대 연구장비 운영 상태 및 가동 실적</span>
+                <span style="font-size:12px;color:var(--ink-light);" id="eqAnalyticsMainSub">첨단 연구장비 운영 상태 및 가동 실적</span>
               </div>
               <div id="eqAnalyticsPeriodBadge" style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;">2026년 11월</div>
             </div>

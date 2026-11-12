@@ -11873,3 +11873,170 @@ html:not(.is-admin) #btnHelpTabAdmin {
   background: #334155 !important;
   border-color: #64748b !important;
 }
+
+
+/* ========================================================================== */
+/* [2DQH UX/UI 최적화: 시약 표 가로스크롤 고정, 모바일 검색 기본 접힘, 브랜드 로고 커서] */
+/* ========================================================================== */
+
+.brand, .brand-img-logo, #brandLogoLink, #drawerBrandLogo {
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+/* 모바일 전용 검색/필터 원터치 토글 바 공통 스타일 */
+.search-toggle-bar {
+  display: none;
+  margin-bottom: 8px;
+  width: 100%;
+}
+.btn-toggle-mobile-search {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-card, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.btn-toggle-mobile-search:hover,
+.btn-toggle-mobile-search.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+/* 화학물질 검색 토글 바 */
+.chem-search-toggle-bar {
+  display: none;
+  margin-bottom: 10px;
+  width: 100%;
+}
+.btn-toggle-chem-search {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-card, #ffffff);
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #0f172a);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.btn-toggle-chem-search:hover,
+.btn-toggle-chem-search.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+.chem-search-toggle-arrow,
+.search-toggle-arrow {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-light, #64748b);
+}
+
+@media (max-width: 768px) {
+  .search-toggle-bar {
+    display: block !important;
+  }
+  .chem-search-toggle-bar {
+    display: block !important;
+  }
+
+  /* 모바일에서 시약 검색 필터 패널 기본 접힘 */
+  .chem-search-box {
+    display: none !important;
+    animation: panelSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .chem-search-box.open {
+    display: block !important;
+  }
+
+  /* 시약 테이블 패널은 모바일에서 항상 기본 표시 (세로 카드 뷰 완전 대체) */
+  #chemTablePanel {
+    display: block !important;
+  }
+  #chemMobileCardList {
+    display: none !important;
+  }
+  .chem-view-mode-toggle {
+    display: none !important;
+  }
+
+  /* [핵심] 모바일 table-wrap flex flex-direction:column 규칙이 시약 테이블을 덮어쓰지 못하도록 엄격히 테이블 모드 유지 */
+  .chem-official-inventory-table-wrap,
+  .table-wrap.chem-official-inventory-table-wrap {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    background: var(--bg-card, #ffffff) !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
+    border-radius: 8px !important;
+    box-shadow: inset -6px 0 8px -4px rgba(0,0,0,0.06) !important;
+  }
+
+  .chem-inventory-table,
+  .chem-official-inventory-table-wrap table,
+  .chem-official-inventory-table-wrap tbody {
+    display: table !important;
+    min-width: 1350px !important;
+    width: max-content !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+  }
+
+  .chem-inventory-table thead,
+  .chem-official-inventory-table-wrap thead {
+    display: table-header-group !important;
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    clip: auto !important;
+  }
+
+  .chem-inventory-table tr,
+  .chem-official-inventory-table-wrap tr {
+    display: table-row !important;
+    flex-direction: row !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .chem-inventory-table th,
+  .chem-inventory-table td,
+  .chem-official-inventory-table-wrap th,
+  .chem-official-inventory-table-wrap td {
+    display: table-cell !important;
+    padding: 8px 8px !important;
+    border: 1px solid var(--border) !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    font-size: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .chem-inventory-table td::before,
+  .chem-official-inventory-table-wrap td::before {
+    display: none !important;
+  }
+}
