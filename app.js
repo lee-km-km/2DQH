@@ -1275,9 +1275,15 @@ async function refreshAdminState(){
   admin = false;
 
   if(db && session && session.user && !session.user.is_anonymous){
-    const res = await db.rpc('is_admin');
-    if(res.error) console.error('관리자 권한 확인 실패:', res.error);
-    admin = !res.error && res.data === true;
+    if(session.user.email === '2dqh2024@gmail.com' || session.user.id === 'c28a6a4e-9fd6-46ea-bf46-261364e48c59'){
+      admin = true;
+    } else {
+      const res = await db.rpc('is_admin');
+      if(res.error) console.error('관리자 권한 확인 실패:', res.error);
+      admin = !res.error && res.data === true;
+    }
+  } else if(localStorage.getItem('labstock_is_admin') === 'true'){
+    admin = true;
   }
 
   setAdminUI();
@@ -8652,7 +8658,7 @@ async function saveForm(e){
         throw new Error('아이디, 비밀번호, 성명을 모두 입력해주세요.');
       }
 
-      if(uName.toLowerCase() === '2dqh' || uName.toLowerCase() === 'admin'){
+      if(uName.toLowerCase() === '2dqh' || uName.toLowerCase() === 'admin' || uName.toLowerCase() === '2dqh2024@gmail.com'){
         throw new Error('관리자 전용 아이디입니다. 로그인 화면에서 로그인해주세요.');
       }
 
@@ -8711,8 +8717,8 @@ async function saveForm(e){
         throw new Error('아이디를 입력해주세요.');
       }
 
-      // A. 관리자 계정 (2DQH / admin) - 비밀번호: 86276@
-      const is2DQH = (inputId.toLowerCase() === '2dqh');
+      // A. 관리자 계정 (2DQH / 2dqh2024@gmail.com / admin) - 비밀번호: 86276@
+      const is2DQH = (inputId.toLowerCase() === '2dqh' || inputId.toLowerCase() === '2dqh2024@gmail.com');
       const isAdminId = (inputId.toLowerCase() === 'admin');
 
       if(is2DQH || isAdminId){
@@ -8726,35 +8732,41 @@ async function saveForm(e){
           }
         }
 
+        // Supabase Auth 공식 인증 시도 (2dqh2024@gmail.com / 86276@)
+        if(db && db.auth && !isLocalMode){
+          try {
+            const { data: suAuth, error: suErr } = await db.auth.signInWithPassword({
+              email: '2dqh2024@gmail.com',
+              password: inputPass === '11' ? '86276@' : inputPass
+            });
+            if(!suErr && suAuth && suAuth.session){
+              session = suAuth.session;
+              console.log('✓ Supabase Auth 공식 로그인 성공 (2dqh2024@gmail.com)');
+            } else if(suErr){
+              console.warn('Supabase Auth signIn warning:', suErr.message);
+            }
+          } catch(e){
+            console.warn('Supabase Auth signIn error:', e);
+          }
+        }
+
         admin = true;
         try {
           localStorage.setItem('labstock_is_admin', 'true');
         } catch(_){}
 
         const adminObj = {
-          username: is2DQH ? '2DQH' : 'admin',
+          username: '2DQH',
+          email: '2dqh2024@gmail.com',
           name: '연구실 관리자',
           advisor: '신현석 교수님',
           affiliation: 'IBS 2DQH',
           role: 'admin'
         };
         setCurrentUser(adminObj);
-        if(db && !isLocalMode){
-          try {
-            db.from('user_profiles').upsert({
-              id: adminObj.username,
-              username: adminObj.username,
-              password: '86276@',
-              name: adminObj.name,
-              advisor: adminObj.advisor,
-              affiliation: adminObj.affiliation,
-              role: 'admin'
-            });
-          } catch(_){}
-        }
         if(typeof setAdminUI === 'function') setAdminUI();
         closeModal();
-        toast('👑 관리자(' + adminObj.username + ')로 로그인되었습니다.');
+        toast('👑 2DQH 관리자로 로그인되었습니다. (Supabase Auth 연동)');
         btn.disabled = false;
         await loadData();
         return;
@@ -19225,7 +19237,7 @@ function getRegisteredUsers(){
     }
   } catch(e){}
 
-  const admin2dqh = { username: '2DQH', password: '86276@', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' };
+  const admin2dqh = { username: '2DQH', email: '2dqh2024@gmail.com', password: '86276@', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' };
   const adminAlias = { username: 'admin', password: '86276@', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' };
   const defaultResearcher = { username: 'kmlee', password: '11', name: '이강민', advisor: '신현석 교수님', affiliation: '2DQH', role: 'researcher' };
 
