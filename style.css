@@ -12749,3 +12749,24 @@ html:not(.is-admin) #btnHelpTabAdmin {
   }
   .sidebar-mobile-head .drawer-head-actions { gap: 8px !important; }
 }
+
+/* 모바일 서랍: 테마 전환 버튼을 서랍 오른쪽 아래로 이동 (✕ 버튼과 겹침 방지) */
+@media (max-width: 700px) {
+  .sidebar .btn-drawer-theme {
+    position: fixed !important; /* 서랍(transform) 기준 고정 → 스크롤해도 항상 우하단 */
+    right: 16px !important;
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    font-size: 22px !important;
+    background: var(--bg, #ffffff) !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18) !important;
+    z-index: 10 !important;
+  }
+  [data-theme="dark"] .sidebar .btn-drawer-theme { background: #1e293b !important; }
+  .sidebar .sidebar-mobile-head { position: static !important; }
+}
+@media (min-width: 701px) {
+  .sidebar .btn-drawer-theme { display: none !important; }
+}
