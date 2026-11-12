@@ -4016,6 +4016,25 @@ function renderQrCodeInto(container, text, size){
   container.appendChild(img);
 }
 
+// [모바일 카메라 스캔 호환 웹앱 Base URL 계산기]
+function getAppBaseUrl(){
+  try {
+    if(window.location.protocol === 'http:' || window.location.protocol === 'https:'){
+      const host = window.location.hostname;
+      if(host && host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.') && !host.startsWith('10.')){
+        let p = window.location.pathname;
+        if(!p.endsWith('/')) {
+          // If pathname ends with index.html, keep directory or full
+          if(!p.endsWith('.html')) p += '/';
+        }
+        return window.location.origin + p;
+      }
+    }
+  } catch(e){}
+  // 로컬/file 프로토콜 테스트 시 GitHub Pages 라이브 주소로 안전 자동 연결
+  return 'https://lee-km-km.github.io/2DQH/';
+}
+
 // [장비 본체 부착용 QR 라벨 생성 및 인쇄 모달 (관리자 전용)]
 function openEquipmentQrModal(eqId){
   if(!isAdmin()){
@@ -4044,7 +4063,7 @@ function openEquipmentQrModal(eqId){
   if(titleEl) titleEl.textContent = logbookTitle;
 
   // 생성될 직행 URL (HTTPS origin + 경로 + 해시 쿼리)
-  const targetUrl = window.location.origin + window.location.pathname + '#logbook?eq=' + encodeURIComponent(eq.id) + '&action=quick_start';
+  const targetUrl = getAppBaseUrl() + '#logbook?eq=' + encodeURIComponent(eq.id) + '&action=quick_start';
 
   if(container){
     renderQrCodeInto(container, targetUrl, 190);
@@ -4307,7 +4326,7 @@ function openChemicalQrModal(){
   const modal = $('modalChemicalQrBackdrop');
   if(!modal) return;
 
-  const targetUrl = window.location.origin + window.location.pathname + '#chemicalLog?action=quick_chem_log';
+  const targetUrl = getAppBaseUrl() + '#chemicalLog?action=quick_chem_log';
   const qrBox = $('chemicalQrCanvasContainer');
   if(qrBox){
     renderQrCodeInto(qrBox, targetUrl, 190);
@@ -4353,7 +4372,7 @@ function openLoanQrModal(){
   const modal = $('modalLoanQrBackdrop');
   if(!modal) return;
 
-  const targetUrl = window.location.origin + window.location.pathname + '#loan?action=quick_loan';
+  const targetUrl = getAppBaseUrl() + '#loan?action=quick_loan';
   const qrBox = $('loanQrCanvasContainer');
   if(qrBox){
     renderQrCodeInto(qrBox, targetUrl, 190);
@@ -10180,12 +10199,11 @@ function handleUrlFastTrack(){
       return;
     }
 
-    // 1. 특별관리물질 취급일지 작성 다이렉트 진입 (#chemicalLog or #chem-log or ?action=quick_chem_log or ?action=chemicalLog)
-    const hashLogMatch = hashRaw.match(/^(?:#?\/?)(?:log|chemicallog|chem-log)[\/\-](.+)$/i);
-    const directChemId = getParam('chem') || getParam('chemId') || getParam('id') || (hashLogMatch ? hashLogMatch[1] : null);
+    // 1. 특별관리물질 취급일지 작성 다이렉트 진입 (#chemicalLog or ?action=quick_chem_log)
     const isChemLogAction = hashPath === 'chemicallog' || hashPath === 'chem-log' || hashPath === 'chem_log' ||
                             getParam('action') === 'quick_chem_log' || getParam('action') === 'chemicalLog' ||
                             getParam('action') === 'write_chem_log';
+    const directChemId = getParam('chem') || getParam('chemId') || getParam('id');
 
     if(isChemLogAction || directChemId){
       showView('consumables', { updateUrl: false });
@@ -10194,58 +10212,62 @@ function handleUrlFastTrack(){
       if(typeof render291InventoryTable === 'function') render291InventoryTable();
       setTimeout(function(){
         openChemWriteLogModal(directChemId);
-        toast('⚡ 특별관리물질 취급일지 작성 화면으로 직행했습니다.');
-      }, 200);
+        toast('⚡ 특별관리물질 취급일지 작성 화면으로 연결되었습니다.');
+      }, 150);
       return;
     }
 
-    // 2. 비품 대여 다이렉트 진입 (#loan or #borrow or ?action=quick_loan or ?action=borrow)
-    const hashLoanMatch = hashRaw.match(/^(?:#?\/?)(?:loan|borrow)[\/\-](.+)$/i);
-    const loanAssetId = getParam('loan') || (getParam('action') === 'borrow' ? getParam('id') : null) || (hashLoanMatch ? hashLoanMatch[1] : null);
-    const isLoanAction = hashPath === 'loan' || hashPath === 'borrow' || getParam('action') === 'quick_loan' || getParam('action') === 'borrow';
+    // 2. 비품 대여 신청 직행 (#loan or #borrow or ?action=quick_loan or ?action=borrow)
+    const isLoanAction = (hashPath === 'loan' && getParam('action')) || hashPath === 'borrow' || getParam('action') === 'quick_loan' || getParam('action') === 'borrow';
+    const loanAssetId = getParam('loan') || (getParam('action') === 'borrow' ? getParam('id') : null);
 
     if(isLoanAction || loanAssetId){
       showView('inventory', { updateUrl: false });
       setTimeout(function(){
         openModal('borrow', loanAssetId);
-        toast('⚡ 비품 대여 신청 화면으로 직행했습니다.');
-      }, 200);
+        toast('⚡ 비품 대여 신청 화면으로 연결되었습니다.');
+      }, 150);
       return;
     }
 
-    // 3. 비품 반납 다이렉트 진입 (?return=EQ-001 or ?action=return&id=EQ-001 or #return/EQ-001)
-    const hashReturnMatch = hashRaw.match(/^(?:#?\/?)(?:return)[\/\-](.+)$/i);
-    const returnAssetId = getParam('return') || (getParam('action') === 'return' ? getParam('id') : null) || (hashReturnMatch ? hashReturnMatch[1] : null);
+    // 3. 비품 반납 직행
+    const returnAssetId = getParam('return') || (getParam('action') === 'return' ? getParam('id') : null);
     if(returnAssetId){
       showView('inventory', { updateUrl: false });
       const act = activeLoanFor(returnAssetId) || loans.find(function(l){ return String(l.id) === String(returnAssetId); });
       setTimeout(function(){
         openModal('return', act ? act.id : returnAssetId);
-      }, 200);
+      }, 150);
       return;
     }
 
-    // 4. 연구장비 전자 로그북 다이렉트 진입 (?logbook=XRD or #logbook?eq=EQ-XRD-01 or ?eq=EQ-XRD-01 or #xrd)
-    const hashEqLogMatch = hashRaw.match(/^(?:#?\/?)(?:logbook|equipmentlog)[\/\-](.+)$/i);
-    const logbookCode = getParam('logbook') || getParam('eq') || (getParam('action') === 'logbook' ? getParam('id') : null) || (hashEqLogMatch ? hashEqLogMatch[1] : null);
-    const isLogbookAction = hashPath === 'logbook' || hashPath === 'xrd' || Boolean(logbookCode);
+    // 4. 연구장비 전자 로그북 직행 (#logbook?eq=EQ-XRD-01 or ?logbook=XRD or #xrd or eq=EQ-XRD-01)
+    // 중요: 단순 #logbook 진입(사용자가 상단 탭 클릭 등) 시에는 팝업 모달 없이 카탈로그/상세 뷰만 표시하고,
+    // QR 스캔(eq 파라미터 또는 quick_start 또는 #xrd)으로 진입한 경우에만 2번째 사진(HR-XRD 전자 로그북 워크스테이션)으로 즉시 직행!
+    const eqCode = getParam('eq') || getParam('logbook') || getParam('equipment') || (hashPath === 'xrd' ? 'EQ-XRD-01' : null);
+    const isQrScanEntry = Boolean(eqCode) || getParam('action') === 'quick_start' || window.location.href.includes('quick_start') || hashPath === 'xrd';
 
-    if(isLogbookAction){
+    if(isQrScanEntry){
       showView('logbook', { updateUrl: false });
-      const targetCode = (logbookCode || 'EQ-XRD-01').trim();
+      const targetCode = (eqCode || 'EQ-XRD-01').trim();
       const found = researchEquipments.find(function(e){
         return e.id.toLowerCase() === targetCode.toLowerCase() || e.code.toLowerCase() === targetCode.toLowerCase();
       }) || researchEquipments[0];
 
-      if(found){
-        selectResearchEquipment(found.id);
+      // 두 번째 사진의 정통 HR-XRD 전자 로그북 워크스테이션 화면(selectResearchEquipment)으로 직행!
+      // (팝업 모달 modalTestDriveBackdrop을 띄우지 않고, 왼쪽 Start session 폼과 오른쪽 로그 기록 테이블이 있는 화면으로 직행)
+      selectResearchEquipment(found.id);
+      if(typeof showXrdMode === 'function'){
+        showXrdMode('start');
       }
 
-      // 장비 목록에 머무르지 않고 바로 로그북 사용기록 작성 모달(modalTestDriveBackdrop) 직행!
       setTimeout(function(){
-        openEquipmentTestDrive(found ? found.code : 'XRD');
-        toast('⚡ ' + (found ? (found.code || found.name) : 'HR-XRD') + ' 로그북 작성 화면으로 즉시 연결되었습니다.');
-      }, 250);
+        const formBox = $('xrdForm') || $('xrdLogbookContainer');
+        if(formBox && typeof formBox.scrollIntoView === 'function'){
+          formBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        toast('⚡ ' + (found ? (found.code || found.name) : 'HR-XRD') + ' 전자 로그북으로 직행했습니다.');
+      }, 150);
       return;
     }
 
