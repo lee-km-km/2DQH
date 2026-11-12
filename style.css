@@ -11459,3 +11459,194 @@ html:not(.is-admin) #btnHelpTabAdmin {
   text-decoration: underline;
   cursor: pointer;
 }
+
+
+/* ==========================================================================
+   [회원가입 및 로그인 모달 크기 완벽 통일 (440px x 520px) & 줄바꿈 원천 차단]
+   ========================================================================== */
+.modal.auth-modal-box {
+  width: 440px !important;
+  max-width: min(440px, 94vw) !important;
+  min-height: 520px !important;
+  height: 520px !important;
+  max-height: calc(100dvh - 32px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22) !important;
+  overflow: hidden !important;
+}
+
+.auth-modal-box .modal-head {
+  flex-shrink: 0 !important;
+  padding: 14px 18px !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+.auth-modal-box .modal-head h2 {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+.auth-modal-box #modalForm {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.auth-modal-box .modal-body {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 16px 18px 8px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.auth-modal-box .modal-foot {
+  flex-shrink: 0 !important;
+  padding: 12px 18px 16px !important;
+  border-top: 1px solid var(--border) !important;
+  background: var(--bg) !important;
+  display: flex !important;
+  gap: 10px !important;
+}
+.auth-modal-box .modal-foot button {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  font-weight: 700 !important;
+}
+
+.auth-modal-box label.field {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+.auth-modal-box label.field input {
+  font-size: 14px !important;
+  padding: 8px 10px !important;
+  min-height: 40px !important;
+  box-sizing: border-box !important;
+}
+
+.auth-modal-box .auth-modal-tabs {
+  flex-shrink: 0 !important;
+  margin-bottom: 14px !important;
+  display: flex !important;
+  background: var(--bg-subtle, #f1f5f9) !important;
+  padding: 4px !important;
+  border-radius: 10px !important;
+  gap: 4px !important;
+}
+
+.auth-modal-box .auth-modal-tab {
+  flex: 1 !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--ink-light, #64748b) !important;
+  border-radius: 7px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  text-align: center !important;
+}
+.auth-modal-box .auth-modal-tab.active {
+  background: #ffffff !important;
+  color: #2563eb !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+}
+[data-theme="dark"] .auth-modal-box .auth-modal-tab.active {
+  background: #1e293b !important;
+  color: #60a5fa !important;
+}
+
+.auth-modal-box .auth-switch-link {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  margin-top: auto !important;
+  padding-top: 12px !important;
+  padding-bottom: 4px !important;
+  font-size: 12px !important;
+  text-align: center !important;
+  color: var(--ink-light) !important;
+}
+
+.auth-modal-box .auth-switch-link a {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  color: #2563eb !important;
+  font-weight: 700 !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+  margin-left: 4px !important;
+}
+
+.auth-two-col-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  margin-top: 8px !important;
+}
+.auth-two-col-grid > label.field {
+  margin-top: 0 !important;
+  min-width: 0 !important;
+}
+
+.auth-login-brand-banner {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  background: var(--bg-subtle, #f8fafc) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  margin-bottom: 14px !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+}
+[data-theme="dark"] .auth-login-brand-banner {
+  background: var(--bg-surface, #1e293b) !important;
+  border-color: #334155 !important;
+}
+.auth-login-brand-icon {
+  font-size: 22px !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+.auth-login-brand-text {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+.auth-login-brand-title {
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  color: var(--ink) !important;
+}
+.auth-login-brand-sub {
+  font-size: 11px !important;
+  color: var(--ink-light) !important;
+}
+
+@media (max-width: 420px) {
+  .auth-two-col-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+}

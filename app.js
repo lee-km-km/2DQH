@@ -7496,6 +7496,12 @@ function openModal(mode, id){
   modalMode = mode;
   modalId = id;
 
+  const isAuth = (mode === 'login' || mode === 'signup');
+  const modalBoxEl = $('modalBackdrop').querySelector('.modal');
+  if(modalBoxEl){
+    modalBoxEl.classList.toggle('auth-modal-box', isAuth);
+  }
+
   $('modalBackdrop').classList.add('open');
   if(document.body) document.body.classList.add('modal-open');
 
@@ -8010,13 +8016,16 @@ function openModal(mode, id){
     parts.push('</div>');
 
     parts.push('<label class="field">User ID (아이디) *<input name="username" required maxlength="30" placeholder="e.g. kmlee" autocomplete="username"></label>');
-    parts.push('<label class="field" style="margin-top:10px">Password (비밀번호) *<input name="password" type="password" required minlength="2" placeholder="Password" autocomplete="new-password"></label>');
-    parts.push('<label class="field" style="margin-top:10px">Name (유저명 / 성명) *<input name="user_name" required maxlength="50" placeholder="e.g. 이강민 (Kangmin Lee)"></label>');
-    parts.push('<label class="field" style="margin-top:10px">Advisor (지도교수) *<input name="advisor" required maxlength="50" placeholder="e.g. 신현석 교수님 (Prof. Shin)"></label>');
-    parts.push('<label class="field" style="margin-top:10px">Affiliation / Department (소속 부서 / 연구실) *<input name="affiliation" required maxlength="80" placeholder="e.g. 2DQH / Department"></label>');
+    parts.push('<label class="field" style="margin-top:8px">Password (비밀번호) *<input name="password" type="password" required minlength="2" placeholder="Password" autocomplete="new-password"></label>');
+    parts.push('<label class="field" style="margin-top:8px">Name (성명) *<input name="user_name" required maxlength="50" placeholder="e.g. 이강민 (Kangmin Lee)"></label>');
+    
+    parts.push('<div class="auth-two-col-grid">');
+    parts.push('  <label class="field">Advisor (지도교수) *<input name="advisor" required maxlength="50" placeholder="e.g. 신현석 교수님"></label>');
+    parts.push('  <label class="field">Department (소속 부서) *<input name="affiliation" required maxlength="80" placeholder="e.g. 2DQH"></label>');
+    parts.push('</div>');
 
-    parts.push('<div class="auth-switch-link" style="margin-top:16px;">');
-    parts.push('  Already have an account? (이미 계정이 있으신가요?) <a id="linkSwitchToLogin" role="button">Log In (로그인하기)</a>');
+    parts.push('<div class="auth-switch-link">');
+    parts.push('  Already a member? <a id="linkSwitchToLogin" role="button">Log In (로그인)</a>');
     parts.push('</div>');
   } else {
     parts.push('<div class="auth-modal-tabs">');
@@ -8024,15 +8033,23 @@ function openModal(mode, id){
     parts.push('  <button type="button" class="auth-modal-tab" id="btnSwitchToSignupTab">Sign Up (회원가입)</button>');
     parts.push('</div>');
 
+    parts.push('<div class="auth-login-brand-banner">');
+    parts.push('  <span class="auth-login-brand-icon">🔬</span>');
+    parts.push('  <div class="auth-login-brand-text">');
+    parts.push('    <span class="auth-login-brand-title">IBS 2DQH 연구지원 포털</span>');
+    parts.push('    <span class="auth-login-brand-sub">성균관대 양자기술첨단기기센터 통합 시스템</span>');
+    parts.push('  </div>');
+    parts.push('</div>');
+
     parts.push('<label class="field">User ID / Email (아이디 또는 이메일) *<input name="username" required placeholder="User ID or Email" autocomplete="username"></label>');
     parts.push('<label class="field" style="margin-top:10px">Password (비밀번호) *<input name="password" type="password" required autocomplete="current-password" placeholder="Password"></label>');
 
     parts.push('<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:10px;">');
-    parts.push('  <a id="btnForgotPassword" role="button" style="font-size:12px;color:#2563eb;font-weight:600;text-decoration:underline;cursor:pointer;">Forgot password? (비밀번호 찾기)</a>');
+    parts.push('  <a id="btnForgotPassword" role="button" style="font-size:12px;color:#2563eb;font-weight:600;text-decoration:underline;cursor:pointer;white-space:nowrap;">Forgot password? (비밀번호 찾기)</a>');
     parts.push('</div>');
 
-    parts.push('<div class="auth-switch-link" style="margin-top:16px;">');
-    parts.push('  Don\'t have an account? (계정이 없으신가요?) <a id="linkSwitchToSignup" role="button">Sign Up (회원가입하기)</a>');
+    parts.push('<div class="auth-switch-link">');
+    parts.push('  Need an account? <a id="linkSwitchToSignup" role="button">Sign Up (회원가입)</a>');
     parts.push('</div>');
   }
 
@@ -8390,7 +8407,7 @@ function closeModal(){
   window.__bypass24hPrompt = false;
 
   const bd = $('modalBackdrop');
-  if(bd) bd.classList.remove('open');
+  if(bd){ bd.classList.remove('open'); const mb = bd.querySelector('.modal'); if(mb) mb.classList.remove('auth-modal-box'); }
   if(document.body) document.body.classList.remove('modal-open');
   const mf = $('modalForm');
   if(mf){
