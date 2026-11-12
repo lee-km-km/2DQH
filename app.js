@@ -4326,7 +4326,7 @@ function openChemicalQrModal(){
   const modal = $('modalChemicalQrBackdrop');
   if(!modal) return;
 
-  const targetUrl = getAppBaseUrl() + '#chemicalLog?action=quick_chem_log';
+  const targetUrl = getAppBaseUrl() + '#chemicals?action=quick_chem_log';
   const qrBox = $('chemicalQrCanvasContainer');
   if(qrBox){
     renderQrCodeInto(qrBox, targetUrl, 190);
@@ -4387,7 +4387,7 @@ function openLoanQrModal(){
   const modal = $('modalLoanQrBackdrop');
   if(!modal) return;
 
-  const targetUrl = getAppBaseUrl() + '#loan?action=quick_loan';
+  const targetUrl = getAppBaseUrl() + '#inventory?action=quick_loan';
   const qrBox = $('loanQrCanvasContainer');
   if(qrBox){
     renderQrCodeInto(qrBox, targetUrl, 190);
@@ -8118,8 +8118,20 @@ function isValidView(name){
 // URL Hash, Query Parameter 및 세션 저장소 기반 활성 뷰 해석
 function getViewFromUrl(){
   try {
+    const params = new URLSearchParams(window.location.search || '');
+    const hashRaw = window.location.hash || '';
+    const qIdx = hashRaw.indexOf('?');
+    const hashQuery = (qIdx !== -1) ? hashRaw.slice(qIdx + 1) : '';
+    const hashParams = new URLSearchParams(hashQuery);
+    const getP = function(k){ return params.get(k) || hashParams.get(k); };
+
+    // 0. QR 코드 스캔 및 딥링크 액션 힌트 최우선 해석
+    const act = getP('action');
+    if(act === 'quick_chem_log' || act === 'chemicalLog' || act === 'write_chem_log') return 'chemicals';
+    if(act === 'quick_loan' || act === 'borrow') return 'inventory';
+    if(act === 'quick_start' || getP('eq')) return 'logbook';
+
     // 1. URL 쿼리 파라미터 우선 (?tab=consumables or ?view=consumables or ?mode=logbook)
-    const params = new URLSearchParams(window.location.search);
     const queryTab = params.get('tab') || params.get('view') || params.get('mode');
     if(queryTab){
       const norm = (queryTab === 'equipment') ? 'inventory' : queryTab.toLowerCase();
@@ -8127,11 +8139,13 @@ function getViewFromUrl(){
     }
 
     // 2. URL Hash (#consumables, #inventory, #loans, #dashboard, #history, #logbook, #standalone-logbook)
-    const rawHash = (window.location.hash || '').replace(/^#\/?/, '').split('?')[0].split('/')[0].trim().toLowerCase();
+    const rawHash = hashRaw.replace(/^#\/?/, '').split('?')[0].split('/')[0].trim().toLowerCase();
     if(rawHash){
       if(rawHash === 'reorder') return 'consumables';
-      if(rawHash === 'standalone-logbook') return 'logbook';
-      if(rawHash === 'chemicals' || rawHash === 'chemical' || rawHash === 'qr-chemical') return 'chemicals';
+      if(rawHash === 'standalone-logbook' || rawHash === 'xrd') return 'logbook';
+      if(rawHash === 'chemicals' || rawHash === 'chemical' || rawHash === 'qr-chemical' ||
+         rawHash === 'chemicallog' || rawHash === 'chem-log' || rawHash === 'chem_log') return 'chemicals';
+      if(rawHash === 'inventory' || rawHash === 'loan' || rawHash === 'loans' || rawHash === 'borrow') return 'inventory';
       if(rawHash === 'help' || rawHash === 'manual' || rawHash === 'guide') return 'help';
       const norm = (rawHash === 'equipment') ? 'inventory' : rawHash;
       if(isValidView(norm)) return norm;
@@ -10296,53 +10310,62 @@ function handleUrlFastTrack(){
       return;
     }
 
-    // 1. 특별관리물질 취급일지 작성 다이렉트 진입 (#chemicalLog or ?action=quick_chem_log)
-    const isChemLogAction = hashPath === 'chemicallog' || hashPath === 'chem-log' || hashPath === 'chem_log' ||
+    // 1. 특별관리물질 취급일지 작성 다이렉트 진입 (#chemicals?action=quick_chem_log or #chemicalLog or ?action=quick_chem_log)
+    const isChemLogAction = (hashPath === 'chemicals' && getParam('action') === 'quick_chem_log') ||
+                            hashPath === 'chemicallog' || hashPath === 'chem-log' || hashPath === 'chem_log' ||
                             getParam('action') === 'quick_chem_log' || getParam('action') === 'chemicalLog' ||
                             getParam('action') === 'write_chem_log';
-    const directChemId = getParam('chem') || getParam('chemId') || getParam('id');
+    const directChemId = getParam('chem') || getParam('chemId');
 
-    if(isChemLogAction || directChemId){
+    if(isChemLogAction || (hashPath === 'chemicals' && directChemId)){
+      setPortalModule('inventory', { switchView: false });
       showView('chemicals', { updateUrl: false });
       if(typeof render291InventoryTable === 'function') render291InventoryTable();
       setTimeout(function(){
         openChemWriteLogModal(directChemId);
-        toast('⚡ 특별관리물질 취급일지 작성 화면으로 연결되었습니다.');
-      }, 150);
+        toast('📝 특별관리물질 취급일지 작성 화면으로 연결되었습니다.');
+      }, 120);
       return;
     }
 
-    // 2. 비품 대여 신청 직행 (#loan or #borrow or ?action=quick_loan or ?action=borrow)
-    const isLoanAction = (hashPath === 'loan' && getParam('action')) || hashPath === 'borrow' || getParam('action') === 'quick_loan' || getParam('action') === 'borrow';
+    // 2. 비품 대여 신청 직행 (#inventory?action=quick_loan or #loan or #borrow or ?action=quick_loan or ?action=borrow)
+    const isLoanAction = (hashPath === 'inventory' && getParam('action') === 'quick_loan') ||
+                         (hashPath === 'loan' && getParam('action')) || hashPath === 'borrow' ||
+                         getParam('action') === 'quick_loan' || getParam('action') === 'borrow';
     const loanAssetId = getParam('loan') || (getParam('action') === 'borrow' ? getParam('id') : null);
 
     if(isLoanAction || loanAssetId){
+      setPortalModule('inventory', { switchView: false });
       showView('inventory', { updateUrl: false });
       setTimeout(function(){
         openModal('borrow', loanAssetId);
-        toast('⚡ 비품 대여 신청 화면으로 연결되었습니다.');
-      }, 150);
+        toast('📱 비품 대여 신청 화면으로 연결되었습니다.');
+      }, 120);
       return;
     }
 
     // 3. 비품 반납 직행
     const returnAssetId = getParam('return') || (getParam('action') === 'return' ? getParam('id') : null);
     if(returnAssetId){
+      setPortalModule('inventory', { switchView: false });
       showView('inventory', { updateUrl: false });
       const act = activeLoanFor(returnAssetId) || loans.find(function(l){ return String(l.id) === String(returnAssetId); });
       setTimeout(function(){
         openModal('return', act ? act.id : returnAssetId);
-      }, 150);
+      }, 120);
       return;
     }
 
     // 4. 연구장비 전자 로그북 직행 (#logbook?eq=EQ-XRD-01 or ?logbook=XRD or #xrd or eq=EQ-XRD-01)
     // 중요: 단순 #logbook 진입(사용자가 상단 탭 클릭 등) 시에는 팝업 모달 없이 카탈로그/상세 뷰만 표시하고,
     // QR 스캔(eq 파라미터 또는 quick_start 또는 #xrd)으로 진입한 경우에만 2번째 사진(HR-XRD 전자 로그북 워크스테이션)으로 즉시 직행!
-    const eqCode = getParam('eq') || getParam('logbook') || getParam('equipment') || (hashPath === 'xrd' ? 'EQ-XRD-01' : null);
-    const isQrScanEntry = Boolean(eqCode) || getParam('action') === 'quick_start' || window.location.href.includes('quick_start') || hashPath === 'xrd';
+    const eqCode = getParam('eq') || (hashPath === 'logbook' ? getParam('equipment') : null) || (hashPath === 'xrd' ? 'EQ-XRD-01' : null);
+    const isEquipmentQrEntry = (hashPath === 'logbook' && getParam('action') === 'quick_start') ||
+                               Boolean(eqCode) || (getParam('action') === 'quick_start' && hashPath === 'logbook') ||
+                               hashPath === 'xrd';
 
-    if(isQrScanEntry){
+    if(isEquipmentQrEntry){
+      setPortalModule('lims', { switchView: false });
       showView('logbook', { updateUrl: false });
       const targetCode = (eqCode || 'EQ-XRD-01').trim();
       const found = researchEquipments.find(function(e){
@@ -10362,7 +10385,7 @@ function handleUrlFastTrack(){
           formBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         toast('⚡ ' + (found ? (found.code || found.name) : 'HR-XRD') + ' 전자 로그북으로 직행했습니다.');
-      }, 150);
+      }, 120);
       return;
     }
 
@@ -18848,14 +18871,17 @@ async function initApp(){
   const savedMod = localStorage.getItem('labstock_active_portal_module');
   setPortalModule(isLims ? 'lims' : (savedMod || 'lims'), { switchView: false });
 
-  // URL Hash, 파라미터 및 세션 기반 활성 뷰 해석 (새로고침 시 현재 탭 유지)
-  showView(initialView, { updateUrl: true, pushState: false });
+  // URL Hash, 파라미터 및 세션 기반 활성 뷰 해석 (새로고침 시 현재 탭 유지, URL 덮어쓰기 금지)
+  showView(initialView, { updateUrl: false, pushState: false });
   if(document.documentElement) document.documentElement.removeAttribute('data-initial-view');
 
   localStorage.removeItem('labstock_local_assets');
   localStorage.removeItem('labstock_local_loans');
 
   loadLocalStorage();
+
+  // QR 스캔 / 딥링크 즉시 진입 (Supabase 네트워크 대기 없이 즉시 해당 뷰로 직행 및 모달 팝업)
+  handleUrlFastTrack();
 
   initXrdControls();
   resetXrdForm();
