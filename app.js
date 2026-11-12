@@ -17541,9 +17541,17 @@ function render291InventoryTable(){
 // [화학물질·시약 신규등록 및 수정 관리자 전용 모달 함수]
 // -------------------------------------------------------------
 function openChemProductModal(chemId){
-  if(!isAdmin()){
-    toast('시약 등록 및 수정을 위해서는 관리자 로그인이 필요합니다.');
+  const curU = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const isAdm = (typeof isAdmin === 'function') && isAdmin();
+
+  if(!curU && !isAdm){
+    toast('시약 등록을 위해 먼저 로그인해주세요.');
     openModal('login');
+    return;
+  }
+
+  if(chemId && !isAdm){
+    toast('기존 시약 정보 수정은 시스템 관리자만 가능합니다.');
     return;
   }
   const modal = $('modalChemProductBackdrop');
@@ -17609,7 +17617,8 @@ function openChemProductModal(chemId){
     if($('chemProdStatus')) $('chemProdStatus').value = '입고';
 
     if(titleEl) titleEl.textContent = '🧪 화학물질·시약 신규 등록';
-    if(subEl) subEl.textContent = 'N센터 86291호 연구실 안전관리 신규 재고 등록';
+    const regName = curU ? (curU.name || curU.username) : (isAdm ? '관리자' : '연구원');
+    if(subEl) subEl.textContent = '등록자: ' + regName + (curU && curU.affiliation ? (' (' + curU.affiliation + ')') : '') + ' · N센터 86291호 신규 재고 등록';
     if(submitBtn) submitBtn.textContent = '신규 등록 완료';
   }
 
@@ -17625,11 +17634,19 @@ function closeChemProductModal(){
 
 async function handleChemProductSubmit(e){
   e.preventDefault();
-  if(!isAdmin()){
-    toast('관리자 권한이 필요합니다.');
+  const curU = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const isAdm = (typeof isAdmin === 'function') && isAdmin();
+
+  if(!curU && !isAdm){
+    toast('시약 등록을 위해 먼저 로그인해주세요.');
+    openModal('login');
     return;
   }
   const id = ($('chemProdId') ? $('chemProdId').value : '').trim();
+  if(id && !isAdm){
+    toast('시약 정보 수정은 관리자만 가능합니다.');
+    return;
+  }
   const name = ($('chemProdName') ? $('chemProdName').value : '').trim();
   if(!name){ toast('제품명을 입력해주세요.'); return; }
   const mfg = ($('chemProdMfg') ? $('chemProdMfg').value : '').trim();
@@ -17709,11 +17726,57 @@ async function handleChemProductSubmit(e){
       carcinogen: carcinogen,
       mutagen: mutagen,
       reprotoxic: reprotoxic,
-      specialNoticeSub: isSpecial ? ('(' + name.split('(')[0].trim() + ')') : ''
+      specialNoticeSub: isSpecial ? ('(' + name.split('(')[0].trim() + ')') : '',
+      registered_by_username: creatorUsername,
+      registered_by_name: creatorName,
+      registered_by_affil: creatorAffil,
+      registered_by_advisor: creatorAdvisor,
+      registered_at: new Date().toISOString(),
+      is_admin_registered: isAdm
     };
     chemicals.unshift(newChem);
     save291ChemicalsMaster(chemicals);
-    toast('✓ 신규 시약 [' + name + ']이(가) 등록되었습니다.');
+    
+    // [감사 로그] 비관리자 / 연구원 신규 등록 추적 로그 기록
+    const auditLog = {
+      id: 'reg_' + newId + '_' + Date.now(),
+      chemId: newId,
+      materialName: newChem.name + (newChem.cas ? (' [' + newChem.cas + ']') : ''),
+      date: new Date().toISOString().slice(0, 10),
+      time: new Date().toTimeString().slice(0, 5),
+      worker: creatorName + (isAdm ? ' (관리자)' : ' (연구원 등록)'),
+      affiliation: creatorAffil || 'IBS 2DQH',
+      professor: creatorAdvisor || '신현석 교수님',
+      purpose: '[신규 시약 최초 등록] 등록자: ' + creatorName + ' (ID: ' + creatorUsername + ')' + (isAdm ? ' [관리자]' : ' [일반연구원 등록]'),
+      usedQty: 0,
+      remainingStock: newChem.stock,
+      unit: newChem.unit,
+      disposalMethod: '정상 입고 보관',
+      safetyGear: '보안경, 실험복, 라텍스 장갑 착용',
+      isRegistrationLog: true,
+      registeredByUsername: creatorUsername
+    };
+    const curLogs = get291UsageLogs();
+    curLogs.unshift(auditLog);
+    save291UsageLogs(curLogs);
+
+    if(db){
+      try {
+        db.from('chemical_logs').insert({
+          chemical_name: newChem.name,
+          cas_no: newChem.cas,
+          user_name: creatorName + (isAdm ? ' (관리자)' : ' (연구원 등록)'),
+          affiliation: creatorAffil || '2DQH',
+          professor: creatorAdvisor,
+          purpose: '[신규등록 감사로그] ID: ' + creatorUsername + ', 성명: ' + creatorName + (isAdm ? ' [관리자]' : ' [일반연구원]'),
+          used_qty: 0,
+          remaining_qty: newChem.stock,
+          unit: newChem.unit,
+          used_date: today()
+        }).then(function(){});
+      } catch(e){}
+    }
+  toast('✓ 신규 시약 [' + name + ']이(가) 등록되었습니다.');
   }
 
   closeChemProductModal();
@@ -17743,7 +17806,13 @@ function openChemHistoryModal(chemId){
   const btnWrite = $('btnHistWriteLog');
 
   if(title) title.textContent = c.name + ' [' + c.cas + ']';
-  if(sub) sub.textContent = '제조사: ' + c.mfg + ' · 보관: ' + c.location + ' · 책임: ' + c.handler;
+  if(sub) {
+    let subTxt = '제조사: ' + c.mfg + ' · 보관: ' + c.location + ' · 책임: ' + c.handler;
+    if(c.registered_by_name) {
+      subTxt += ' · 최초 등록자: ' + c.registered_by_name + (c.registered_by_affil ? (' (' + c.registered_by_affil + ')') : '') + (c.is_admin_registered ? ' [관리자]' : ' [연구원]');
+    }
+    sub.textContent = subTxt;
+  }
   if(initEl) initEl.textContent = c.stock + ' ' + c.unit;
   if(curEl) curEl.textContent = curStock + ' ' + c.unit;
 
@@ -19210,6 +19279,10 @@ function bindChemicalsEvents(){
     e.preventDefault();
     openChemProductModal();
   });
+  addEvt('btnChemPageHeadNewProduct', 'click', function(e){
+    e.preventDefault();
+    openChemProductModal();
+  });
   addEvt('btnChemTabNewProduct', 'click', function(e){
     e.preventDefault();
     openChemProductModal();
@@ -19604,6 +19677,12 @@ function saveRegisteredUsers(list){
 function updateUserUI(){
   const u = getCurrentUser();
   const isAdm = isAdmin();
+
+  const userOnlyEls = document.querySelectorAll('.user-only');
+  userOnlyEls.forEach(function(el){
+    el.classList.toggle('hidden', !(u || isAdm));
+  });
+
   const topBadge = $('userProfileBadge');
   const topName = $('topUserName');
   const topAffil = $('topUserAffil');

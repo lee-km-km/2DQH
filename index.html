@@ -423,12 +423,21 @@
     <!-- 🧪 특별관리물질 & 시약 안전관리 포털 (IBS 2DQH N센터 86291호 연구실) -->
     <!-- ================================================================= -->
     <section class="view hidden" id="view-chemicals">
+      <div class="page-head hide-mobile">
+        <div class="head-title">
+          <h1>특별관리물질 &amp; 시약</h1>
+          <span class="count-badge" id="chemCountBadge">안전관리</span>
+        </div>
+        <div class="head-actions">
+          <button type="button" class="btn user-only hidden" id="btnChemPageHeadNewProduct" style="background:#2563eb;color:#fff;border:none;font-weight:700;">＋ 신규 시약 등록</button>
+        </div>
+      </div>
       <!-- 1. 상단 탭 (재고현황 | 월별 취급 캘린더 | 신규제품등록) & 가이드 다운로드 -->
       <div class="chem-portal-nav-bar">
         <div class="chem-main-tabs" role="tablist">
           <button type="button" class="chem-main-tab active" id="btnChemTabInventory">재고현황</button>
           <button type="button" class="chem-main-tab" id="btnChemTabCalendar">📅 취급 일지 캘린더</button>
-          <button type="button" class="chem-main-tab" id="btnChemTabNewProduct" title="신규 화학물질 및 시약 등록 (관리자)">＋ 신규제품등록</button>
+          <button type="button" class="chem-main-tab user-only hidden" id="btnChemTabNewProduct" title="신규 화학물질 및 시약 등록">＋ 신규제품등록</button>
         </div>
         
       </div>
@@ -437,14 +446,14 @@
       <div id="chemInventoryViewArea">
         <!-- 시약 카테고리 원클릭 필터 탭 (특별관리물질 vs 일반 시약 vs 전체 통합) -->
         <div class="chem-quick-scope-bar" role="tablist">
+          <button type="button" class="btn-chem-scope active" data-chem-scope="all" id="btnScopeAll">
+            📦 전체 시약
+          </button>
           <button type="button" class="btn-chem-scope" data-chem-scope="special" id="btnScopeSpecial">
             ⭐ 특별관리물질
           </button>
           <button type="button" class="btn-chem-scope" data-chem-scope="general" id="btnScopeGeneral">
-            🧪 일반 시약·유해물질
-          </button>
-          <button type="button" class="btn-chem-scope active" data-chem-scope="all" id="btnScopeAll">
-            📦 전체 화학물질 (통합 검색)
+            🧪 일반 시약
           </button>
         </div>
 
@@ -566,7 +575,7 @@
             <button type="button" class="btn-korea-action admin-only hidden" id="btnChemShowDirectQr" title="시약장 부착용 취급일지 직통 QR 라벨 (관리자 전용)" style="background:#ffffff;border:1.5px solid #059669;color:#059669;font-weight:700;">
               📱 일지작성 QR
             </button>
-            <button type="button" class="btn-korea-action dark admin-only hidden" id="btnChemOpenNewProductModal">
+            <button type="button" class="btn-korea-action dark user-only hidden" id="btnChemOpenNewProductModal" title="신규 화학물질 및 시약 등록">
               ＋ 시약등록
             </button>
             
