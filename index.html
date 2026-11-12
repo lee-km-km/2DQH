@@ -1415,7 +1415,16 @@
             <!-- 2. User -->
             <div class="xrd-sec" id="xrdUserSec">
               <h2>User</h2>
-              <div class="xrd-grid xrd-c3">
+              <div class="xrd-user-compact-bar hidden" id="xrdUserCompactBar">
+                <div class="xrd-user-compact-left">
+                  <span class="xrd-user-compact-label">OPERATOR</span>
+                  <span class="xrd-user-compact-name" id="xrdCompactName"></span>
+                  <span class="xrd-user-compact-meta" id="xrdCompactMeta"></span>
+                  <span class="xrd-user-compact-tag">자동 연동</span>
+                </div>
+                <button type="button" class="xrd-user-toggle-btn" id="btnToggleXrdUserEdit">수정</button>
+              </div>
+              <div class="xrd-grid xrd-c3" id="xrdUserInputsGrid">
                 <label>User name *
                   <input name="user_name" required maxlength="100" placeholder="Full name, e.g. Kang-Min Lee">
                 </label>

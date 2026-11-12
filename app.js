@@ -3051,6 +3051,19 @@ function initXrdControls(){
   const opt = function(o){ return '<option value="' + o + '">' + o + '</option>'; };
   if(f.start_time && f.start_time.options.length === 0) f.start_time.innerHTML = slots.map(opt).join('');
   if(f.end_time && f.end_time.options.length === 0) f.end_time.innerHTML = slots.map(opt).join('');
+
+  const btnToggleXrd = $('btnToggleXrdUserEdit');
+  if(btnToggleXrd && !btnToggleXrd.__bound){
+    btnToggleXrd.__bound = true;
+    btnToggleXrd.addEventListener('click', function(e){
+      e.preventDefault();
+      const grid = $('xrdUserInputsGrid');
+      if(!grid) return;
+      const isHidden = grid.classList.contains('hidden');
+      grid.classList.toggle('hidden', !isHidden);
+      btnToggleXrd.textContent = isHidden ? '접기' : '수정';
+    });
+  }
   if(f.sample_count && f.sample_count.options.length === 0){
     f.sample_count.innerHTML = XRD_COUNTS.map(function(n){
       return '<option value="' + n + '">' + (n >= 10 ? '10 or more' : n) + '</option>';
@@ -3342,6 +3355,8 @@ function resetXrdForm(){
   xrdAlign = 'PB';
   xrdScanSel = new Set();
   if(f.sample_count) f.sample_count.value = '1';
+
+  if(typeof applyCurrentUserToForms === 'function') applyCurrentUserToForms();
 
   // 회원 프로필 정보 자동완성 (로그인 회원 메타데이터 or 게스트 localStorage 기억)
   if(session && session.user && !session.user.is_anonymous){
@@ -4634,11 +4649,34 @@ function openEquipmentTestDrive(code){
   formHtml += '    <label class="xrd-mini modal-col-time">시작 시간<input name="start_time" type="time" value="' + defTime + '" required></label>';
   formHtml += '    <label class="xrd-mini modal-col-dur">가동 시간(분)<input name="duration_min" type="number" min="5" step="5" value="60" required></label>';
   formHtml += '  </div>';
-  formHtml += '  <div class="xrd-grid xrd-c3">';
-  formHtml += '    <label class="xrd-mini">사용자 이름<input name="user_name" value="' + safe(storedUser) + '" placeholder="사용자 성명" required></label>';
-  formHtml += '    <label class="xrd-mini">소속 연구실<input name="affiliation" value="' + safe(storedAffil) + '" placeholder="e.g. 2DQH"></label>';
-  formHtml += '    <label class="xrd-mini">지도교수<input name="professor" value="' + safe(storedProf) + '" placeholder="e.g. 신현석 교수님"></label>';
-  formHtml += '  </div>';
+  const curAuthUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const isAuthLoggedIn = !!curAuthUser;
+  const uNameVal = curAuthUser ? (curAuthUser.name || '') : storedUser;
+  const uAffilVal = curAuthUser ? (curAuthUser.affiliation || '') : storedAffil;
+  const uProfVal = curAuthUser ? (curAuthUser.advisor || '') : storedProf;
+
+  if(isAuthLoggedIn){
+    formHtml += '  <div class="modal-user-compact-bar" id="modalUserCompactBar">';
+    formHtml += '    <div class="modal-user-compact-left">';
+    formHtml += '      <span class="modal-user-compact-label">OPERATOR</span>';
+    formHtml += '      <span class="modal-user-compact-name"><strong>' + safe(uNameVal) + '</strong></span>';
+    formHtml += '      <span class="modal-user-compact-meta">' + safe(uAffilVal) + (uProfVal ? (' · ' + safe(uProfVal)) : '') + '</span>';
+    formHtml += '      <span class="modal-user-compact-badge">자동 연동</span>';
+    formHtml += '    </div>';
+    formHtml += '    <button type="button" class="modal-user-toggle-btn" id="btnToggleModalUserInputs">수정</button>';
+    formHtml += '  </div>';
+    formHtml += '  <div class="xrd-grid xrd-c3 hidden" id="modalUserInputsGrid" style="margin-top:6px;">';
+    formHtml += '    <label class="xrd-mini">사용자 이름<input name="user_name" value="' + safe(uNameVal) + '" placeholder="사용자 성명" required></label>';
+    formHtml += '    <label class="xrd-mini">소속 연구실<input name="affiliation" value="' + safe(uAffilVal) + '" placeholder="e.g. 2DQH"></label>';
+    formHtml += '    <label class="xrd-mini">지도교수<input name="professor" value="' + safe(uProfVal) + '" placeholder="e.g. 신현석 교수님"></label>';
+    formHtml += '  </div>';
+  } else {
+    formHtml += '  <div class="xrd-grid xrd-c3" id="modalUserInputsGrid">';
+    formHtml += '    <label class="xrd-mini">사용자 이름<input name="user_name" value="' + safe(uNameVal) + '" placeholder="사용자 성명" required></label>';
+    formHtml += '    <label class="xrd-mini">소속 연구실<input name="affiliation" value="' + safe(uAffilVal) + '" placeholder="e.g. 2DQH"></label>';
+    formHtml += '    <label class="xrd-mini">지도교수<input name="professor" value="' + safe(uProfVal) + '" placeholder="e.g. 신현석 교수님"></label>';
+    formHtml += '  </div>';
+  }
   formHtml += '</div>';
 
   // 2. 샘플 정보
@@ -4716,6 +4754,19 @@ function openEquipmentTestDrive(code){
   formHtml += '</div>';
 
   container.innerHTML = formHtml;
+
+  const btnToggleModalUser = container.querySelector('#btnToggleModalUserInputs');
+  if(btnToggleModalUser){
+    btnToggleModalUser.addEventListener('click', function(e){
+      e.preventDefault();
+      const grid = container.querySelector('#modalUserInputsGrid');
+      if(!grid) return;
+      const isHidden = grid.classList.contains('hidden');
+      grid.classList.toggle('hidden', !isHidden);
+      btnToggleModalUser.textContent = isHidden ? '접기' : '수정';
+    });
+  }
+
   modal.classList.add('open');
 }
 
@@ -19330,20 +19381,40 @@ function updateUserUI(){
 
 function applyCurrentUserToForms(){
   const u = getCurrentUser();
-  if(!u) return;
-
-  // 1. HR-XRD 워크스테이션 (#xrdForm) 자동 채우기
   const f = $('xrdForm');
+  const userSec = $('xrdUserSec');
+  const compactBar = $('xrdUserCompactBar');
+  const inputsGrid = $('xrdUserInputsGrid');
+  const profileHint = $('xrdProfileHint');
+
   if(f){
-    if(f.user_name && (!f.user_name.value || f.user_name.value === 'default')) f.user_name.value = u.name;
-    if(f.professor && (!f.professor.value || f.professor.value.includes('교수'))) f.professor.value = u.advisor;
-    if(f.affiliation && (!f.affiliation.value || f.affiliation.value === '2DQH')) f.affiliation.value = u.affiliation;
+    if(u){
+      if(f.user_name) f.user_name.value = u.name || '';
+      if(f.professor) f.professor.value = u.advisor || '';
+      if(f.affiliation) f.affiliation.value = u.affiliation || '';
+
+      if(userSec) userSec.classList.add('is-compact');
+      if(compactBar){
+        compactBar.classList.remove('hidden');
+        const cName = $('xrdCompactName');
+        const cMeta = $('xrdCompactMeta');
+        if(cName) cName.textContent = u.name || '';
+        if(cMeta) cMeta.textContent = (u.affiliation || '') + (u.advisor ? (' · ' + u.advisor) : '');
+      }
+      if(inputsGrid) inputsGrid.classList.add('hidden');
+      if(profileHint) profileHint.classList.add('hidden');
+    } else {
+      if(userSec) userSec.classList.remove('is-compact');
+      if(compactBar) compactBar.classList.add('hidden');
+      if(inputsGrid) inputsGrid.classList.remove('hidden');
+      if(profileHint) profileHint.classList.remove('hidden');
+    }
   }
 
-  // 2. 특별관리물질 취급일지 모달 (#modalChemWriteLogBackdrop) 자동 채우기
+  // 특별관리물질 취급일지 모달 (#modalChemWriteLogBackdrop) 자동 채우기
   const chemHandler = $('modalChemHandler');
-  if(chemHandler && (!chemHandler.value || chemHandler.value === '이강민')){
-    chemHandler.value = u.name;
+  if(chemHandler && u){
+    chemHandler.value = u.name || '';
   }
 }
 

@@ -11650,3 +11650,110 @@ html:not(.is-admin) #btnHelpTabAdmin {
     gap: 8px !important;
   }
 }
+
+
+/* ==========================================================================
+   [로그북 작성 화면 사용자 정보 초경량 콤팩트 바 & 칸 축소]
+   ========================================================================== */
+#xrdUserSec.is-compact {
+  padding: 8px 12px !important;
+  margin-bottom: 10px !important;
+  background: var(--bg-surface, #ffffff) !important;
+  border-color: #cbd5e1 !important;
+}
+#xrdUserSec.is-compact > h2 {
+  display: none !important;
+}
+
+.xrd-user-compact-bar,
+.modal-user-compact-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  padding: 2px 0 !important;
+}
+
+.xrd-user-compact-left,
+.modal-user-compact-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.xrd-user-compact-label,
+.modal-user-compact-label {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  color: #64748b !important;
+  background: #f1f5f9 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
+  flex-shrink: 0 !important;
+}
+[data-theme="dark"] .xrd-user-compact-label,
+[data-theme="dark"] .modal-user-compact-label {
+  background: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+.xrd-user-compact-name,
+.modal-user-compact-name {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--ink, #0f172a) !important;
+  flex-shrink: 0 !important;
+}
+
+.xrd-user-compact-meta,
+.modal-user-compact-meta {
+  font-size: 12px !important;
+  color: var(--ink-light, #64748b) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.xrd-user-compact-tag,
+.modal-user-compact-badge {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #15803d !important;
+  background: #dcfce7 !important;
+  padding: 1px 6px !important;
+  border-radius: 999px !important;
+  flex-shrink: 0 !important;
+}
+[data-theme="dark"] .xrd-user-compact-tag,
+[data-theme="dark"] .modal-user-compact-badge {
+  color: #86efac !important;
+  background: #14532d !important;
+}
+
+.xrd-user-toggle-btn,
+.modal-user-toggle-btn {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #2563eb !important;
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  transition: all 0.15s ease !important;
+}
+.xrd-user-toggle-btn:hover,
+.modal-user-toggle-btn:hover {
+  background: #dbeafe !important;
+}
