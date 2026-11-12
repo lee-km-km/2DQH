@@ -8479,6 +8479,192 @@ async function saveForm(e){
   const btn = $('saveModal');
   btn.disabled = true;
 
+  // =========================================================================
+  // [회원가입 및 로그인 전역 핸들러] (Supabase DB 연결 여부와 무관하게 최우선 처리)
+  // =========================================================================
+  if(modalMode === 'signup'){
+    try {
+      const uName = (v.username || '').trim();
+      const uPass = (v.password || '').trim();
+      const rName = (v.user_name || '').trim();
+      const rAdvisor = (v.advisor || '').trim();
+      const rAffil = (v.affiliation || '').trim();
+
+      if(!uName || !uPass || !rName){
+        throw new Error('아이디, 비밀번호, 성명을 모두 입력해주세요.');
+      }
+
+      if(uName.toLowerCase() === '2dqh' || uName.toLowerCase() === 'admin' || uName.toLowerCase() === '2dqh2024@gmail.com'){
+        throw new Error('관리자 전용 아이디입니다. 로그인 화면에서 로그인해주세요.');
+      }
+
+      const registered = getRegisteredUsers();
+      if(registered.some(function(u){ return u.username.toLowerCase() === uName.toLowerCase(); })){
+        throw new Error('이미 등록된 아이디입니다. 다른 아이디를 사용해주세요.');
+      }
+
+      const newUserObj = {
+        username: uName,
+        password: uPass,
+        name: rName,
+        advisor: rAdvisor,
+        affiliation: rAffil,
+        role: 'researcher',
+        created_at: new Date().toISOString()
+      };
+
+      registered.push(newUserObj);
+      saveRegisteredUsers(registered);
+
+      // Supabase user_profiles 저장 시도
+      if(db && !isLocalMode){
+        try {
+          await db.from('user_profiles').upsert({
+            id: uName,
+            username: uName,
+            password: uPass,
+            name: rName,
+            advisor: rAdvisor,
+            affiliation: rAffil,
+            role: newUserObj.role,
+            created_at: newUserObj.created_at
+          });
+        } catch(e){
+          console.warn('Supabase profile save skipped:', e);
+        }
+      }
+
+      setCurrentUser(newUserObj);
+      closeModal();
+      toast('🎉 ' + rName + '님 회원가입이 완료되었습니다! 정보가 자동 연동됩니다.');
+    } catch(err){
+      toast(err.message || '회원가입에 실패했습니다.');
+    } finally {
+      btn.disabled = false;
+    }
+    return;
+  }
+
+  if(modalMode === 'login'){
+    try {
+      const inputId = (v.username || v.email || '').trim();
+      const inputPass = (v.password || '').trim();
+
+      if(!inputId){
+        throw new Error('아이디 또는 이메일을 입력해주세요.');
+      }
+
+      // A. 관리자 계정 (2DQH / 2dqh2024@gmail.com / admin) - 비밀번호: 86276@
+      const is2DQH = (inputId.toLowerCase() === '2dqh' || inputId.toLowerCase() === '2dqh2024@gmail.com');
+      const isAdminId = (inputId.toLowerCase() === 'admin');
+
+      if(is2DQH || isAdminId){
+        if(is2DQH){
+          if(inputPass !== '86276@'){
+            throw new Error('비밀번호가 일치하지 않습니다. (관리자 비밀번호 확인)');
+          }
+        } else if(isAdminId){
+          if(inputPass && inputPass !== '86276@' && inputPass !== '11'){
+            throw new Error('비밀번호가 일치하지 않습니다. (관리자 비밀번호 확인)');
+          }
+        }
+
+        // Supabase Auth 공식 인증 시도 (2dqh2024@gmail.com / 86276@)
+        if(db && db.auth && !isLocalMode){
+          try {
+            const { data: suAuth, error: suErr } = await db.auth.signInWithPassword({
+              email: '2dqh2024@gmail.com',
+              password: inputPass === '11' ? '86276@' : inputPass
+            });
+            if(!suErr && suAuth && suAuth.session){
+              session = suAuth.session;
+              console.log('✓ Supabase Auth 공식 로그인 성공 (2dqh2024@gmail.com)');
+            } else if(suErr){
+              console.warn('Supabase Auth signIn warning:', suErr.message);
+            }
+          } catch(e){
+            console.warn('Supabase Auth signIn error:', e);
+          }
+        }
+
+        admin = true;
+        try {
+          localStorage.setItem('labstock_is_admin', 'true');
+        } catch(_){}
+
+        const adminObj = {
+          username: '2DQH',
+          email: '2dqh2024@gmail.com',
+          name: '연구실 관리자',
+          advisor: '신현석 교수님',
+          affiliation: 'IBS 2DQH',
+          role: 'admin'
+        };
+        setCurrentUser(adminObj);
+        if(typeof setAdminUI === 'function') setAdminUI();
+        closeModal();
+        toast('👑 2DQH 관리자로 로그인되었습니다.');
+        btn.disabled = false;
+        await loadData();
+        return;
+      }
+
+      // B. 등록된 연구원 프로필 조회
+      const registered = getRegisteredUsers();
+      const found = registered.find(function(u){ return u.username.toLowerCase() === inputId.toLowerCase(); });
+
+      if(found){
+        if(found.password && inputPass && found.password !== inputPass){
+          throw new Error('비밀번호가 일치하지 않습니다.');
+        }
+        setCurrentUser(found);
+        if(found.role === 'admin'){
+          admin = true;
+          if(typeof setAdminUI === 'function') setAdminUI();
+        }
+        closeModal();
+        toast('✓ ' + found.name + ' 연구원님 로그인 완료');
+        btn.disabled = false;
+        return;
+      }
+
+      // C. Supabase user_profiles 조회 시도
+      if(db && !isLocalMode){
+        try {
+          const { data: suData } = await db.from('user_profiles').select('*').eq('username', inputId).single();
+          if(suData){
+            if(suData.password && inputPass && suData.password !== inputPass){
+              throw new Error('비밀번호가 일치하지 않습니다.');
+            }
+            setCurrentUser(suData);
+            closeModal();
+            toast('✓ ' + suData.name + ' 연구원님 로그인 완료');
+            btn.disabled = false;
+            return;
+          }
+        } catch(e){}
+      }
+
+      // D. 신규 아이디인 경우 간편 자동 연동
+      const autoUser = {
+        username: inputId,
+        password: inputPass,
+        name: inputId,
+        advisor: '신현석 교수님',
+        affiliation: '2DQH',
+        role: 'researcher'
+      };
+      setCurrentUser(autoUser);
+      closeModal();
+      toast('✓ ' + inputId + '님 로그인 완료 (정보 자동 연동)');
+    } catch(err){
+      toast(err.message || '로그인에 실패했습니다.');
+    } finally {
+      btn.disabled = false;
+    }
+    return;
+  }
+
   // [특별관리물질 취급일지 등록 처리]
   if(modalMode === 'chemicalLog'){
     try {
@@ -8644,182 +8830,6 @@ async function saveForm(e){
       saveLocalStorage();
       closeModal();
       toast('비품이 저장되었습니다.');
-      btn.disabled = false;
-      return;
-    } else if(modalMode === 'signup'){
-      // 1. 회원가입 처리 (Supabase DB + Local Sync)
-      const uName = (v.username || '').trim();
-      const uPass = (v.password || '').trim();
-      const rName = (v.user_name || '').trim();
-      const rAdvisor = (v.advisor || '').trim();
-      const rAffil = (v.affiliation || '').trim();
-
-      if(!uName || !uPass || !rName){
-        throw new Error('아이디, 비밀번호, 성명을 모두 입력해주세요.');
-      }
-
-      if(uName.toLowerCase() === '2dqh' || uName.toLowerCase() === 'admin' || uName.toLowerCase() === '2dqh2024@gmail.com'){
-        throw new Error('관리자 전용 아이디입니다. 로그인 화면에서 로그인해주세요.');
-      }
-
-      const registered = getRegisteredUsers();
-      if(registered.some(function(u){ return u.username.toLowerCase() === uName.toLowerCase(); })){
-        throw new Error('이미 등록된 아이디입니다. 다른 아이디를 사용해주세요.');
-      }
-
-      const newUserObj = {
-        username: uName,
-        password: uPass,
-        name: rName,
-        advisor: rAdvisor,
-        affiliation: rAffil,
-        role: uName.toLowerCase() === 'admin' ? 'admin' : 'researcher',
-        created_at: new Date().toISOString()
-      };
-
-      registered.push(newUserObj);
-      saveRegisteredUsers(registered);
-
-      // Supabase user_profiles 저장 시도
-      if(db && !isLocalMode){
-        try {
-          await db.from('user_profiles').upsert({
-            id: uName,
-            username: uName,
-            password: uPass,
-            name: rName,
-            advisor: rAdvisor,
-            affiliation: rAffil,
-            role: newUserObj.role,
-            created_at: newUserObj.created_at
-          });
-        } catch(e){
-          console.warn('Supabase profile save skipped:', e);
-        }
-      }
-
-      setCurrentUser(newUserObj);
-      if(newUserObj.role === 'admin'){
-        admin = true;
-        if(typeof setAdminUI === 'function') setAdminUI();
-      }
-      closeModal();
-      toast('🎉 ' + rName + '님 회원가입이 완료되었습니다! 정보가 자동 연동됩니다.');
-      btn.disabled = false;
-      return;
-
-    } else if(modalMode === 'login'){
-      // 2. 로그인 처리 (관리자 / 연구원 판별)
-      const inputId = (v.username || v.email || '').trim();
-      const inputPass = (v.password || '').trim();
-
-      if(!inputId){
-        throw new Error('아이디를 입력해주세요.');
-      }
-
-      // A. 관리자 계정 (2DQH / 2dqh2024@gmail.com / admin) - 비밀번호: 86276@
-      const is2DQH = (inputId.toLowerCase() === '2dqh' || inputId.toLowerCase() === '2dqh2024@gmail.com');
-      const isAdminId = (inputId.toLowerCase() === 'admin');
-
-      if(is2DQH || isAdminId){
-        if(is2DQH){
-          if(inputPass !== '86276@'){
-            throw new Error('비밀번호가 일치하지 않습니다. (관리자 비밀번호 확인)');
-          }
-        } else if(isAdminId){
-          if(inputPass && inputPass !== '86276@' && inputPass !== '11'){
-            throw new Error('비밀번호가 일치하지 않습니다. (관리자 비밀번호 확인)');
-          }
-        }
-
-        // Supabase Auth 공식 인증 시도 (2dqh2024@gmail.com / 86276@)
-        if(db && db.auth && !isLocalMode){
-          try {
-            const { data: suAuth, error: suErr } = await db.auth.signInWithPassword({
-              email: '2dqh2024@gmail.com',
-              password: inputPass === '11' ? '86276@' : inputPass
-            });
-            if(!suErr && suAuth && suAuth.session){
-              session = suAuth.session;
-              console.log('✓ Supabase Auth 공식 로그인 성공 (2dqh2024@gmail.com)');
-            } else if(suErr){
-              console.warn('Supabase Auth signIn warning:', suErr.message);
-            }
-          } catch(e){
-            console.warn('Supabase Auth signIn error:', e);
-          }
-        }
-
-        admin = true;
-        try {
-          localStorage.setItem('labstock_is_admin', 'true');
-        } catch(_){}
-
-        const adminObj = {
-          username: '2DQH',
-          email: '2dqh2024@gmail.com',
-          name: '연구실 관리자',
-          advisor: '신현석 교수님',
-          affiliation: 'IBS 2DQH',
-          role: 'admin'
-        };
-        setCurrentUser(adminObj);
-        if(typeof setAdminUI === 'function') setAdminUI();
-        closeModal();
-        toast('👑 2DQH 관리자로 로그인되었습니다. (Supabase Auth 연동)');
-        btn.disabled = false;
-        await loadData();
-        return;
-      }
-
-      // B. 등록된 연구원 프로필 조회
-      const registered = getRegisteredUsers();
-      const found = registered.find(function(u){ return u.username.toLowerCase() === inputId.toLowerCase(); });
-
-      if(found){
-        if(found.password && inputPass && found.password !== inputPass){
-          throw new Error('비밀번호가 일치하지 않습니다.');
-        }
-        setCurrentUser(found);
-        if(found.role === 'admin'){
-          admin = true;
-          if(typeof setAdminUI === 'function') setAdminUI();
-        }
-        closeModal();
-        toast('✓ ' + found.name + ' 연구원님 로그인 완료');
-        btn.disabled = false;
-        return;
-      }
-
-      // C. Supabase user_profiles 조회 시도
-      if(db && !isLocalMode){
-        try {
-          const { data: suData } = await db.from('user_profiles').select('*').eq('username', inputId).single();
-          if(suData){
-            if(suData.password && inputPass && suData.password !== inputPass){
-              throw new Error('비밀번호가 일치하지 않습니다.');
-            }
-            setCurrentUser(suData);
-            closeModal();
-            toast('✓ ' + suData.name + ' 연구원님 로그인 완료');
-            btn.disabled = false;
-            return;
-          }
-        } catch(e){}
-      }
-
-      // D. 신규 아이디인 경우 간편 자동 등록 안내 또는 로컬 연구원 로그인
-      const autoUser = {
-        username: inputId,
-        password: inputPass,
-        name: inputId,
-        advisor: '신현석 교수님',
-        affiliation: '2DQH',
-        role: 'researcher'
-      };
-      setCurrentUser(autoUser);
-      closeModal();
-      toast('✓ ' + inputId + '님 로그인 완료 (정보 자동 연동)');
       btn.disabled = false;
       return;
     }
