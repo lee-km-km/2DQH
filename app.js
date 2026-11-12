@@ -3958,7 +3958,7 @@ function toggleTheme(){
 // ========================================================
 // QR 코드 렌더링 통합 헬퍼 (로컬 QRCode.js 우선 + 3중 안전 렌더링)
 function renderQrCodeInto(container, text, size){
-  size = size || 180;
+  size = size || 190;
   if(!container) return;
   container.innerHTML = '';
 
@@ -3972,18 +3972,31 @@ function renderQrCodeInto(container, text, size){
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
       });
-      setTimeout(function(){
+      // 인라인 스타일로 가로/세로를 190px 엄격 고정하여 CSS 캐시나 flex 왜곡 방지
+      const applyStrictSize = function(){
+        const cvs = container.querySelector('canvas');
         const img = container.querySelector('img');
-        if(img){
+        if(img && img.src){
+          img.style.width = size + 'px';
+          img.style.height = size + 'px';
+          img.style.maxWidth = size + 'px';
+          img.style.maxHeight = size + 'px';
           img.style.display = 'block';
           img.style.margin = '0 auto';
-        }
-        const cvs = container.querySelector('canvas');
-        if(cvs){
+          img.style.objectFit = 'contain';
+          if(cvs) cvs.style.display = 'none';
+        } else if(cvs){
+          cvs.style.width = size + 'px';
+          cvs.style.height = size + 'px';
+          cvs.style.maxWidth = size + 'px';
+          cvs.style.maxHeight = size + 'px';
           cvs.style.display = 'block';
           cvs.style.margin = '0 auto';
         }
-      }, 50);
+      };
+      applyStrictSize();
+      setTimeout(applyStrictSize, 40);
+      setTimeout(applyStrictSize, 120);
       return;
     } catch(err){
       console.warn('QRCode generation fallback:', err);
@@ -3996,6 +4009,8 @@ function renderQrCodeInto(container, text, size){
   img.alt = 'QR Code';
   img.style.width = size + 'px';
   img.style.height = size + 'px';
+  img.style.maxWidth = size + 'px';
+  img.style.maxHeight = size + 'px';
   img.style.display = 'block';
   img.style.margin = '0 auto';
   container.appendChild(img);
@@ -4010,7 +4025,7 @@ function openEquipmentQrModal(eqId){
   }
   eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
   const eq = researchEquipments.find(function(e){ return e.id === eqId || e.code === eqId; }) || {
-    id: eqId, code: eqId, name: eqId, model: 'IBS 2DQH 연구장비', location: 'N센터 실험실'
+    id: eqId, code: eqId, name: eqId
   };
 
   const modal = $('modalEquipmentQrBackdrop');
@@ -4018,23 +4033,21 @@ function openEquipmentQrModal(eqId){
   modal.dataset.equipmentId = eq.id;
   modal.dataset.equipmentCode = eq.code || eq.id;
 
-  // 장비명/코드 기반 "HR-XRD Logbook" 형식의 명확한 타이틀 (미사여구 배제)
+  // 장비명/코드 기반 "HR-XRD Logbook" 형식만 상단에 배치 (위치/모델/IBS 하단문구 일체 배제)
   let shortName = eq.code || 'HR-XRD';
   if(shortName === 'XRD') shortName = 'HR-XRD';
   const logbookTitle = shortName + ' Logbook';
 
   const titleEl = $('qrLabelEquipName');
-  const modelEl = $('qrLabelEquipModel');
   const container = $('equipmentQrCanvasContainer');
 
   if(titleEl) titleEl.textContent = logbookTitle;
-  if(modelEl) modelEl.textContent = (eq.model || '') + (eq.location ? ' · ' + eq.location : '');
 
   // 생성될 직행 URL (HTTPS origin + 경로 + 해시 쿼리)
   const targetUrl = window.location.origin + window.location.pathname + '#logbook?eq=' + encodeURIComponent(eq.id) + '&action=quick_start';
 
   if(container){
-    renderQrCodeInto(container, targetUrl, 150);
+    renderQrCodeInto(container, targetUrl, 190);
   }
 
   // 액션 버튼 직접 바인딩 (이벤트 누락 방지)
@@ -4090,7 +4103,7 @@ function downloadEquipmentQrImage(){
   const modal = $('modalEquipmentQrBackdrop');
   const eqId = (modal && modal.dataset.equipmentId) ? modal.dataset.equipmentId : (currentSelectedEquipment || 'EQ-XRD-01');
   const cur = researchEquipments.find(function(e){ return e.id === eqId || e.code === eqId; }) || {
-    id: eqId, code: 'HR-XRD', name: 'HR-XRD', model: 'SmartLab · Rigaku', location: 'IBS XRD실'
+    id: eqId, code: 'HR-XRD', name: 'HR-XRD'
   };
 
   const container = $('equipmentQrCanvasContainer');
@@ -4099,7 +4112,6 @@ function downloadEquipmentQrImage(){
   let shortName = cur.code || 'HR-XRD';
   if(shortName === 'XRD') shortName = 'HR-XRD';
   const titleString = shortName + ' Logbook';
-  const subString = (cur.model || '') + (cur.location ? ' · ' + cur.location : '');
   const fileName = shortName + '_Logbook_QR.png';
 
   // QR 렌더링 엘리먼트 (Canvas 또는 Image) 안전한 추출
@@ -4133,43 +4145,31 @@ function downloadEquipmentQrImage(){
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, w, h);
 
-    // 2. 모던하고 깔끔한 외곽 테두리 (2.5px 상당 8px 두께 라운드 테두리)
+    // 2. 외곽 테두리 (2.5px 상당 8px 두께 라운드 테두리)
     ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = 8;
     if(ctx.roundRect){
       ctx.beginPath();
-      ctx.roundRect(14, 14, w - 28, h - 28, 20);
+      ctx.roundRect(14, 14, w - 28, h - 28, 24);
       ctx.stroke();
     } else {
       ctx.strokeRect(14, 14, w - 28, h - 28);
     }
 
-    // 3. 타이틀: "[장비명] Logbook" (예: HR-XRD Logbook) - 미사여구 배제
+    // 3. 타이틀: "[장비명] Logbook" (예: HR-XRD Logbook) - 상단 단독 배치
     ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 34px Pretendard, -apple-system, sans-serif';
+    ctx.font = 'bold 40px Pretendard, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(titleString, 300, 68);
+    ctx.fillText(titleString, 300, 75);
 
-    // 4. 서브타이틀: 모델명 및 위치
-    ctx.fillStyle = '#475569';
-    ctx.font = '600 18px Pretendard, -apple-system, sans-serif';
-    let sub = subString;
-    if(sub.length > 36) sub = sub.substring(0, 35) + '...';
-    ctx.fillText(sub, 300, 108);
-
-    // 5. 대형 정사각형 QR 코드 정중앙 배치 (360x360)
-    const qrSize = 360;
+    // 4. 대형 정사각형 QR 코드 정중앙 배치 (440x440) - 위치/모델/IBS 하단문구 일체 배제
+    const qrSize = 440;
     const qrX = (w - qrSize) / 2;
-    const qrY = 138;
+    const qrY = 118;
     ctx.drawImage(qrDrawable, qrX, qrY, qrSize, qrSize);
 
-    // 6. 하단 공식 기관 푸터 (미사여구 배제)
-    ctx.fillStyle = '#64748b';
-    ctx.font = 'bold 18px Pretendard, -apple-system, sans-serif';
-    ctx.fillText('IBS 2DQH LIMS', 300, 545);
-
-    // 7. 직접 다운로드 트리거
+    // 5. 직접 다운로드 트리거
     const dataUrl = cvs.toDataURL('image/png');
     const a = document.createElement('a');
     a.download = fileName;
@@ -4212,9 +4212,8 @@ function printEquipmentQrLabel(){
   }
 
   const title = ($('qrLabelEquipName') ? $('qrLabelEquipName').textContent : 'HR-XRD Logbook');
-  const model = ($('qrLabelEquipModel') ? $('qrLabelEquipModel').textContent : '');
 
-  // 2. 단독 인쇄용 숨김 iframe 생성 및 80mm x 80mm 정사각형 스티커 규격 전송
+  // 2. 단독 인쇄용 숨김 iframe 생성 및 80mm x 80mm 정사각형 스티커 규격 전송 (위치/모델/IBS 일체 배제)
   let printFrame = document.getElementById('equipmentQrPrintIframe');
   if(!printFrame){
     printFrame = document.createElement('iframe');
@@ -4251,7 +4250,7 @@ function printEquipmentQrLabel(){
 '  box-sizing: border-box;' +
 '  border: 2.5px solid #0f172a;' +
 '  border-radius: 6mm;' +
-'  padding: 6mm;' +
+'  padding: 6mm 6mm 7mm;' +
 '  display: flex;' +
 '  flex-direction: column;' +
 '  justify-content: space-between;' +
@@ -4262,50 +4261,32 @@ function printEquipmentQrLabel(){
 '}' +
 '.label-title {' +
 '  margin: 0;' +
-'  font-size: 15.5pt;' +
-'  font-weight: 800;' +
+'  font-size: 17pt;' +
+'  font-weight: 900;' +
 '  color: #0f172a;' +
 '  line-height: 1.2;' +
-'  letter-spacing: -0.3px;' +
-'}' +
-'.label-sub {' +
-'  margin: 2mm 0 0;' +
-'  font-size: 9.5pt;' +
-'  color: #475569;' +
-'  font-weight: 600;' +
-'  line-height: 1.2;' +
+'  letter-spacing: -0.4px;' +
 '}' +
 '.qr-box {' +
-'  width: 44mm;' +
-'  height: 44mm;' +
+'  width: 58mm;' +
+'  height: 58mm;' +
 '  display: flex;' +
 '  align-items: center;' +
 '  justify-content: center;' +
-'  margin: auto 0;' +
+'  margin: auto 0 0;' +
 '}' +
 '.qr-box img {' +
-'  width: 44mm;' +
-'  height: 44mm;' +
+'  width: 58mm;' +
+'  height: 58mm;' +
 '  display: block;' +
 '  image-rendering: pixelated;' +
 '}' +
-'.label-footer {' +
-'  font-size: 8.5pt;' +
-'  font-weight: 700;' +
-'  color: #64748b;' +
-'  letter-spacing: 0.5px;' +
-'  margin: 0;' +
-'}' +
 '</style></head><body>' +
 '<div class="square-sticker">' +
-'  <div style="text-align:center;">' +
-'    <h1 class="label-title">' + title + '</h1>' +
-'    <p class="label-sub">' + model + '</p>' +
-'  </div>' +
+'  <h1 class="label-title">' + title + '</h1>' +
 '  <div class="qr-box">' +
 (qrImgSrc ? '    <img src="' + qrImgSrc + '" alt="QR Code">' : '') +
 '  </div>' +
-'  <p class="label-footer">IBS 2DQH LIMS</p>' +
 '</div></body></html>');
     doc.close();
 

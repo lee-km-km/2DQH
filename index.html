@@ -26,7 +26,7 @@
     })();
   </script>
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-  <link rel="stylesheet" href="style.css?v=20261111_1350_mobile_ui">
+  <link rel="stylesheet" href="style.css?v=20261112_03">
   <script>
     (function(){
       try {
@@ -1999,15 +1999,11 @@
     </div>
     <div class="modal-body" style="padding:16px;text-align:center;">
       <!-- 인쇄 대상 라벨 카드 (정사각형에 가까운 스티커 규격) -->
-      <div id="equipmentQrPrintArea" class="equipment-qr-label-card square-label" style="border:2.5px solid #0f172a;border-radius:12px;padding:18px 14px 14px;background:#ffffff;box-sizing:border-box;width:270px;height:270px;margin:0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,0.08);">
-        <div class="qr-label-header-group" style="text-align:center;width:100%;">
-          <h3 class="qr-label-title" id="qrLabelEquipName" style="margin:0;font-size:17.5px;font-weight:900;color:#0f172a;letter-spacing:-0.3px;line-height:1.2;">HR-XRD Logbook</h3>
-          <p class="qr-label-sub" id="qrLabelEquipModel" style="margin:4px 0 0;font-size:11.5px;color:#475569;font-weight:600;line-height:1.2;">SmartLab · Rigaku</p>
+      <div id="equipmentQrPrintArea" class="equipment-qr-label-card square-label" style="border:2.5px solid #0f172a;border-radius:14px;padding:20px 16px;background:#ffffff;box-sizing:border-box;width:270px;height:270px;margin:0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,0.08);overflow:hidden;">
+        <h3 class="qr-label-title" id="qrLabelEquipName" style="margin:0;font-size:21px;font-weight:900;color:#0f172a;letter-spacing:-0.5px;line-height:1.2;text-align:center;">HR-XRD Logbook</h3>
+        <div class="qr-label-canvas-box" style="display:flex;justify-content:center;align-items:center;width:190px;height:190px;background:#ffffff;margin:0 auto;overflow:hidden;">
+          <div id="equipmentQrCanvasContainer" style="width:190px;height:190px;display:flex;align-items:center;justify-content:center;"></div>
         </div>
-        <div class="qr-label-canvas-box" style="display:flex;justify-content:center;align-items:center;margin:auto 0;width:150px;height:150px;background:#ffffff;">
-          <div id="equipmentQrCanvasContainer" style="width:150px;height:150px;display:flex;align-items:center;justify-content:center;"></div>
-        </div>
-        <p class="qr-label-footer" style="margin:0;font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.5px;">IBS 2DQH LIMS</p>
       </div>
 
       <div class="qr-modal-actions" style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
