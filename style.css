@@ -11757,3 +11757,104 @@ html:not(.is-admin) #btnHelpTabAdmin {
 .modal-user-toggle-btn:hover {
   background: #dbeafe !important;
 }
+
+
+/* ==========================================================================
+   [비품 대여 및 취급일지 초경량 콤팩트 바 스타일]
+   ========================================================================== */
+.borrow-user-compact-bar,
+.chem-user-compact-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  padding: 6px 10px !important;
+  background: var(--bg-subtle, #f8fafc) !important;
+  border: 1px solid var(--border, #e2e8f0) !important;
+  border-radius: 8px !important;
+  margin-bottom: 6px !important;
+}
+
+.borrow-user-compact-left,
+.chem-user-compact-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.borrow-user-compact-label,
+.chem-user-compact-label {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  color: #64748b !important;
+  background: #f1f5f9 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
+  flex-shrink: 0 !important;
+}
+[data-theme="dark"] .borrow-user-compact-label,
+[data-theme="dark"] .chem-user-compact-label {
+  background: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+.borrow-user-compact-name,
+.chem-user-compact-name {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--ink, #0f172a) !important;
+  flex-shrink: 0 !important;
+}
+
+.borrow-user-compact-meta,
+.chem-user-compact-meta {
+  font-size: 12px !important;
+  color: var(--ink-light, #64748b) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.borrow-user-compact-badge,
+.chem-user-compact-badge {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #15803d !important;
+  background: #dcfce7 !important;
+  padding: 1px 6px !important;
+  border-radius: 999px !important;
+  flex-shrink: 0 !important;
+}
+[data-theme="dark"] .borrow-user-compact-badge,
+[data-theme="dark"] .chem-user-compact-badge {
+  color: #86efac !important;
+  background: #14532d !important;
+}
+
+.borrow-user-toggle-btn,
+.chem-user-toggle-btn {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #2563eb !important;
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  transition: all 0.15s ease !important;
+}
+.borrow-user-toggle-btn:hover,
+.chem-user-toggle-btn:hover {
+  background: #dbeafe !important;
+}

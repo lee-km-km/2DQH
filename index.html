@@ -693,7 +693,18 @@
             <div class="chem-handler-date-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
               <div class="chem-handler-col">
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);white-space:nowrap;word-break:keep-all;">취급자 성명 *</label>
-                <input type="text" id="modalChemHandler" class="form-control" placeholder="성명 (예: 이강민)" value="이강민" required style="width:100%;padding:8px 10px;">
+                <div class="chem-user-compact-bar hidden" id="chemUserCompactBar">
+                  <div class="chem-user-compact-left">
+                    <span class="chem-user-compact-label">취급자</span>
+                    <span class="chem-user-compact-name" id="chemCompactName"></span>
+                    <span class="chem-user-compact-meta" id="chemCompactMeta"></span>
+                    <span class="chem-user-compact-badge">자동 연동</span>
+                  </div>
+                  <button type="button" class="chem-user-toggle-btn" id="btnToggleChemUserEdit">수정</button>
+                </div>
+                <div id="chemUserInputWrap">
+                  <input type="text" id="modalChemHandler" class="form-control" placeholder="성명 (예: 이강민)" value="이강민" required style="width:100%;padding:8px 10px;">
+                </div>
               </div>
               <div class="chem-date-col">
                 <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);white-space:nowrap;word-break:keep-all;">취급 일시 *</label>

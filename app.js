@@ -7671,10 +7671,29 @@ function openModal(mode, id){
     }
 
     const defaultDueDate = calcSmartDueDate(1);
+    const curBorrowUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+    const borrowerName = curBorrowUser ? (curBorrowUser.name || '') : lastBorrower;
+    const borrowerMeta = curBorrowUser ? ((curBorrowUser.affiliation || '') + (curBorrowUser.advisor ? (' · ' + curBorrowUser.advisor) : '')) : '';
 
     parts.push('<div class="form-grid" style="margin-top:10px;">');
     parts.push('<input type="hidden" name="due_date" value="' + defaultDueDate + '">');
-    parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(lastBorrower) + '"></label>');
+
+    if(curBorrowUser){
+      parts.push('<div class="borrow-user-compact-bar" id="borrowUserCompactBar">');
+      parts.push('  <div class="borrow-user-compact-left">');
+      parts.push('    <span class="borrow-user-compact-label">대여자</span>');
+      parts.push('    <span class="borrow-user-compact-name"><strong>' + safe(borrowerName) + '</strong></span>');
+      if(borrowerMeta) parts.push('    <span class="borrow-user-compact-meta">' + safe(borrowerMeta) + '</span>');
+      parts.push('    <span class="borrow-user-compact-badge">자동 연동</span>');
+      parts.push('  </div>');
+      parts.push('  <button type="button" class="borrow-user-toggle-btn" id="btnToggleBorrowUserEdit">수정</button>');
+      parts.push('</div>');
+      parts.push('<div class="hidden" id="borrowUserInputWrap" style="margin-bottom:8px;">');
+      parts.push('  <label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(borrowerName) + '"></label>');
+      parts.push('</div>');
+    } else {
+      parts.push('<label class="field full">대여자 이름 *<input name="borrower_name" required maxlength="100" autocomplete="name" placeholder="홍길동" value="' + safe(borrowerName) + '"></label>');
+    }
     parts.push('<label class="field full">사용 목적 / 메모 (선택)<input name="memo" maxlength="500" placeholder="예: 3층 측정실 작업 (생략 가능)"></label>');
     parts.push('</div>');
   } else if(mode === 'consumable'){
@@ -8111,6 +8130,20 @@ function openModal(mode, id){
   }
 
   $('modalBody').innerHTML = parts.join('');
+
+  if(mode === 'borrow'){
+    const btnToggleBorrow = $('modalBody').querySelector('#btnToggleBorrowUserEdit');
+    if(btnToggleBorrow){
+      btnToggleBorrow.addEventListener('click', function(e){
+        e.preventDefault();
+        const wrap = $('modalBody').querySelector('#borrowUserInputWrap');
+        if(!wrap) return;
+        const isHidden = wrap.classList.contains('hidden');
+        wrap.classList.toggle('hidden', !isHidden);
+        btnToggleBorrow.textContent = isHidden ? '접기' : '수정';
+      });
+    }
+  }
 
   if(mode === 'login' || mode === 'signup'){
     const signupTriggers = $('modalBody').querySelectorAll('#btnSwitchToSignupTab, #linkSwitchToSignup');
@@ -17620,11 +17653,26 @@ function openChemWriteLogModal(chemId){
 
   const handlerEl = $('modalChemHandler');
   const curAuth = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
-  if(handlerEl){
-    if(curAuth && curAuth.name){
-      handlerEl.value = curAuth.name;
-    } else if(!handlerEl.value){
-      handlerEl.value = '이강민';
+  const chemCompactBar = $('chemUserCompactBar');
+  const chemInputWrap = $('chemUserInputWrap');
+  const chemBtnToggle = $('btnToggleChemUserEdit');
+
+  if(curAuth && curAuth.name){
+    if(handlerEl) handlerEl.value = curAuth.name;
+    if(chemCompactBar){
+      chemCompactBar.classList.remove('hidden');
+      const cn = $('chemCompactName');
+      const cm = $('chemCompactMeta');
+      if(cn) cn.innerHTML = '<strong>' + safe(curAuth.name) + '</strong>';
+      if(cm) cm.textContent = curAuth.affiliation ? ('(' + curAuth.affiliation + ')') : '';
+    }
+    if(chemInputWrap) chemInputWrap.classList.add('hidden');
+    if(chemBtnToggle) chemBtnToggle.textContent = '수정';
+  } else {
+    if(chemCompactBar) chemCompactBar.classList.add('hidden');
+    if(chemInputWrap) chemInputWrap.classList.remove('hidden');
+    if(handlerEl && !handlerEl.value){
+      handlerEl.value = localStorage.getItem('labstock_last_borrower_name') || '';
     }
   }
 
@@ -17743,6 +17791,9 @@ async function handleModalChemLogSubmit(e){
 
   logs.unshift(newLog);
   save291UsageLogs(logs);
+  try {
+    localStorage.setItem('labstock_last_borrower_name', newLog.worker);
+  } catch(_){}
 
   if(db && !isLocalMode){
     try {
@@ -19139,6 +19190,19 @@ function bindChemicalsEvents(){
   });
   addEvt('modalChemSelect', 'change', updateModalChemStockPreview);
   addEvt('formWriteChemicalLogModal', 'submit', handleModalChemLogSubmit);
+
+  const btnToggleChem = $('btnToggleChemUserEdit');
+  if(btnToggleChem && !btnToggleChem.__bound){
+    btnToggleChem.__bound = true;
+    btnToggleChem.addEventListener('click', function(e){
+      e.preventDefault();
+      const wrap = $('chemUserInputWrap');
+      if(!wrap) return;
+      const isHidden = wrap.classList.contains('hidden');
+      wrap.classList.toggle('hidden', !isHidden);
+      btnToggleChem.textContent = isHidden ? '접기' : '수정';
+    });
+  }
 
   // L. QR 모달 조작
   addEvt('btnChemShowDirectQr', 'click', function(e){
