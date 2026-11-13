@@ -1,0 +1,12 @@
+{
+  "name": "labstock-equipment",
+  "version": "1.0.0",
+  "description": "2DQH Equipment & LabStock Management System",
+  "main": "app.js",
+  "scripts": {
+    "start": "serve ."
+  },
+  "dependencies": {
+    "nodemailer": "^6.10.1"
+  }
+}

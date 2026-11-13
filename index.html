@@ -68,6 +68,9 @@
   </div>
 
   <div class="topbar-right top-actions">
+    <button id="btnTopOpenLabMail" class="icon-btn admin-only hidden desktop-only" type="button" title="업무 보고 메일 발송 (이강민 계정)" aria-label="메일 발송" style="width:34px;height:34px;padding:0;font-size:16px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:var(--bg);cursor:pointer;">
+      <span>✉️</span>
+    </button>
     <button id="btnToggleSearch" class="btn-toggle-search desktop-only" aria-label="검색 및 카테고리 필터 열기/닫기" type="button" title="검색">
       <span class="search-btn-icon" aria-hidden="true">🔍</span>
       <span class="search-btn-label">검색</span>
@@ -136,6 +139,18 @@
       <button class="nav" data-view="logbook" data-lims-nav="catalog" id="sidebarNavCatalog">
         <span class="nav-icon" aria-hidden="true">🔬</span>
         <span>연구장비 포털</span>
+      </button>
+    </div>
+
+    <!-- C. ✉️ 연구실 업무 메일 발송 메뉴 -->
+    <div class="sidebar-section-header admin-only hidden" style="margin-top:16px;">
+      <span class="sidebar-section-title">업무 지원</span>
+      <span class="sidebar-section-pill" style="background:#e0e7ff;color:#3730a3;">WebMail</span>
+    </div>
+    <div class="sidebar-nav-group admin-only hidden">
+      <button class="nav" id="btnNavOpenLabMail" type="button">
+        <span class="nav-icon" aria-hidden="true">✉️</span>
+        <span>업무 메일 발송</span>
       </button>
     </div>
 
@@ -805,7 +820,7 @@
       </div>
 
       <!-- 7. 시약별 상세 이력 / 취급대장 모달 (사용자/잔여량/이력) -->
-      <div id="modalChemHistoryBackdrop" class="backdrop">
+      <div id="modalChemHistoryBackdrop" class="backdrop" style="display:none;">
         <section class="modal" role="dialog" aria-modal="true" style="max-width:760px;width:min(760px,94vw);border-radius:10px;overflow:hidden;">
           <div class="modal-head" style="border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
             <div>
@@ -827,7 +842,7 @@
       </div>
 
       <!-- 8. 실시간 취급일지 작성 모달 -->
-      <div id="modalChemWriteLogBackdrop" class="backdrop">
+      <div id="modalChemWriteLogBackdrop" class="backdrop" style="display:none;">
         <section class="modal chem-write-modal" role="dialog" aria-modal="true" style="max-width:520px;width:min(520px,92vw);max-height:85vh;max-height:85dvh;display:flex;flex-direction:column;border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(0,0,0,0.22);position:relative;">
           <div class="modal-head" style="flex-shrink:0;border-bottom:1px solid var(--border);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
             <div>
@@ -916,7 +931,7 @@
       </div>
 
       <!-- 9. 특별관리물질 고지 모달 (사용자 요청 이미지 2 서식 100% 일치) -->
-      <div id="modalChemNoticeBackdrop" class="backdrop">
+      <div id="modalChemNoticeBackdrop" class="backdrop" style="display:none;">
         <section class="modal chem-notice-modal" role="dialog" aria-modal="true" style="max-width:820px;width:min(820px,96vw);border-radius:8px;overflow:hidden;background:#fff;">
           <div class="modal-head" style="border-bottom:1px solid #e2e8f0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
             <div style="display:flex;align-items:center;gap:8px;">
@@ -988,7 +1003,7 @@
       </div>
 
       <!-- 10. 특별관리물질 취급일지 법정 서식 뷰어 모달 (사용자 요청 이미지 3 서식 100% 일치) -->
-      <div id="modalChemOfficialLedgerBackdrop" class="backdrop">
+      <div id="modalChemOfficialLedgerBackdrop" class="backdrop" style="display:none;">
         <section class="modal chem-ledger-modal" role="dialog" aria-modal="true" style="max-width:1000px;width:min(1000px,96vw);border-radius:8px;overflow:hidden;background:#fff;">
           <div class="modal-head" style="border-bottom:1px solid #e2e8f0;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
             <div style="display:flex;align-items:center;gap:8px;">
@@ -1067,7 +1082,7 @@
       </div>
 
       <!-- 12. 🧪 화학물질·시약 신규 등록 및 수정 모달 (관리자 전용) -->
-      <div id="modalChemProductBackdrop" class="backdrop">
+      <div id="modalChemProductBackdrop" class="backdrop" style="display:none;">
         <section class="modal" role="dialog" aria-modal="true" style="max-width:680px;width:min(680px,94vw);border-radius:12px;overflow:hidden;">
           <div class="modal-head" style="border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
             <div>
@@ -2248,6 +2263,63 @@
         <button class="btn" id="btnCloseLoanQrBottom" type="button" style="padding:9px 14px;font-size:13.5px;">닫기</button>
       </div>
     </div>
+  </section>
+</div>
+
+<!-- 8-B. 업무 메일 발송 센터 모달 (관리자 전용) -->
+<div id="modalLabMailBackdrop" class="backdrop" style="display:none;">
+  <section class="modal lab-mail-modal" role="dialog" aria-modal="true" style="max-width:640px;width:min(640px,94vw);max-height:88vh;max-height:88dvh;display:flex;flex-direction:column;border-radius:14px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,0.25);position:relative;background:var(--bg-card, #ffffff);">
+    <div class="modal-head" style="flex-shrink:0;border-bottom:1px solid var(--border);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;background:var(--bg-subtle);">
+      <div>
+        <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--ink);">✉️ 업무 메일 발송</h3>
+        <p style="margin:2px 0 0;font-size:11.5px;color:var(--ink-light);">발신자: <b style="color:#2563eb;">이강민 &lt;kangminlee@skku.edu&gt;</b></p>
+      </div>
+      <button class="icon-btn" id="btnCloseLabMail" aria-label="닫기" type="button"><span aria-hidden="true">✕</span></button>
+    </div>
+
+    <form id="formLabMail" style="flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px;display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label for="selectLabMailTemplate" style="display:block;font-size:12.5px;font-weight:700;margin-bottom:5px;color:var(--ink);">📋 메일 양식 *</label>
+        <select id="selectLabMailTemplate" class="form-control" style="width:100%;height:40px;padding:6px 10px;font-size:13.5px;font-weight:600;border-radius:8px;"></select>
+      </div>
+
+      <div>
+        <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--ink);">📬 수신자 (행정원) *</label>
+        <div id="labMailRecipientContainer" style="display:grid;grid-template-columns:1fr;gap:6px;"></div>
+        <div style="margin-top:8px;">
+          <div style="font-size:12px;font-weight:700;margin-bottom:3px;color:var(--ink);">참조 (CC) <span style="font-weight:400;color:var(--ink-light);">- 이름이나 이메일을 입력하면 자동완성</span></div>
+          <div id="labMailCcChips"></div>
+          <input type="text" id="inputLabMailCc" autocomplete="off" placeholder="이름 또는 이메일 입력 후 Enter" style="width:100%;height:34px;padding:4px 10px;font-size:12.5px;border:1px solid var(--border);border-radius:6px;box-sizing:border-box;background:var(--card,#fff);color:var(--ink);">
+          <div id="labMailCcSuggest" style="display:none;border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;max-height:170px;overflow-y:auto;background:var(--card,#fff);"></div>
+        </div>
+      </div>
+
+      <div id="labMailDynamicFields" style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;"></div>
+
+      <div>
+        <label for="inputLabMailFiles" style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;color:var(--ink);">📎 첨부파일 (합계 3MB 이하)</label>
+        <input type="file" id="inputLabMailFiles" multiple style="font-size:12px;">
+        <div id="labMailFileList" style="margin-top:4px;"></div>
+      </div>
+
+      <div>
+        <label for="inputLabMailSubject" style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;color:var(--ink);">메일 제목 *</label>
+        <input type="text" id="inputLabMailSubject" class="form-control" required style="width:100%;height:38px;padding:6px 10px;font-size:13.5px;font-weight:600;border-radius:8px;box-sizing:border-box;">
+      </div>
+
+      <div>
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:4px;color:var(--ink);">👀 본문 미리보기</div>
+        <div id="labMailToSummary" style="font-size:11.5px;color:var(--ink-light);margin-bottom:4px;"></div>
+        <div id="boxMailHtmlPreview" style="border:1px solid var(--border);border-radius:8px;padding:14px;background:#ffffff;max-height:280px;overflow-y:auto;font-size:13px;line-height:1.7;"></div>
+      </div>
+
+      <div>
+        <div id="labMailStatusMsg" class="hidden" style="padding:8px 12px;border-radius:8px;font-size:12.5px;margin-bottom:10px;font-weight:600;"></div>
+        <button type="submit" id="btnSubmitLabMail" class="btn primary" style="width:100%;height:46px;font-size:15px;font-weight:800;background:#2563eb;border-color:#2563eb;border-radius:10px;color:#fff;cursor:pointer;">
+          🚀 <span id="labMailBtnText">메일 발송</span>
+        </button>
+      </div>
+    </form>
   </section>
 </div>
 

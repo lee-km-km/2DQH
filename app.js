@@ -10997,6 +10997,7 @@ function handleUrlFastTrack(){
     if(isChemLogAction || (hashPath === 'chemicals' && directChemId)){
       setPortalModule('inventory', { switchView: false });
       showView('chemicals', { updateUrl: false });
+      try { history.replaceState(null, '', location.pathname + '#chemicals'); } catch(_){}
       if(typeof render291InventoryTable === 'function') render291InventoryTable();
       setTimeout(function(){
         openChemWriteLogModal(directChemId);
@@ -20342,3 +20343,431 @@ function renderInvSubLoans(){
   html += '</tbody></table>';
   container.innerHTML = html;
 }
+
+// ==========================================================================
+// [2DQH 업무 메일 발송 센터] 발신자: 이강민 고정 / 수신자: 행정원 선택 / 서식 자동 작성
+// ==========================================================================
+(function initLabMailModuleScope(){
+  const SENDER = { name: '이강민', email: 'kangminlee@skku.edu' };
+
+  const STAFF = [
+    { id: 'park_te', name: '박태은', hours: '08:00-16:30', tel: '299-6506', email: 'ttaeeun@skku.edu', duty: '인사/급여 · 기타 구매' },
+    { id: 'park_sy', name: '박소연', hours: '08:00-16:30', tel: '299-6508', email: 'soyeon01@skku.edu', duty: 'IBS · 장비비' },
+    { id: 'jeon_hj', name: '전현주', hours: '08:00-16:30', tel: '299-6504', email: 'chunhj26@skku.edu', duty: '재료비 · 간접비' },
+    { id: 'lee_jh', name: '이지혜', hours: '08:00-16:30', tel: '299-6503', email: '2zihye@skku.edu', duty: '활동비 · 기타(논문/홈페이지/세콤)' }
+  ];
+
+  function todayKo(){
+    const d = new Date();
+    const w = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
+    return (d.getMonth() + 1) + '월 ' + d.getDate() + '일(' + w + '), 1일';
+  }
+
+  const TEMPLATES = {
+    trip: {
+      label: '✈️ 출장 신청 (활동비)',
+      defaultTo: ['lee_jh'],
+      fields: [
+        { id: 'purpose', label: '출장 목적', value: 'XRD 시료분석' },
+        { id: 'attendee', label: '참석자', value: SENDER.name },
+        { id: 'place', label: '출장지', value: '(주)한국아이티에스, 서울 송파구 위례순환로 472(장지동 904-1) 빌딩904, 3층' },
+        { id: 'date', label: '출장 날짜', value: todayKo }
+      ],
+      subject: function(v){ return '[출장 신청] ' + (v.attendee || SENDER.name) + ' - ' + (v.purpose || ''); },
+      lines: function(v, to){
+        return [
+          '안녕하세요. ' + to + ' 선생님.',
+          '기술원 ' + SENDER.name + ' 입니다.',
+          '',
+          '출장 신청 드립니다.',
+          '',
+          '- 출장 목적 : ' + v.purpose,
+          '- 참석자 : ' + v.attendee,
+          '- 출장지 : ' + v.place,
+          '- 출장 날짜 : ' + v.date,
+          '',
+          '확인 후 진행 부탁드리겠습니다.',
+          '',
+          '감사합니다.',
+          SENDER.name + ' 드림'
+        ];
+      }
+    },
+    material: {
+      label: '📦 재료비 구매 요청',
+      defaultTo: ['jeon_hj'],
+      fields: [
+        { id: 'intro', label: '요청 문구', type: 'textarea', value: '2층 Glove box 장비의 스크롤 펌프 재료비 구매 요청을 드리고자 메일 드립니다.' },
+        { id: 'itemNo', label: '비품번호', value: '7-2014-0084-1' },
+        { id: 'equip', label: '장비명', value: '1.5pair Glove Box' },
+        { id: 'vendor', label: '업체명', value: '엠아이베큠' },
+        { id: 'amount', label: '금액', value: '1,606,000원 (VAT 포함)' },
+        { id: 'room', label: '호실', value: '86291' },
+        { id: 'content', label: '내용', value: 'Glove box용 Scroll Pump Tip seal 2건 교체' },
+        { id: 'extra', label: '추가 문구 (선택)', type: 'textarea', value: '' }
+      ],
+      subject: function(v){ return '[재료비 구매 요청] ' + (v.equip || '') + ' - ' + (v.amount || ''); },
+      lines: function(v, to){ return itemLines(v, to, '확인 후 진행 부탁드리겠습니다.'); }
+    },
+    repair: {
+      label: '🔧 장비수리비 요청',
+      defaultTo: ['park_sy'],
+      fields: [
+        { id: 'intro', label: '요청 문구', type: 'textarea', value: '글로브박스 장비의 스크롤펌프 교체 수리가 필요 하여, 단장님께 사전 허락을 받고 진행 요청 메일 드립니다.\n이전 요청드린 Tip seal 구매건이 점검결과 베어링수리까지 필요하여 다시 요청드립니다.' },
+        { id: 'itemNo', label: '비품번호', value: '7-2014-0084-1' },
+        { id: 'equip', label: '장비명', value: '1.5Pair Glove Box' },
+        { id: 'vendor', label: '업체명', value: '엠아이베큠(스크롤 펌프 제작사 에이질런트 테크의 독점계약사)' },
+        { id: 'amount', label: '금액', value: '4,620,000원 (VAT 포함)' },
+        { id: 'room', label: '호실', value: '86291' },
+        { id: 'content', label: '내용', value: '글로브박스 장비의 터보펌프 작동 불능으로 인한 교체 수리' },
+        { id: 'extra', label: '추가 문구 (선택)', type: 'textarea', value: '견적서, 규격서, 사유서, 독점계약서 첨부 드립니다.' }
+      ],
+      subject: function(v){ return '[장비수리비 요청] ' + (v.equip || '') + ' - ' + (v.amount || ''); },
+      lines: function(v, to){ return itemLines(v, to, ''); }
+    }
+  };
+
+  function itemLines(v, to, closing){
+    const out = [
+      '안녕하세요. ' + to + ' 선생님.',
+      '기술원 ' + SENDER.name + ' 입니다.',
+      ''
+    ];
+    String(v.intro || '').split('\n').forEach(function(l){ out.push(l); });
+    out.push('');
+    out.push('- 비품번호 : ' + v.itemNo);
+    out.push('- 장비명 : ' + v.equip);
+    out.push('- 업체명 : ' + v.vendor);
+    out.push('- 금액 : ' + v.amount);
+    out.push('- 호실 : ' + v.room);
+    out.push('- 내용 : ' + v.content);
+    out.push('');
+    if(v.extra && v.extra.trim()){
+      v.extra.trim().split('\n').forEach(function(l){ out.push(l); });
+      out.push('');
+    }
+    if(closing){ out.push(closing); out.push(''); }
+    out.push('감사합니다.');
+    out.push(SENDER.name + ' 드림');
+    return out;
+  }
+
+  const state = { tpl: 'trip', to: [], values: {}, subjectEdited: false, files: [], cc: [] };
+
+  function $id(id){ return document.getElementById(id); }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function getValues(){
+    const t = TEMPLATES[state.tpl];
+    const v = {};
+    t.fields.forEach(function(f){
+      const el = $id('lmf_' + f.id);
+      v[f.id] = el ? el.value.trim() : '';
+    });
+    return v;
+  }
+
+  function recipientNames(){
+    return state.to.map(function(id){
+      const s = STAFF.find(function(x){ return x.id === id; });
+      return s ? s.name : '';
+    }).filter(Boolean).join(', ');
+  }
+
+  function buildLines(){
+    const t = TEMPLATES[state.tpl];
+    return t.lines(getValues(), recipientNames() || '○○○');
+  }
+
+  function renderRecipients(){
+    const box = $id('labMailRecipientContainer');
+    if(!box) return;
+    box.innerHTML = STAFF.map(function(s){
+      const on = state.to.indexOf(s.id) >= 0;
+      return '<label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;text-align:left;border:1.5px solid ' + (on ? '#2563eb' : 'var(--border)') + ';border-radius:10px;cursor:pointer;background:' + (on ? 'rgba(37,99,235,0.08)' : 'transparent') + ';">' +
+        '<input type="checkbox" class="lab-mail-rec-chk" data-id="' + s.id + '" ' + (on ? 'checked' : '') + ' style="margin:3px 0 0;flex:0 0 18px;width:18px;height:18px;min-width:18px;padding:0;">' +
+        '<span style="flex:1 1 auto;min-width:0;font-size:12.5px;line-height:1.45;color:var(--ink);"><b>' + esc(s.name) + '</b> <span style="color:var(--ink-light);font-size:11px;">' + esc(s.duty) + '</span><br>' +
+        '<span style="font-size:11px;color:var(--ink-light);">' + esc(s.email) + ' · ☎ ' + esc(s.tel) + ' · ' + esc(s.hours) + '</span></span></label>';
+    }).join('');
+    box.querySelectorAll('.lab-mail-rec-chk').forEach(function(chk){
+      chk.addEventListener('change', function(){
+        const id = chk.dataset.id;
+        const i = state.to.indexOf(id);
+        if(chk.checked && i < 0) state.to.push(id);
+        if(!chk.checked && i >= 0) state.to.splice(i, 1);
+        renderRecipients();
+        refresh();
+      });
+    });
+  }
+
+  function renderFields(){
+    const t = TEMPLATES[state.tpl];
+    const box = $id('labMailDynamicFields');
+    if(!box) return;
+    const saved = state.values[state.tpl] || {};
+    box.innerHTML = t.fields.map(function(f){
+      let val = saved[f.id] !== undefined ? saved[f.id] : (typeof f.value === 'function' ? f.value() : f.value);
+      const base = 'width:100%;box-sizing:border-box;padding:6px 10px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--card,#fff);color:var(--ink);';
+      const input = f.type === 'textarea'
+        ? '<textarea id="lmf_' + f.id + '" rows="3" style="' + base + 'line-height:1.5;">' + esc(val) + '</textarea>'
+        : '<input id="lmf_' + f.id + '" type="text" value="' + esc(val) + '" style="' + base + 'height:36px;">';
+      return '<div><label for="lmf_' + f.id + '" style="display:block;font-size:12px;font-weight:700;margin-bottom:3px;color:var(--ink);">' + esc(f.label) + '</label>' + input + '</div>';
+    }).join('');
+    box.querySelectorAll('input,textarea').forEach(function(el){
+      el.addEventListener('input', function(){
+        state.values[state.tpl] = getValues();
+        refresh();
+      });
+    });
+    state.values[state.tpl] = getValues();
+  }
+
+  function refresh(){
+    const t = TEMPLATES[state.tpl];
+    const subj = $id('inputLabMailSubject');
+    if(subj && !state.subjectEdited) subj.value = t.subject(getValues());
+    const prev = $id('boxMailHtmlPreview');
+    if(prev){
+      prev.innerHTML = '<div style="white-space:pre-wrap;color:#111827;">' + esc(buildLines().join('\n')) + '</div>';
+    }
+    const tos = $id('labMailToSummary');
+    if(tos){
+      tos.textContent = state.to.length
+        ? '받는 사람: ' + state.to.map(function(id){ const s = STAFF.find(function(x){ return x.id === id; }); return s.name + ' <' + s.email + '>'; }).join(', ')
+        : '받는 사람: (수신자를 선택해주세요)';
+    }
+  }
+
+  function renderFiles(){
+    const list = $id('labMailFileList');
+    if(!list) return;
+    list.innerHTML = state.files.map(function(f, i){
+      return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--border);border-radius:14px;font-size:11.5px;margin:2px 4px 2px 0;">📎 ' + esc(f.name) + ' (' + Math.round(f.size / 1024) + 'KB) <button type="button" data-rm="' + i + '" style="border:none;background:none;color:#ef4444;cursor:pointer;font-weight:700;">×</button></span>';
+    }).join('');
+    list.querySelectorAll('button[data-rm]').forEach(function(b){
+      b.addEventListener('click', function(){ state.files.splice(parseInt(b.dataset.rm, 10), 1); renderFiles(); });
+    });
+  }
+
+  const CC_EXTRA = [
+    { name: '우상인', email: 'venice@skku.edu' },
+    { name: '김덕수', email: 'ykkddss@skku.edu' },
+    { name: '이강민', email: 'kangminlee@skku.edu' },
+    { name: '박현웅', email: 'hwpark31@skku.edu' }
+  ];
+
+  function ccDirectory(){
+    return STAFF.map(function(s){ return { name: s.name, email: s.email }; }).concat(CC_EXTRA);
+  }
+
+  function ccLabel(email){
+    const d = ccDirectory().find(function(x){ return x.email.toLowerCase() === email.toLowerCase(); });
+    return d ? d.name + ' <' + d.email + '>' : email;
+  }
+
+  function addCc(email){
+    email = String(email || '').trim().replace(/[,;]+$/, '');
+    if(!email) return false;
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('올바른 이메일 형식이 아닙니다: ' + email); return false; }
+    const exists = state.cc.some(function(x){ return x.toLowerCase() === email.toLowerCase(); });
+    if(!exists) state.cc.push(email);
+    return true;
+  }
+
+  function renderCc(){
+    const chips = $id('labMailCcChips');
+    if(chips){
+      chips.innerHTML = state.cc.map(function(em, i){
+        return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid #2563eb;background:rgba(37,99,235,0.08);border-radius:14px;font-size:11.5px;color:var(--ink);margin:2px 4px 2px 0;">' + esc(ccLabel(em)) + ' <button type="button" data-ccrm="' + i + '" style="border:none;background:none;color:#ef4444;cursor:pointer;font-weight:700;padding:0;">×</button></span>';
+      }).join('');
+      chips.querySelectorAll('button[data-ccrm]').forEach(function(b){
+        b.addEventListener('click', function(){ state.cc.splice(parseInt(b.dataset.ccrm, 10), 1); renderCc(); });
+      });
+    }
+    renderCcSuggest();
+  }
+
+  function renderCcSuggest(){
+    const box = $id('labMailCcSuggest');
+    const input = $id('inputLabMailCc');
+    if(!box || !input) return;
+    const q = input.value.trim().toLowerCase();
+    if(!q){ box.style.display = 'none'; box.innerHTML = ''; return; }
+    const hits = ccDirectory().filter(function(d){
+      if(state.cc.some(function(x){ return x.toLowerCase() === d.email.toLowerCase(); })) return false;
+      return d.name.toLowerCase().indexOf(q) >= 0 || d.email.toLowerCase().indexOf(q) >= 0;
+    });
+    if(!hits.length){ box.style.display = 'none'; box.innerHTML = ''; return; }
+    box.style.display = 'block';
+    box.innerHTML = hits.map(function(d){
+      return '<div class="lab-cc-opt" data-email="' + esc(d.email) + '" style="padding:7px 10px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--border);color:var(--ink);"><b>' + esc(d.name) + '</b> <span style="color:var(--ink-light);font-size:11.5px;">' + esc(d.email) + '</span></div>';
+    }).join('');
+    box.querySelectorAll('.lab-cc-opt').forEach(function(o){
+      o.addEventListener('mousedown', function(ev){
+        ev.preventDefault();
+        addCc(o.dataset.email);
+        input.value = '';
+        renderCc();
+        input.focus();
+      });
+    });
+  }
+
+  function selectTemplate(key){
+    state.tpl = key;
+    state.to = TEMPLATES[key].defaultTo.slice();
+    state.subjectEdited = false;
+    renderRecipients();
+    renderFields();
+    refresh();
+  }
+
+  window.openLabMailModal = function(){
+    const modal = $id('modalLabMailBackdrop');
+    if(!modal) return;
+    const sel = $id('selectLabMailTemplate');
+    if(sel){
+      sel.innerHTML = Object.keys(TEMPLATES).map(function(k){ return '<option value="' + k + '">' + esc(TEMPLATES[k].label) + '</option>'; }).join('');
+      sel.value = state.tpl;
+    }
+    if(!state.to.length) state.to = TEMPLATES[state.tpl].defaultTo.slice();
+    renderRecipients();
+    renderFields();
+    refresh();
+    renderCc();
+    const st = $id('labMailStatusMsg');
+    if(st) st.classList.add('hidden');
+    modal.classList.add('open');
+    modal.style.display = 'flex';
+    document.body.classList.add('modal-open');
+  };
+
+  window.closeLabMailModal = function(){
+    const modal = $id('modalLabMailBackdrop');
+    if(modal){ modal.classList.remove('open'); modal.style.display = 'none'; }
+    document.body.classList.remove('modal-open');
+  };
+
+  function readFile(file){
+    return new Promise(function(resolve, reject){
+      const r = new FileReader();
+      r.onload = function(){ resolve({ filename: file.name, content: String(r.result).split(',')[1], encoding: 'base64' }); };
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function handleSubmit(e){
+    e.preventDefault();
+    if(!state.to.length){ toast('수신자를 1명 이상 선택해주세요.'); return; }
+    const subject = ($id('inputLabMailSubject').value || '').trim();
+    if(!subject){ toast('메일 제목을 입력해주세요.'); return; }
+
+    const lines = buildLines();
+    const text = lines.join('\n');
+    const toEmails = state.to.map(function(id){ return STAFF.find(function(x){ return x.id === id; }).email; });
+    const ccEl = $id('inputLabMailCc');
+    if(ccEl && ccEl.value.trim()){ if(!addCc(ccEl.value)) return; ccEl.value = ''; renderCc(); }
+    const cc = state.cc.slice();
+
+    if(!confirm('다음 메일을 발송할까요?\n\n받는 사람: ' + toEmails.join(', ') + '\n제목: ' + subject)) return;
+
+    const btn = $id('btnSubmitLabMail');
+    const btnText = $id('labMailBtnText');
+    const st = $id('labMailStatusMsg');
+    const show = function(bg, color, border, msg){
+      if(!st) return;
+      st.className = '';
+      st.style.background = bg; st.style.color = color; st.style.border = '1px solid ' + border;
+      st.textContent = msg;
+    };
+    if(btn) btn.disabled = true;
+    if(btnText) btnText.textContent = '발송 중...';
+    show('#eff6ff', '#1d4ed8', '#bfdbfe', '⏳ 메일 발송 중입니다...');
+
+    try {
+      const attachments = await Promise.all(state.files.map(readFile));
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: toEmails, cc: cc, subject: subject, text: text,
+          html: '<div style="font-family:\'Malgun Gothic\',sans-serif;font-size:14px;line-height:1.7;white-space:pre-wrap;">' + esc(text) + '</div>',
+          senderName: SENDER.name, attachments: attachments
+        })
+      });
+      let data = {};
+      try { data = await res.json(); } catch(_){}
+      if(!res.ok || !data.success) throw new Error(data.error || ('서버 오류 (' + res.status + ')'));
+      show('#f0fdf4', '#15803d', '#bbf7d0', '✅ 발송 완료: ' + toEmails.join(', '));
+      toast('✅ 메일이 발송되었습니다.');
+    } catch(err){
+      console.error('Mail Send Error:', err);
+      show('#fef2f2', '#b91c1c', '#fecaca', '❌ 메일 발송 실패: ' + err.message);
+      toast('메일 발송 실패: ' + err.message);
+    } finally {
+      if(btn) btn.disabled = false;
+      if(btnText) btnText.textContent = '메일 발송';
+    }
+  }
+
+  function bind(){
+    const nav = $id('btnNavOpenLabMail');
+    if(nav) nav.addEventListener('click', function(e){
+      e.preventDefault();
+      openLabMailModal();
+      if(typeof closeMobileDrawer === 'function') closeMobileDrawer();
+    });
+    const top = $id('btnTopOpenLabMail');
+    if(top) top.addEventListener('click', function(e){ e.preventDefault(); openLabMailModal(); });
+    const close = $id('btnCloseLabMail');
+    if(close) close.addEventListener('click', function(e){ e.preventDefault(); closeLabMailModal(); });
+
+    const sel = $id('selectLabMailTemplate');
+    if(sel) sel.addEventListener('change', function(){ selectTemplate(sel.value); });
+
+    const ccIn = $id('inputLabMailCc');
+    if(ccIn){
+      ccIn.addEventListener('input', renderCcSuggest);
+      ccIn.addEventListener('blur', function(){ setTimeout(function(){ const b = $id('labMailCcSuggest'); if(b) b.style.display = 'none'; }, 150); });
+      ccIn.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ',' ){
+          e.preventDefault();
+          const first = document.querySelector('#labMailCcSuggest .lab-cc-opt');
+          const q = ccIn.value.trim();
+          if(!q) return;
+          if(first && q.indexOf('@') < 0) addCc(first.dataset.email); else addCc(q);
+          ccIn.value = '';
+          renderCc();
+        } else if(e.key === 'Backspace' && !ccIn.value && state.cc.length){
+          state.cc.pop();
+          renderCc();
+        }
+      });
+    }
+
+    const subj = $id('inputLabMailSubject');
+    if(subj) subj.addEventListener('input', function(){ state.subjectEdited = true; });
+
+    const file = $id('inputLabMailFiles');
+    if(file) file.addEventListener('change', function(){
+      Array.prototype.forEach.call(file.files, function(f){ state.files.push(f); });
+      file.value = '';
+      const total = state.files.reduce(function(a, f){ return a + f.size; }, 0);
+      if(total > 3 * 1024 * 1024){
+        toast('첨부 용량은 합계 3MB 이하만 가능합니다.');
+        state.files.length = 0;
+      }
+      renderFiles();
+    });
+
+    const form = $id('formLabMail');
+    if(form) form.addEventListener('submit', handleSubmit);
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();

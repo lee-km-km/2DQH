@@ -12845,3 +12845,84 @@ html:not(.is-admin) #btnHelpTabAdmin {
   background: #27354f !important;
   border-color: #60a5fa !important;
 }
+
+
+/* ==========================================================================
+   [2DQH 정형 업무 메일 발송 센터 모달 스타일]
+   ========================================================================== */
+#modalLabMailBackdrop {
+  display: none;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px 12px !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  z-index: 2600 !important;
+}
+#modalLabMailBackdrop.open {
+  display: flex !important;
+}
+#modalLabMailBackdrop .lab-mail-modal {
+  margin: auto !important;
+  max-height: 88vh !important;
+  max-height: 88dvh !important;
+  width: min(680px, 94vw) !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: var(--bg-card, #ffffff) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28) !important;
+}
+#formLabMail {
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #2563eb rgba(0, 0, 0, 0.08) !important;
+}
+#formLabMail::-webkit-scrollbar {
+  width: 6px !important;
+  display: block !important;
+}
+#formLabMail::-webkit-scrollbar-thumb {
+  background: #2563eb !important;
+  border-radius: 4px !important;
+}
+#formLabMail::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+.lab-mail-chip:hover {
+  border-color: #2563eb !important;
+  background: var(--bg-subtle, #f8fafc) !important;
+}
+#tabMailPreview.active, #tabMailRawText.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-modal {
+  background: #111827 !important;
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] #boxMailHtmlPreview {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .lab-mail-chip {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+@media (max-width: 640px) {
+  #modalLabMailBackdrop {
+    padding: 10px 8px !important;
+  }
+  #modalLabMailBackdrop .lab-mail-modal {
+    max-height: 90vh !important;
+    max-height: 90dvh !important;
+    width: min(540px, 94vw) !important;
+  }
+  #formLabMail {
+    padding: 12px 14px !important;
+    gap: 10px !important;
+  }
+}
