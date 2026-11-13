@@ -2268,113 +2268,113 @@
 
 <!-- 8-B. 업무 메일 발송 센터 모달 (네이버웍스 스타일 · 관리자 전용) -->
 <div id="modalLabMailBackdrop" class="backdrop" style="display:none;">
-  <section class="modal lab-mail-modal" role="dialog" aria-modal="true" style="max-width:860px;width:min(860px,96vw);max-height:90vh;max-height:90dvh;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;box-shadow:0 18px 48px rgba(0,0,0,0.28);position:relative;background:#ffffff;color:#111827;border:1px solid #e5e7eb;">
-    <form id="formLabMail" style="display:flex;flex-direction:column;flex:1 1 auto;min-height:0;margin:0;">
-      <!-- 1. 상단 웍스 액션바 (보내기 / 양식선택 / 닫기) -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #e5e7eb;background:#ffffff;flex-shrink:0;gap:10px;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <button type="submit" id="btnSubmitLabMail" style="height:36px;padding:0 18px;font-size:13.5px;font-weight:700;background:#1a73e8;color:#ffffff;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 2px rgba(26,115,232,0.3);">
+  <section class="modal lab-mail-modal" role="dialog" aria-modal="true">
+    <form id="formLabMail" style="display:flex;flex-direction:column;flex:1 1 auto;min-height:0;margin:0;padding:0;">
+      <!-- 1. 상단 웍스 액션바 (한 줄 배치: 보내기 / 양식선택 / 항목토글 ... 발신자 / 닫기) -->
+      <div class="lab-mail-topbar">
+        <div class="lab-mail-topbar-left">
+          <button type="submit" id="btnSubmitLabMail" class="lab-mail-btn-send">
             <span id="labMailBtnText">보내기</span>
           </button>
-          <select id="selectLabMailTemplate" style="height:36px;padding:0 12px;font-size:13px;font-weight:600;border:1px solid #d1d5db;border-radius:6px;background:#f9fafb;color:#111827;cursor:pointer;"></select>
-          <button type="button" id="btnToggleMailFields" style="height:36px;padding:0 12px;font-size:12.5px;font-weight:600;border:1px solid #d1d5db;border-radius:6px;background:#ffffff;color:#374151;cursor:pointer;">
+          <select id="selectLabMailTemplate" class="lab-mail-tpl-select"></select>
+          <button type="button" id="btnToggleMailFields" class="lab-mail-btn-toggle">
             ⚡ 양식 항목 입력창 접기
           </button>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:12px;color:#6b7280;">발신: <b style="color:#111827;">이강민</b> &lt;kangminlee@skku.edu&gt;</span>
-          <button class="icon-btn" id="btnCloseLabMail" aria-label="닫기" type="button" style="width:32px;height:32px;font-size:16px;color:#6b7280;cursor:pointer;"><span aria-hidden="true">✕</span></button>
+        <div class="lab-mail-topbar-right">
+          <span class="lab-mail-sender-badge">발신: <b>이강민</b> &lt;kangminlee@skku.edu&gt;</span>
+          <button class="lab-mail-btn-close" id="btnCloseLabMail" aria-label="닫기" type="button">✕</button>
         </div>
       </div>
 
       <!-- 상태 알림 바 -->
-      <div id="labMailStatusMsg" class="hidden" style="padding:8px 18px;font-size:12.5px;font-weight:600;border-bottom:1px solid #e5e7eb;flex-shrink:0;"></div>
+      <div id="labMailStatusMsg" class="hidden" style="padding:10px 22px;font-size:13px;font-weight:600;border-bottom:1px solid #e5e7eb;flex-shrink:0;"></div>
 
       <!-- 스크롤 가능한 본문 컨테이너 -->
-      <div style="flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;">
+      <div class="lab-mail-scroll-area">
         <!-- 2. 받는사람 / 참조 / 제목 (웍스 가로형 헤더) -->
-        <div style="padding:8px 18px 4px;border-bottom:1px solid #e5e7eb;background:#ffffff;display:flex;flex-direction:column;gap:6px;">
+        <div class="lab-mail-header-rows">
           <!-- 받는사람 -->
-          <div style="display:flex;align-items:flex-start;gap:10px;padding:4px 0;">
-            <div style="width:110px;flex-shrink:0;padding-top:6px;font-size:13px;font-weight:700;color:#111827;display:flex;align-items:center;justify-content:space-between;">
+          <div class="lab-mail-row">
+            <div class="lab-mail-row-label">
               <span>받는사람</span>
             </div>
-            <div style="flex:1;min-width:0;">
-              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;min-height:36px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;background:#ffffff;">
-                <div id="labMailToChips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-                <input type="text" id="inputLabMailToSearch" autocomplete="off" placeholder="행정원 클릭 또는 이름/이메일 검색" style="flex:1;min-width:160px;height:26px;border:none;outline:none;font-size:13px;background:transparent;color:#111827;padding:0 4px;">
+            <div class="lab-mail-row-field">
+              <div class="lab-mail-chipbox">
+                <div id="labMailToChips" class="lab-mail-chips-wrap"></div>
+                <input type="text" id="inputLabMailToSearch" class="lab-mail-inline-input" autocomplete="off" placeholder="행정원 클릭 또는 이름/이메일 입력 후 Enter">
               </div>
-              <div id="labMailToSuggest" style="display:none;border:1px solid #d1d5db;border-top:none;border-radius:0 0 6px 6px;max-height:150px;overflow-y:auto;background:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.08);"></div>
+              <div id="labMailToSuggest" class="lab-mail-suggest-dropdown" style="display:none;"></div>
               <!-- 행정원 4명 빠른 선택 바 -->
-              <div id="labMailRecipientContainer" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+              <div id="labMailRecipientContainer" class="lab-mail-staff-bar"></div>
             </div>
           </div>
 
           <!-- 참조 -->
-          <div style="display:flex;align-items:flex-start;gap:10px;padding:4px 0;">
-            <div style="width:110px;flex-shrink:0;padding-top:6px;font-size:13px;font-weight:700;color:#111827;">
+          <div class="lab-mail-row">
+            <div class="lab-mail-row-label">
               <span>참조</span>
             </div>
-            <div style="flex:1;min-width:0;position:relative;">
-              <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;min-height:36px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;background:#ffffff;">
-                <div id="labMailCcChips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-                <input type="text" id="inputLabMailCc" autocomplete="off" placeholder="이름 또는 이메일 입력 (우상인, 김덕수, 박현웅 등 자동완성)" style="flex:1;min-width:180px;height:26px;border:none;outline:none;font-size:13px;background:transparent;color:#111827;padding:0 4px;">
+            <div class="lab-mail-row-field">
+              <div class="lab-mail-chipbox">
+                <div id="labMailCcChips" class="lab-mail-chips-wrap"></div>
+                <input type="text" id="inputLabMailCc" class="lab-mail-inline-input" autocomplete="off" placeholder="이름 또는 이메일 입력 (우상인, 김덕수, 박현웅 등 자동완성)">
               </div>
-              <div id="labMailCcSuggest" style="display:none;border:1px solid #d1d5db;border-top:none;border-radius:0 0 6px 6px;max-height:160px;overflow-y:auto;background:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.08);"></div>
+              <div id="labMailCcSuggest" class="lab-mail-suggest-dropdown" style="display:none;"></div>
             </div>
           </div>
 
           <!-- 제목 -->
-          <div style="display:flex;align-items:center;gap:10px;padding:4px 0 6px;">
-            <div style="width:110px;flex-shrink:0;font-size:13px;font-weight:700;color:#111827;display:flex;align-items:center;justify-content:space-between;">
+          <div class="lab-mail-row" style="align-items:center;">
+            <div class="lab-mail-row-label" style="padding-top:0;display:flex;align-items:center;justify-content:space-between;padding-right:10px;">
               <span>제목</span>
-              <label style="display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:500;color:#4b5563;cursor:pointer;user-select:none;">
-                <input type="checkbox" id="chkLabMailImportant" style="width:14px;height:14px;min-width:14px;margin:0;cursor:pointer;">
-                <span>중요 <b style="color:#ef4444;">!</b></span>
+              <label class="lab-mail-important-lbl">
+                <input type="checkbox" id="chkLabMailImportant">
+                <span>중요 <b>!</b></span>
               </label>
             </div>
-            <div style="flex:1;min-width:0;">
-              <input type="text" id="inputLabMailSubject" required placeholder="메일 제목을 입력하세요" style="width:100%;height:36px;padding:4px 10px;font-size:13.5px;font-weight:600;border:1px solid #d1d5db;border-radius:6px;box-sizing:border-box;background:#ffffff;color:#111827;outline:none;">
+            <div class="lab-mail-row-field">
+              <input type="text" id="inputLabMailSubject" class="lab-mail-subject-input" required placeholder="메일 제목을 입력하세요">
             </div>
           </div>
         </div>
 
         <!-- 3. 양식 자동완성 입력 패널 (접기/펼치기 가능) -->
-        <div id="labMailDynamicFieldsWrap" style="padding:10px 18px;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
-          <div style="font-size:11.5px;font-weight:700;color:#475569;margin-bottom:6px;">⚡ 양식 항목을 수정하면 아래 메일 본문과 제목이 자동으로 변경됩니다 (본문 직접 수정도 가능)</div>
-          <div id="labMailDynamicFields" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;"></div>
+        <div id="labMailDynamicFieldsWrap" class="lab-mail-fields-panel">
+          <div style="font-size:12px;font-weight:700;color:#2563eb;margin-bottom:8px;">⚡ 양식 자동입력 항목 (수정 시 아래 메일 제목·본문이 즉시 자동 완성됩니다)</div>
+          <div id="labMailDynamicFields" class="lab-mail-fields-grid"></div>
         </div>
 
         <!-- 4. 웍스 스타일 에디터 툴바 -->
-        <div style="padding:6px 18px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12.5px;color:#374151;">
-          <span style="padding:4px 8px;border:1px solid #e5e7eb;border-radius:4px;background:#ffffff;font-size:12px;">맑은 고딕</span>
-          <span style="padding:4px 8px;border:1px solid #e5e7eb;border-radius:4px;background:#ffffff;font-size:12px;">14px</span>
-          <span style="width:1px;height:18px;background:#d1d5db;margin:0 2px;"></span>
-          <button type="button" data-cmd="bold" style="width:28px;height:28px;border:1px solid transparent;border-radius:4px;background:transparent;font-weight:800;cursor:pointer;color:#111827;" title="굵게">B</button>
-          <button type="button" data-cmd="italic" style="width:28px;height:28px;border:1px solid transparent;border-radius:4px;background:transparent;font-style:italic;font-family:serif;cursor:pointer;color:#111827;" title="기울임">I</button>
-          <button type="button" data-cmd="underline" style="width:28px;height:28px;border:1px solid transparent;border-radius:4px;background:transparent;text-decoration:underline;cursor:pointer;color:#111827;" title="밑줄">U</button>
-          <span style="width:1px;height:18px;background:#d1d5db;margin:0 2px;"></span>
-          <label for="inputLabMailFiles" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid #d1d5db;border-radius:4px;background:#ffffff;cursor:pointer;font-size:12px;font-weight:600;color:#111827;">
+        <div class="lab-mail-toolbar">
+          <span class="lab-mail-tool-pill">맑은 고딕</span>
+          <span class="lab-mail-tool-pill">14px</span>
+          <span class="lab-mail-tool-sep"></span>
+          <button type="button" data-cmd="bold" class="lab-mail-tool-btn" style="font-weight:800;" title="굵게">B</button>
+          <button type="button" data-cmd="italic" class="lab-mail-tool-btn" style="font-style:italic;font-family:Georgia,serif;" title="기울임">I</button>
+          <button type="button" data-cmd="underline" class="lab-mail-tool-btn" style="text-decoration:underline;" title="밑줄">U</button>
+          <span class="lab-mail-tool-sep"></span>
+          <label for="inputLabMailFiles" class="lab-mail-attach-btn">
             📎 파일첨부
           </label>
           <input type="file" id="inputLabMailFiles" multiple style="display:none;">
-          <div id="labMailFileList" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;"></div>
+          <div id="labMailFileList" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>
         </div>
 
-        <!-- 5. 본문 에디터 + 고정 꼬릿말(서명) 영역 -->
-        <div id="boxMailHtmlPreview" style="padding:20px 22px;background:#ffffff;flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-between;min-height:290px;">
-          <div id="labMailEditableBody" contenteditable="true" spellcheck="false" style="font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:14px;line-height:1.75;color:#111827;white-space:pre-wrap;outline:none;min-height:160px;"></div>
+        <!-- 5. 본문 에디터 + 고정 꼬릿말(서명) 영역 (겹침 원천 차단 블록 레이아웃) -->
+        <div id="boxMailHtmlPreview" class="lab-mail-editor-canvas">
+          <div id="labMailEditableBody" contenteditable="true" spellcheck="false" class="lab-mail-editable-body"></div>
 
           <!-- 고정 꼬릿말 (서명) -->
-          <div id="labMailSignatureBlock" style="margin-top:28px;padding-top:8px;font-family:'Malgun Gothic','맑은 고딕',sans-serif;user-select:none;">
-            <div style="width:52px;border-top:1px solid #d1d5db;margin-bottom:14px;"></div>
-            <div style="font-size:14px;color:#111827;line-height:1.4;">
+          <div id="labMailSignatureBlock" class="lab-mail-signature">
+            <div style="width:52px;border-top:1px solid #cbd5e1;margin-bottom:14px;"></div>
+            <div style="font-size:14px;color:#111827;line-height:1.45;">
               <strong style="font-weight:700;color:#000000;">이강민</strong> <span style="color:#374151;font-weight:400;">Kangmin Lee</span>
             </div>
             <div style="font-size:13px;color:#6b7280;margin-top:2px;margin-bottom:12px;">
               이차원양자헤테로구조체연구단(2DQH) / 기술원
             </div>
-            <div style="font-size:12.5px;color:#6b7280;line-height:1.55;">
+            <div style="font-size:12.5px;color:#6b7280;line-height:1.6;">
               <strong style="color:#6b7280;font-weight:700;">Tel</strong> 031-299-6576 <strong style="color:#6b7280;font-weight:700;">Mobile</strong> 010-5488-0309<br>
               <strong style="color:#6b7280;font-weight:700;">Email</strong> <span style="color:#6b7280;">kangminlee@skku.edu</span>
             </div>

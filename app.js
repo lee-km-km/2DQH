@@ -20511,7 +20511,7 @@ function renderInvSubLoans(){
     values: {},
     subjectEdited: false,
     bodyEdited: false,
-    fieldsOpen: true,
+    fieldsOpen: false,
     files: []
   };
 

@@ -12850,13 +12850,15 @@ html:not(.is-admin) #btnHelpTabAdmin {
 /* ==========================================================================
    [2DQH 정형 업무 메일 발송 센터 모달 스타일]
    ========================================================================== */
+
+/* ==========================================================================
+   [2DQH 정형 업무 메일 발송 센터 모달 스타일 - 네이버웍스 와이드 레이아웃]
+   ========================================================================== */
 #modalLabMailBackdrop {
   display: none;
   align-items: center !important;
   justify-content: center !important;
-  padding: 16px 12px !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
+  padding: 20px !important;
   z-index: 2600 !important;
 }
 #modalLabMailBackdrop.open {
@@ -12864,65 +12866,367 @@ html:not(.is-admin) #btnHelpTabAdmin {
 }
 #modalLabMailBackdrop .lab-mail-modal {
   margin: auto !important;
-  max-height: 88vh !important;
-  max-height: 88dvh !important;
-  width: min(680px, 94vw) !important;
-  border-radius: 14px !important;
+  width: min(980px, 95vw) !important;
+  max-width: 980px !important;
+  height: min(840px, 90vh) !important;
+  max-height: 90vh !important;
+  border-radius: 12px !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
-  background: var(--bg-card, #ffffff) !important;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28) !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.32) !important;
 }
-#formLabMail {
-  overflow-y: auto !important;
-  scrollbar-width: thin !important;
-  scrollbar-color: #2563eb rgba(0, 0, 0, 0.08) !important;
+#modalLabMailBackdrop .lab-mail-topbar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 12px 22px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
+  flex-shrink: 0 !important;
+  gap: 12px !important;
 }
-#formLabMail::-webkit-scrollbar {
-  width: 6px !important;
-  display: block !important;
+#modalLabMailBackdrop .lab-mail-topbar-left {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
 }
-#formLabMail::-webkit-scrollbar-thumb {
-  background: #2563eb !important;
-  border-radius: 4px !important;
+#modalLabMailBackdrop .lab-mail-topbar-right {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-shrink: 0 !important;
 }
-#formLabMail::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.04) !important;
-}
-.lab-mail-chip:hover {
-  border-color: #2563eb !important;
-  background: var(--bg-subtle, #f8fafc) !important;
-}
-#tabMailPreview.active, #tabMailRawText.active {
-  background: #2563eb !important;
+#modalLabMailBackdrop .lab-mail-btn-send {
+  width: auto !important;
+  height: 36px !important;
+  padding: 0 20px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  background: #1570ef !important;
   color: #ffffff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+}
+#modalLabMailBackdrop .lab-mail-btn-send:hover {
+  background: #175cd3 !important;
+}
+#modalLabMailBackdrop .lab-mail-tpl-select {
+  width: 220px !important;
+  max-width: 240px !important;
+  height: 36px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  background: #f9fafb !important;
+  color: #111827 !important;
+  cursor: pointer !important;
+}
+#modalLabMailBackdrop .lab-mail-btn-toggle {
+  width: auto !important;
+  height: 36px !important;
+  padding: 0 14px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  color: #374151 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+#modalLabMailBackdrop .lab-mail-btn-toggle:hover {
+  background: #f3f4f6 !important;
+}
+#modalLabMailBackdrop .lab-mail-sender-badge {
+  font-size: 12.5px !important;
+  color: #6b7280 !important;
+  white-space: nowrap !important;
+}
+#modalLabMailBackdrop .lab-mail-sender-badge b {
+  color: #111827 !important;
+}
+#modalLabMailBackdrop .lab-mail-btn-close {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: #6b7280 !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#modalLabMailBackdrop .lab-mail-btn-close:hover {
+  background: #f3f4f6 !important;
+  color: #111827 !important;
+}
+#modalLabMailBackdrop .lab-mail-scroll-area {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #ffffff !important;
+}
+#modalLabMailBackdrop .lab-mail-header-rows {
+  padding: 12px 22px 10px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  background: #ffffff !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+#modalLabMailBackdrop .lab-mail-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+}
+#modalLabMailBackdrop .lab-mail-row-label {
+  width: 105px !important;
+  flex: 0 0 105px !important;
+  padding-top: 8px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+}
+#modalLabMailBackdrop .lab-mail-row-field {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  position: relative !important;
+}
+#modalLabMailBackdrop .lab-mail-chipbox {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  min-height: 38px !important;
+  padding: 4px 10px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  box-sizing: border-box !important;
+}
+#modalLabMailBackdrop .lab-mail-chipbox:focus-within {
   border-color: #2563eb !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12) !important;
 }
-[data-theme="dark"] #modalLabMailBackdrop .lab-mail-modal {
-  background: #111827 !important;
-  color: #f1f5f9 !important;
+#modalLabMailBackdrop .lab-mail-chips-wrap {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  align-items: center !important;
 }
-[data-theme="dark"] #boxMailHtmlPreview {
-  background: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
+#modalLabMailBackdrop .lab-mail-inline-input {
+  width: auto !important;
+  flex: 1 1 200px !important;
+  min-width: 160px !important;
+  height: 28px !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  background: transparent !important;
+  color: #111827 !important;
+  padding: 0 4px !important;
+  margin: 0 !important;
 }
-[data-theme="dark"] .lab-mail-chip {
-  background: #1e293b !important;
-  border-color: #334155 !important;
+#modalLabMailBackdrop .lab-mail-staff-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin-top: 6px !important;
 }
-@media (max-width: 640px) {
-  #modalLabMailBackdrop {
-    padding: 10px 8px !important;
-  }
+#modalLabMailBackdrop .lab-mail-staff-pill {
+  width: auto !important;
+  height: 28px !important;
+  padding: 0 11px !important;
+  border-radius: 14px !important;
+  font-size: 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  transition: all 0.12s ease !important;
+}
+#modalLabMailBackdrop .lab-mail-suggest-dropdown {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 40px !important;
+  z-index: 30 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  max-height: 180px !important;
+  overflow-y: auto !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+#modalLabMailBackdrop .lab-mail-important-lbl {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #4b5563 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  margin: 0 !important;
+}
+#modalLabMailBackdrop .lab-mail-important-lbl input[type="checkbox"] {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 15px !important;
+  cursor: pointer !important;
+}
+#modalLabMailBackdrop .lab-mail-important-lbl b {
+  color: #ef4444 !important;
+  font-weight: 800 !important;
+}
+#modalLabMailBackdrop .lab-mail-subject-input {
+  width: 100% !important;
+  height: 38px !important;
+  padding: 0 12px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  margin: 0 !important;
+}
+#modalLabMailBackdrop .lab-mail-fields-panel {
+  padding: 12px 22px !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  flex-shrink: 0 !important;
+}
+#modalLabMailBackdrop .lab-mail-fields-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 8px 12px !important;
+}
+#modalLabMailBackdrop .lab-mail-toolbar {
+  padding: 7px 22px !important;
+  background: #f9fafb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+}
+#modalLabMailBackdrop .lab-mail-tool-pill {
+  padding: 4px 10px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  font-size: 12px !important;
+  color: #374151 !important;
+}
+#modalLabMailBackdrop .lab-mail-tool-sep {
+  width: 1px !important;
+  height: 18px !important;
+  background: #d1d5db !important;
+  margin: 0 4px !important;
+}
+#modalLabMailBackdrop .lab-mail-tool-btn {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  color: #111827 !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#modalLabMailBackdrop .lab-mail-tool-btn:hover {
+  background: #e5e7eb !important;
+}
+#modalLabMailBackdrop .lab-mail-attach-btn {
+  width: auto !important;
+  height: 28px !important;
+  padding: 0 12px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin: 0 !important;
+}
+#modalLabMailBackdrop .lab-mail-attach-btn:hover {
+  background: #f3f4f6 !important;
+}
+#modalLabMailBackdrop .lab-mail-editor-canvas {
+  display: block !important;
+  padding: 24px 26px 32px !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  flex: 1 1 auto !important;
+}
+#modalLabMailBackdrop .lab-mail-editable-body {
+  display: block !important;
+  font-family: 'Malgun Gothic', '맑은 고딕', sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.75 !important;
+  color: #111827 !important;
+  white-space: pre-wrap !important;
+  outline: none !important;
+  min-height: 180px !important;
+  height: auto !important;
+}
+#modalLabMailBackdrop .lab-mail-signature {
+  display: block !important;
+  margin-top: 32px !important;
+  padding-top: 8px !important;
+  font-family: 'Malgun Gothic', '맑은 고딕', sans-serif !important;
+  user-select: none !important;
+}
+@media (max-width: 720px) {
   #modalLabMailBackdrop .lab-mail-modal {
-    max-height: 90vh !important;
-    max-height: 90dvh !important;
-    width: min(540px, 94vw) !important;
+    width: 96vw !important;
+    height: 92vh !important;
   }
-  #formLabMail {
-    padding: 12px 14px !important;
-    gap: 10px !important;
+  #modalLabMailBackdrop .lab-mail-topbar {
+    flex-wrap: wrap !important;
+  }
+  #modalLabMailBackdrop .lab-mail-fields-grid {
+    grid-template-columns: 1fr !important;
   }
 }
