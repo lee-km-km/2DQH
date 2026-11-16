@@ -28,6 +28,12 @@
   --amber: #b45309;      /* Amber-700 */
 
   --radius: 6px;
+  --radius-ctrl: 8px;
+  --radius-card: 10px;
+  --action-primary: #2563eb;
+  --action-safe: #059669;
+  --ctrl-h-md: 36px;
+  --ctrl-h-touch: 44px;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
@@ -13252,5 +13258,56 @@ html:not(.is-admin) #btnHelpTabAdmin {
   #chemNoticePrintArea h2 {
     font-size: 24px !important;
     letter-spacing: 1px !important;
+  }
+}
+
+/* ==========================================================================
+   [UI/UX 고도화 Phase: 공통 컨트롤 규격 & 모바일 시약 카드뷰/카테고리 스크롤 개선]
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* 1. 시약 모바일 카드 뷰 기본 표시 복구 및 표/카드 토글 지원 */
+  #chemMobileCardList:not(.mobile-view-table) {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  #chemMobileCardList.mobile-view-table {
+    display: none !important;
+  }
+  .chem-official-inventory-table-wrap:not(.mobile-view-table) {
+    display: none !important;
+  }
+  .chem-official-inventory-table-wrap.mobile-view-table {
+    display: block !important;
+  }
+
+  /* 2. 시약 상단 컨트롤 바 콤팩트 정렬 */
+  .chem-quick-scope-bar {
+    gap: 6px !important;
+    margin-bottom: 8px !important;
+  }
+  .btn-chem-scope {
+    min-height: 38px !important;
+    border-radius: var(--radius-ctrl, 8px) !important;
+    font-size: 12.5px !important;
+  }
+  .chem-table-top-bar {
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* 3. 모바일 터치 타겟 최소 높이 확보 (오터치 방지) */
+  .btn-m-action,
+  .btn-chem-view-mode,
+  .btn-korea-action {
+    min-height: 38px !important;
+    border-radius: var(--radius-ctrl, 8px) !important;
+  }
+
+  /* 4. 비품/소모품 카테고리 탭 가로 스크롤 힌트 (우측 여백 페이드) */
+  .category-tabs {
+    padding-right: 24px !important;
+    -webkit-mask-image: linear-gradient(to right, #000 90%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 90%, transparent 100%);
   }
 }
