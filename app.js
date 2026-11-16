@@ -3981,37 +3981,45 @@ function renderQrCodeInto(container, text, size){
   size = size || 190;
   if(!container) return;
   container.innerHTML = '';
+  container.style.background = '#ffffff';
+  container.style.padding = '12px';
+  container.style.boxSizing = 'border-box';
+  container.style.borderRadius = '8px';
+
+  const qrSize = Math.max(120, size - 24);
 
   if(window.QRCode){
     try {
       new QRCode(container, {
         text: text,
-        width: size,
-        height: size,
+        width: qrSize,
+        height: qrSize,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M
       });
-      // 인라인 스타일로 가로/세로를 190px 엄격 고정하여 CSS 캐시나 flex 왜곡 방지
+      // 인라인 스타일로 가로/세로를 엄격 고정하여 CSS 캐시나 flex 왜곡 및 번짐 방지
       const applyStrictSize = function(){
         const cvs = container.querySelector('canvas');
         const img = container.querySelector('img');
         if(img && img.src){
-          img.style.width = size + 'px';
-          img.style.height = size + 'px';
-          img.style.maxWidth = size + 'px';
-          img.style.maxHeight = size + 'px';
+          img.style.width = qrSize + 'px';
+          img.style.height = qrSize + 'px';
+          img.style.maxWidth = qrSize + 'px';
+          img.style.maxHeight = qrSize + 'px';
           img.style.display = 'block';
           img.style.margin = '0 auto';
           img.style.objectFit = 'contain';
+          img.style.imageRendering = 'pixelated';
           if(cvs) cvs.style.display = 'none';
         } else if(cvs){
-          cvs.style.width = size + 'px';
-          cvs.style.height = size + 'px';
-          cvs.style.maxWidth = size + 'px';
-          cvs.style.maxHeight = size + 'px';
+          cvs.style.width = qrSize + 'px';
+          cvs.style.height = qrSize + 'px';
+          cvs.style.maxWidth = qrSize + 'px';
+          cvs.style.maxHeight = qrSize + 'px';
           cvs.style.display = 'block';
           cvs.style.margin = '0 auto';
+          cvs.style.imageRendering = 'pixelated';
         }
       };
       applyStrictSize();
@@ -4025,14 +4033,15 @@ function renderQrCodeInto(container, text, size){
 
   // Fallback: 이미지 태그
   const img = document.createElement('img');
-  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + size + 'x' + size + '&data=' + encodeURIComponent(text);
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + qrSize + 'x' + qrSize + '&margin=2&data=' + encodeURIComponent(text);
   img.alt = 'QR Code';
-  img.style.width = size + 'px';
-  img.style.height = size + 'px';
-  img.style.maxWidth = size + 'px';
-  img.style.maxHeight = size + 'px';
+  img.style.width = qrSize + 'px';
+  img.style.height = qrSize + 'px';
+  img.style.maxWidth = qrSize + 'px';
+  img.style.maxHeight = qrSize + 'px';
   img.style.display = 'block';
   img.style.margin = '0 auto';
+  img.style.imageRendering = 'pixelated';
   container.appendChild(img);
 }
 
@@ -19153,7 +19162,7 @@ function openChemQrModalForSingle(chemId){
   if(titleEl) titleEl.textContent = c.name + ' 직통 QR';
   if(locEl) locEl.textContent = '보관: ' + c.location + ' · 책임: ' + c.handler;
 
-  const targetUrl = window.location.origin + window.location.pathname + '#chemicals?chem=' + encodeURIComponent(c.id);
+  const targetUrl = getAppBaseUrl() + '#chemicals?chem=' + encodeURIComponent(c.id) + '&action=quick_chem_log';
   const urlEl = $('chemicalQrLabelUrlText');
   if(urlEl) urlEl.textContent = targetUrl;
 
