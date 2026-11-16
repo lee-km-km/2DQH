@@ -4009,7 +4009,7 @@ function openEquipmentQrModal(eqId){
   if(titleEl) titleEl.textContent = logbookTitle;
 
   // 생성될 직행 URL (HTTPS origin + 경로 + 해시 쿼리)
-  const targetUrl = getAppBaseUrl() + '#logbook?eq=' + encodeURIComponent(eq.id) + '&action=quick_start';
+  const targetUrl = getAppBaseUrl() + '?qr=equip&eq=' + encodeURIComponent(eq.id) + '#logbook';
 
   if(container){
     renderQrCodeInto(container, targetUrl, 190);
@@ -4272,7 +4272,7 @@ function openChemicalQrModal(){
   const modal = $('modalChemicalQrBackdrop');
   if(!modal) return;
 
-  const targetUrl = getAppBaseUrl() + '#chemicals?action=quick_chem_log';
+  const targetUrl = getAppBaseUrl() + '?qr=chem#chemicals';
   const qrBox = $('chemicalQrCanvasContainer');
   if(qrBox){
     renderQrCodeInto(qrBox, targetUrl, 190);
@@ -4333,7 +4333,7 @@ function openLoanQrModal(){
   const modal = $('modalLoanQrBackdrop');
   if(!modal) return;
 
-  const targetUrl = getAppBaseUrl() + '#inventory?action=quick_loan';
+  const targetUrl = getAppBaseUrl() + '?qr=loan#inventory';
   const qrBox = $('loanQrCanvasContainer');
   if(qrBox){
     renderQrCodeInto(qrBox, targetUrl, 190);
@@ -10869,6 +10869,41 @@ function handleUrlFastTrack(){
     const hashParams = new URLSearchParams(hashQuery);
 
     const getParam = function(k){ return searchParams.get(k) || hashParams.get(k); };
+
+    const qrMode = searchParams.get('qr');
+    if(qrMode === 'equip'){
+      const eqId = searchParams.get('eq') || 'EQ-XRD-01';
+      setPortalModule('logbook', { switchView: false });
+      showView('logbook', { updateUrl: false });
+      try { history.replaceState(null, '', location.pathname + '#logbook'); } catch(_){}
+      setTimeout(function(){
+        if(typeof selectEquipment === 'function') selectEquipment(eqId);
+        if(typeof openTestDriveModal === 'function') openTestDriveModal(eqId);
+      }, 150);
+      return;
+    }
+    if(qrMode === 'chem'){
+      const chemId = searchParams.get('chem') || '';
+      setPortalModule('inventory', { switchView: false });
+      showView('chemicals', { updateUrl: false });
+      if(typeof render291InventoryTable === 'function') render291InventoryTable();
+      try { history.replaceState(null, '', location.pathname + '#chemicals'); } catch(_){}
+      setTimeout(function(){
+        openChemWriteLogModal(chemId);
+        toast('📝 특별관리물질 취급일지 작성 화면으로 연결되었습니다.');
+      }, 150);
+      return;
+    }
+    if(qrMode === 'loan'){
+      setPortalModule('inventory', { switchView: false });
+      showView('inventory', { updateUrl: false });
+      try { history.replaceState(null, '', location.pathname + '#inventory'); } catch(_){}
+      setTimeout(function(){
+        if(typeof openModal === 'function') openModal('borrow');
+        toast('📱 비품 대여 신청 화면으로 연결되었습니다.');
+      }, 150);
+      return;
+    }
 
     // 0. 재발주 패널 스크롤 (#reorder or #consumables/reorder)
     if(hashPath === 'reorder' || hashPath === 'consumables/reorder'){
@@ -19042,7 +19077,7 @@ function openChemQrModalForSingle(chemId){
   if(titleEl) titleEl.textContent = c.name + ' 직통 QR';
   if(locEl) locEl.textContent = '보관: ' + c.location + ' · 책임: ' + c.handler;
 
-  const targetUrl = getAppBaseUrl() + '#chemicals?chem=' + encodeURIComponent(c.id) + '&action=quick_chem_log';
+  const targetUrl = getAppBaseUrl() + '?qr=chem&chem=' + encodeURIComponent(c.id) + '#chemicals';
   const urlEl = $('chemicalQrLabelUrlText');
   if(urlEl) urlEl.textContent = targetUrl;
 
