@@ -6195,9 +6195,7 @@ function renderEquipmentAnalyticsOverview(periodSessions, targetSessions, allSes
       '<td style="font-size:12px;color:var(--ink);"><span style="font-weight:600;">' + safe(st.topAffil) + '</span></td>' +
       '<td style="font-size:12px;color:var(--ink-light);">' + safe(st.topUser) + '</td>' +
       '<td style="text-align:center;">' +
-        '<button type="button" class="btn" style="padding:4px 8px;font-size:11.5px;font-weight:600;border-radius:6px;" data-analytics-eq="' + safe(eq.id) + '">' +
-          '📊 상세 분석' +
-        '</button>' +
+        '' +
       '</td>' +
     '</tr>';
   }).join('');
@@ -9819,6 +9817,17 @@ function bindEvents(){
 
 
   document.addEventListener('click', function(e){
+  const utilEqBtn = e.target.closest('[data-select-util-eq]');
+  if(utilEqBtn){
+    e.preventDefault();
+    const eqId = utilEqBtn.getAttribute('data-select-util-eq');
+    if(eqId){
+      if(typeof switchEquipmentHubView === 'function') switchEquipmentHubView('catalog');
+      if(typeof selectResearchEquipment === 'function') selectResearchEquipment(eqId);
+    }
+    return;
+  }
+
     const el = e.target;
     if(!el) return;
 
