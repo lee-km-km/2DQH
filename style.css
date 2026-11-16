@@ -13614,3 +13614,42 @@ html:not(.is-admin) #btnHelpTabAdmin {
     justify-content: center !important;
   }
 }
+
+/* ==========================================================================
+   [Phase 5: 시약 모달 4종 모바일 & 다크모드 UI (이력·고지문/법정서식 프레임 분리)]
+   ========================================================================== */
+[data-theme="dark"] .chem-notice-modal,
+[data-theme="dark"] .chem-ledger-modal {
+  background: #0f172a !important;
+}
+[data-theme="dark"] .chem-notice-modal .modal-head,
+[data-theme="dark"] .chem-ledger-modal .modal-head {
+  background: #1e293b !important;
+  border-bottom-color: #334155 !important;
+}
+[data-theme="dark"] .chem-notice-modal .modal-head h3,
+[data-theme="dark"] .chem-ledger-modal .modal-head h3 {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .chem-notice-modal .modal-body,
+[data-theme="dark"] .chem-ledger-modal .modal-body {
+  background: #0f172a !important;
+}
+
+@media (max-width: 768px) {
+  .chem-notice-modal .modal-head,
+  .chem-ledger-modal .modal-head {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    padding: 12px 14px !important;
+  }
+  #chemHistoryMetaBox {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+  #btnHistWriteLog {
+    width: 100% !important;
+    min-height: 40px !important;
+  }
+}
