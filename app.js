@@ -5347,6 +5347,8 @@ function renderEquipmentAnalyticsScopeChips(){
   }
 
   const isAll = (selectedAnalyticsEquipmentId === 'all');
+  const mainDet = document.querySelector('#panelAnalyticsMain details');
+  if(mainDet) mainDet.open = !isAll;
   if(isAll){
     if(descEl) descEl.textContent = '첨단 연구장비 통합 운영 관리 오버뷰';
   } else {
@@ -5524,6 +5526,8 @@ function renderEquipmentAnalyticsDashboard(){
   renderEquipmentAnalyticsScopeChips();
 
   const isAll = (selectedAnalyticsEquipmentId === 'all');
+  const mainDet = document.querySelector('#panelAnalyticsMain details');
+  if(mainDet) mainDet.open = !isAll;
   const selectedEq = isAll ? null : researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
 
   // 세션 스코프 분리: 전체 vs 선택된 단일 장비
@@ -5664,6 +5668,8 @@ function renderEquipmentAnalyticsOverview(periodSessions, targetSessions, allSes
   if(!container) return;
 
   const isAll = (selectedAnalyticsEquipmentId === 'all');
+  const mainDet = document.querySelector('#panelAnalyticsMain details');
+  if(mainDet) mainDet.open = !isAll;
   const selectedEq = isAll ? null : researchEquipments.find(function(e){ return e.id === selectedAnalyticsEquipmentId; });
 
   const monthWeeks = getMonthWeeks(currentCalendarYear, currentCalendarMonth);
