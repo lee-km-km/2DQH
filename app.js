@@ -17373,7 +17373,7 @@ function render291InventoryTable(){
   if(countBadge) countBadge.textContent = filtered.length;
 
   if(filtered.length === 0){
-    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;padding:48px 16px;color:var(--ink-light);font-size:14px;">' +
+    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;padding:48px 16px;color:var(--ink-light);font-size:14px;">' +
       '🔍 검색 조건에 일치하는 시약이 없습니다.<br>' +
       '<span style="font-size:12px;color:var(--ink-muted);margin-top:6px;display:inline-block;">검색어를 확인하시거나 상단 <b>[초기화]</b> 버튼을 눌러 전체 목록을 조회하세요.</span>' +
       '</td></tr>';
@@ -17410,7 +17410,6 @@ function render291InventoryTable(){
     html += '<td style="white-space:nowrap;color:var(--ink-light);">' + safe(c.mfg) + '</td>';
     html += '<td style="white-space:nowrap;font-family:monospace;font-size:11.5px;">' + safe(c.catNo) + '</td>';
     html += '<td style="white-space:nowrap;font-family:monospace;font-weight:600;font-size:11.5px;">' + safe(c.cas) + '</td>';
-    html += '<td style="text-align:center;"><button type="button" class="btn-table-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '" title="제조사 공식 MSDS 16대 필수 요약 정보">📄</button></td>';
     html += '<td style="text-align:center;">' + hazardBadge + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">' + safe(c.qty) + '</td>';
     html += '<td style="text-align:right;white-space:nowrap;font-weight:800;color:' + (c.status === '폐기' ? '#94a3b8' : '#059669') + ';font-size:13px;">' + currentStock + ' ' + safe(c.unit) + '</td>';
@@ -17420,7 +17419,7 @@ function render291InventoryTable(){
     html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.inDate) + '</td>';
     html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.expDate) + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">';
-    html += '<button type="button" class="btn-table-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '" style="font-weight:700;color:#2563eb;">이력</button>';
+    if(c.isSpecial){ html += '<button type="button" class="btn-table-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '" style="font-weight:700;color:#2563eb;">이력</button>'; }
     if(isAdmin()){
       html += '<button type="button" class="btn-table-action btn-chem-edit" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;font-weight:700;color:#0284c7;" title="시약 정보 수정">수정</button>';
       html += '<button type="button" class="btn-table-action btn-chem-discard" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#d97706;" title="시약 폐기 처리">폐기</button>';
@@ -17449,11 +17448,12 @@ function render291InventoryTable(){
     cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">담당자</span><span class="val">👤 ' + safe(c.handler || '-') + '</span></div>';
     cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">수량 / 잔량</span><span class="val stock">' + safe(c.qty) + ' · <b>' + currentStock + ' ' + safe(c.unit) + '</b></span></div>';
     cardsHtml += '  </div>';
-    cardsHtml += '  <div class="chem-m-card-actions">';
-    cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '">📄 MSDS</button>';
-    cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '">📜 이력</button>';
-    cardsHtml += '    <button type="button" class="btn-m-action primary btn-chem-m-quick-log" data-chem-id="' + safe(c.id) + '">📝 일지작성</button>';
-    cardsHtml += '  </div>';
+    if(c.isSpecial){
+      cardsHtml += '  <div class="chem-m-card-actions">';
+      cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '">📜 이력</button>';
+      cardsHtml += '    <button type="button" class="btn-m-action primary btn-chem-m-quick-log" data-chem-id="' + safe(c.id) + '">📝 일지작성</button>';
+      cardsHtml += '  </div>';
+    }
     if(isAdmin()){
       cardsHtml += '  <div class="chem-m-card-admin-actions" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);display:flex;gap:6px;">';
       cardsHtml += '    <button type="button" class="btn-m-action btn-chem-edit" data-chem-id="' + safe(c.id) + '" style="color:#0284c7;font-weight:700;">✏️ 수정</button>';
