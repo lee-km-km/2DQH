@@ -13199,14 +13199,58 @@ html:not(.is-admin) #btnHelpTabAdmin {
   user-select: none !important;
 }
 @media (max-width: 720px) {
+  #modalLabMailBackdrop {
+    padding: 8px !important;
+  }
   #modalLabMailBackdrop .lab-mail-modal {
     width: 96vw !important;
-    height: 92vh !important;
+    height: 92dvh !important;
   }
   #modalLabMailBackdrop .lab-mail-topbar {
     flex-wrap: wrap !important;
+    padding: 10px 14px !important;
+    gap: 8px !important;
+  }
+  #modalLabMailBackdrop .lab-mail-topbar-left {
+    flex-wrap: wrap !important;
+    width: 100% !important;
+  }
+  #modalLabMailBackdrop .lab-mail-tpl-select {
+    flex: 1 1 160px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  #modalLabMailBackdrop .lab-mail-header-rows {
+    padding: 10px 14px !important;
+  }
+  #modalLabMailBackdrop .lab-mail-row {
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+  #modalLabMailBackdrop .lab-mail-row-label {
+    width: 100% !important;
+    flex: none !important;
+    padding-top: 0 !important;
   }
   #modalLabMailBackdrop .lab-mail-fields-grid {
     grid-template-columns: 1fr !important;
+  }
+  #modalLabMailBackdrop .lab-mail-editor-canvas {
+    padding: 16px 14px 24px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .chem-notice-modal .modal-body,
+  .msds-viewer-modal .modal-body {
+    padding: 12px !important;
+  }
+  #chemNoticePrintArea h1 {
+    font-size: 22px !important;
+    letter-spacing: 2px !important;
+  }
+  #chemNoticePrintArea h2 {
+    font-size: 24px !important;
+    letter-spacing: 1px !important;
   }
 }
