@@ -13324,3 +13324,15 @@ html:not(.is-admin) #btnHelpTabAdmin {
   -webkit-overflow-scrolling: touch !important;
   padding-bottom: 36px !important;
 }
+
+@media (min-width: 769px) {
+  .chem-inventory-table th,
+  .chem-inventory-table td {
+    padding: 7px 8px !important;
+    font-size: 12px !important;
+  }
+  .chem-inventory-table td:last-child {
+    white-space: nowrap !important;
+    overflow: visible !important;
+  }
+}
