@@ -13407,3 +13407,40 @@ html:not(.is-admin) #btnHelpTabAdmin {
   min-width: 0 !important;
   display: block !important;
 }
+
+/* [모바일/PC 취급일지 작성 & 수정 모달 스크롤 및 날짜 입력칸 넘침 최종 해결] */
+#modalChemWriteLogBackdrop .modal {
+  display: block !important;
+  max-height: 88dvh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+#modalChemWriteLogBackdrop .modal-head {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: var(--bg-card, #ffffff) !important;
+}
+#formWriteChemicalLogModal {
+  max-height: none !important;
+  overflow: visible !important;
+  padding-bottom: 32px !important;
+}
+#formWriteChemicalLogModal > div,
+#modalChemProductBackdrop form > div {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+#formWriteChemicalLogModal input[type="datetime-local"],
+#modalChemProductBackdrop input[type="date"],
+#modalChemProductBackdrop input[type="datetime-local"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  font-size: 14px !important;
+  padding: 8px 10px !important;
+  box-sizing: border-box !important;
+}
