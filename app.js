@@ -9461,11 +9461,6 @@ async function handleLogout(){
   }
 }
 
-// userLogout alias
-function userLogout(){
-  return handleLogout();
-}
-
 // ==========================================
 // [모바일 슬라이드 아웃 서랍(Drawer) 제어 - 햄버거 to X 애니메이션 연동]
 // ==========================================
