@@ -13710,3 +13710,26 @@ html:not(.is-admin) #btnHelpTabAdmin {
     border-radius: var(--radius-ctrl, 8px) !important;
   }
 }
+
+/* ==========================================================================
+   [Phase 8: 도움말(view-help)·메일 툴바·다크모드 최종 마감 게이트]
+   ========================================================================== */
+@media (max-width: 768px) {
+  #view-help .help-tab-btn {
+    min-height: 40px !important;
+    border-radius: var(--radius-ctrl, 8px) !important;
+  }
+  #view-help .help-hero-banner,
+  #view-help .panel {
+    padding: 14px !important;
+    border-radius: var(--radius-card, 10px) !important;
+  }
+  #modalLabMailBackdrop .lab-mail-toolbar {
+    padding: 8px 12px !important;
+    gap: 6px !important;
+  }
+  #modalLabMailBackdrop .lab-mail-tool-btn,
+  #modalLabMailBackdrop .lab-mail-attach-btn {
+    min-height: 34px !important;
+  }
+}
