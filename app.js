@@ -1263,6 +1263,8 @@ function setAdminUI(){
   }
 
   // 장비 관련 화면 갱신 (관리자 로그인 상태에 따라 수정/삭제 및 통계 뷰 동적 반영)
+  if(typeof render291InventoryTable === 'function') render291InventoryTable();
+
   if(currentSelectedEquipment === 'EQ-XRD-01'){
     renderXrdLogs();
   } else {
