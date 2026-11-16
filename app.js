@@ -20769,6 +20769,12 @@ function renderInvSubLoans(){
       openLabMailModal();
       if(typeof closeMobileDrawer === 'function') closeMobileDrawer();
     });
+    const mobMail = $id('btnMobileDrawerLabMail');
+    if(mobMail) mobMail.addEventListener('click', function(e){
+      e.preventDefault();
+      openLabMailModal();
+      if(typeof closeMobileDrawer === 'function') closeMobileDrawer();
+    });
     const top = $id('btnTopOpenLabMail');
     if(top) top.addEventListener('click', function(e){ e.preventDefault(); openLabMailModal(); });
     const close = $id('btnCloseLabMail');

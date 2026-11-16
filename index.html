@@ -142,19 +142,7 @@
       </button>
     </div>
 
-    <!-- C. ✉️ 연구실 업무 메일 발송 메뉴 -->
-    <div class="sidebar-section-header admin-only hidden" style="margin-top:16px;">
-      <span class="sidebar-section-title">업무 지원</span>
-      <span class="sidebar-section-pill" style="background:#e0e7ff;color:#3730a3;">WebMail</span>
-    </div>
-    <div class="sidebar-nav-group admin-only hidden">
-      <button class="nav" id="btnNavOpenLabMail" type="button">
-        <span class="nav-icon" aria-hidden="true">✉️</span>
-        <span>업무 메일 발송</span>
-      </button>
-    </div>
-
-    <!-- C. 👑 관리자 전용 메뉴 (관리자 로그인 시 언락) -->
+<!-- C. 👑 관리자 전용 메뉴 (관리자 로그인 시 언락) -->
     <div class="sidebar-section-header admin-only hidden" style="margin-top:16px;">
       <span class="sidebar-section-title">👑 관리자 전용</span>
       <span class="sidebar-section-pill" style="background:#fee2e2;color:#991b1b;">Admin</span>
@@ -210,6 +198,7 @@
             </div>
           </div>
         </div>
+        <button id="btnMobileDrawerLabMail" class="btn admin-only hidden mobile-only" type="button" aria-label="업무 메일 발송" title="업무 메일 발송 (관리자 전용)" style="width:38px;height:38px;min-width:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--border);background:var(--card,#ffffff);font-size:17px;cursor:pointer;flex-shrink:0;align-self:center;"><span>✉️</span></button>
         <button id="btnDrawerThemeToggle" class="btn btn-drawer-theme" type="button" aria-label="다크모드 / 라이트모드 전환" title="다크모드 / 라이트모드 전환" style="width:38px;height:38px;min-width:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1.5px solid var(--border);background:var(--card,#ffffff);font-size:18px;cursor:pointer;flex-shrink:0;align-self:center;">
           <span id="drawerThemeIcon">🌙</span>
         </button>
