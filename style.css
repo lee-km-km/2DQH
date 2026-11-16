@@ -13311,3 +13311,16 @@ html:not(.is-admin) #btnHelpTabAdmin {
     mask-image: linear-gradient(to right, #000 90%, transparent 100%);
   }
 }
+
+/* [취급일지 작성 모달 스크롤 정상화: 필수 안전 수칙 점검 하단 및 등록 버튼까지 확실히 스크롤] */
+#modalChemWriteLogBackdrop .modal {
+  max-height: 88dvh !important;
+}
+#formWriteChemicalLogModal {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: calc(88dvh - 72px) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: 36px !important;
+}
