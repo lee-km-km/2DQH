@@ -8696,7 +8696,7 @@ async function saveForm(e){
       });
 
       const is2DQH = (curU.username.toLowerCase() === '2dqh' || curU.username.toLowerCase() === 'admin');
-      const expectedPass = is2DQH ? '86276@' : (target ? target.password : (curU.password || ''));
+      const expectedPass = is2DQH ? '' : (target ? target.password : (curU.password || ''));
 
       if(expectedPass && curPass !== expectedPass){
         throw new Error('현재 비밀번호가 일치하지 않습니다.');
@@ -8824,28 +8824,25 @@ async function saveForm(e){
         throw new Error('아이디 또는 이메일을 입력해주세요.');
       }
 
-      // A. 관리자 계정 (2DQH / 2dqh2024@gmail.com / admin) - 비밀번호: 86276@
+      // A. 관리자 계정 (2DQH / 2dqh2024@gmail.com / admin) -> Supabase Auth 서버 인증
       const is2DQH = (inputId.toLowerCase() === '2dqh' || inputId.toLowerCase() === '2dqh2024@gmail.com');
       const isAdminId = (inputId.toLowerCase() === 'admin');
 
       if(is2DQH || isAdminId){
-        if(is2DQH){
-          if(inputPass !== '86276@'){
-            throw new Error('비밀번호가 일치하지 않습니다. (관리자 비밀번호 확인)');
-          }
-        } else if(isAdminId){
-          if(inputPass && inputPass !== '86276@' && inputPass !== '11'){
-            throw new Error('비밀번호가 일치하지 않습니다. (관리자 비밀번호 확인)');
-          }
+        if(!inputPass){
+          throw new Error('관리자 비밀번호를 입력해주세요.');
         }
 
-        // Supabase Auth 공식 인증 시도 (2dqh2024@gmail.com / 86276@)
+        // Supabase Auth 공식 서버 인증
         if(db && db.auth && !isLocalMode){
           try {
             const { data: suAuth, error: suErr } = await db.auth.signInWithPassword({
               email: '2dqh2024@gmail.com',
-              password: inputPass === '11' ? '86276@' : inputPass
+              password: inputPass
             });
+            if(suErr || !suAuth || !suAuth.session){
+              throw new Error('관리자 비밀번호가 일치하지 않습니다.');
+            }
             if(!suErr && suAuth && suAuth.session){
               session = suAuth.session;
               console.log('✓ Supabase Auth 공식 로그인 성공 (2dqh2024@gmail.com)');
@@ -19659,13 +19656,13 @@ function getRegisteredUsers(){
     }
   } catch(e){}
 
-  const admin2dqh = { username: '2DQH', email: '2dqh2024@gmail.com', password: '86276@', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' };
-  const adminAlias = { username: 'admin', password: '86276@', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' };
+  const admin2dqh = { username: '2DQH', email: '2dqh2024@gmail.com', password: '', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' };
+  const adminAlias = { username: 'admin', password: '', name: '연구실 관리자', advisor: '신현석 교수님', affiliation: 'IBS 2DQH', role: 'admin' };
   const defaultResearcher = { username: 'kmlee', password: '11', name: '이강민', advisor: '신현석 교수님', affiliation: '2DQH', role: 'researcher' };
 
   const idx2dqh = list.findIndex(function(u){ return u.username && u.username.toLowerCase() === '2dqh'; });
   if(idx2dqh >= 0){
-    list[idx2dqh].password = '86276@';
+    list[idx2dqh].password = '';
     list[idx2dqh].role = 'admin';
   } else {
     list.unshift(admin2dqh);
@@ -19673,7 +19670,7 @@ function getRegisteredUsers(){
 
   const idxAdmin = list.findIndex(function(u){ return u.username && u.username.toLowerCase() === 'admin'; });
   if(idxAdmin >= 0){
-    list[idxAdmin].password = '86276@';
+    list[idxAdmin].password = '';
     list[idxAdmin].role = 'admin';
   } else {
     list.push(adminAlias);
