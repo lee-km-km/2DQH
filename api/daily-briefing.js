@@ -37,11 +37,14 @@ function reconstructAbstract(invertedIndex) {
 
 async function fetchWeeklyPaper() {
   try {
-    const url = 'https://api.openalex.org/works?search=2D+heterostructure+XRD+OR+TEM+OR+STEM&filter=has_abstract:true,type:article&sort=publication_date:desc&per-page=3';
+    const q = encodeURIComponent('("van der Waals heterostructure" OR "2D heterostructure" OR "transition metal dichalcogenide") AND ("transmission electron microscopy" OR "STEM" OR "X-ray diffraction" OR "XRD")');
+    const url = `https://api.openalex.org/works?filter=title_and_abstract.search:${q},has_abstract:true,type:article,publication_year:2023-2026&sort=relevance_score:desc&per-page=10`;
     const res = await fetch(url, { headers: { 'User-Agent': '2DQH-Lab-Briefing/1.0' } });
     if (!res.ok) return null;
     const data = await res.json();
-    const work = data.results && data.results[0];
+    const list = data.results || [];
+    const kst = getKstInfo();
+    const work = list.length ? list[kst.weekNum % list.length] : null;
     if (!work) return null;
     return {
       title: work.title || '제목 없음',
