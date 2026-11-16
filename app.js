@@ -10877,8 +10877,7 @@ function handleUrlFastTrack(){
       showView('logbook', { updateUrl: false });
       try { history.replaceState(null, '', location.pathname + '#logbook'); } catch(_){}
       setTimeout(function(){
-        if(typeof selectEquipment === 'function') selectEquipment(eqId);
-        if(typeof openTestDriveModal === 'function') openTestDriveModal(eqId);
+        if(typeof selectResearchEquipment === 'function') selectResearchEquipment(eqId);
       }, 150);
       return;
     }
