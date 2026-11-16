@@ -13494,3 +13494,53 @@ html:not(.is-admin) #btnHelpTabAdmin {
     border-radius: 6px !important;
   }
 }
+
+/* ==========================================================================
+   [Phase 2: 비품 및 대여 관리 모바일 UI (카드 가독성·버튼 40px+·모달 입력칸 넘침 방지)]
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* 1. 비품/대여 테이블 및 카드 내 액션 버튼 터치 영역 확보 (40px+) */
+  #view-inventory .btn,
+  #view-loans .btn,
+  #inventoryRows .btn-table-action,
+  #loanRows .btn-table-action,
+  #invSubLoanRows .btn-table-action {
+    min-height: 40px !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    border-radius: var(--radius-ctrl, 8px) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 2. 대여/반납/비품등록 모달(#modalBackdrop) 입력칸 & 날짜칸 가로 넘침 차단 */
+  #modalBackdrop input,
+  #modalBackdrop select,
+  #modalBackdrop textarea {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    font-size: 15px !important;
+  }
+  #modalBackdrop input[type="date"],
+  #modalBackdrop input[type="datetime-local"] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 100% !important;
+  }
+  #modalBackdrop .modal-foot .btn {
+    min-height: 44px !important;
+    font-size: 14px !important;
+  }
+
+  /* 3. 비품 대여 QR 모달 하단 액션 버튼 터치성 개선 */
+  #modalLoanQrBackdrop .qr-modal-actions {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  #modalLoanQrBackdrop .qr-modal-actions .btn {
+    min-height: 42px !important;
+    flex: 1 1 110px !important;
+  }
+}
