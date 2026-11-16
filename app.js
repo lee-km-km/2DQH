@@ -20777,6 +20777,12 @@ function renderInvSubLoans(){
     });
     const top = $id('btnTopOpenLabMail');
     if(top) top.addEventListener('click', function(e){ e.preventDefault(); openLabMailModal(); });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape'){
+        const modal = $id('modalLabMailBackdrop');
+        if(modal && modal.classList.contains('open')) closeLabMailModal();
+      }
+    });
     const close = $id('btnCloseLabMail');
     if(close) close.addEventListener('click', function(e){ e.preventDefault(); closeLabMailModal(); });
 
