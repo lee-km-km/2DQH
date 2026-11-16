@@ -5460,7 +5460,12 @@ function renderEquipmentUtilizationPanel(allSessions){
     panel.id = 'eqUtilizationPanel';
     panel.className = 'panel';
     panel.style.cssText = 'margin-top:16px;padding:16px;border-radius:12px;';
-    host.appendChild(panel);
+    const scopeBar = host.querySelector('.eq-analytics-scope-bar');
+    if(scopeBar && scopeBar.parentNode === host){
+      scopeBar.insertAdjacentElement('afterend', panel);
+    } else {
+      host.prepend(panel);
+    }
   }
 
   const rows = computeEquipmentUtilizationRows(allSessions);
