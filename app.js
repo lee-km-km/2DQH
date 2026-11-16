@@ -243,6 +243,33 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
     image: 'img/equipment/thermo_xps.png',
     type: 'placeholder'
   }
+,
+  { id: 'EQ-UVVIS-01', code: 'UV-Vis', name: 'UV-Vis', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '🌈' },
+  { id: 'EQ-PLASER-01', code: 'Potable laser', name: 'Potable laser', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '🔦' },
+  { id: 'EQ-EL-01', code: 'EL', name: 'EL', category: 'optical', categoryName: '광학·분광', status: 'standby', statusLabel: '점검(비활용)', icon: '💡' },
+  { id: 'EQ-TRPL-02', code: 'TRPL 2', name: 'TRPL 2', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '⏱️' },
+  { id: 'EQ-FEMTO-02', code: 'Femto 2', name: 'Femto 2', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '⚡' },
+  { id: 'EQ-TAS-02', code: 'TAS 2', name: 'TAS 2', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '📈' },
+  { id: 'EQ-ULRAMAN-01', code: 'Ultra low Raman', name: 'Ultra low Raman', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '🔬' },
+  { id: 'EQ-THZ-01', code: 'THz 1', name: 'THz 1', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '📡' },
+  { id: 'EQ-THZ-02', code: 'THz 2', name: 'THz 2', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '📡' },
+  { id: 'EQ-PXRD-01', code: 'P-XRD', name: 'P-XRD', category: 'structural', categoryName: '구조분석', status: 'active', statusLabel: '정상', icon: '💎' },
+  { id: 'EQ-PPMS-9T', code: 'PPMS-9T', name: 'PPMS-9T', category: 'electrical', categoryName: '물성·전기', status: 'active', statusLabel: '정상', icon: '🧲' },
+  { id: 'EQ-PPMS-14T', code: 'PPMS-14T', name: 'PPMS-14T', category: 'electrical', categoryName: '물성·전기', status: 'active', statusLabel: '정상', icon: '🧲' },
+  { id: 'EQ-6PROBE-01', code: '6-probe', name: '6-probe', category: 'electrical', categoryName: '물성·전기', status: 'active', statusLabel: '정상', icon: '🔌' },
+  { id: 'EQ-HALL-01', code: 'Hall measurement', name: 'Hall measurement', category: 'electrical', categoryName: '물성·전기', status: 'active', statusLabel: '정상', icon: '📊' },
+  { id: 'EQ-TEM-02', code: 'TEM 2 (200kV)', name: 'TEM 2 (200kV)', category: 'structural', categoryName: '구조분석', status: 'active', statusLabel: '정상', icon: '🔭' },
+  { id: 'EQ-ALPHASTEP-01', code: 'Alpha-step', name: 'Alpha-step', category: 'surface', categoryName: '표면·형상', status: 'active', statusLabel: '정상', icon: '📏' },
+  { id: 'EQ-OM-ZEISS', code: 'OM(Zeiss)', name: 'OM(Zeiss)', category: 'surface', categoryName: '표면·형상', status: 'active', statusLabel: '정상', icon: '🔍' },
+  { id: 'EQ-PARK-AFM', code: 'Park AFM', name: 'Park AFM', category: 'surface', categoryName: '표면·형상', status: 'active', statusLabel: '정상', icon: '🔬' },
+  { id: 'EQ-SEIKO-AFM', code: 'Seiko AFM', name: 'Seiko AFM', category: 'surface', categoryName: '표면·형상', status: 'active', statusLabel: '정상', icon: '🔬' },
+  { id: 'EQ-WITEC-RAMAN', code: 'Witec Raman', name: 'Witec Raman', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '🔬' },
+  { id: 'EQ-PROBE-01', code: 'Probe station', name: 'Probe station', category: 'electrical', categoryName: '물성·전기', status: 'active', statusLabel: '정상', icon: '🔌' },
+  { id: 'EQ-PLD-01', code: 'PLD', name: 'PLD', category: 'deposition', categoryName: '박막·증착', status: 'active', statusLabel: '정상', icon: '🔥' },
+  { id: 'EQ-ORG-EVAP', code: 'Organic thermal evaporator', name: 'Organic thermal evaporator', category: 'deposition', categoryName: '박막·증착', status: 'active', statusLabel: '정상', icon: '⚗️' },
+  { id: 'EQ-STM-STHEM', code: 'STM (STheM)', name: 'STM (STheM)', category: 'surface', categoryName: '표면·형상', status: 'active', statusLabel: '정상', icon: '⚛️' },
+  { id: 'EQ-STM-LT', code: 'STM (LT-STM)', name: 'STM (LT-STM)', category: 'surface', categoryName: '표면·형상', status: 'active', statusLabel: '정상', icon: '❄️' },
+  { id: 'EQ-STM-VT', code: 'STM (VT-STM)', name: 'STM (VT-STM)', category: 'surface', categoryName: '표면·형상', status: 'active', statusLabel: '정상', icon: '🌡️' }
 ];
 // [2-in-1 연구 포털 모듈 아키텍처]
 // lims: 성균관대 AQT/SESS 연구장비 & 전자로그북 전문 시스템
@@ -5339,28 +5366,15 @@ function classifyEquipAffiliation(affil){
   return '교내';
 }
 
-// [장비별 가동률 (1년 2,000h / 4주 160h 기준) 및 소속 3분류 통계 패널]
-function renderEquipmentUtilizationPanel(allSessions){
-  const host = $('equipmentAnalyticsDashboard');
-  if(!host) return;
-  let panel = $('eqUtilizationPanel');
-  if(!panel){
-    panel = document.createElement('section');
-    panel.id = 'eqUtilizationPanel';
-    panel.className = 'panel';
-    panel.style.cssText = 'margin-top:16px;padding:16px;border-radius:12px;';
-    host.appendChild(panel);
-  }
-
+// [장비별 가동률 (1년 2,000h / 4주 160h 기준) 및 활용/비활용 + 소속 3분류 통계]
+function computeEquipmentUtilizationRows(allSessions){
   const now = new Date();
   const d28 = new Date(now.getTime() - 28 * 86400000);
   const cutoff28 = d28.getFullYear() + '-' + pad(d28.getMonth() + 1) + '-' + pad(d28.getDate());
   const curYearPrefix = String(now.getFullYear()) + '-';
-
   const list = (researchEquipments && researchEquipments.length) ? researchEquipments : [];
-  let rowsHtml = '';
 
-  list.forEach(function(eq){
+  return list.map(function(eq){
     const eqSessions = allSessions.filter(function(s){
       return s.equipment_id === eq.id || (eq.code && s.equipment_code === eq.code);
     });
@@ -5378,29 +5392,103 @@ function renderEquipmentUtilizationPanel(allSessions){
       else minsCampus += m;
     });
 
+    const isActive = eq.status === 'active';
     const h4w = mins4w / 60;
     const h1y = mins1y / 60;
-    const pct4w = ((h4w / 160) * 100).toFixed(1);
-    const pct1y = ((h1y / 2000) * 100).toFixed(1);
-
-    rowsHtml += '<tr>' +
-      '<td style="font-weight:700;white-space:nowrap;">' + safe(eq.name || eq.code) + '</td>' +
-      '<td style="text-align:right;white-space:nowrap;"><b>' + h4w.toFixed(1) + 'h</b> <span style="color:#2563eb;font-weight:700;">(' + pct4w + '%)</span></td>' +
-      '<td style="text-align:right;white-space:nowrap;"><b>' + h1y.toFixed(1) + 'h</b> <span style="color:#059669;font-weight:700;">(' + pct1y + '%)</span></td>' +
-      '<td style="text-align:right;white-space:nowrap;">' + (minsResearch / 60).toFixed(1) + 'h</td>' +
-      '<td style="text-align:right;white-space:nowrap;">' + (minsCampus / 60).toFixed(1) + 'h</td>' +
-      '<td style="text-align:right;white-space:nowrap;">' + (minsExternal / 60).toFixed(1) + 'h</td>' +
-    '</tr>';
+    return {
+      group: isActive ? '활용' : '비활용',
+      name: eq.name || eq.code,
+      h4w: Number(h4w.toFixed(1)),
+      pct4w: Number(((h4w / 160) * 100).toFixed(1)),
+      h1y: Number(h1y.toFixed(1)),
+      pct1y: Number(((h1y / 2000) * 100).toFixed(1)),
+      hResearch: Number((minsResearch / 60).toFixed(1)),
+      hCampus: Number((minsCampus / 60).toFixed(1)),
+      hExternal: Number((minsExternal / 60).toFixed(1))
+    };
   });
+}
+
+function exportEquipmentUtilizationExcel(){
+  if(typeof XLSX === 'undefined'){ toast('엑셀 라이브러리를 불러오는 중입니다.'); return; }
+  const allSessions = getUnifiedEquipmentSessions();
+  const rows = computeEquipmentUtilizationRows(allSessions);
+  const yr = new Date().getFullYear();
+
+  const summarySheetData = [
+    ['구분(활용/비활용)', '장비명', '최근 4주(h)', '4주 가동률(%, 160h)', yr + '년 누적(h)', '연간 가동률(%, 2,000h)', '연구단(h)', '교내(h)', '외부(h)']
+  ];
+  rows.forEach(function(r){
+    summarySheetData.push([r.group, r.name, r.h4w, r.pct4w, r.h1y, r.pct1y, r.hResearch, r.hCampus, r.hExternal]);
+  });
+
+  const detailSheetData = [
+    ['사용일자', '장비코드', '사용자', '소속(원본)', '소속구분', '가동시간(분)', '가동시간(h)']
+  ];
+  allSessions.forEach(function(s){
+    const mins = Number(s.duration_min) || 0;
+    detailSheetData.push([
+      s.used_on || '',
+      s.equipment_code || s.equipment_id || '',
+      s.user_name || '',
+      s.affiliation || '',
+      classifyEquipAffiliation(s.affiliation),
+      mins,
+      Number((mins / 60).toFixed(2))
+    ]);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.aoa_to_sheet(summarySheetData);
+  ws1['!cols'] = [{ wch: 16 }, { wch: 28 }, { wch: 13 }, { wch: 18 }, { wch: 14 }, { wch: 20 }, { wch: 11 }, { wch: 11 }, { wch: 11 }];
+  XLSX.utils.book_append_sheet(wb, ws1, '장비별 가동률 요약');
+
+  const ws2 = XLSX.utils.aoa_to_sheet(detailSheetData);
+  ws2['!cols'] = [{ wch: 13 }, { wch: 20 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 13 }, { wch: 13 }];
+  XLSX.utils.book_append_sheet(wb, ws2, '상세 로그북 이력');
+
+  XLSX.writeFile(wb, '2DQH_장비가동률_통계_' + today() + '.xlsx');
+  toast('✓ 장비별 가동률 엑셀 시트가 다운로드되었습니다.');
+}
+
+function renderEquipmentUtilizationPanel(allSessions){
+  const host = $('equipmentAnalyticsDashboard');
+  if(!host) return;
+  let panel = $('eqUtilizationPanel');
+  if(!panel){
+    panel = document.createElement('section');
+    panel.id = 'eqUtilizationPanel';
+    panel.className = 'panel';
+    panel.style.cssText = 'margin-top:16px;padding:16px;border-radius:12px;';
+    host.appendChild(panel);
+  }
+
+  const rows = computeEquipmentUtilizationRows(allSessions);
+  const rowsHtml = rows.map(function(r){
+    const badge = r.group === '활용'
+      ? '<span style="padding:2px 7px;border-radius:10px;background:#dcfce7;color:#15803d;font-weight:700;font-size:11px;">활용</span>'
+      : '<span style="padding:2px 7px;border-radius:10px;background:#fee2e2;color:#b91c1c;font-weight:700;font-size:11px;">비활용</span>';
+    return '<tr>' +
+      '<td style="text-align:center;">' + badge + '</td>' +
+      '<td style="font-weight:700;white-space:nowrap;">' + safe(r.name) + '</td>' +
+      '<td style="text-align:right;white-space:nowrap;"><b>' + r.h4w.toFixed(1) + 'h</b> <span style="color:#2563eb;font-weight:700;">(' + r.pct4w.toFixed(1) + '%)</span></td>' +
+      '<td style="text-align:right;white-space:nowrap;"><b>' + r.h1y.toFixed(1) + 'h</b> <span style="color:#059669;font-weight:700;">(' + r.pct1y.toFixed(1) + '%)</span></td>' +
+      '<td style="text-align:right;white-space:nowrap;">' + r.hResearch.toFixed(1) + 'h</td>' +
+      '<td style="text-align:right;white-space:nowrap;">' + r.hCampus.toFixed(1) + 'h</td>' +
+      '<td style="text-align:right;white-space:nowrap;">' + r.hExternal.toFixed(1) + 'h</td>' +
+    '</tr>';
+  }).join('');
 
   panel.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
-      '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 소속 구분 통계</h3>' +
-      '<span style="font-size:12px;color:var(--ink-light);">기준: 4주 160시간 · 1년 2,000시간 (소속: 연구단 / 교내 / 외부)</span>' +
+      '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 활용/비활용 통계</h3>' +
+      '<span style="font-size:12px;color:var(--ink-light);">기준: 최근 4주 160h · 연간(1/1~) 2,000h (소속: 연구단 / 교내 / 외부)</span></div>' +
+      '<button type="button" id="btnExportUtilExcel" class="btn btn-sm" style="background:#059669;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;">📊 가동률 엑셀(.xlsx)</button>' +
     '</div>' +
     '<div class="table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
       '<table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
         '<thead><tr style="border-bottom:1.5px solid var(--border);background:var(--bg-subtle);">' +
+          '<th style="padding:8px;text-align:center;">구분</th>' +
           '<th style="padding:8px;text-align:left;">장비명</th>' +
           '<th style="padding:8px;text-align:right;">4주 가동률 (160h)</th>' +
           '<th style="padding:8px;text-align:right;">연간 가동률 (2,000h)</th>' +
@@ -5408,9 +5496,12 @@ function renderEquipmentUtilizationPanel(allSessions){
           '<th style="padding:8px;text-align:right;">교내</th>' +
           '<th style="padding:8px;text-align:right;">외부</th>' +
         '</tr></thead>' +
-        '<tbody>' + (rowsHtml || '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--ink-light);">등록된 장비가 없습니다.</td></tr>') + '</tbody>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
       '</table>' +
     '</div>';
+
+  const expBtn = $('btnExportUtilExcel');
+  if(expBtn) expBtn.onclick = exportEquipmentUtilizationExcel;
 }
 
 function renderEquipmentAnalyticsDashboard(){
