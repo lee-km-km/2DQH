@@ -3874,69 +3874,6 @@ function getXrdExportData(){
   return { headers, csvRows, excelRows, colWidths };
 }
 
-function exportXrdLogsCsv(){
-  if(xrdLogs.length === 0){
-    toast('내보낼 HR-XRD 로그 데이터가 없습니다.');
-    return;
-  }
-  const data = getXrdExportData();
-  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-
-  let totalMins = 0;
-  let totalSamples = 0;
-  const affilMap = {};
-  const userMap = {};
-
-  xrdLogs.forEach(function(l){
-    totalMins += (l.duration_min || 0);
-    const cnt = (l.sample_count || 1);
-    totalSamples += cnt;
-    const aff = l.affiliation || '2DQH';
-    affilMap[aff] = (affilMap[aff] || 0) + cnt;
-    const u = l.user_name || '연구원';
-    userMap[u] = (userMap[u] || 0) + 1;
-  });
-
-  let topAffil = '-';
-  let maxAff = 0;
-  for(const a in affilMap){
-    if(affilMap[a] > maxAff){
-      maxAff = affilMap[a];
-      const pct = totalSamples > 0 ? Math.round((maxAff / totalSamples) * 100) : 0;
-      topAffil = a + ' (' + maxAff + '개, ' + pct + '%)';
-    }
-  }
-
-  let topUser = '-';
-  let maxU = 0;
-  for(const u in userMap){
-    if(userMap[u] > maxU){
-      maxU = userMap[u];
-      topUser = u + ' (' + maxU + '건)';
-    }
-  }
-
-  const lines = [];
-  lines.push('"[IBS 2DQH 연구단 HR-XRD (고분해능 X선 회절분석기) 전자 로그북]"');
-  lines.push('"설치위치: 제1연구동 204호","총 ' + xrdLogs.length + '건 가동 · ' + (totalMins / 60).toFixed(1) + '시간 (' + totalMins + '분)","총 시료수: ' + totalSamples + '개"');
-  lines.push('"[최다 측정처 (어디에서 많이 찍었는지): ' + topAffil + ' | 최다 사용자: ' + topUser + ']"');
-  lines.push('""');
-  lines.push(data.headers.join(','));
-  lines.push(data.csvRows.join('\r\n'));
-
-  const csvContent = lines.join('\r\n');
-  const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = '2DQH_HR-XRD_Logbook_' + today() + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('✓ HR-XRD 로그(' + xrdLogs.length + '건)가 최다 측정처 요약과 함께 엑셀(CSV)로 다운로드되었습니다.');
-}
-
 // ========================================================
 // [다크모드 / 암실 모드 제어 엔진 (IBS 2DQH 고도화)]
 // ========================================================
@@ -7366,35 +7303,6 @@ function getGeneralEquipmentExportData(){
 
   const colWidths = [110, 100, 110, 110, 85, 85, 95, 180, 200];
   return { curEq, count: sourceList.length, headers, csvRows, excelRows, colWidths, totalMins, totalSamples, topAffil, topUser };
-}
-
-function exportGeneralEquipmentLogsCsv(){
-  const data = getGeneralEquipmentExportData();
-  if(data.count === 0){
-    toast('내보낼 ' + (data.curEq.name || '장비') + ' 로그북 세션 데이터가 없습니다.');
-    return;
-  }
-  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-
-  const lines = [];
-  lines.push('"[IBS 2DQH 연구장비 전자 로그북 - ' + (data.curEq.name || '장비') + ' (' + (data.curEq.code || 'EQUIP') + ')]"');
-  lines.push('"설치위치: ' + (data.curEq.location || '연구실') + '","총 ' + data.count + '건 가동 · ' + (data.totalMins / 60).toFixed(1) + '시간 (' + data.totalMins + '분)","총 시료수: ' + data.totalSamples + '개"');
-  lines.push('"[최다 측정처 (어디에서 많이 찍었는지): ' + data.topAffil + ' | 최다 사용자: ' + data.topUser + ']"');
-  lines.push('""');
-  lines.push(data.headers.join(','));
-  lines.push(data.csvRows.join('\r\n'));
-
-  const csvContent = lines.join('\r\n');
-  const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = '2DQH_' + (data.curEq.code || 'Equipment') + '_Logbook_' + today() + '.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('✓ ' + (data.curEq.name || '장비') + ' 세션 로그(' + data.count + '건)가 최다 측정처 요약과 함께 엑셀(CSV)로 다운로드되었습니다.');
 }
 
 // [연구장비 공식 사용일지 표준 Excel(.xlsx) 내보내기 엔진 (날짜 ### 짤림 원천 차단)]
