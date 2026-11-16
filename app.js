@@ -5372,7 +5372,10 @@ function computeEquipmentUtilizationRows(allSessions){
   const d28 = new Date(now.getTime() - 28 * 86400000);
   const cutoff28 = d28.getFullYear() + '-' + pad(d28.getMonth() + 1) + '-' + pad(d28.getDate());
   const curYearPrefix = String(now.getFullYear()) + '-';
-  const list = (researchEquipments && researchEquipments.length) ? researchEquipments : [];
+  const rawList = (researchEquipments && researchEquipments.length) ? researchEquipments : [];
+  const list = (selectedAnalyticsEquipmentId && selectedAnalyticsEquipmentId !== 'all')
+    ? rawList.filter(function(eq){ return eq.id === selectedAnalyticsEquipmentId; })
+    : rawList;
 
   return list.map(function(eq){
     const eqSessions = allSessions.filter(function(s){
@@ -5460,12 +5463,7 @@ function renderEquipmentUtilizationPanel(allSessions){
     panel.id = 'eqUtilizationPanel';
     panel.className = 'panel';
     panel.style.cssText = 'margin-top:16px;padding:16px;border-radius:12px;';
-    const scopeBar = host.querySelector('.eq-analytics-scope-bar');
-    if(scopeBar && scopeBar.parentNode === host){
-      scopeBar.insertAdjacentElement('afterend', panel);
-    } else {
-      host.prepend(panel);
-    }
+    host.appendChild(panel);
   }
 
   const rows = computeEquipmentUtilizationRows(allSessions);
