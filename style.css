@@ -13444,3 +13444,53 @@ html:not(.is-admin) #btnHelpTabAdmin {
   padding: 8px 10px !important;
   box-sizing: border-box !important;
 }
+
+/* ==========================================================================
+   [Phase 1: 모바일 공통 쉘 (상단바·하단 퀵탭바·사이드바·토스트·안전영역) 고도화]
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* 1. 토스트 알림이 하단 퀵 탭바(56px)에 가리지 않도록 위로 배치 */
+  .toast {
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
+    max-width: calc(100vw - 32px) !important;
+    font-size: 13px !important;
+    padding: 10px 16px !important;
+    border-radius: 10px !important;
+  }
+
+  /* 2. 하단 퀵 탭바 iOS safe-area 대응 및 터치 타겟 정돈 */
+  .mobile-bottom-nav {
+    height: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+  .bottom-nav-tab {
+    min-height: 48px !important;
+    gap: 2px !important;
+  }
+  .main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* 3. 사이드바 서랍 스크롤 격리 및 하단 프로필/테마/메일 버튼 균일화 */
+  .sidebar {
+    overscroll-behavior: contain !important;
+  }
+  #btnDrawerThemeToggle,
+  #btnMobileDrawerLabMail {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 10px !important;
+  }
+  #sidebarAdminEditProfileBtn,
+  #sidebarLogoutBtn {
+    min-height: 32px !important;
+    padding: 4px 10px !important;
+    background: var(--bg-card, #ffffff) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+  }
+}
