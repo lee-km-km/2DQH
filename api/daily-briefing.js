@@ -62,9 +62,8 @@ module.exports = async (req, res) => {
   const isBiweeklySteering = kst.weekNum % 2 === 0; // 격주(짝수 주) 운영위원회
 
   const tasks = [
-    '📦 소모품 재고 부족 품목 및 발주 필요 여부 확인',
-    '🧪 특별관리물질 취급일지 및 시약 잔여량 점검',
-    '🛠️ 공용 비품 대여/반납 현황 확인'
+    '🛠️ 공용 비품 대여/반납 현황 확인',
+    '🔬 연구장비 로그북 업데이트 현황 확인'
   ];
 
   if (isBiweeklySteering) {
