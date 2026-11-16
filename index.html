@@ -1316,18 +1316,6 @@
             </div>
           </div>
 
-          <!-- 2. [전체 너비] 연구장비 운용 관리 오버뷰 & 주기별 상세 통계 (Full-width for readability at a glance) -->
-          <div class="panel eq-analytics-panel" id="panelAnalyticsMain" style="margin-bottom:18px;">
-            <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-              <div>
-                <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqAnalyticsMainTitle">🔬 연구장비 운용 관리 오버뷰</h3>
-                <span style="font-size:12px;color:var(--ink-light);" id="eqAnalyticsMainSub">첨단 연구장비 운영 상태 및 가동 실적</span>
-              </div>
-              <div id="eqAnalyticsPeriodBadge" style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;">2026년 11월</div>
-            </div>
-            <div id="eqUtilizationList" class="eq-utilization-list"></div>
-          </div>
-
           <!-- 3. [2-Column Grid] 좌: 월간 가동 캘린더 & 날짜별 상세 | 우: 실시간 통합 가동 피드 -->
           <div class="eq-analytics-row">
             <!-- 좌: 월간 연구장비 가동 캘린더 (Equipment Activity Calendar) -->
@@ -1360,6 +1348,20 @@
               </div>
               <div id="eqRecentTimelineList"></div>
             </div>
+          </div>
+
+          <!-- 3. [접이식] 연구장비 운용 관리 현황 (한 칸 아래 배치 + 기본 접힘) -->
+          <div class="panel eq-analytics-panel" id="panelAnalyticsMain" style="margin-top:16px;margin-bottom:18px;">
+            <details>
+              <summary class="panel-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">
+                <div>
+                  <h3 style="margin:0;font-size:15px;color:var(--ink);" id="eqAnalyticsMainTitle">🔬 연구장비 운용 관리 오버뷰</h3>
+                  <span style="font-size:12px;color:var(--ink-light);" id="eqAnalyticsMainSub">첨단 연구장비 운영 상태 및 가동 실적 (클릭하여 펼치기)</span>
+                </div>
+                <div id="eqAnalyticsPeriodBadge" style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;">2026년 11월</div>
+              </summary>
+              <div id="eqUtilizationList" class="eq-utilization-list" style="margin-top:12px;"></div>
+            </details>
           </div>
         </div>
       </div>
