@@ -13387,3 +13387,23 @@ html:not(.is-admin) #btnHelpTabAdmin {
     text-align: center !important;
   }
 }
+
+/* [시약 취급일지 작성 / 이력 / 수정 모달 입력창(특히 datetime-local) 가로 넘침 원천 차단] */
+#formWriteChemicalLogModal input,
+#formWriteChemicalLogModal select,
+#formWriteChemicalLogModal textarea,
+#modalChemProductBackdrop input,
+#modalChemProductBackdrop select,
+#modalChemHistoryBackdrop input,
+#modalChemHistoryBackdrop select {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+#formWriteChemicalLogModal input[type="datetime-local"],
+#modalChemProductBackdrop input[type="date"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  display: block !important;
+}
