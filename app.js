@@ -10899,8 +10899,7 @@ function handleUrlFastTrack(){
       showView('inventory', { updateUrl: false });
       try { history.replaceState(null, '', location.pathname + '#inventory'); } catch(_){}
       setTimeout(function(){
-        if(typeof openModal === 'function') openModal('borrow');
-        toast('📱 비품 대여 신청 화면으로 연결되었습니다.');
+        toast('🛠️ 비품 목록 화면으로 연결되었습니다.');
       }, 150);
       return;
     }
