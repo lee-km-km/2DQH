@@ -3,6 +3,12 @@
   "name": "labstock-equipment",
   "cleanUrls": true,
   "trailingSlash": false,
+  "crons": [
+    {
+      "path": "/api/daily-briefing",
+      "schedule": "30 23 * * 0-4"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
