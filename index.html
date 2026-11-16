@@ -2335,9 +2335,7 @@
 
         <!-- 4. 웍스 스타일 에디터 툴바 -->
         <div class="lab-mail-toolbar">
-          <span class="lab-mail-tool-pill">맑은 고딕</span>
-          <span class="lab-mail-tool-pill">14px</span>
-          <span class="lab-mail-tool-sep"></span>
+
           <button type="button" data-cmd="bold" class="lab-mail-tool-btn" style="font-weight:800;" title="굵게">B</button>
           <button type="button" data-cmd="italic" class="lab-mail-tool-btn" style="font-style:italic;font-family:Georgia,serif;" title="기울임">I</button>
           <button type="button" data-cmd="underline" class="lab-mail-tool-btn" style="text-decoration:underline;" title="밑줄">U</button>
@@ -2346,6 +2344,10 @@
             📎 파일첨부
           </label>
           <input type="file" id="inputLabMailFiles" multiple style="display:none;">
+          <label for="inputLabMailInlineImg" class="lab-mail-attach-btn">
+            🖼️ 본문에 사진 넣기
+          </label>
+          <input type="file" id="inputLabMailInlineImg" accept="image/*" multiple style="display:none;">
           <div id="labMailFileList" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>
         </div>
 

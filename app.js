@@ -20593,6 +20593,7 @@ function renderInvSubLoans(){
       el.addEventListener('input', function(){
         state.values[state.tpl] = getValues();
         state.bodyEdited = false;
+        state.subjectEdited = false;
         refresh();
       });
     });
@@ -20816,6 +20817,30 @@ function renderInvSubLoans(){
         document.execCommand(b.dataset.cmd, false, null);
         if(ed) ed.focus();
       });
+    });
+
+    const inlineImg = $id('inputLabMailInlineImg');
+    if(inlineImg) inlineImg.addEventListener('change', function(){
+      const edEl = $id('labMailEditableBody');
+      if(!edEl) return;
+      Array.prototype.forEach.call(inlineImg.files, function(f){
+        if(!f.type.startsWith('image/')) return;
+        const r = new FileReader();
+        r.onload = function(){
+          const img = document.createElement('img');
+          img.src = r.result;
+          img.alt = f.name;
+          img.style.maxWidth = '100%';
+          img.style.height = 'auto';
+          img.style.borderRadius = '6px';
+          img.style.margin = '8px 0';
+          img.style.display = 'block';
+          edEl.appendChild(img);
+          state.bodyEdited = true;
+        };
+        r.readAsDataURL(f);
+      });
+      inlineImg.value = '';
     });
 
     const file = $id('inputLabMailFiles');
