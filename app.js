@@ -3917,62 +3917,19 @@ function toggleTheme(){
 // ========================================================
 // QR 코드 렌더링 통합 헬퍼 (로컬 QRCode.js 우선 + 3중 안전 렌더링)
 function renderQrCodeInto(container, text, size){
-  size = size || 190;
+  size = size || 180;
   if(!container) return;
   container.innerHTML = '';
   container.style.background = '#ffffff';
-  container.style.padding = '12px';
+  container.style.padding = '8px';
   container.style.boxSizing = 'border-box';
   container.style.borderRadius = '8px';
 
-  const qrSize = Math.max(120, size - 24);
+  const qrSize = Math.max(130, size - 16);
 
-  if(window.QRCode){
-    try {
-      new QRCode(container, {
-        text: text,
-        width: qrSize,
-        height: qrSize,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-      // 인라인 스타일로 가로/세로를 엄격 고정하여 CSS 캐시나 flex 왜곡 및 번짐 방지
-      const applyStrictSize = function(){
-        const cvs = container.querySelector('canvas');
-        const img = container.querySelector('img');
-        if(img && img.src){
-          img.style.width = qrSize + 'px';
-          img.style.height = qrSize + 'px';
-          img.style.maxWidth = qrSize + 'px';
-          img.style.maxHeight = qrSize + 'px';
-          img.style.display = 'block';
-          img.style.margin = '0 auto';
-          img.style.objectFit = 'contain';
-          img.style.imageRendering = 'pixelated';
-          if(cvs) cvs.style.display = 'none';
-        } else if(cvs){
-          cvs.style.width = qrSize + 'px';
-          cvs.style.height = qrSize + 'px';
-          cvs.style.maxWidth = qrSize + 'px';
-          cvs.style.maxHeight = qrSize + 'px';
-          cvs.style.display = 'block';
-          cvs.style.margin = '0 auto';
-          cvs.style.imageRendering = 'pixelated';
-        }
-      };
-      applyStrictSize();
-      setTimeout(applyStrictSize, 40);
-      setTimeout(applyStrictSize, 120);
-      return;
-    } catch(err){
-      console.warn('QRCode generation fallback:', err);
-    }
-  }
-
-  // Fallback: 이미지 태그
+  // 표준 QR 이미지 생성 (여백 margin=4 및 고해상도 300x300 PNG로 스마트폰 카메라 즉시 인식)
   const img = document.createElement('img');
-  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + qrSize + 'x' + qrSize + '&margin=2&data=' + encodeURIComponent(text);
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&ecc=M&margin=4&data=' + encodeURIComponent(text);
   img.alt = 'QR Code';
   img.style.width = qrSize + 'px';
   img.style.height = qrSize + 'px';
@@ -3980,7 +3937,28 @@ function renderQrCodeInto(container, text, size){
   img.style.maxHeight = qrSize + 'px';
   img.style.display = 'block';
   img.style.margin = '0 auto';
+  img.style.objectFit = 'contain';
   img.style.imageRendering = 'pixelated';
+
+  // 오프라인 등 외부 이미지 로드 실패 시 로컬 QRCode.js 폴백
+  img.onerror = function(){
+    if(window.QRCode){
+      container.innerHTML = '';
+      try {
+        new QRCode(container, {
+          text: text,
+          width: qrSize,
+          height: qrSize,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(err){
+        console.warn('QRCode fallback error:', err);
+      }
+    }
+  };
+
   container.appendChild(img);
 }
 
