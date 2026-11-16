@@ -5466,7 +5466,16 @@ function renderEquipmentUtilizationPanel(allSessions){
     host.appendChild(panel);
   }
 
+  const isAll = (!selectedAnalyticsEquipmentId || selectedAnalyticsEquipmentId === 'all');
   const rows = computeEquipmentUtilizationRows(allSessions);
+
+  function barHtml(pct, color){
+    const w = Math.min(100, Math.max(0, pct));
+    return '<div style="width:76px;height:6px;background:var(--bg-subtle,#e2e8f0);border-radius:4px;overflow:hidden;margin-left:auto;margin-top:3px;">' +
+      '<div style="width:' + w + '%;height:100%;background:' + color + ';border-radius:4px;"></div>' +
+    '</div>';
+  }
+
   const rowsHtml = rows.map(function(r){
     const badge = r.group === '활용'
       ? '<span style="padding:2px 7px;border-radius:10px;background:#dcfce7;color:#15803d;font-weight:700;font-size:11px;">활용</span>'
@@ -5474,8 +5483,8 @@ function renderEquipmentUtilizationPanel(allSessions){
     return '<tr>' +
       '<td style="text-align:center;">' + badge + '</td>' +
       '<td style="font-weight:700;white-space:nowrap;">' + safe(r.name) + '</td>' +
-      '<td style="text-align:right;white-space:nowrap;"><b>' + r.h4w.toFixed(1) + 'h</b> <span style="color:#2563eb;font-weight:700;">(' + r.pct4w.toFixed(1) + '%)</span></td>' +
-      '<td style="text-align:right;white-space:nowrap;"><b>' + r.h1y.toFixed(1) + 'h</b> <span style="color:#059669;font-weight:700;">(' + r.pct1y.toFixed(1) + '%)</span></td>' +
+      '<td style="text-align:right;white-space:nowrap;"><b>' + r.h4w.toFixed(1) + 'h</b> <span style="color:#2563eb;font-weight:700;">(' + r.pct4w.toFixed(1) + '%)</span>' + barHtml(r.pct4w, '#2563eb') + '</td>' +
+      '<td style="text-align:right;white-space:nowrap;"><b>' + r.h1y.toFixed(1) + 'h</b> <span style="color:#059669;font-weight:700;">(' + r.pct1y.toFixed(1) + '%)</span>' + barHtml(r.pct1y, '#059669') + '</td>' +
       '<td style="text-align:right;white-space:nowrap;">' + r.hResearch.toFixed(1) + 'h</td>' +
       '<td style="text-align:right;white-space:nowrap;">' + r.hCampus.toFixed(1) + 'h</td>' +
       '<td style="text-align:right;white-space:nowrap;">' + r.hExternal.toFixed(1) + 'h</td>' +
@@ -5483,28 +5492,30 @@ function renderEquipmentUtilizationPanel(allSessions){
   }).join('');
 
   panel.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
-      '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 활용/비활용 통계</h3>' +
-      '<span style="font-size:12px;color:var(--ink-light);">기준: 최근 4주 160h · 연간(1/1~) 2,000h (소속: 연구단 / 교내 / 외부)</span></div>' +
-      '<button type="button" id="btnExportUtilExcel" class="btn btn-sm" style="background:#059669;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;">📊 가동률 엑셀(.xlsx)</button>' +
-    '</div>' +
-    '<div class="table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
-      '<table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
-        '<thead><tr style="border-bottom:1.5px solid var(--border);background:var(--bg-subtle);">' +
-          '<th style="padding:8px;text-align:center;">구분</th>' +
-          '<th style="padding:8px;text-align:left;">장비명</th>' +
-          '<th style="padding:8px;text-align:right;">4주 가동률 (160h)</th>' +
-          '<th style="padding:8px;text-align:right;">연간 가동률 (2,000h)</th>' +
-          '<th style="padding:8px;text-align:right;">연구단</th>' +
-          '<th style="padding:8px;text-align:right;">교내</th>' +
-          '<th style="padding:8px;text-align:right;">외부</th>' +
-        '</tr></thead>' +
-        '<tbody>' + rowsHtml + '</tbody>' +
-      '</table>' +
-    '</div>';
+    '<details' + (isAll ? '' : ' open') + '>' +
+      '<summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">' +
+        '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 활용/비활용 통계 ' + (isAll ? '(클릭하여 펼치기 · ' + rows.length + '대)' : '') + '</h3>' +
+        '<span style="font-size:12px;color:var(--ink-light);">기준: 최근 4주 160h · 연간(1/1~) 2,000h (소속: 연구단 / 교내 / 외부)</span></div>' +
+        '<button type="button" id="btnExportUtilExcel" class="btn btn-sm" style="background:#059669;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;">📊 가동률 엑셀(.xlsx)</button>' +
+      '</summary>' +
+      '<div class="table-wrap" style="margin-top:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
+          '<thead><tr style="border-bottom:1.5px solid var(--border);background:var(--bg-subtle);">' +
+            '<th style="padding:8px;text-align:center;">구분</th>' +
+            '<th style="padding:8px;text-align:left;">장비명</th>' +
+            '<th style="padding:8px;text-align:right;">4주 가동률 (160h)</th>' +
+            '<th style="padding:8px;text-align:right;">연간 가동률 (2,000h)</th>' +
+            '<th style="padding:8px;text-align:right;">연구단</th>' +
+            '<th style="padding:8px;text-align:right;">교내</th>' +
+            '<th style="padding:8px;text-align:right;">외부</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rowsHtml + '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</details>';
 
   const expBtn = $('btnExportUtilExcel');
-  if(expBtn) expBtn.onclick = exportEquipmentUtilizationExcel;
+  if(expBtn) expBtn.onclick = function(ev){ ev.preventDefault(); ev.stopPropagation(); exportEquipmentUtilizationExcel(); };
 }
 
 function renderEquipmentAnalyticsDashboard(){
