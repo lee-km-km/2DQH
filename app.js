@@ -5268,6 +5268,7 @@ function renderEquipmentAnalyticsScopeChips(){
   const periodDescEl = $('eqAnalyticsPeriodDesc');
 
   const allSessions = getUnifiedEquipmentSessions();
+  renderEquipmentUtilizationPanel(allSessions);
 
   // 1. 드롭다운 <select id="eqAnalyticsSelect"> 옵션 갱신 및 체인지 이벤트 바인딩
   if(selEl){
@@ -5327,6 +5328,89 @@ function renderEquipmentAnalyticsScopeChips(){
       descEl.textContent = selectedEq.name + ' [' + selectedEq.code + '] 독립 세션 및 ' + periodName;
     }
   }
+}
+
+// [소속 3분류: 연구단 / 교내 / 외부] (추후 사용자 지정 규칙 확장 가능)
+function classifyEquipAffiliation(affil){
+  const s = String(affil || '').trim().toLowerCase();
+  if(!s || s.includes('2dqh') || s.includes('ibs') || s.includes('이차원') || s.includes('연구단')) return '연구단';
+  if(s.includes('외부') || s.includes('기업') || s.includes('타교') || s.includes('주식회사') || s.includes('(주)')) return '외부';
+  if(s.includes('skku') || s.includes('성균관') || s.includes('교내') || s.includes('학과') || s.includes('연구실') || s.includes('랩')) return '교내';
+  return '교내';
+}
+
+// [장비별 가동률 (1년 2,000h / 4주 160h 기준) 및 소속 3분류 통계 패널]
+function renderEquipmentUtilizationPanel(allSessions){
+  const host = $('equipmentAnalyticsDashboard');
+  if(!host) return;
+  let panel = $('eqUtilizationPanel');
+  if(!panel){
+    panel = document.createElement('section');
+    panel.id = 'eqUtilizationPanel';
+    panel.className = 'panel';
+    panel.style.cssText = 'margin-top:16px;padding:16px;border-radius:12px;';
+    host.appendChild(panel);
+  }
+
+  const now = new Date();
+  const d28 = new Date(now.getTime() - 28 * 86400000);
+  const cutoff28 = d28.getFullYear() + '-' + pad(d28.getMonth() + 1) + '-' + pad(d28.getDate());
+  const curYearPrefix = String(now.getFullYear()) + '-';
+
+  const list = (researchEquipments && researchEquipments.length) ? researchEquipments : [];
+  let rowsHtml = '';
+
+  list.forEach(function(eq){
+    const eqSessions = allSessions.filter(function(s){
+      return s.equipment_id === eq.id || (eq.code && s.equipment_code === eq.code);
+    });
+    let mins4w = 0, mins1y = 0;
+    let minsResearch = 0, minsCampus = 0, minsExternal = 0;
+
+    eqSessions.forEach(function(s){
+      const m = Number(s.duration_min) || 0;
+      const dt = s.used_on || '';
+      if(dt >= cutoff28) mins4w += m;
+      if(dt.startsWith(curYearPrefix)) mins1y += m;
+      const grp = classifyEquipAffiliation(s.affiliation);
+      if(grp === '연구단') minsResearch += m;
+      else if(grp === '외부') minsExternal += m;
+      else minsCampus += m;
+    });
+
+    const h4w = mins4w / 60;
+    const h1y = mins1y / 60;
+    const pct4w = ((h4w / 160) * 100).toFixed(1);
+    const pct1y = ((h1y / 2000) * 100).toFixed(1);
+
+    rowsHtml += '<tr>' +
+      '<td style="font-weight:700;white-space:nowrap;">' + safe(eq.name || eq.code) + '</td>' +
+      '<td style="text-align:right;white-space:nowrap;"><b>' + h4w.toFixed(1) + 'h</b> <span style="color:#2563eb;font-weight:700;">(' + pct4w + '%)</span></td>' +
+      '<td style="text-align:right;white-space:nowrap;"><b>' + h1y.toFixed(1) + 'h</b> <span style="color:#059669;font-weight:700;">(' + pct1y + '%)</span></td>' +
+      '<td style="text-align:right;white-space:nowrap;">' + (minsResearch / 60).toFixed(1) + 'h</td>' +
+      '<td style="text-align:right;white-space:nowrap;">' + (minsCampus / 60).toFixed(1) + 'h</td>' +
+      '<td style="text-align:right;white-space:nowrap;">' + (minsExternal / 60).toFixed(1) + 'h</td>' +
+    '</tr>';
+  });
+
+  panel.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+      '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 소속 구분 통계</h3>' +
+      '<span style="font-size:12px;color:var(--ink-light);">기준: 4주 160시간 · 1년 2,000시간 (소속: 연구단 / 교내 / 외부)</span>' +
+    '</div>' +
+    '<div class="table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
+      '<table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
+        '<thead><tr style="border-bottom:1.5px solid var(--border);background:var(--bg-subtle);">' +
+          '<th style="padding:8px;text-align:left;">장비명</th>' +
+          '<th style="padding:8px;text-align:right;">4주 가동률 (160h)</th>' +
+          '<th style="padding:8px;text-align:right;">연간 가동률 (2,000h)</th>' +
+          '<th style="padding:8px;text-align:right;">연구단</th>' +
+          '<th style="padding:8px;text-align:right;">교내</th>' +
+          '<th style="padding:8px;text-align:right;">외부</th>' +
+        '</tr></thead>' +
+        '<tbody>' + (rowsHtml || '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--ink-light);">등록된 장비가 없습니다.</td></tr>') + '</tbody>' +
+      '</table>' +
+    '</div>';
 }
 
 function renderEquipmentAnalyticsDashboard(){
