@@ -13753,3 +13753,15 @@ html:not(.is-admin) #btnHelpTabAdmin {
     white-space: nowrap !important;
   }
 }
+
+/* [모바일 취급일지 작성 모달: 필수 안전 수칙 점검 체크박스 크기 고정] */
+#formWriteChemicalLogModal input[type="checkbox"].chem-safety-checkbox {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex: 0 0 18px !important;
+}
