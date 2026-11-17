@@ -5369,10 +5369,77 @@ function classifyEquipAffiliation(affil){
 }
 
 // [장비별 가동률 (1년 2,000h / 4주 160h 기준) 및 활용/비활용 + 소속 3분류 통계]
+// [외부 CSV 업로드 금액 자동 계산 저장소]
+let uploadedEquipCsvRows = [];
+
+function getOneMonthRange(){
+  const now = new Date();
+  const prev = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+  const fmt = function(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  return { from: fmt(prev), to: fmt(now), yearPrefix: String(now.getFullYear()) + '-' };
+}
+
+function parseCsvLine(line){
+  const res = [];
+  let cur = '', inQ = false;
+  for(let i = 0; i < line.length; i++){
+    const ch = line[i];
+    if(ch === '"'){
+      if(inQ && line[i + 1] === '"'){ cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if(ch === ',' && !inQ){
+      res.push(cur.trim());
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  res.push(cur.trim());
+  return res;
+}
+
+function handleEquipCostCsvFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    let text = String(ev.target.result || '');
+    const lines = text.split(/\r?\n/).filter(function(l){ return l.trim().length > 0; });
+    if(lines.length < 2){ toast('CSV 데이터가 비어 있습니다.'); return; }
+
+    const headers = parseCsvLine(lines[0]).map(function(h){ return h.replace(/^\uFEFF/, '').toLowerCase(); });
+    const findCol = function(kws){
+      return headers.findIndex(function(h){ return kws.some(function(k){ return h.includes(k); }); });
+    };
+    const idxDate = findCol(['날짜', '일자', '사용일', '일시', 'date']);
+    const idxEquip = findCol(['장비', '기기', 'equipment', 'equip']);
+    const idxCost = findCol(['금액', '사용료', '비용', '청구', '요금', 'amount', 'cost', 'fee', 'price']);
+
+    if(idxEquip < 0 || idxCost < 0){
+      toast('CSV에서 [장비명] 또는 [금액] 열을 찾지 못했습니다. (헤더: ' + headers.join(', ') + ')');
+      return;
+    }
+
+    const parsed = [];
+    for(let i = 1; i < lines.length; i++){
+      const cols = parseCsvLine(lines[i]);
+      const eqName = (cols[idxEquip] || '').trim();
+      const rawDate = idxDate >= 0 ? (cols[idxDate] || '').trim() : '';
+      const normDate = rawDate.replace(/[.\/]/g, '-').slice(0, 10);
+      const rawCost = String(cols[idxCost] || '0').replace(/[^0-9.-]/g, '');
+      const cost = Number(rawCost) || 0;
+      if(eqName) parsed.push({ date: normDate, equip: eqName, cost: cost });
+    }
+    uploadedEquipCsvRows = parsed;
+    toast('✓ CSV ' + parsed.length + '건 금액 반영 완료');
+    if(typeof renderEquipmentAnalyticsDashboard === 'function') renderEquipmentAnalyticsDashboard();
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
 function computeEquipmentUtilizationRows(allSessions){
   const now = new Date();
-  const d28 = new Date(now.getTime() - 28 * 86400000);
-  const cutoff28 = d28.getFullYear() + '-' + pad(d28.getMonth() + 1) + '-' + pad(d28.getDate());
+  const range1m = getOneMonthRange();
+  const cutoff28 = range1m.from;
   const curYearPrefix = String(now.getFullYear()) + '-';
   const rawList = (researchEquipments && researchEquipments.length) ? researchEquipments : [];
   const list = (selectedAnalyticsEquipmentId && selectedAnalyticsEquipmentId !== 'all')
@@ -5398,6 +5465,16 @@ function computeEquipmentUtilizationRows(allSessions){
     });
 
     const isActive = eq.status === 'active';
+    let cost1m = 0, cost1y = 0;
+    const eqKey = String(eq.name || eq.code || '').toLowerCase();
+    const eqCode = String(eq.code || '').toLowerCase();
+    uploadedEquipCsvRows.forEach(function(r){
+      const rk = r.equip.toLowerCase();
+      if(rk === eqKey || rk === eqCode || eqKey.includes(rk) || rk.includes(eqCode)){
+        if(!r.date || (r.date >= range1m.from && r.date <= range1m.to)) cost1m += r.cost;
+        if(!r.date || r.date.startsWith(curYearPrefix)) cost1y += r.cost;
+      }
+    });
     const h4w = mins4w / 60;
     const h1y = mins1y / 60;
     return {
@@ -5409,7 +5486,9 @@ function computeEquipmentUtilizationRows(allSessions){
       pct1y: Number(((h1y / 2000) * 100).toFixed(1)),
       hResearch: Number((minsResearch / 60).toFixed(1)),
       hCampus: Number((minsCampus / 60).toFixed(1)),
-      hExternal: Number((minsExternal / 60).toFixed(1))
+      hExternal: Number((minsExternal / 60).toFixed(1)),
+      cost1m: Math.round(cost1m),
+      cost1y: Math.round(cost1y)
     };
   });
 }
@@ -5421,10 +5500,10 @@ function exportEquipmentUtilizationExcel(){
   const yr = new Date().getFullYear();
 
   const summarySheetData = [
-    ['구분(활용/비활용)', '장비명', '최근 4주(h)', '4주 가동률(%, 160h)', yr + '년 누적(h)', '연간 가동률(%, 2,000h)', '연구단(h)', '교내(h)', '외부(h)']
+    ['구분(활용/비활용)', '장비명', '최근 1개월(h)', '4주 가동률(%, 160h)', yr + '년 누적(h)', '연간 가동률(%, 2,000h)', '연구단(h)', '교내(h)', '외부(h)', '최근 1개월 금액(원)', yr + '년 누적 금액(원)']
   ];
   rows.forEach(function(r){
-    summarySheetData.push([r.group, r.name, r.h4w, r.pct4w, r.h1y, r.pct1y, r.hResearch, r.hCampus, r.hExternal]);
+    summarySheetData.push([r.group, r.name, r.h4w, r.pct4w, r.h1y, r.pct1y, r.hResearch, r.hCampus, r.hExternal, r.cost1m, r.cost1y]);
   });
 
   const detailSheetData = [
@@ -5490,6 +5569,8 @@ function renderEquipmentUtilizationPanel(allSessions){
       '<td style="text-align:right;white-space:nowrap;">' + r.hResearch.toFixed(1) + 'h</td>' +
       '<td style="text-align:right;white-space:nowrap;">' + r.hCampus.toFixed(1) + 'h</td>' +
       '<td style="text-align:right;white-space:nowrap;">' + r.hExternal.toFixed(1) + 'h</td>' +
+      '<td style="text-align:right;white-space:nowrap;font-weight:700;color:#2563eb;">' + r.cost1m.toLocaleString() + '원</td>' +
+      '<td style="text-align:right;white-space:nowrap;font-weight:700;color:#059669;">' + r.cost1y.toLocaleString() + '원</td>' +
     '</tr>';
   }).join('');
 
@@ -5498,7 +5579,11 @@ function renderEquipmentUtilizationPanel(allSessions){
       '<summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">' +
         '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 활용/비활용 통계 ' + (isAll ? '(클릭하여 펼치기 · ' + rows.length + '대)' : '') + '</h3>' +
         '<span style="font-size:12px;color:var(--ink-light);">기준: 최근 4주 160h · 연간(1/1~) 2,000h (소속: 연구단 / 교내 / 외부)</span></div>' +
-        '<button type="button" id="btnExportUtilExcel" class="btn btn-sm" style="background:#059669;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;">📊 가동률 엑셀(.xlsx)</button>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+          '<label for="inputEquipCostCsv" class="btn btn-sm" style="background:#2563eb;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📂 CSV 금액 불러오기</label>' +
+          '<input type="file" id="inputEquipCostCsv" accept=".csv" style="display:none;">' +
+          '<button type="button" id="btnExportUtilExcel" class="btn btn-sm" style="background:#059669;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;">📊 가동률 엑셀(.xlsx)</button>' +
+        '</div>' +
       '</summary>' +
       '<div class="table-wrap" style="margin-top:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
         '<table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
@@ -5510,12 +5595,16 @@ function renderEquipmentUtilizationPanel(allSessions){
             '<th style="padding:8px;text-align:right;">연구단</th>' +
             '<th style="padding:8px;text-align:right;">교내</th>' +
             '<th style="padding:8px;text-align:right;">외부</th>' +
+            '<th style="padding:8px;text-align:right;">1개월 금액</th>' +
+            '<th style="padding:8px;text-align:right;">연간 금액</th>' +
           '</tr></thead>' +
           '<tbody>' + rowsHtml + '</tbody>' +
         '</table>' +
       '</div>' +
     '</details>';
 
+  const csvIn = $('inputEquipCostCsv');
+  if(csvIn) csvIn.onchange = function(ev){ if(ev.target.files && ev.target.files[0]) handleEquipCostCsvFile(ev.target.files[0]); ev.target.value = ''; };
   const expBtn = $('btnExportUtilExcel');
   if(expBtn) expBtn.onclick = function(ev){ ev.preventDefault(); ev.stopPropagation(); exportEquipmentUtilizationExcel(); };
 }
