@@ -3763,8 +3763,10 @@ async function handleXrdFormSubmit(e){
 }
 
 async function deleteXrdLog(id){
-  if(!isAdmin()){
-    toast('로그북 삭제 권한은 관리자에게만 있습니다.');
+  const targetLog = xrdLogs.find(function(l){ return String(l.id) === String(id); });
+  const isInProgress = targetLog && (targetLog.status === 'in_use' || !targetLog.end_time);
+  if(!isAdmin() && !isInProgress){
+    toast('완료된 로그북 삭제 권한은 관리자에게만 있습니다.');
     return;
   }
   if(!confirm('이 HR-XRD 로그 기록을 삭제하시겠습니까?')) return;
