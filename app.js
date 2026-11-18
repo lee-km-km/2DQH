@@ -21339,9 +21339,9 @@ function renderInvSubLoans(){
           '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">시료 개수 *</label>' +
           '<input type="number" id="quickEndSamples" min="1" value="' + (prev ? (prev.samples || 1) : 1) + '" style="width:100%;height:42px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
           '<div id="quickEndEditFields" style="display:' + (prev ? 'none' : 'block') + ';">' +
-            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">시료명</label>
-            <input type="text" id="quickEndSampleName" value="' + safe(prev ? (prev.sampleName || '') : '') + '" placeholder="예: MoS2/hBN, SiO2 wafer" style="width:100%;height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">
-            <label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">측정 조건 (전압/전류/파장 등)</label>' +
+            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">시료명</label>' +
+            '<input type="text" id="quickEndSampleName" value="' + safe(prev ? (prev.sampleName || '') : '') + '" placeholder="예: MoS2/hBN, SiO2 wafer" style="width:100%;height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
+            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">측정 조건 (전압/전류/파장 등)</label>' +
             '<input type="text" id="quickEndCond" value="' + safe(prev ? prev.condition : '') + '" placeholder="예: 2theta 10-80 deg, 532nm 등" style="width:100%;height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
             '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">상세 내용</label>' +
             '<textarea id="quickEndDetail" rows="3" placeholder="특이사항 또는 상세 내용" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' + safe(prev ? prev.detail : '') + '</textarea>' +
