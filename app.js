@@ -8451,10 +8451,12 @@ function openModal(mode, id){
     parts.push('<div class="auth-two-col-grid">');
     parts.push('  <label class="field">Advisor (지도교수) *<input name="advisor" required maxlength="50" placeholder="e.g. 신현석 교수님"></label>');
     parts.push('  <label class="field">Department (소속 부서) *<input name="affiliation" required maxlength="80" placeholder="e.g. 2DQH"></label>');
-    parts.push('  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">');
-    parts.push('    <label class="field" style="font-size:12px;">연구단 소속 여부<select name="is_center"><option value="연구단 소속">예 (연구단)</option><option value="타 소속">아니오</option></select></label>');
-    parts.push('    <label class="field" style="font-size:12px;">교내/교외<select name="campus_type"><option value="교내">교내</option><option value="교외">교외</option></select></label>');
-    parts.push('    <label class="field" style="font-size:12px;">에너지과학과<select name="is_energy_dept"><option value="에너지과학과">에너지과학과</option><option value="타학과/기타">타학과/기타</option></select></label>');
+        parts.push('  <div style="margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-subtle,#f8fafc);display:flex;flex-direction:column;gap:8px;">');
+    parts.push('    <label class="field" style="font-size:12.5px;margin:0;">2DQH 연구단 소속 여부<select id="regIsCenterSelect" name="is_center" onchange="var ex=document.getElementById(\'regExtraAffilBox\');if(ex)ex.style.display=(this.value===\'타 소속\'?\'grid\':\'none\');"><option value="연구단 소속">예 (2DQH 연구단)</option><option value="타 소속">아니오 (타 소속)</option></select></label>');
+    parts.push('    <div id="regExtraAffilBox" style="display:none;grid-template-columns:1fr 1fr;gap:8px;">');
+    parts.push('      <label class="field" style="font-size:12px;margin:0;">교내 / 교외<select name="campus_type"><option value="교내">교내 (성균관대)</option><option value="교외">교외 (외부기관)</option></select></label>');
+    parts.push('      <label class="field" style="font-size:12px;margin:0;">에너지과학과 여부<select name="is_energy_dept"><option value="에너지과학과">예 (에너지과학과)</option><option value="타학과/기타">아니오 (타학과/기타)</option></select></label>');
+    parts.push('    </div>');
     parts.push('  </div>');
     parts.push('</div>');
 
