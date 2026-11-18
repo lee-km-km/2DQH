@@ -21251,8 +21251,48 @@ function renderInvSubLoans(){
         startMs: now.getTime(),
         startTimeText: pad(now.getHours()) + ':' + pad(now.getMinutes())
       };
+      const eqObj = (researchEquipments || []).find(function(e){ return e.id === eqId; });
+      const eqCode = eqObj ? eqObj.code : eqId;
+      const logId = 'LOG-' + now.getTime();
+      map[eqId].logId = logId;
       saveActiveMap(map);
-      toast('▶ 사용 시작이 기록되었습니다.');
+
+      const affilStr = map[eqId].affiliation + ' (' + map[eqId].is_center + '/' + map[eqId].campus_type + '/' + map[eqId].is_energy_dept + ')';
+      if(eqId === 'EQ-XRD-01' && typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
+        xrdLogs.unshift({
+          id: logId,
+          used_on: today(),
+          start_time: map[eqId].startTimeText,
+          end_time: '',
+          duration_min: 0,
+          sample_count: 1,
+          user_name: map[eqId].user,
+          affiliation: affilStr,
+          status: 'in_use',
+          notes: '사용 중'
+        });
+        if(typeof saveLocalStorage === 'function') saveLocalStorage();
+        if(typeof renderXrdLogs === 'function') renderXrdLogs();
+      } else if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
+        equipmentSessions.unshift({
+          id: logId,
+          equipment_id: eqId,
+          equipment_code: eqCode,
+          used_on: today(),
+          start_time: map[eqId].startTimeText,
+          end_time: '',
+          duration_min: 0,
+          sample_count: 1,
+          user_name: map[eqId].user,
+          affiliation: affilStr,
+          status: 'in_use',
+          notes: '사용 중'
+        });
+        if(typeof saveLocalStorage === 'function') saveLocalStorage();
+        if(typeof renderEquipmentTestSessions === 'function') renderEquipmentTestSessions(eqCode);
+      }
+
+      toast('▶ 사용 시작이 로그북에 기록되었습니다.');
       renderQuickEquipTwoBtnBar(eqId);
     };
 
@@ -21332,20 +21372,63 @@ function renderInvSubLoans(){
       lm[eqId] = { samples: samples, condition: cond, detail: detail };
       saveLastLogMap(lm);
 
-      if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
-        const eqObj = (researchEquipments || []).find(function(e){ return e.id === eqId; });
-        equipmentSessions.unshift({
-          id: 'SES-' + nowMs,
-          equipment_id: eqId,
-          equipment_code: eqObj ? eqObj.code : eqId,
-          used_on: today(),
-          duration_min: mins,
-          sample_count: samples,
-          user_name: curUse.user,
-          affiliation: curUse.affiliation + ' (' + curUse.is_center + '/' + curUse.campus_type + '/' + curUse.is_energy_dept + ')',
-          notes: (cond ? '[' + cond + '] ' : '') + detail
-        });
+      const eqObj = (researchEquipments || []).find(function(e){ return e.id === eqId; });
+      const eqCode = eqObj ? eqObj.code : eqId;
+      const nowD = new Date(nowMs);
+      const endTimeText = pad(nowD.getHours()) + ':' + pad(nowD.getMinutes());
+      const affilStr = curUse.affiliation + ' (' + curUse.is_center + '/' + curUse.campus_type + '/' + curUse.is_energy_dept + ')';
+      const noteStr = (cond ? '[' + cond + '] ' : '') + detail;
+
+      if(eqId === 'EQ-XRD-01' && typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
+        const existing = curUse.logId ? xrdLogs.find(function(l){ return l.id === curUse.logId; }) : null;
+        if(existing){
+          existing.end_time = endTimeText;
+          existing.duration_min = mins;
+          existing.sample_count = samples;
+          existing.status = 'completed';
+          existing.notes = noteStr;
+        } else {
+          xrdLogs.unshift({
+            id: 'LOG-' + nowMs,
+            used_on: today(),
+            start_time: curUse.startTimeText || '',
+            end_time: endTimeText,
+            duration_min: mins,
+            sample_count: samples,
+            user_name: curUse.user,
+            affiliation: affilStr,
+            status: 'completed',
+            notes: noteStr
+          });
+        }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
+        if(typeof renderXrdLogs === 'function') renderXrdLogs();
+      } else if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
+        const existing = curUse.logId ? equipmentSessions.find(function(s){ return s.id === curUse.logId; }) : null;
+        if(existing){
+          existing.end_time = endTimeText;
+          existing.duration_min = mins;
+          existing.sample_count = samples;
+          existing.status = 'completed';
+          existing.notes = noteStr;
+        } else {
+          equipmentSessions.unshift({
+            id: 'SES-' + nowMs,
+            equipment_id: eqId,
+            equipment_code: eqCode,
+            used_on: today(),
+            start_time: curUse.startTimeText || '',
+            end_time: endTimeText,
+            duration_min: mins,
+            sample_count: samples,
+            user_name: curUse.user,
+            affiliation: affilStr,
+            status: 'completed',
+            notes: noteStr
+          });
+        }
+        if(typeof saveLocalStorage === 'function') saveLocalStorage();
+        if(typeof renderEquipmentTestSessions === 'function') renderEquipmentTestSessions(eqCode);
       }
 
       const am = getActiveMap();
