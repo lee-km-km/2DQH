@@ -8451,6 +8451,11 @@ function openModal(mode, id){
     parts.push('<div class="auth-two-col-grid">');
     parts.push('  <label class="field">Advisor (지도교수) *<input name="advisor" required maxlength="50" placeholder="e.g. 신현석 교수님"></label>');
     parts.push('  <label class="field">Department (소속 부서) *<input name="affiliation" required maxlength="80" placeholder="e.g. 2DQH"></label>');
+    parts.push('  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">');
+    parts.push('    <label class="field" style="font-size:12px;">연구단 여부<select name="is_center"><option value="연구단">연구단</option><option value="비연구단">비연구단</option></select></label>');
+    parts.push('    <label class="field" style="font-size:12px;">교내/교외<select name="campus_type"><option value="교내">교내</option><option value="교외">교외</option></select></label>');
+    parts.push('    <label class="field" style="font-size:12px;">에너지과학과<select name="is_energy_dept"><option value="에너지과학과">에너지과학과</option><option value="타학과/기타">타학과/기타</option></select></label>');
+    parts.push('  </div>');
     parts.push('</div>');
 
     parts.push('<div class="auth-switch-link">');
@@ -21165,4 +21170,197 @@ function renderInvSubLoans(){
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
   else bind();
+})();
+
+
+// ==========================================================================
+// [초단순 2버튼 장비 사용 시작 / 사용 종료 워크플로우 (HR-XRD, OM, UV-Vis, FT-IR 등)]
+// ==========================================================================
+(function initQuickEquipTwoBtnWorkflow(){
+  const ACTIVE_USE_KEY = 'labstock_active_equip_use_v1';
+  const LAST_LOG_KEY = 'labstock_last_equip_log_v1';
+
+  function getActiveMap(){
+    try { return JSON.parse(localStorage.getItem(ACTIVE_USE_KEY) || '{}'); } catch(_) { return {}; }
+  }
+  function saveActiveMap(m){
+    try { localStorage.setItem(ACTIVE_USE_KEY, JSON.stringify(m)); } catch(_) {}
+  }
+  function getLastLogMap(){
+    try { return JSON.parse(localStorage.getItem(LAST_LOG_KEY) || '{}'); } catch(_) { return {}; }
+  }
+  function saveLastLogMap(m){
+    try { localStorage.setItem(LAST_LOG_KEY, JSON.stringify(m)); } catch(_) {}
+  }
+
+  function ensureQuickBar(){
+    const hub = $('equipmentDetailHub');
+    if(!hub) return null;
+    let bar = $('quickEquipTwoBtnBar');
+    if(!bar){
+      bar = document.createElement('div');
+      bar.id = 'quickEquipTwoBtnBar';
+      bar.className = 'panel';
+      bar.style.cssText = 'margin:12px 0;padding:16px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-card,#ffffff);';
+      const topbar = hub.querySelector('.eq-detail-topbar');
+      if(topbar) topbar.insertAdjacentElement('afterend', bar);
+      else hub.prepend(bar);
+    }
+    return bar;
+  }
+
+  window.renderQuickEquipTwoBtnBar = function(eqId){
+    eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
+    const bar = ensureQuickBar();
+    if(!bar) return;
+
+    const activeMap = getActiveMap();
+    const curUse = activeMap[eqId];
+    const curUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const myName = curUser ? (curUser.name || curUser.username || '연구원') : '연구원';
+    const isBusyByOther = curUse && curUse.user !== myName;
+
+    const statusHtml = curUse
+      ? '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:' + (isBusyByOther ? '#fef2f2' : '#eff6ff') + ';border:1px solid ' + (isBusyByOther ? '#fecaca' : '#bfdbfe') + ';color:' + (isBusyByOther ? '#b91c1c' : '#1d4ed8') + ';font-size:13.5px;font-weight:700;">' +
+          (isBusyByOther ? '🔴 이미 사용 중인 장비 (' + safe(curUse.user) + ' · ' + safe(curUse.startTimeText) + ' 시작)' : '🔵 현재 사용 중 (' + safe(curUse.user) + ' · ' + safe(curUse.startTimeText) + ' 시작)') +
+        '</div>'
+      : '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:13.5px;font-weight:700;">🟢 현재 사용 가능한 장비입니다</div>';
+
+    bar.innerHTML =
+      statusHtml +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+        '<button type="button" id="btnQuickEquipStart" ' + (curUse ? 'disabled' : '') + ' style="min-height:54px;font-size:16px;font-weight:800;border:none;border-radius:10px;cursor:' + (curUse ? 'not-allowed' : 'pointer') + ';background:' + (curUse ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;">▶ 사용 시작</button>' +
+        '<button type="button" id="btnQuickEquipEnd" ' + (!curUse ? 'disabled' : '') + ' style="min-height:54px;font-size:16px;font-weight:800;border:none;border-radius:10px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#cbd5e1' : '#dc2626') + ';color:#ffffff;">⏹ 사용 종료</button>' +
+      '</div>';
+
+    const btnStart = $('btnQuickEquipStart');
+    if(btnStart) btnStart.onclick = function(){
+      const map = getActiveMap();
+      if(map[eqId]){ toast('이미 사용 중인 장비입니다.'); return; }
+      const now = new Date();
+      map[eqId] = {
+        user: myName,
+        affiliation: curUser ? (curUser.affiliation || '2DQH') : '2DQH',
+        is_center: curUser ? (curUser.is_center || '연구단') : '연구단',
+        campus_type: curUser ? (curUser.campus_type || '교내') : '교내',
+        is_energy_dept: curUser ? (curUser.is_energy_dept || '에너지과학과') : '에너지과학과',
+        startMs: now.getTime(),
+        startTimeText: pad(now.getHours()) + ':' + pad(now.getMinutes())
+      };
+      saveActiveMap(map);
+      toast('▶ 사용 시작이 기록되었습니다.');
+      renderQuickEquipTwoBtnBar(eqId);
+    };
+
+    const btnEnd = $('btnQuickEquipEnd');
+    if(btnEnd) btnEnd.onclick = function(){
+      openQuickEndPopup(eqId);
+    };
+  };
+
+  function openQuickEndPopup(eqId){
+    const activeMap = getActiveMap();
+    const curUse = activeMap[eqId];
+    if(!curUse) return;
+    const lastMap = getLastLogMap();
+    const prev = lastMap[eqId];
+
+    let modal = $('quickEquipEndBackdrop');
+    if(!modal){
+      modal = document.createElement('div');
+      modal.id = 'quickEquipEndBackdrop';
+      modal.className = 'backdrop';
+      modal.style.zIndex = '2700';
+      document.body.appendChild(modal);
+    }
+
+    const prevNotice = prev
+      ? '<div style="padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;margin-bottom:12px;font-size:13px;color:#1e3a8a;">' +
+          '<b>💡 이전 사용과 동일한 조건으로 로그북을 작성할까요?</b><br>' +
+          '<span style="font-size:12px;color:#3b82f6;">이전 조건: ' + safe(prev.condition || '-') + ' / ' + safe(prev.detail || '-') + '</span>' +
+        '</div>'
+      : '<div style="padding:10px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:13px;color:var(--ink);">첫 사용입니다. 시료 개수와 측정 조건을 입력해 주세요.</div>';
+
+    modal.innerHTML =
+      '<section class="modal" role="dialog" aria-modal="true" style="max-width:440px;width:min(440px,94vw);border-radius:14px;overflow:hidden;background:var(--bg-card,#fff);">' +
+        '<div class="modal-head" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">' +
+          '<h3 style="margin:0;font-size:16px;font-weight:800;">⏹ 사용 종료 및 로그북 작성</h3>' +
+          '<button type="button" id="btnCloseQuickEnd" class="icon-btn">✕</button>' +
+        '</div>' +
+        '<div style="padding:16px;">' +
+          prevNotice +
+          '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">시료 개수 *</label>' +
+          '<input type="number" id="quickEndSamples" min="1" value="' + (prev ? (prev.samples || 1) : 1) + '" style="width:100%;height:42px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
+          '<div id="quickEndEditFields" style="display:' + (prev ? 'none' : 'block') + ';">' +
+            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">측정 조건</label>' +
+            '<input type="text" id="quickEndCond" value="' + safe(prev ? prev.condition : '') + '" placeholder="예: 2theta 10-80 deg, 532nm 등" style="width:100%;height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
+            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">상세 내용</label>' +
+            '<textarea id="quickEndDetail" rows="3" placeholder="특이사항 또는 상세 내용" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' + safe(prev ? prev.detail : '') + '</textarea>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">' +
+            (prev ? '<button type="button" id="btnQuickEndToggleEdit" class="btn" style="flex:1;min-height:44px;border-radius:8px;">✏️ 내용 수정 후 작성</button>' : '') +
+            '<button type="button" id="btnQuickEndConfirm" class="btn primary" style="flex:1;min-height:44px;background:#059669;border-color:#059669;color:#fff;font-weight:800;border-radius:8px;">' + (prev ? '✓ 예, 동일하게 종료' : '✓ 로그북 저장 후 종료') + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</section>';
+
+    modal.classList.add('open');
+
+    $('btnCloseQuickEnd').onclick = function(){ modal.classList.remove('open'); };
+    const toggleBtn = $('btnQuickEndToggleEdit');
+    if(toggleBtn){
+      toggleBtn.onclick = function(){
+        const box = $('quickEndEditFields');
+        if(box) box.style.display = 'block';
+        toggleBtn.style.display = 'none';
+        $('btnQuickEndConfirm').textContent = '✓ 수정 내용으로 종료';
+      };
+    }
+
+    $('btnQuickEndConfirm').onclick = function(){
+      const samples = Math.max(1, parseInt($('quickEndSamples').value || '1', 10));
+      const cond = ($('quickEndCond').value || '').trim();
+      const detail = ($('quickEndDetail').value || '').trim();
+      const nowMs = Date.now();
+      const mins = Math.max(1, Math.round((nowMs - (curUse.startMs || nowMs)) / 60000));
+
+      const lm = getLastLogMap();
+      lm[eqId] = { samples: samples, condition: cond, detail: detail };
+      saveLastLogMap(lm);
+
+      if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
+        const eqObj = (researchEquipments || []).find(function(e){ return e.id === eqId; });
+        equipmentSessions.unshift({
+          id: 'SES-' + nowMs,
+          equipment_id: eqId,
+          equipment_code: eqObj ? eqObj.code : eqId,
+          used_on: today(),
+          duration_min: mins,
+          sample_count: samples,
+          user_name: curUse.user,
+          affiliation: curUse.affiliation + ' (' + curUse.is_center + '/' + curUse.campus_type + '/' + curUse.is_energy_dept + ')',
+          notes: (cond ? '[' + cond + '] ' : '') + detail
+        });
+        if(typeof saveLocalStorage === 'function') saveLocalStorage();
+      }
+
+      const am = getActiveMap();
+      delete am[eqId];
+      saveActiveMap(am);
+
+      modal.classList.remove('open');
+      toast('✓ 사용 종료 및 로그북이 저장되었습니다.');
+      renderQuickEquipTwoBtnBar(eqId);
+    };
+  }
+
+  // selectResearchEquipment 호출 시 2버튼 바도 자동 갱신되도록 훅 연결
+  const origSelect = window.selectResearchEquipment;
+  if(typeof origSelect === 'function'){
+    window.selectResearchEquipment = function(eqId){
+      const res = origSelect.apply(this, arguments);
+      renderQuickEquipTwoBtnBar(eqId);
+      return res;
+    };
+  }
 })();
