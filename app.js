@@ -21231,10 +21231,13 @@ function renderInvSubLoans(){
       : '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:13.5px;font-weight:700;">🟢 현재 사용 가능한 장비입니다</div>';
 
     bar.innerHTML =
+      '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12.5px;line-height:1.5;">' +
+        '<b>⚠️ 장비 사용 주의사항</b> · 사용 전 장비 상태 및 안전수칙을 확인하고, 종료 시 최소 30분 단위로 로그북이 기록됩니다.' +
+      '</div>' +
       statusHtml +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
-        '<button type="button" id="btnQuickEquipStart" ' + (curUse ? 'disabled' : '') + ' style="min-height:54px;font-size:16px;font-weight:800;border:none;border-radius:10px;cursor:' + (curUse ? 'not-allowed' : 'pointer') + ';background:' + (curUse ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;">▶ 사용 시작</button>' +
-        '<button type="button" id="btnQuickEquipEnd" ' + (!curUse ? 'disabled' : '') + ' style="min-height:54px;font-size:16px;font-weight:800;border:none;border-radius:10px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#cbd5e1' : '#dc2626') + ';color:#ffffff;">⏹ 사용 종료</button>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+        '<button type="button" id="btnQuickEquipStart" ' + (curUse ? 'disabled' : '') + ' style="min-height:76px;font-size:18px;font-weight:800;border:none;border-radius:12px;cursor:' + (curUse ? 'not-allowed' : 'pointer') + ';background:' + (curUse ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;box-shadow:0 4px 12px rgba(37,99,235,0.2);">▶ 사용 시작</button>' +
+        '<button type="button" id="btnQuickEquipEnd" ' + (!curUse ? 'disabled' : '') + ' style="min-height:76px;font-size:18px;font-weight:800;border:none;border-radius:12px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#cbd5e1' : '#dc2626') + ';color:#ffffff;box-shadow:0 4px 12px rgba(220,38,38,0.2);">⏹ 사용 종료</button>' +
       '</div>';
 
     const btnStart = $('btnQuickEquipStart');
@@ -21336,7 +21339,9 @@ function renderInvSubLoans(){
           '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">시료 개수 *</label>' +
           '<input type="number" id="quickEndSamples" min="1" value="' + (prev ? (prev.samples || 1) : 1) + '" style="width:100%;height:42px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
           '<div id="quickEndEditFields" style="display:' + (prev ? 'none' : 'block') + ';">' +
-            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">측정 조건</label>' +
+            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">시료명</label>
+            <input type="text" id="quickEndSampleName" value="' + safe(prev ? (prev.sampleName || '') : '') + '" placeholder="예: MoS2/hBN, SiO2 wafer" style="width:100%;height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">
+            <label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">측정 조건 (전압/전류/파장 등)</label>' +
             '<input type="text" id="quickEndCond" value="' + safe(prev ? prev.condition : '') + '" placeholder="예: 2theta 10-80 deg, 532nm 등" style="width:100%;height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
             '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">상세 내용</label>' +
             '<textarea id="quickEndDetail" rows="3" placeholder="특이사항 또는 상세 내용" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' + safe(prev ? prev.detail : '') + '</textarea>' +
@@ -21363,13 +21368,15 @@ function renderInvSubLoans(){
 
     $('btnQuickEndConfirm').onclick = function(){
       const samples = Math.max(1, parseInt($('quickEndSamples').value || '1', 10));
+      const sampleName = ($('quickEndSampleName') ? $('quickEndSampleName').value : '').trim();
       const cond = ($('quickEndCond').value || '').trim();
       const detail = ($('quickEndDetail').value || '').trim();
       const nowMs = Date.now();
-      const mins = Math.max(1, Math.round((nowMs - (curUse.startMs || nowMs)) / 60000));
+      const rawMins = Math.max(1, Math.round((nowMs - (curUse.startMs || nowMs)) / 60000));
+      const mins = Math.max(30, Math.ceil(rawMins / 30) * 30);
 
       const lm = getLastLogMap();
-      lm[eqId] = { samples: samples, condition: cond, detail: detail };
+      lm[eqId] = { sampleName: sampleName, samples: samples, condition: cond, detail: detail };
       saveLastLogMap(lm);
 
       const eqObj = (researchEquipments || []).find(function(e){ return e.id === eqId; });
@@ -21377,7 +21384,7 @@ function renderInvSubLoans(){
       const nowD = new Date(nowMs);
       const endTimeText = pad(nowD.getHours()) + ':' + pad(nowD.getMinutes());
       const affilStr = curUse.affiliation + ' (' + curUse.is_center + '/' + curUse.campus_type + '/' + curUse.is_energy_dept + ')';
-      const noteStr = (cond ? '[' + cond + '] ' : '') + detail;
+      const noteStr = (sampleName ? '시료: ' + sampleName + ' | ' : '') + (cond ? '[' + cond + '] ' : '') + detail;
 
       if(eqId === 'EQ-XRD-01' && typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
         const existing = curUse.logId ? xrdLogs.find(function(l){ return l.id === curUse.logId; }) : null;

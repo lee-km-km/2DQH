@@ -13772,3 +13772,11 @@ html:not(.is-admin) #btnHelpTabAdmin {
 #equipmentDetailHub #xrdForm {
   display: none !important;
 }
+
+@media (max-width: 768px) {
+  #equipmentDetailHub .xrd-list-card,
+  #equipmentDetailHub #xrdRows {
+    max-height: 220px !important;
+    overflow-y: auto !important;
+  }
+}
