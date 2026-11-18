@@ -13765,3 +13765,10 @@ html:not(.is-admin) #btnHelpTabAdmin {
   margin: 0 !important;
   flex: 0 0 18px !important;
 }
+
+/* [연구장비 상세 화면: 기존 복잡한 측정 세션 시작/완료일지 직접 작성 폼 숨김 -> 2버튼 워크플로우로 단순화] */
+#equipmentDetailHub .xrd-mode-switcher,
+#equipmentDetailHub #xrdModeBar,
+#equipmentDetailHub #xrdForm {
+  display: none !important;
+}
