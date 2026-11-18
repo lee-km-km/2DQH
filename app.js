@@ -8452,7 +8452,7 @@ function openModal(mode, id){
     parts.push('  <label class="field">Advisor (지도교수) *<input name="advisor" required maxlength="50" placeholder="e.g. 신현석 교수님"></label>');
     parts.push('  <label class="field">Department (소속 부서) *<input name="affiliation" required maxlength="80" placeholder="e.g. 2DQH"></label>');
     parts.push('  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;">');
-    parts.push('    <label class="field" style="font-size:12px;">연구단 여부<select name="is_center"><option value="연구단">연구단</option><option value="비연구단">비연구단</option></select></label>');
+    parts.push('    <label class="field" style="font-size:12px;">연구단 소속 여부<select name="is_center"><option value="연구단 소속">예 (연구단)</option><option value="타 소속">아니오</option></select></label>');
     parts.push('    <label class="field" style="font-size:12px;">교내/교외<select name="campus_type"><option value="교내">교내</option><option value="교외">교외</option></select></label>');
     parts.push('    <label class="field" style="font-size:12px;">에너지과학과<select name="is_energy_dept"><option value="에너지과학과">에너지과학과</option><option value="타학과/기타">타학과/기타</option></select></label>');
     parts.push('  </div>');
