@@ -21225,19 +21225,16 @@ function renderInvSubLoans(){
     const isBusyByOther = curUse && curUse.user !== myName;
 
     const statusHtml = curUse
-      ? '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:' + (isBusyByOther ? '#fef2f2' : '#eff6ff') + ';border:1px solid ' + (isBusyByOther ? '#fecaca' : '#bfdbfe') + ';color:' + (isBusyByOther ? '#b91c1c' : '#1d4ed8') + ';font-size:13.5px;font-weight:700;">' +
+      ? '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:' + (isBusyByOther ? '#fef2f2' : '#eff6ff') + ';border:1px solid ' + (isBusyByOther ? '#fecaca' : '#bfdbfe') + ';color:' + (isBusyByOther ? '#b91c1c' : '#1d4ed8') + ';font-size:14px;font-weight:700;text-align:center;">' +
           (isBusyByOther ? '🔴 이미 사용 중인 장비 (' + safe(curUse.user) + ' · ' + safe(curUse.startTimeText) + ' 시작)' : '🔵 현재 사용 중 (' + safe(curUse.user) + ' · ' + safe(curUse.startTimeText) + ' 시작)') +
         '</div>'
-      : '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:13.5px;font-weight:700;">🟢 현재 사용 가능한 장비입니다</div>';
+      : '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:14px;font-weight:700;text-align:center;">🟢 현재 사용 가능한 장비입니다</div>';
 
     bar.innerHTML =
-      '<div style="margin-bottom:12px;padding:10px 12px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12.5px;line-height:1.5;">' +
-        '<b>⚠️ 장비 사용 주의사항</b> · 사용 전 장비 상태 및 안전수칙을 확인하고, 종료 시 최소 30분 단위로 로그북이 기록됩니다.' +
-      '</div>' +
       statusHtml +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
-        '<button type="button" id="btnQuickEquipStart" ' + (curUse ? 'disabled' : '') + ' style="min-height:76px;font-size:18px;font-weight:800;border:none;border-radius:12px;cursor:' + (curUse ? 'not-allowed' : 'pointer') + ';background:' + (curUse ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;box-shadow:0 4px 12px rgba(37,99,235,0.2);">▶ 사용 시작</button>' +
-        '<button type="button" id="btnQuickEquipEnd" ' + (!curUse ? 'disabled' : '') + ' style="min-height:76px;font-size:18px;font-weight:800;border:none;border-radius:12px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#cbd5e1' : '#dc2626') + ';color:#ffffff;box-shadow:0 4px 12px rgba(220,38,38,0.2);">⏹ 사용 종료</button>' +
+      '<div style="display:grid;grid-template-columns:1fr;gap:12px;">' +
+        '<button type="button" id="btnQuickEquipStart" ' + (curUse ? 'disabled' : '') + ' style="width:100%;min-height:88px;font-size:20px;font-weight:800;border:none;border-radius:14px;cursor:' + (curUse ? 'not-allowed' : 'pointer') + ';background:' + (curUse ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;box-shadow:0 4px 14px rgba(37,99,235,0.22);">▶ 사용 시작</button>' +
+        '<button type="button" id="btnQuickEquipEnd" ' + (!curUse ? 'disabled' : '') + ' style="width:100%;min-height:88px;font-size:20px;font-weight:800;border:none;border-radius:14px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#cbd5e1' : '#dc2626') + ';color:#ffffff;box-shadow:0 4px 14px rgba(220,38,38,0.22);">⏹ 사용 종료</button>' +
       '</div>';
 
     const btnStart = $('btnQuickEquipStart');
@@ -21245,22 +21242,25 @@ function renderInvSubLoans(){
       const map = getActiveMap();
       if(map[eqId]){ toast('이미 사용 중인 장비입니다.'); return; }
       const now = new Date();
-      map[eqId] = {
-        user: myName,
-        affiliation: curUser ? (curUser.affiliation || '2DQH') : '2DQH',
-        is_center: curUser ? (curUser.is_center || '연구단') : '연구단',
-        campus_type: curUser ? (curUser.campus_type || '교내') : '교내',
-        is_energy_dept: curUser ? (curUser.is_energy_dept || '에너지과학과') : '에너지과학과',
-        startMs: now.getTime(),
-        startTimeText: pad(now.getHours()) + ':' + pad(now.getMinutes())
-      };
       const eqObj = (researchEquipments || []).find(function(e){ return e.id === eqId; });
       const eqCode = eqObj ? eqObj.code : eqId;
       const logId = 'LOG-' + now.getTime();
-      map[eqId].logId = logId;
+      const affilStr = curUser
+        ? (curUser.affiliation || '2DQH') + ' (' + (curUser.is_center || '연구단 소속') + '/' + (curUser.campus_type || '교내') + '/' + (curUser.is_energy_dept || '에너지과학과') + ')'
+        : '2DQH';
+
+      map[eqId] = {
+        user: myName,
+        affiliation: curUser ? (curUser.affiliation || '2DQH') : '2DQH',
+        is_center: curUser ? (curUser.is_center || '연구단 소속') : '연구단 소속',
+        campus_type: curUser ? (curUser.campus_type || '교내') : '교내',
+        is_energy_dept: curUser ? (curUser.is_energy_dept || '에너지과학과') : '에너지과학과',
+        startMs: now.getTime(),
+        startTimeText: pad(now.getHours()) + ':' + pad(now.getMinutes()),
+        logId: logId
+      };
       saveActiveMap(map);
 
-      const affilStr = map[eqId].affiliation + ' (' + map[eqId].is_center + '/' + map[eqId].campus_type + '/' + map[eqId].is_energy_dept + ')';
       if(eqId === 'EQ-XRD-01' && typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
         xrdLogs.unshift({
           id: logId,
@@ -21269,7 +21269,7 @@ function renderInvSubLoans(){
           end_time: '',
           duration_min: 0,
           sample_count: 1,
-          user_name: map[eqId].user,
+          user_name: myName,
           affiliation: affilStr,
           status: 'in_use',
           notes: '사용 중'
@@ -21286,7 +21286,7 @@ function renderInvSubLoans(){
           end_time: '',
           duration_min: 0,
           sample_count: 1,
-          user_name: map[eqId].user,
+          user_name: myName,
           affiliation: affilStr,
           status: 'in_use',
           notes: '사용 중'
@@ -21300,9 +21300,7 @@ function renderInvSubLoans(){
     };
 
     const btnEnd = $('btnQuickEquipEnd');
-    if(btnEnd) btnEnd.onclick = function(){
-      openQuickEndPopup(eqId);
-    };
+    if(btnEnd) btnEnd.onclick = function(){ openQuickEndPopup(eqId); };
   };
 
   function openQuickEndPopup(eqId){
@@ -21311,6 +21309,7 @@ function renderInvSubLoans(){
     if(!curUse) return;
     const lastMap = getLastLogMap();
     const prev = lastMap[eqId];
+    const isXrd = (eqId === 'EQ-XRD-01');
 
     let modal = $('quickEquipEndBackdrop');
     if(!modal){
@@ -21321,15 +21320,35 @@ function renderInvSubLoans(){
       document.body.appendChild(modal);
     }
 
+    const prevSummary = prev
+      ? (isXrd
+          ? 'Chiller: ' + safe(prev.chillerStart || '22') + '→' + safe(prev.chillerEnd || '22') + '°C · Vacuum: ' + safe(prev.vacuumStart || '90') + '→' + safe(prev.vacuumEnd || '180') + 'mV · ' + safe(prev.align || 'PB') + ' / ' + safe(prev.scanType || '2theta-omega')
+          : '시료: ' + safe(prev.sampleName || '-') + ' · 조건: ' + safe(prev.condition || '-'))
+      : '';
+
     const prevNotice = prev
       ? '<div style="padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;margin-bottom:12px;font-size:13px;color:#1e3a8a;">' +
           '<b>💡 이전 사용과 동일한 조건으로 로그북을 작성할까요?</b><br>' +
-          '<span style="font-size:12px;color:#3b82f6;">이전 조건: ' + safe(prev.condition || '-') + ' / ' + safe(prev.detail || '-') + '</span>' +
+          '<span style="font-size:12px;color:#3b82f6;">' + prevSummary + '</span>' +
         '</div>'
-      : '<div style="padding:10px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:13px;color:var(--ink);">첫 사용입니다. 시료 개수와 측정 조건을 입력해 주세요.</div>';
+      : '<div style="padding:10px 12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:13px;color:var(--ink);">첫 사용입니다. 아래 로그북 항목을 입력해 주세요.</div>';
+
+    const xrdFieldsHtml = isXrd
+      ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
+          '<div><label style="display:block;font-size:12px;font-weight:700;margin-bottom:3px;">Chiller Start (°C)</label><input type="number" step="0.1" id="quickEndChillerStart" value="' + safe(prev ? (prev.chillerStart || '22') : '22') + '" style="width:100%;height:38px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;"></div>' +
+          '<div><label style="display:block;font-size:12px;font-weight:700;margin-bottom:3px;">Chiller End (°C)</label><input type="number" step="0.1" id="quickEndChillerEnd" value="' + safe(prev ? (prev.chillerEnd || '22') : '22') + '" style="width:100%;height:38px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;"></div>' +
+          '<div><label style="display:block;font-size:12px;font-weight:700;margin-bottom:3px;">Vacuum Start (mV)</label><input type="number" id="quickEndVacStart" value="' + safe(prev ? (prev.vacuumStart || '90') : '90') + '" style="width:100%;height:38px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;"></div>' +
+          '<div><label style="display:block;font-size:12px;font-weight:700;margin-bottom:3px;">Vacuum End (mV)</label><input type="number" id="quickEndVacEnd" value="' + safe(prev ? (prev.vacuumEnd || '180') : '180') + '" style="width:100%;height:38px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;"></div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">' +
+          '<div><label style="display:block;font-size:12px;font-weight:700;margin-bottom:3px;">Align</label><select id="quickEndAlign" style="width:100%;height:38px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;"><option value="PB"' + ((!prev || prev.align === 'PB') ? ' selected' : '') + '>PB</option><option value="BB"' + ((prev && prev.align === 'BB') ? ' selected' : '') + '>BB</option></select></div>' +
+          '<div><label style="display:block;font-size:12px;font-weight:700;margin-bottom:3px;">Scan type</label><input type="text" id="quickEndScanType" value="' + safe(prev ? (prev.scanType || '2theta-omega') : '2theta-omega') + '" style="width:100%;height:38px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;"></div>' +
+        '</div>'
+      : '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">측정 조건</label>' +
+        '<input type="text" id="quickEndCond" value="' + safe(prev ? (prev.condition || '') : '') + '" placeholder="예: 파장 532nm, 배율 50x 등" style="width:100%;height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">';
 
     modal.innerHTML =
-      '<section class="modal" role="dialog" aria-modal="true" style="max-width:440px;width:min(440px,94vw);border-radius:14px;overflow:hidden;background:var(--bg-card,#fff);">' +
+      '<section class="modal" role="dialog" aria-modal="true" style="max-width:460px;width:min(460px,94vw);max-height:90dvh;overflow-y:auto;border-radius:14px;background:var(--bg-card,#fff);">' +
         '<div class="modal-head" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">' +
           '<h3 style="margin:0;font-size:16px;font-weight:800;">⏹ 사용 종료 및 로그북 작성</h3>' +
           '<button type="button" id="btnCloseQuickEnd" class="icon-btn">✕</button>' +
@@ -21339,16 +21358,15 @@ function renderInvSubLoans(){
           '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">시료 개수 *</label>' +
           '<input type="number" id="quickEndSamples" min="1" value="' + (prev ? (prev.samples || 1) : 1) + '" style="width:100%;height:42px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
           '<div id="quickEndEditFields" style="display:' + (prev ? 'none' : 'block') + ';">' +
-            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">시료명</label>' +
+            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">시료명 / 설명</label>' +
             '<input type="text" id="quickEndSampleName" value="' + safe(prev ? (prev.sampleName || '') : '') + '" placeholder="예: MoS2/hBN, SiO2 wafer" style="width:100%;height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
-            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">측정 조건 (전압/전류/파장 등)</label>' +
-            '<input type="text" id="quickEndCond" value="' + safe(prev ? prev.condition : '') + '" placeholder="예: 2theta 10-80 deg, 532nm 등" style="width:100%;height:40px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' +
-            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">상세 내용</label>' +
-            '<textarea id="quickEndDetail" rows="3" placeholder="특이사항 또는 상세 내용" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' + safe(prev ? prev.detail : '') + '</textarea>' +
+            xrdFieldsHtml +
+            '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:4px;">Memo / Issue (특이사항)</label>' +
+            '<textarea id="quickEndDetail" rows="2" placeholder="특이사항이 없으면 비워두세요" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px;box-sizing:border-box;">' + safe(prev ? (prev.detail || '') : '') + '</textarea>' +
           '</div>' +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">' +
-            (prev ? '<button type="button" id="btnQuickEndToggleEdit" class="btn" style="flex:1;min-height:44px;border-radius:8px;">✏️ 내용 수정 후 작성</button>' : '') +
-            '<button type="button" id="btnQuickEndConfirm" class="btn primary" style="flex:1;min-height:44px;background:#059669;border-color:#059669;color:#fff;font-weight:800;border-radius:8px;">' + (prev ? '✓ 예, 동일하게 종료' : '✓ 로그북 저장 후 종료') + '</button>' +
+            (prev ? '<button type="button" id="btnQuickEndToggleEdit" class="btn" style="flex:1;min-height:46px;border-radius:8px;">✏️ 내용 수정 후 작성</button>' : '') +
+            '<button type="button" id="btnQuickEndConfirm" class="btn primary" style="flex:1;min-height:46px;background:#059669;border-color:#059669;color:#fff;font-weight:800;border-radius:8px;">' + (prev ? '✓ 예, 동일하게 종료' : '✓ 로그북 저장 후 종료') + '</button>' +
           '</div>' +
         '</div>' +
       '</section>';
@@ -21369,14 +21387,25 @@ function renderInvSubLoans(){
     $('btnQuickEndConfirm').onclick = function(){
       const samples = Math.max(1, parseInt($('quickEndSamples').value || '1', 10));
       const sampleName = ($('quickEndSampleName') ? $('quickEndSampleName').value : '').trim();
-      const cond = ($('quickEndCond').value || '').trim();
-      const detail = ($('quickEndDetail').value || '').trim();
+      const cond = ($('quickEndCond') ? $('quickEndCond').value : '').trim();
+      const detail = ($('quickEndDetail') ? $('quickEndDetail').value : '').trim();
+
+      const chillerStart = $('quickEndChillerStart') ? $('quickEndChillerStart').value : '22';
+      const chillerEnd = $('quickEndChillerEnd') ? $('quickEndChillerEnd').value : '22';
+      const vacStart = $('quickEndVacStart') ? $('quickEndVacStart').value : '90';
+      const vacEnd = $('quickEndVacEnd') ? $('quickEndVacEnd').value : '180';
+      const align = $('quickEndAlign') ? $('quickEndAlign').value : 'PB';
+      const scanType = ($('quickEndScanType') ? $('quickEndScanType').value : '2theta-omega').trim();
+
       const nowMs = Date.now();
       const rawMins = Math.max(1, Math.round((nowMs - (curUse.startMs || nowMs)) / 60000));
       const mins = Math.max(30, Math.ceil(rawMins / 30) * 30);
 
       const lm = getLastLogMap();
-      lm[eqId] = { sampleName: sampleName, samples: samples, condition: cond, detail: detail };
+      lm[eqId] = {
+        sampleName: sampleName, samples: samples, condition: cond, detail: detail,
+        chillerStart: chillerStart, chillerEnd: chillerEnd, vacuumStart: vacStart, vacuumEnd: vacEnd, align: align, scanType: scanType
+      };
       saveLastLogMap(lm);
 
       const eqObj = (researchEquipments || []).find(function(e){ return e.id === eqId; });
@@ -21384,14 +21413,22 @@ function renderInvSubLoans(){
       const nowD = new Date(nowMs);
       const endTimeText = pad(nowD.getHours()) + ':' + pad(nowD.getMinutes());
       const affilStr = curUse.affiliation + ' (' + curUse.is_center + '/' + curUse.campus_type + '/' + curUse.is_energy_dept + ')';
-      const noteStr = (sampleName ? '시료: ' + sampleName + ' | ' : '') + (cond ? '[' + cond + '] ' : '') + detail;
+      const noteStr = isXrd
+        ? (sampleName ? sampleName + ' | ' : '') + align + ' / ' + scanType + (detail ? ' | ' + detail : '')
+        : (sampleName ? '시료: ' + sampleName + ' | ' : '') + (cond ? '[' + cond + '] ' : '') + detail;
 
-      if(eqId === 'EQ-XRD-01' && typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
+      if(isXrd && typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
         const existing = curUse.logId ? xrdLogs.find(function(l){ return l.id === curUse.logId; }) : null;
         if(existing){
           existing.end_time = endTimeText;
           existing.duration_min = mins;
           existing.sample_count = samples;
+          existing.chiller_start = Number(chillerStart);
+          existing.chiller_end = Number(chillerEnd);
+          existing.vacuum_start = Number(vacStart);
+          existing.vacuum_end = Number(vacEnd);
+          existing.alignment = align;
+          existing.scan_type = scanType;
           existing.status = 'completed';
           existing.notes = noteStr;
         } else {
@@ -21402,6 +21439,12 @@ function renderInvSubLoans(){
             end_time: endTimeText,
             duration_min: mins,
             sample_count: samples,
+            chiller_start: Number(chillerStart),
+            chiller_end: Number(chillerEnd),
+            vacuum_start: Number(vacStart),
+            vacuum_end: Number(vacEnd),
+            alignment: align,
+            scan_type: scanType,
             user_name: curUse.user,
             affiliation: affilStr,
             status: 'completed',
@@ -21443,12 +21486,11 @@ function renderInvSubLoans(){
       saveActiveMap(am);
 
       modal.classList.remove('open');
-      toast('✓ 사용 종료 및 로그북이 저장되었습니다.');
+      toast('✓ 사용 종료 (' + mins + '분) 및 로그북이 저장되었습니다.');
       renderQuickEquipTwoBtnBar(eqId);
     };
   }
 
-  // selectResearchEquipment 호출 시 2버튼 바도 자동 갱신되도록 훅 연결
   const origSelect = window.selectResearchEquipment;
   if(typeof origSelect === 'function'){
     window.selectResearchEquipment = function(eqId){

@@ -1758,16 +1758,19 @@
               </div>
             </div>
 
-            <!-- 5. XRD 로그 내역 테이블 -->
+            <!-- 5. XRD 로그 내역 테이블 (기본 접힘) -->
             <section class="panel xrd-table-panel">
-              <div class="toolbar" style="margin-bottom:12px;">
-                <div class="search-input-box" style="flex:1;">
-                  <span class="search-input-icon">🔍</span>
-                  <input id="xrdSearch" placeholder="Search sample, user, adviser, affiliation, scan type...">
-                  <button id="btnClearXrdSearch" class="btn-clear-search hidden" type="button">✕</button>
+              <details>
+                <summary style="cursor:pointer;font-weight:800;font-size:14px;color:var(--ink);padding:4px 0;list-style:none;">📋 이전 로그북 검색 및 기록 보기 (클릭하여 펼치기)</summary>
+                <div class="toolbar" style="margin-top:12px;margin-bottom:12px;">
+                  <div class="search-input-box" style="flex:1;">
+                    <span class="search-input-icon">🔍</span>
+                    <input id="xrdSearch" placeholder="Search sample, user, adviser, affiliation, scan type...">
+                    <button id="btnClearXrdSearch" class="btn-clear-search hidden" type="button">✕</button>
+                  </div>
                 </div>
-              </div>
-              <div class="table-wrap" id="xrdRows" aria-live="polite"></div>
+                <div class="table-wrap" id="xrdRows" aria-live="polite"></div>
+              </details>
             </section>
           </div>
         </div>
