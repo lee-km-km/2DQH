@@ -2380,6 +2380,47 @@
   </section>
 </div>
 
+
+<!-- 모바일 설정 시트 모달 (겐바로 스타일: 테마·언어·도움말·로그인) -->
+<div id="mobileSettingsModalBackdrop" class="backdrop" style="display:none;z-index:2650;">
+  <section class="modal" role="dialog" aria-modal="true" style="max-width:420px;width:min(420px,94vw);border-radius:16px;overflow:hidden;background:var(--bg-card,#ffffff);">
+    <div class="modal-head" style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;font-size:16px;font-weight:800;">⚙️ 설정 및 가이드</h3>
+      <button type="button" id="btnCloseMobileSettings" class="icon-btn">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+      <div id="mobSetUserBox" style="padding:12px;border-radius:10px;background:var(--bg-subtle,#f8fafc);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div>
+          <div id="mobSetUserName" style="font-size:14px;font-weight:800;color:var(--ink);">비회원 (로그인 필요)</div>
+          <div id="mobSetUserSub" style="font-size:11.5px;color:var(--ink-light);">로그인 후 장비 예약 및 로그북 작성 가능</div>
+        </div>
+        <button type="button" id="btnMobSetAuth" class="btn primary btn-sm" style="min-height:36px;padding:0 12px;border-radius:8px;font-weight:700;">로그인</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:10px;">
+        <span style="font-size:13.5px;font-weight:700;">🎨 화면 테마</span>
+        <button type="button" id="btnMobSetTheme" class="btn btn-sm" style="min-height:36px;padding:0 14px;border-radius:8px;font-weight:700;">🌙 다크 / ☀️ 라이트</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border);border-radius:10px;">
+        <span style="font-size:13.5px;font-weight:700;">🌐 언어 (Language)</span>
+        <div style="display:flex;gap:6px;">
+          <button type="button" id="btnMobLangKo" class="btn btn-sm" style="min-height:34px;padding:0 10px;border-radius:8px;font-weight:700;">한국어</button>
+          <button type="button" id="btnMobLangEn" class="btn btn-sm" style="min-height:34px;padding:0 10px;border-radius:8px;font-weight:700;">English</button>
+        </div>
+      </div>
+
+      <button type="button" id="btnMobSetHelp" class="btn" style="width:100%;min-height:44px;border-radius:10px;font-weight:700;text-align:left;padding:0 14px;display:flex;justify-content:space-between;align-items:center;">
+        <span>📖 도움말 &amp; 이용 가이드</span><span>→</span>
+      </button>
+
+      <button type="button" id="btnMobSetMail" class="btn admin-only hidden" style="width:100%;min-height:44px;border-radius:10px;font-weight:700;text-align:left;padding:0 14px;display:flex;justify-content:space-between;align-items:center;">
+        <span>✉️ 업무 메일 발송 (관리자)</span><span>→</span>
+      </button>
+    </div>
+  </section>
+</div>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <!-- 모바일 하단 플로팅 퀵 탭 바 (언제든 1탭 즉시 이동) -->
@@ -2401,8 +2442,8 @@
     <span class="bottom-tab-label">연구장비</span>
   </button>
   <button type="button" class="bottom-nav-tab" id="bottomTabMenu">
-    <span class="bottom-tab-icon">☰</span>
-    <span class="bottom-tab-label">메뉴</span>
+    <span class="bottom-tab-icon">⚙️</span>
+    <span class="bottom-tab-label">설정</span>
   </button>
 </nav>
 

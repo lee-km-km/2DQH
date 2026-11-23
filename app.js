@@ -18233,6 +18233,11 @@ function closeChemHistoryModal(){
 
 function openChemWriteLogModal(chemId){
   const modal = $('modalChemWriteLogBackdrop');
+  try {
+    const cu = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const hIn = $('modalChemHandler');
+    if(hIn && cu) hIn.value = cu.name || cu.username || hIn.value;
+  } catch(_) {}
   if(!modal) return;
 
   const chemicals = get291ChemicalsMaster();
@@ -21616,38 +21621,14 @@ function renderInvSubLoans(){
   let viewMonth = now0.getMonth() + 1;
   let selectedDate = today();
   let pickedSlots = [];
+  let gbViewMode = 'detail'; // 'all' | 'detail'
+  let gbFilter = 'all';      // 'all' | 'mine' | 'avail'
 
   function getBookings(){
     try { return JSON.parse(localStorage.getItem(BOOKING_KEY) || '[]'); } catch(_) { return []; }
   }
   function saveBookings(list){
     try { localStorage.setItem(BOOKING_KEY, JSON.stringify(list)); } catch(_) {}
-  }
-
-  async function syncBookingsFromSupabase(eqId){
-    if(typeof db === 'undefined' || !db) return;
-    try {
-      const { data, error } = await db.from('equipment_sessions')
-        .select('*')
-        .eq('equipment_code', 'BOOKING')
-        .eq('equipment_id', eqId);
-      if(!error && Array.isArray(data)){
-        const remoteList = data.map(function(row){
-          let slots = [];
-          try { slots = JSON.parse(row.notes || '[]'); } catch(_) {}
-          return {
-            id: String(row.id),
-            remoteId: row.id,
-            eqId: row.equipment_id,
-            date: row.used_on,
-            slots: Array.isArray(slots) ? slots : [],
-            user: row.user_name || '연구원'
-          };
-        });
-        const others = getBookings().filter(function(b){ return b.eqId !== eqId; });
-        saveBookings(others.concat(remoteList));
-      }
-    } catch(_) {}
   }
 
   window.renderGenbaroBookingPanel = function(eqId){
@@ -21671,11 +21652,12 @@ function renderInvSubLoans(){
     }
     panel.style.display = 'block';
 
+    const lang = (localStorage.getItem('labstock_lang') || 'ko');
+    const isEn = (lang === 'en');
     const all = getBookings().filter(function(b){ return b.eqId === eqId; });
     const dayMap = {};
     all.forEach(function(b){ dayMap[b.date] = (dayMap[b.date] || 0) + 1; });
 
-    // 달력 생성
     const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay();
     const lastDate = new Date(viewYear, viewMonth, 0).getDate();
     const todayStr = today();
@@ -21693,7 +21675,6 @@ function renderInvSubLoans(){
       '</button>';
     }
 
-    // 선택된 날짜의 슬롯 상태
     const dayBookings = all.filter(function(b){ return b.date === selectedDate; });
     const slotOwner = {};
     dayBookings.forEach(function(b){
@@ -21703,11 +21684,18 @@ function renderInvSubLoans(){
     const curUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
     const myName = curUser ? (curUser.name || curUser.username || '연구원') : '연구원';
 
-    const slotsHtml = TIME_SLOTS.map(function(t){
+    const filteredSlots = TIME_SLOTS.filter(function(t){
+      const owner = slotOwner[t];
+      if(gbFilter === 'avail') return !owner;
+      if(gbFilter === 'mine') return owner && owner.user === myName;
+      return true;
+    });
+
+    const slotsHtml = filteredSlots.map(function(t){
       const owner = slotOwner[t];
       if(owner){
         const isMine = (owner.user === myName) || (typeof isAdmin === 'function' && isAdmin());
-        return '<button type="button" class="gb-slot booked' + (isMine ? ' mine' : '') + '" data-gb-cancel="' + safe(owner.id) + '" title="' + safe(owner.user) + ' 예약' + (isMine ? ' (클릭 시 취소)' : '') + '">' +
+        return '<button type="button" class="gb-slot booked' + (isMine ? ' mine' : '') + '" data-gb-cancel="' + safe(owner.id) + '" title="' + safe(owner.user) + '">' +
           '<span class="gb-slot-time">' + t + '</span>' +
           '<span class="gb-slot-user">' + safe(owner.user) + '</span>' +
         '</button>';
@@ -21715,45 +21703,66 @@ function renderInvSubLoans(){
       const isPicked = pickedSlots.indexOf(t) >= 0;
       return '<button type="button" class="gb-slot' + (isPicked ? ' picked' : '') + '" data-gb-slot="' + t + '">' +
         '<span class="gb-slot-time">' + t + '</span>' +
-        '<span class="gb-slot-user">' + (isPicked ? '선택됨' : '예약가능') + '</span>' +
+        '<span class="gb-slot-user">' + (isPicked ? (isEn ? 'Selected' : '선택됨') : (isEn ? 'Open' : '예약가능')) + '</span>' +
       '</button>';
     }).join('');
 
-    const dayListHtml = dayBookings.length
-      ? dayBookings.map(function(b){
+    const monthPrefix = viewYear + '-' + pad(viewMonth);
+    const monthBookings = all.filter(function(b){ return (b.date || '').startsWith(monthPrefix); }).sort(function(a,b){ return (a.date || '').localeCompare(b.date || ''); });
+    const listSource = (gbViewMode === 'all') ? monthBookings : dayBookings;
+
+    const dayListHtml = listSource.length
+      ? listSource.map(function(b){
           const isMine = (b.user === myName) || (typeof isAdmin === 'function' && isAdmin());
           const sList = (b.slots || []).slice().sort();
-          const rangeText = sList.length ? (sList[0] + ' ~ ' + sList[sList.length - 1] + ' (+30분)') : '';
+          const rangeText = sList.length ? (sList[0] + ' ~ ' + sList[sList.length - 1] + ' (+30m)') : '';
           return '<div class="gb-booking-card">' +
-            '<div><b>' + safe(b.user) + '</b> <span style="color:var(--ink-light);font-size:12px;">· ' + safe(rangeText) + ' (' + (sList.length * 30) + '분)</span></div>' +
-            (isMine ? '<button type="button" class="btn btn-sm" data-gb-cancel="' + safe(b.id) + '" style="color:#dc2626;border:1px solid #fecaca;background:#fef2f2;padding:4px 8px;border-radius:6px;font-size:11.5px;">취소</button>' : '') +
+            '<div><b>' + (gbViewMode === 'all' ? safe(b.date) + ' · ' : '') + safe(b.user) + '</b> <span style="color:var(--ink-light);font-size:12px;">· ' + safe(rangeText) + ' (' + (sList.length * 30) + (isEn ? 'min' : '분') + ')</span></div>' +
+            (isMine ? '<button type="button" class="btn btn-sm" data-gb-cancel="' + safe(b.id) + '" style="color:#dc2626;border:1px solid #fecaca;background:#fef2f2;padding:4px 8px;border-radius:6px;font-size:11.5px;">' + (isEn ? 'Cancel' : '취소') + '</button>' : '') +
           '</div>';
         }).join('')
-      : '<div style="font-size:12.5px;color:var(--ink-light);padding:8px 0;">선택한 날짜에 등록된 예약이 없습니다.</div>';
+      : '<div style="font-size:12.5px;color:var(--ink-light);padding:8px 0;">' + (isEn ? 'No bookings found.' : '등록된 예약이 없습니다.') + '</div>';
 
     panel.innerHTML =
       '<div class="gb-header">' +
-        '<div><h3 style="margin:0;font-size:15.5px;font-weight:800;color:var(--ink);">📅 날짜별 장비 예약 (30분 단위)</h3>' +
-        '<span style="font-size:12px;color:var(--ink-light);">날짜와 시간대를 선택해 예약하세요</span></div>' +
-        '<div class="gb-month-nav">' +
-          '<button type="button" id="gbPrevMonth" class="gb-nav-btn">‹</button>' +
-          '<span style="font-weight:800;font-size:14px;min-width:84px;text-align:center;">' + viewYear + '.' + pad(viewMonth) + '</span>' +
-          '<button type="button" id="gbNextMonth" class="gb-nav-btn">›</button>' +
+        '<div><h3 style="margin:0;font-size:15.5px;font-weight:800;color:var(--ink);">' + (isEn ? '📅 Equipment Booking (30m)' : '📅 날짜별 장비 예약 (30분 단위)') + '</h3></div>' +
+        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+          '<button type="button" class="gb-mode-btn' + (gbViewMode === 'all' ? ' active' : '') + '" data-gb-mode="all">' + (isEn ? 'All' : '전체 보기') + '</button>' +
+          '<button type="button" class="gb-mode-btn' + (gbViewMode === 'detail' ? ' active' : '') + '" data-gb-mode="detail">' + (isEn ? 'Detail' : '자세히 보기') + '</button>' +
+          '<div class="gb-month-nav">' +
+            '<button type="button" id="gbPrevMonth" class="gb-nav-btn">‹</button>' +
+            '<span style="font-weight:800;font-size:13.5px;min-width:74px;text-align:center;">' + viewYear + '.' + pad(viewMonth) + '</span>' +
+            '<button type="button" id="gbNextMonth" class="gb-nav-btn">›</button>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="gb-cal-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>' +
       '<div class="gb-cal-grid">' + calCells + '</div>' +
       '<div class="gb-day-section">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
-          '<b style="font-size:13.5px;">🗓️ ' + safe(selectedDate) + ' 타임슬롯 (09:00 ~ 18:00)</b>' +
-          (pickedSlots.length ? '<button type="button" id="gbSubmitBooking" class="btn primary" style="background:#2563eb;border-color:#2563eb;color:#fff;font-weight:800;padding:7px 14px;border-radius:8px;">✓ ' + (pickedSlots.length * 30) + '분 예약 확정</button>' : '') +
-        '</div>' +
-        '<div class="gb-slots-grid">' + slotsHtml + '</div>' +
+        (gbViewMode === 'detail'
+          ? '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">' +
+              '<b style="font-size:13.5px;">🗓️ ' + safe(selectedDate) + ' (09:00 ~ 18:00)</b>' +
+              '<div style="display:flex;gap:4px;">' +
+                '<button type="button" class="gb-filter-chip' + (gbFilter === 'all' ? ' active' : '') + '" data-gb-filter="all">' + (isEn ? 'All' : '전체') + '</button>' +
+                '<button type="button" class="gb-filter-chip' + (gbFilter === 'avail' ? ' active' : '') + '" data-gb-filter="avail">' + (isEn ? 'Open' : '예약가능') + '</button>' +
+                '<button type="button" class="gb-filter-chip' + (gbFilter === 'mine' ? ' active' : '') + '" data-gb-filter="mine">' + (isEn ? 'Mine' : '내 예약') + '</button>' +
+              '</div>' +
+            '</div>' +
+            (pickedSlots.length ? '<div style="margin-bottom:8px;"><button type="button" id="gbSubmitBooking" class="btn primary" style="width:100%;min-height:42px;background:#2563eb;border-color:#2563eb;color:#fff;font-weight:800;border-radius:8px;">✓ ' + (pickedSlots.length * 30) + (isEn ? 'm Confirm Booking' : '분 예약 확정') + '</button></div>' : '') +
+            '<div class="gb-slots-grid">' + slotsHtml + '</div>'
+          : '') +
         '<div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:10px;">' +
-          '<div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">📌 이날의 예약 목록</div>' +
+          '<div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">' + (gbViewMode === 'all' ? (isEn ? '📌 Monthly Bookings' : '📌 이번 달 전체 예약 현황') : (isEn ? '📌 Day Bookings' : '📌 이날의 예약 목록')) + '</div>' +
           dayListHtml +
         '</div>' +
       '</div>';
+
+    panel.querySelectorAll('[data-gb-mode]').forEach(function(b){
+      b.onclick = function(){ gbViewMode = b.dataset.gbMode; renderGenbaroBookingPanel(eqId); };
+    });
+    panel.querySelectorAll('[data-gb-filter]').forEach(function(b){
+      b.onclick = function(){ gbFilter = b.dataset.gbFilter; renderGenbaroBookingPanel(eqId); };
+    });
 
     $('gbPrevMonth').onclick = function(){
       viewMonth--; if(viewMonth < 1){ viewMonth = 12; viewYear--; }
@@ -21984,3 +21993,83 @@ async function renderAdminMembersPanel(){
     };
   });
 }
+
+
+// ==========================================================================
+// [모바일 하단 ⚙️ 설정 모달 & 한국어/English 언어 전환 모듈]
+// ==========================================================================
+(function initMobileSettingsAndLang(){
+  function applyLang(lang){
+    lang = (lang === 'en') ? 'en' : 'ko';
+    try { localStorage.setItem('labstock_lang', lang); } catch(_) {}
+    const isEn = (lang === 'en');
+    const labels = isEn
+      ? { inv: 'Equip', con: 'Supply', chem: 'Chem', log: 'Portal', set: 'Settings' }
+      : { inv: '비품', con: '소모품', chem: '시약', log: '연구장비', set: '설정' };
+    const setLbl = function(id, txt){ const el = document.querySelector('#' + id + ' .bottom-tab-label'); if(el) el.textContent = txt; };
+    setLbl('bottomTabInventory', labels.inv);
+    setLbl('bottomTabConsumables', labels.con);
+    setLbl('bottomTabChemicals', labels.chem);
+    setLbl('bottomTabLogbook', labels.log);
+    setLbl('bottomTabMenu', labels.set);
+
+    const bKo = $('btnMobLangKo'), bEn = $('btnMobLangEn');
+    if(bKo){ bKo.style.background = !isEn ? '#2563eb' : ''; bKo.style.color = !isEn ? '#fff' : ''; }
+    if(bEn){ bEn.style.background = isEn ? '#2563eb' : ''; bEn.style.color = isEn ? '#fff' : ''; }
+    if(typeof renderGenbaroBookingPanel === 'function' && typeof currentSelectedEquipment !== 'undefined'){
+      renderGenbaroBookingPanel(currentSelectedEquipment);
+    }
+  }
+
+  window.openMobileSettingsModal = function(){
+    const m = $('mobileSettingsModalBackdrop');
+    if(!m) return;
+    const cu = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const nm = $('mobSetUserName'), sub = $('mobSetUserSub'), ab = $('btnMobSetAuth');
+    if(cu){
+      if(nm) nm.textContent = (cu.name || cu.username) + '님';
+      if(sub) sub.textContent = (cu.affiliation || '2DQH') + (typeof isAdmin === 'function' && isAdmin() ? ' · 관리자' : '');
+      if(ab){ ab.textContent = '로그아웃'; ab.onclick = function(){ m.classList.remove('open'); m.style.display='none'; if(typeof userLogout==='function') userLogout(); }; }
+    } else {
+      if(nm) nm.textContent = '비회원 (로그인 필요)';
+      if(sub) sub.textContent = '로그인 후 장비 예약 및 로그북 작성 가능';
+      if(ab){ ab.textContent = '로그인'; ab.onclick = function(){ m.classList.remove('open'); m.style.display='none'; if(typeof openModal==='function') openModal('login'); }; }
+    }
+    applyLang(localStorage.getItem('labstock_lang') || 'ko');
+    m.classList.add('open');
+    m.style.display = 'flex';
+  };
+
+  function bindSettings(){
+    const tabBtn = $('bottomTabMenu');
+    if(tabBtn){
+      tabBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        openMobileSettingsModal();
+      }, true);
+    }
+    const closeBtn = $('btnCloseMobileSettings');
+    const modal = $('mobileSettingsModalBackdrop');
+    if(closeBtn && modal) closeBtn.onclick = function(){ modal.classList.remove('open'); modal.style.display='none'; };
+    if(modal) modal.onclick = function(e){ if(e.target === modal){ modal.classList.remove('open'); modal.style.display='none'; } };
+
+    const th = $('btnMobSetTheme');
+    if(th) th.onclick = function(){ if(typeof toggleTheme === 'function') toggleTheme(); };
+
+    const bKo = $('btnMobLangKo'), bEn = $('btnMobLangEn');
+    if(bKo) bKo.onclick = function(){ applyLang('ko'); toast('한국어로 전환되었습니다.'); };
+    if(bEn) bEn.onclick = function(){ applyLang('en'); toast('Switched to English.'); };
+
+    const hBtn = $('btnMobSetHelp');
+    if(hBtn && modal) hBtn.onclick = function(){ modal.classList.remove('open'); modal.style.display='none'; if(typeof showView === 'function') showView('help'); };
+
+    const mBtn = $('btnMobSetMail');
+    if(mBtn && modal) mBtn.onclick = function(){ modal.classList.remove('open'); modal.style.display='none'; if(typeof openLabMailModal === 'function') openLabMailModal(); };
+
+    applyLang(localStorage.getItem('labstock_lang') || 'ko');
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindSettings);
+  else bindSettings();
+})();

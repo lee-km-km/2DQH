@@ -13900,3 +13900,19 @@ html:not(.is-admin) #btnHelpTabAdmin {
 @media (min-width: 769px) {
   .gb-slots-grid { grid-template-columns: repeat(6, 1fr); }
 }
+
+.gb-mode-btn, .gb-filter-chip {
+  padding: 5px 10px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle, #f8fafc);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.gb-mode-btn.active, .gb-filter-chip.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
