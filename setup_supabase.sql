@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS public.equipment_sessions (
 
 ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS start_time TEXT;
 ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS end_time TEXT;
-ALTER TABLE IF NOT EXISTS public.equipment_sessions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'completed';
+ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'completed';
 
 -- 3. HR-XRD 전용 로그북 테이블
 CREATE TABLE IF NOT EXISTS public.xrd_logs (
