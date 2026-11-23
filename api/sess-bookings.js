@@ -15,32 +15,53 @@ function toHalfHourSlots(startTm, endTm) {
   return out;
 }
 
+async function fetchSessQuery(curDate, extraParams) {
+  const url = `https://sess.skku.edu/_custom/shb/_common/sessEquip/reserve/month/getMonthData.jsp?curDate=${encodeURIComponent(curDate)}&${extraParams}`;
+  try {
+    const r = await fetch(url, { headers: { 'User-Agent': '2DQH-Lab-Sync/1.0' } });
+    if (!r.ok) return [];
+    const j = await r.json();
+    return Array.isArray(j.data) ? j.data : [];
+  } catch (_) {
+    return [];
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   const month = (req.query && req.query.month) ? String(req.query.month).slice(0, 7) : new Date().toISOString().slice(0, 7);
   const curDate = `${month}-01`;
 
   try {
-    const url = `https://sess.skku.edu/_custom/shb/_common/sessEquip/reserve/month/getMonthData.jsp?searchCode1=place&searchCode2=610&curDate=${encodeURIComponent(curDate)}`;
-    const r = await fetch(url, { headers: { 'User-Agent': '2DQH-Lab-Sync/1.0' } });
-    if (!r.ok) {
-      return res.status(502).json({ error: `SESS 응답 오류 (${r.status})`, items: [] });
-    }
-    const json = await r.json();
-    const raw = Array.isArray(json.data) ? json.data : [];
+    const batches = await Promise.all([
+      fetchSessQuery(curDate, 'searchCode1=place&searchCode2=610'),
+      fetchSessQuery(curDate, 'searchCode1=place&searchCode2=610&srSearchVal=HRXRD'),
+      fetchSessQuery(curDate, 'searchCode1=place&searchCode2=610&srSearchVal=FT-IR'),
+      fetchSessQuery(curDate, 'searchCode1=place&searchCode2=610&srSearchVal=UV'),
+      fetchSessQuery(curDate, 'searchCode1=place&searchCode2=610&srSearchVal=OM')
+    ]);
 
-    const items = raw.map((d) => ({
-      reservNo: d.reservNo || d.reservNos || '',
-      equipEngNm: d.equipEngNm || '',
-      equipShortNm: d.equipShortNm || '',
-      equipKorNm: d.equipKorNm || '',
-      user: d.korNm || 'SESS 예약자',
-      date: d.startDt || d.start || '',
-      startTm: d.startTm || '',
-      endTm: d.endTm || '',
-      slots: toHalfHourSlots(d.startTm, d.endTm),
-      space: d.GK_GU_SPACE_NM || ''
-    }));
+    const seen = new Set();
+    const items = [];
+    for (const raw of batches) {
+      for (const d of raw) {
+        const rNo = String(d.reservNo || d.reservNos || '');
+        if (rNo && seen.has(rNo)) continue;
+        if (rNo) seen.add(rNo);
+        items.push({
+          reservNo: rNo,
+          equipEngNm: d.equipEngNm || '',
+          equipShortNm: d.equipShortNm || '',
+          equipKorNm: d.equipKorNm || '',
+          user: d.korNm || 'SESS 예약자',
+          date: d.startDt || d.start || '',
+          startTm: d.startTm || '',
+          endTm: d.endTm || '',
+          slots: toHalfHourSlots(d.startTm, d.endTm),
+          space: d.GK_GU_SPACE_NM || ''
+        });
+      }
+    }
 
     return res.status(200).json({ success: true, month, count: items.length, items });
   } catch (err) {

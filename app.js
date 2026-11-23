@@ -22127,6 +22127,79 @@ async function renderAdminMembersPanel(){
 // [모바일 하단 ⚙️ 설정 모달 & 한국어/English 언어 전환 모듈]
 // ==========================================================================
 (function initMobileSettingsAndLang(){
+
+  const KO_EN_PHRASES = [
+    ['연구장비 운영 포털', 'Equipment Reservation & Logbook'],
+    ['연구장비 포털', 'Equipment Booking'],
+    ['연구장비 목록', 'Equipment List'],
+    ['전체 연구장비 목록', 'All Equipment'],
+    ['성균관대 SESS 연구장비', 'SKKU SESS Research Equipment'],
+    ['핵심 예약 장비 4종 (HR-XRD · OM · UV-Vis · FT-IR)', 'Core 4 Equipment (HR-XRD · OM · UV-Vis · FT-IR)'],
+    ['전체 장비 보기', 'Show All Equipment'],
+    ['핵심 4종만 보기', 'Core 4 Only'],
+    ['전자 로그북 열기', 'Open Logbook & Booking'],
+    ['HR-XRD 전자 로그북 열기', 'Open HR-XRD Logbook & Booking'],
+    ['비품 및 소모품', 'Lab Inventory'],
+    ['비품·소모품', 'Inventory'],
+    ['비품', 'Equipment'],
+    ['소모품', 'Consumables'],
+    ['특수물질 & 시약', 'Chemicals & Reagents'],
+    ['시약', 'Chemicals'],
+    ['시스템 안내', 'System'],
+    ['도움말 & 가이드', 'Help & User Guide'],
+    ['도움말', 'Help'],
+    ['로그인 / 회원가입', 'Login / Sign Up'],
+    ['로그아웃', 'Logout'],
+    ['현재 사용 가능한 장비입니다', 'Available Now'],
+    ['이미 사용 중인 장비', 'Currently In Use'],
+    ['이전 로그북 검색 및 기록 보기 (클릭하여 펼치기)', 'Previous Logbook Search & Records (Click to Expand)'],
+    ['전체 보기', 'All'],
+    ['자세히 보기', 'Detail'],
+    ['연구실 예약', 'Lab Booking'],
+    ['SESS 예약', 'SESS Booking'],
+    ['시작 시간', 'Start Time'],
+    ['종료 시간', 'End Time'],
+    ['예약 확정', 'Confirm Booking'],
+    ['예약 시간 선택 및 확정은 로그인 후 가능합니다.', 'Please log in to select times and make a reservation.'],
+    ['이날의 예약 목록', 'Bookings on Selected Date'],
+    ['이번 달 전체 예약 현황', 'Monthly Bookings'],
+    ['등록된 예약이 없습니다.', 'No bookings found.'],
+    ['비회원 (로그인 필요)', 'Guest (Login Required)'],
+    ['로그인 후 장비 예약 및 로그북 작성 가능', 'Log in to book equipment and write logbooks'],
+    ['화면 테마', 'Theme'],
+    ['언어 (Language)', 'Language'],
+    ['도움말 & 이용 가이드', 'Help & User Guide'],
+    ['업무 메일 발송 (관리자)', 'Lab Mail (Admin Only)'],
+    ['직접사용 (자율운영)', 'Self-Service'],
+    ['직접사용', 'Self-Service'],
+    ['운영 중', 'Active']
+  ];
+
+  function translateDomTexts(isEn){
+    try {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+      let node;
+      while((node = walker.nextNode())){
+        const parent = node.parentElement;
+        if(!parent || parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') continue;
+        if(!node._origKoText){
+          const raw = node.nodeValue;
+          if(raw && /[가-힣]/.test(raw)) node._origKoText = raw;
+        }
+        if(!node._origKoText) continue;
+        if(!isEn){
+          node.nodeValue = node._origKoText;
+        } else {
+          let txt = node._origKoText;
+          for(let i = 0; i < KO_EN_PHRASES.length; i++){
+            const ko = KO_EN_PHRASES[i][0], en = KO_EN_PHRASES[i][1];
+            if(txt.indexOf(ko) >= 0) txt = txt.split(ko).join(en);
+          }
+          node.nodeValue = txt;
+        }
+      }
+    } catch(_) {}
+  }
   function applyLang(lang){
     lang = (lang === 'en') ? 'en' : 'ko';
     try { localStorage.setItem('labstock_lang', lang); } catch(_) {}
@@ -22149,7 +22222,7 @@ async function renderAdminMembersPanel(){
     setTxt('#sidebarNavHelp span:last-child', '도움말', 'Help & Guide');
     setTxt('#loginBtn', '로그인 / 회원가입', 'Login / Sign Up');
     setTxt('#logoutBtn', '로그아웃', 'Logout');
-    setTxt('#btnTopSwitchLogbook .mod-label', '연구장비', 'Equip Portal');
+    setTxt('#btnTopSwitchLogbook .mod-label', '연구장비', 'Equip Booking');
     setTxt('#btnTopSwitchInventory .mod-label', '비품·소모품', 'Inventory');
     setTxt('#view-inventory .page-head h1', '비품', 'Equipment');
     setTxt('#view-consumables .page-head h1', '소모품', 'Consumables');
@@ -22162,6 +22235,7 @@ async function renderAdminMembersPanel(){
     if(typeof renderQuickEquipTwoBtnBar === 'function' && typeof currentSelectedEquipment !== 'undefined'){
       renderQuickEquipTwoBtnBar(currentSelectedEquipment);
     }
+    translateDomTexts(isEn);
 
     const bKo = $('btnMobLangKo'), bEn = $('btnMobLangEn');
     if(bKo){ bKo.style.background = !isEn ? '#2563eb' : ''; bKo.style.color = !isEn ? '#fff' : ''; }
@@ -22220,6 +22294,22 @@ async function renderAdminMembersPanel(){
     applyLang(localStorage.getItem('labstock_lang') || 'ko');
   }
 
+  const _origSv = window.showView;
+  if(typeof _origSv === 'function'){
+    window.showView = function(){
+      const res = _origSv.apply(this, arguments);
+      if(localStorage.getItem('labstock_lang') === 'en') setTimeout(function(){ translateDomTexts(true); }, 60);
+      return res;
+    };
+  }
+  const _origSelEq = window.selectResearchEquipment;
+  if(typeof _origSelEq === 'function'){
+    window.selectResearchEquipment = function(){
+      const res = _origSelEq.apply(this, arguments);
+      if(localStorage.getItem('labstock_lang') === 'en') setTimeout(function(){ translateDomTexts(true); }, 60);
+      return res;
+    };
+  }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindSettings);
   else bindSettings();
 })();
