@@ -5077,7 +5077,29 @@ function renderEquipmentPortalGrid(){
   const clearBtn = $('btnClearEqSearch');
   if(clearBtn) clearBtn.classList.toggle('hidden', !q);
 
+  const CORE_4_IDS = ['EQ-XRD-01', 'EQ-OM-ZEISS', 'EQ-UVVIS-01', 'EQ-FTIR-01'];
+  if(typeof window._showAllPortalEquips === 'undefined') window._showAllPortalEquips = false;
+
+  let toggleWrap = $('eqPortalShowAllWrap');
+  if(!toggleWrap && grid.parentNode){
+    toggleWrap = document.createElement('div');
+    toggleWrap.id = 'eqPortalShowAllWrap';
+    toggleWrap.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;';
+    grid.parentNode.insertBefore(toggleWrap, grid);
+  }
+  if(toggleWrap){
+    toggleWrap.innerHTML = '<span style="font-size:12.5px;color:var(--ink-light);font-weight:600;">' +
+      (window._showAllPortalEquips ? '전체 연구장비 (' + allEquips.length + '대)' : '⭐ 핵심 예약 장비 4종 (HR-XRD · OM · UV-Vis · FT-IR)') + '</span>' +
+      '<button type="button" id="btnToggleShowAllEquips" class="btn btn-sm" style="border-radius:8px;font-weight:700;padding:5px 12px;">' +
+      (window._showAllPortalEquips ? '⭐ 핵심 4종만 보기' : '📋 전체 장비 보기 (' + allEquips.length + '대)') + '</button>';
+    const tb = $('btnToggleShowAllEquips');
+    if(tb) tb.onclick = function(){ window._showAllPortalEquips = !window._showAllPortalEquips; renderEquipmentPortalGrid(); };
+  }
+
   const filtered = allEquips.filter(function(eq){
+    if(!q && selectedEquipmentCategory === 'all' && !window._showAllPortalEquips){
+      if(CORE_4_IDS.indexOf(eq.id) < 0) return false;
+    }
     const matchCat = (selectedEquipmentCategory === 'all' || eq.category === selectedEquipmentCategory);
     if(!matchCat) return false;
     if(!q) return true;
@@ -7351,6 +7373,7 @@ function exportUnifiedSessionsCsv(){
 }
 
 function selectResearchEquipment(eqId){
+  if(eqId === 'EQ-WIRE-01') eqId = 'EQ-BONDER-01';
   currentSelectedEquipment = eqId || 'EQ-XRD-01';
   const hub = $('equipmentCatalogHub');
   const detail = $('equipmentDetailHub');

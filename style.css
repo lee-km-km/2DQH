@@ -13916,3 +13916,38 @@ html:not(.is-admin) #btnHelpTabAdmin {
   color: #ffffff !important;
   border-color: #2563eb !important;
 }
+
+/* ==========================================================================
+   [다크모드 보완: 2버튼 바 · 겐바로 예약 달력 · 모바일 설정 모달]
+   ========================================================================== */
+[data-theme="dark"] #quickEquipTwoBtnBar,
+[data-theme="dark"] .genbaro-booking-panel,
+[data-theme="dark"] #mobileSettingsModalBackdrop .modal {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .gb-nav-btn,
+[data-theme="dark"] .gb-slot,
+[data-theme="dark"] .gb-booking-card,
+[data-theme="dark"] .gb-mode-btn,
+[data-theme="dark"] .gb-filter-chip,
+[data-theme="dark"] #mobSetUserBox {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .gb-slot.booked {
+  background: #0f172a !important;
+  border-color: #475569 !important;
+}
+[data-theme="dark"] .gb-slot.booked.mine {
+  background: rgba(127, 29, 29, 0.35) !important;
+  border-color: #ef4444 !important;
+}
+[data-theme="dark"] .gb-cal-day {
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .gb-cal-day:hover {
+  background: #1e293b !important;
+}
