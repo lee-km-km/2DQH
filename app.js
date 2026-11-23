@@ -3517,7 +3517,9 @@ function renderXrdLogs(){
   const unloggedXrd = (typeof window.getUnloggedBookingLogs === 'function')
     ? window.getUnloggedBookingLogs('EQ-XRD-01', xrdLogs)
     : [];
-  const combinedXrd = xrdLogs.map(function(l){ return Object.assign({}, l, { is_unlogged_booking: false }); })
+  const combinedXrd = xrdLogs.map(function(l){
+      return Object.assign({}, l, { is_unlogged_booking: (l.status === 'unlogged_booking' || !!l.is_unlogged_booking) });
+    })
     .concat(unloggedXrd)
     .sort(function(a, b){
       const da = (a.used_on || '') + ' ' + (a.start_time || '');
@@ -3537,8 +3539,8 @@ function renderXrdLogs(){
   const filterBarHtml =
     '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">' +
       '<button type="button" data-xrd-filter="all" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='all'?'#2563eb':'#cbd5e1') + ';background:' + (filterMode==='all'?'#2563eb':'#fff') + ';color:' + (filterMode==='all'?'#fff':'#475569') + ';cursor:pointer;">전체 일지 (' + combinedXrd.length + ')</button>' +
-      '<button type="button" data-xrd-filter="logged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='logged'?'#15803d':'#cbd5e1') + ';background:' + (filterMode==='logged'?'#15803d':'#fff') + ';color:' + (filterMode==='logged'?'#fff':'#475569') + ';cursor:pointer;">📝 로그북 작성분 (' + xrdLogs.length + ')</button>' +
-      '<button type="button" data-xrd-filter="unlogged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='unlogged'?'#d97706':'#cbd5e1') + ';background:' + (filterMode==='unlogged'?'#d97706':'#fff') + ';color:' + (filterMode==='unlogged'?'#fff':'#475569') + ';cursor:pointer;">📅 예약기반 미작성 (' + unloggedXrd.length + ')</button>' +
+      '<button type="button" data-xrd-filter="logged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='logged'?'#15803d':'#cbd5e1') + ';background:' + (filterMode==='logged'?'#15803d':'#fff') + ';color:' + (filterMode==='logged'?'#fff':'#475569') + ';cursor:pointer;">📝 로그북 작성분 (' + combinedXrd.filter(function(x){ return !x.is_unlogged_booking; }).length + ')</button>' +
+      '<button type="button" data-xrd-filter="unlogged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='unlogged'?'#d97706':'#cbd5e1') + ';background:' + (filterMode==='unlogged'?'#d97706':'#fff') + ';color:' + (filterMode==='unlogged'?'#fff':'#475569') + ';cursor:pointer;">📅 예약기반 미작성 (' + combinedXrd.filter(function(x){ return x.is_unlogged_booking; }).length + ')</button>' +
     '</div>';
 
   if(filtered.length === 0){
@@ -3582,13 +3584,13 @@ function renderXrdLogs(){
       : '<span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10.5px;margin-left:4px;">로그북 작성</span>';
     html += '<tr' + (isUnlogged ? ' style="background:#fffbeb;"' : '') + '>' +
       '<td data-l="Time"><b>' + safe(dt) + '</b>' + typeBadge + '<span class="id" style="font-size:12px;color:#64748b;display:block;">' + safe(st) + ' ~ ' + (isActive ? '<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-weight:700;font-size:11px;">In progress</span>' : safe(et) + ' (' + durStr + ')') + (l.reservation_no ? ' · #' + safe(l.reservation_no) : '') + '</span></td>' +
-      '<td data-l="User"><b>' + safe(l.user_name) + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + safe(l.professor || '') + ' · ' + safe(l.affiliation || '') + '</span></td>' +
-      '<td data-l="Chiller">' + arrow(l.chiller_start, l.chiller_end) + '</td>' +
-      '<td data-l="Vacuum">' + arrow(l.vacuum_start, l.vacuum_end) + '</td>' +
-      '<td data-l="Checks">' + (isActive ? '—' : checksHtml(l)) + '</td>' +
-      '<td data-l="Align.">' + (isActive ? '—' : safe(l.align || 'PB')) + '</td>' +
+      '<td data-l="User"><b>' + safe(l.user_name || '—') + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + [l.professor, l.affiliation].filter(Boolean).map(safe).join(' · ') + '</span></td>' +
+      '<td data-l="Chiller">' + (isUnlogged && l.chiller_start == null && l.chiller_end == null ? '—' : arrow(l.chiller_start, l.chiller_end)) + '</td>' +
+      '<td data-l="Vacuum">' + (isUnlogged && l.vacuum_start == null && l.vacuum_end == null ? '—' : arrow(l.vacuum_start, l.vacuum_end)) + '</td>' +
+      '<td data-l="Checks">' + ((isActive || isUnlogged) ? '—' : checksHtml(l)) + '</td>' +
+      '<td data-l="Align.">' + ((isActive || isUnlogged) ? '—' : safe(l.align || 'PB')) + '</td>' +
       '<td data-l="Scan">' + (safe(l.scan_type) || '—') + '</td>' +
-      '<td data-l="Sample"><b>' + (safe(l.sample_name) || '—') + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + (isActive ? '' : '×' + safe(l.sample_count || 1)) + (l.meas_info ? ' · ' + safe(l.meas_info) : '') + (l.memo ? ' · 📝 ' + safe(l.memo) : '') + '</span></td>' +
+      '<td data-l="Sample"><b>' + (safe(l.sample_name) || '—') + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + ((isActive || isUnlogged || !l.sample_count) ? '' : '×' + safe(l.sample_count)) + (l.meas_info ? ' · ' + safe(l.meas_info) : '') + (l.memo ? ' · 📝 ' + safe(l.memo) : '') + '</span></td>' +
       '<td data-l="Action">';
     if(isUnlogged){
       html += '<span style="font-size:11.5px;color:#b45309;font-weight:700;background:#fef3c7;padding:2px 7px;border-radius:6px;">예약반영</span>';
@@ -5209,6 +5211,7 @@ function getUnifiedEquipmentSessions(){
   // 1. HR-XRD logs (map to unified session object)
   if(Array.isArray(xrdLogs)){
     xrdLogs.forEach(function(l){
+      const isUnloggedRow = (l.status === 'unlogged_booking' || !!l.is_unlogged_booking);
       list.push({
         id: 'xrd_' + (l.id || l.created_at || Math.random()),
         raw_id: l.id,
@@ -5217,17 +5220,19 @@ function getUnifiedEquipmentSessions(){
         equipment_name: 'HR-XRD (고분해능 X선 회절분석기)',
         icon: '🔬',
         is_live: true,
-        type: 'active',
+        type: isUnloggedRow ? 'booking_unlogged' : 'active',
+        is_unlogged_booking: isUnloggedRow,
+        booking_source: l.booking_source || (String(l.memo || '').includes('SESS') ? 'SESS' : ''),
         used_on: l.used_on || (l.created_at ? l.created_at.slice(0, 10) : today()),
-        start_time: l.start_time || '10:00',
+        start_time: l.start_time || '',
         end_time: l.end_time || '',
-        duration_min: l.duration_min || 60,
-        user_name: l.user_name || '이강민',
-        affiliation: l.affiliation || '2DQH',
-        professor: l.professor || '신현석 교수님',
-        sample_name: l.sample_name || 'HR-XRD 분석 시료',
-        sample_count: l.sample_count || 1,
-        scan_type: l.scan_type || 'θ/2θ',
+        duration_min: l.duration_min != null ? l.duration_min : 0,
+        user_name: l.user_name || '',
+        affiliation: l.affiliation || '',
+        professor: l.professor || '',
+        sample_name: l.sample_name || '',
+        sample_count: l.sample_count != null ? l.sample_count : (isUnloggedRow ? 0 : 1),
+        scan_type: l.scan_type || '',
         parameters: {
           chiller_start: l.chiller_start,
           chiller_end: l.chiller_end,
@@ -5247,7 +5252,9 @@ function getUnifiedEquipmentSessions(){
   // 2. 범용 장비 시험/운영 세션 (equipmentSessions)
   if(Array.isArray(equipmentSessions)){
     equipmentSessions.forEach(function(s){
+      if(s.equipment_code === 'BOOKING' || s.equipment_code === 'ACTIVE_USE' || s.equipment_code === 'VIP_CONFIG') return;
       const eq = researchEquipments.find(function(e){ return e.id === s.equipment_id || e.code === s.equipment_code; }) || {};
+      const isUnloggedRow = (s.status === 'unlogged_booking' || !!s.is_unlogged_booking);
       list.push({
         id: 'sess_' + (s.id || s.created_at || Math.random()),
         raw_id: s.id,
@@ -5256,19 +5263,21 @@ function getUnifiedEquipmentSessions(){
         equipment_name: eq.name || s.equipment_code || '연구장비',
         icon: eq.icon || '⚡',
         is_live: (eq.status === 'active'),
-        type: 'test',
+        type: isUnloggedRow ? 'booking_unlogged' : 'test',
+        is_unlogged_booking: isUnloggedRow,
+        booking_source: s.booking_source || (String(s.memo || s.notes || '').includes('SESS') ? 'SESS' : ''),
         used_on: s.used_on || today(),
-        start_time: s.start_time || '10:00',
+        start_time: s.start_time || '',
         end_time: s.end_time || '',
-        duration_min: s.duration_min || 60,
-        user_name: s.user_name || '연구원',
-        affiliation: s.affiliation || '2DQH',
-        professor: s.professor || '신현석 교수님',
-        sample_name: s.sample_name || '연구 시료',
-        sample_count: s.sample_count || 1,
+        duration_min: s.duration_min != null ? s.duration_min : 0,
+        user_name: s.user_name || '',
+        affiliation: s.affiliation || '',
+        professor: s.professor || '',
+        sample_name: s.sample_name || '',
+        sample_count: s.sample_count != null ? s.sample_count : (isUnloggedRow ? 0 : 1),
         scan_type: s.scan_type || '',
         parameters: s.parameters || {},
-        memo: s.memo || '',
+        memo: s.memo || s.notes || '',
         created_at: s.created_at || new Date().toISOString()
       });
     });
@@ -5716,6 +5725,9 @@ function renderEquipmentUtilizationPanel(allSessions){
 }
 
 function renderEquipmentAnalyticsDashboard(){
+  if(typeof window.ensureSessBookingsForAnalytics === 'function'){
+    window.ensureSessBookingsForAnalytics(currentCalendarYear, currentCalendarMonth, selectedAnalyticsPeriod);
+  }
   const allSessions = getUnifiedEquipmentSessions();
 
   renderEquipmentAnalyticsScopeChips();
@@ -7681,14 +7693,18 @@ function exportEquipmentLogsExcel(){
   };
 
   const isXrd = (selected.type === 'xrd' || selected.code === 'XRD' || selected.code === 'HR-XRD' || selected.id === 'EQ-XRD-01');
-  const writtenLogs = (isXrd ? xrdLogs : equipmentSessions.filter(function(s){
+  const baseLogs = (isXrd ? xrdLogs : equipmentSessions.filter(function(s){
+    if(s.equipment_code === 'BOOKING' || s.equipment_code === 'ACTIVE_USE' || s.equipment_code === 'VIP_CONFIG') return false;
     return s.equipment_id === selected.id || s.equipment_code === selected.code;
-  })).map(function(l){ return Object.assign({}, l, { is_unlogged_booking: false }); });
+  })).map(function(l){
+    return Object.assign({}, l, { is_unlogged_booking: (l.status === 'unlogged_booking' || !!l.is_unlogged_booking) });
+  });
+  const writtenLogs = baseLogs.filter(function(l){ return !l.is_unlogged_booking; });
 
   const unloggedList = (typeof window.getUnloggedBookingLogs === 'function')
-    ? window.getUnloggedBookingLogs(selected.id, writtenLogs)
+    ? window.getUnloggedBookingLogs(selected.id, baseLogs)
     : [];
-  const logs = writtenLogs.concat(unloggedList).sort(function(a, b){
+  const logs = baseLogs.concat(unloggedList).sort(function(a, b){
     const da = (a.used_on || '') + ' ' + (a.start_time || '');
     const dbStr = (b.used_on || '') + ' ' + (b.start_time || '');
     return dbStr.localeCompare(da);
@@ -7778,11 +7794,11 @@ function exportEquipmentLogsExcel(){
       }
       const durMin = l.duration_min != null ? Number(l.duration_min) : (Number(l.run_hours) ? Math.round(Number(l.run_hours) * 60) : 60);
       const userName = l.user_name || l.operator_name || '-';
-      const affil = l.affiliation || '2DQH';
+      const affil = l.affiliation || (l.is_unlogged_booking ? '-' : '2DQH');
       const prof = l.professor || '-';
       const sample = l.sample_name || l.sample_info || '-';
-      const sampleCnt = l.sample_count != null ? Number(l.sample_count) : 1;
-      const scanMode = l.scan_type || (l.parameters && l.parameters.scan_type) || (isXrd ? (l.scan_mode || 'θ/2θ') : '표준');
+      const sampleCnt = l.sample_count != null ? Number(l.sample_count) : (l.is_unlogged_booking ? '' : 1);
+      const scanMode = l.scan_type || (l.parameters && l.parameters.scan_type) || (l.is_unlogged_booking ? '-' : (isXrd ? (l.scan_mode || 'θ/2θ') : '표준'));
 
       let paramStr = '-';
       if(l.parameters && typeof l.parameters === 'object'){
@@ -21882,6 +21898,118 @@ function renderInvSubLoans(){
   };
   window._matchSessEq = matchSessEquipment;
 
+  const syncedUnloggedKeys = new Set();
+  window.syncUnloggedBookingsToSupabase = async function(targetEqId){
+    if(typeof db === 'undefined' || !db || typeof window.getUnloggedBookingLogs !== 'function') return;
+    const targets = targetEqId ? [targetEqId] : ['EQ-XRD-01', 'EQ-OM-ZEISS', 'EQ-UVVIS-01', 'EQ-FTIR-01'];
+    for(let i = 0; i < targets.length; i++){
+      const eqId = targets[i];
+      if(eqId === 'EQ-XRD-01' && typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
+        const unlogged = window.getUnloggedBookingLogs('EQ-XRD-01', xrdLogs);
+        for(let j = 0; j < unlogged.length; j++){
+          const u = unlogged[j];
+          const k = 'XRD|' + (u.reservation_no || (u.used_on + '|' + u.start_time + '|' + u.user_name));
+          if(syncedUnloggedKeys.has(k)) continue;
+          syncedUnloggedKeys.add(k);
+          const payload = {
+            reservation_no: u.reservation_no || '',
+            used_on: u.used_on,
+            start_time: u.start_time,
+            end_time: u.end_time || null,
+            duration_min: u.duration_min || null,
+            status: 'unlogged_booking',
+            chiller_start: null,
+            chiller_end: null,
+            vacuum_start: null,
+            vacuum_end: null,
+            xray_max_ok: null,
+            xray_min_ok: null,
+            position_ok: null,
+            align: '',
+            scan_type: '',
+            sample_name: '',
+            meas_info: '',
+            sample_count: null,
+            affiliation: '',
+            user_name: u.user_name || '',
+            professor: '',
+            memo: u.memo || '',
+            updated_at: new Date().toISOString()
+          };
+          try {
+            const { data: ins, error: err } = await db.from('xrd_logs').insert(payload).select();
+            if(!err && ins && ins[0]){
+              xrdLogs.unshift(ins[0]);
+              try { localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs)); } catch(_) {}
+            }
+          } catch(_) {}
+        }
+      } else if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
+        const eqObj = (researchEquipments || []).find(function(e){ return e.id === eqId; }) || { id: eqId, code: eqId };
+        const existingForEq = equipmentSessions.filter(function(s){
+          return s.equipment_code !== 'BOOKING' && s.equipment_code !== 'ACTIVE_USE' && s.equipment_code !== 'VIP_CONFIG' &&
+            (s.equipment_id === eqId || s.equipment_code === eqObj.code);
+        });
+        const unlogged = window.getUnloggedBookingLogs(eqId, existingForEq);
+        for(let j = 0; j < unlogged.length; j++){
+          const u = unlogged[j];
+          const k = eqId + '|' + (u.reservation_no || (u.used_on + '|' + u.start_time + '|' + u.user_name));
+          if(syncedUnloggedKeys.has(k)) continue;
+          syncedUnloggedKeys.add(k);
+          const payload = {
+            equipment_id: eqId,
+            equipment_code: eqObj.code || eqId,
+            used_on: u.used_on,
+            start_time: u.start_time,
+            end_time: u.end_time || null,
+            duration_min: u.duration_min || null,
+            user_name: u.user_name || '',
+            affiliation: '',
+            professor: '',
+            sample_name: '',
+            sample_count: null,
+            scan_type: '',
+            status: 'unlogged_booking',
+            notes: u.memo || ''
+          };
+          try {
+            const { data: ins, error: err } = await db.from('equipment_sessions').insert(payload).select();
+            if(!err && ins && ins[0]){
+              equipmentSessions.unshift(ins[0]);
+              try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
+            }
+          } catch(_) {}
+        }
+      }
+    }
+  };
+
+  window.ensureSessBookingsForAnalytics = async function(year, month, period){
+    const months = [];
+    if(period === 'year'){
+      const nowY = new Date().getFullYear();
+      const maxM = (year === nowY) ? (new Date().getMonth() + 1) : 12;
+      for(let m = 1; m <= maxM; m++) months.push(m);
+    } else {
+      months.push(month);
+    }
+    let fetchedAny = false;
+    for(let i = 0; i < months.length; i++){
+      const m = months[i];
+      const mKey = year + '-' + pad(m);
+      if(!sessMonthCache[mKey]){
+        fetchedAny = true;
+        await fetchSessBookings(year, m, 'EQ-XRD-01');
+      }
+    }
+    if(fetchedAny){
+      await window.syncUnloggedBookingsToSupabase();
+      if(typeof renderEquipmentAnalyticsDashboard === 'function'){
+        renderEquipmentAnalyticsDashboard();
+      }
+    }
+  };
+
   window.getUnloggedBookingLogs = function(eqId, existingLogs){
     const now = new Date();
     const todayStr = today();
@@ -21931,17 +22059,25 @@ function renderInvSubLoans(){
         start_time: it.startTm || '10:00',
         end_time: it.endTm || '',
         duration_min: dur,
-        user_name: it.user || 'SESS 예약자',
-        affiliation: 'SESS 예약',
-        professor: '-',
-        sample_name: '(로그북 미작성 · SESS 예약)',
-        sample_count: 1,
-        scan_type: '—',
+        user_name: it.user || '',
+        affiliation: '',
+        professor: '',
+        sample_name: '',
+        sample_count: null,
+        scan_type: '',
+        chiller_start: null,
+        chiller_end: null,
+        vacuum_start: null,
+        vacuum_end: null,
+        align: '',
+        xray_max_ok: null,
+        xray_min_ok: null,
+        position_ok: null,
         reservation_no: it.reservNo || '',
         status: 'unlogged_booking',
         is_unlogged_booking: true,
         booking_source: 'SESS',
-        memo: 'SESS #' + (it.reservNo || '-') + ' (로그북 미작성 자동반영)'
+        memo: 'SESS #' + (it.reservNo || '-')
       });
     });
 
@@ -21967,17 +22103,25 @@ function renderInvSubLoans(){
         start_time: sTm,
         end_time: eTm,
         duration_min: Math.max(30, sl.length * 30),
-        user_name: b.user || '연구원',
-        affiliation: '2DQH',
-        professor: '-',
-        sample_name: '(로그북 미작성 · 연구실 예약)',
-        sample_count: 1,
-        scan_type: '—',
+        user_name: b.user || '',
+        affiliation: '',
+        professor: '',
+        sample_name: '',
+        sample_count: null,
+        scan_type: '',
+        chiller_start: null,
+        chiller_end: null,
+        vacuum_start: null,
+        vacuum_end: null,
+        align: '',
+        xray_max_ok: null,
+        xray_min_ok: null,
+        position_ok: null,
         reservation_no: '',
         status: 'unlogged_booking',
         is_unlogged_booking: true,
         booking_source: 'LAB',
-        memo: '연구실 예약 (로그북 미작성 자동반영)'
+        memo: '연구실 예약'
       });
     });
 
@@ -22001,9 +22145,15 @@ function renderInvSubLoans(){
       const d = await r.json();
       if(d && Array.isArray(d.items)){
         sessMonthCache[mKey] = d.items;
+        if(typeof window.syncUnloggedBookingsToSupabase === 'function'){
+          await window.syncUnloggedBookingsToSupabase(eqId);
+        }
         if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
         if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
         if(eqId === 'EQ-XRD-01' && typeof renderXrdLogs === 'function') renderXrdLogs();
+        if(typeof renderEquipmentAnalyticsDashboard === 'function' && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
+          renderEquipmentAnalyticsDashboard();
+        }
       }
     } catch(_) {}
   }
