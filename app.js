@@ -21293,6 +21293,61 @@ function renderInvSubLoans(){
     } catch(_) {}
   }
 
+  const HRXRD_VIP_KEY = 'labstock_hrxrd_vip_v1';
+  window.getHrxrdVipList = function(){
+    try {
+      const raw = JSON.parse(localStorage.getItem(HRXRD_VIP_KEY) || '[]');
+      return Array.isArray(raw) ? raw.map(function(x){ return String(x || '').trim(); }).filter(Boolean) : [];
+    } catch(_) { return []; }
+  };
+  window.setHrxrdVipList = async function(arr){
+    const clean = Array.from(new Set((arr || []).map(function(x){ return String(x || '').trim(); }).filter(Boolean)));
+    try { localStorage.setItem(HRXRD_VIP_KEY, JSON.stringify(clean)); } catch(_) {}
+    if(typeof db !== 'undefined' && db){
+      try {
+        await db.from('equipment_sessions').delete().eq('equipment_id', 'EQ-XRD-01').eq('equipment_code', 'VIP_CONFIG');
+        await db.from('equipment_sessions').insert({
+          equipment_id: 'EQ-XRD-01',
+          equipment_code: 'VIP_CONFIG',
+          used_on: '2099-01-01',
+          duration_min: 0,
+          user_name: 'SYSTEM',
+          notes: JSON.stringify(clean)
+        });
+      } catch(_) {}
+    }
+    return clean;
+  };
+  window.syncHrxrdVipFromSupabase = async function(){
+    if(typeof db === 'undefined' || !db) return;
+    try {
+      const { data, error } = await db.from('equipment_sessions')
+        .select('notes')
+        .eq('equipment_id', 'EQ-XRD-01')
+        .eq('equipment_code', 'VIP_CONFIG')
+        .limit(1);
+      if(!error && Array.isArray(data) && data.length > 0){
+        const parsed = JSON.parse(data[0].notes || '[]');
+        if(Array.isArray(parsed)){
+          localStorage.setItem(HRXRD_VIP_KEY, JSON.stringify(parsed));
+          if(typeof currentSelectedEquipment !== 'undefined' && currentSelectedEquipment === 'EQ-XRD-01'){
+            if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar('EQ-XRD-01');
+            if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel('EQ-XRD-01');
+          }
+        }
+      }
+    } catch(_) {}
+  };
+  window.isHrxrdAfterHoursAllowed = function(user){
+    if(typeof isAdmin === 'function' && isAdmin()) return true;
+    if(!user) return false;
+    const uname = String(user.username || '').trim().toLowerCase();
+    const realName = String(user.name || '').trim().toLowerCase();
+    const list = window.getHrxrdVipList().map(function(x){ return x.toLowerCase(); });
+    return (uname && list.indexOf(uname) >= 0) || (realName && list.indexOf(realName) >= 0);
+  };
+  setTimeout(function(){ if(typeof window.syncHrxrdVipFromSupabase === 'function') window.syncHrxrdVipFromSupabase(); }, 600);
+
   function findCurrentSlotBooking(eqId){
     const now = new Date();
     const curMin = now.getHours() * 60 + now.getMinutes();
@@ -21338,7 +21393,10 @@ function renderInvSubLoans(){
     const isBusyByOther = curUse && curUse.user !== myName;
     const curBooking = !curUse ? findCurrentSlotBooking(eqId) : null;
     const isBookedByOther = curBooking && (curBooking.rawUser || curBooking.user) !== myName && !(typeof isAdmin === 'function' && isAdmin());
-    const disableStart = !!(curUse || isBookedByOther);
+    const nowObj = new Date();
+    const nowMin = nowObj.getHours() * 60 + nowObj.getMinutes();
+    const isXrdAfterHoursBlocked = (eqId === 'EQ-XRD-01') && !!curUser && (nowMin < 600 || nowMin >= 1020) && !(typeof window.isHrxrdAfterHoursAllowed === 'function' && window.isHrxrdAfterHoursAllowed(curUser));
+    const disableStart = !!(curUse || isBookedByOther || isXrdAfterHoursBlocked);
     const isEn = (localStorage.getItem('labstock_lang') === 'en');
 
     const statusHtml = curUse
@@ -21349,7 +21407,11 @@ function renderInvSubLoans(){
           ? '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#fffbeb;border:1px solid #fcd34d;color:#b45309;font-size:14px;font-weight:700;text-align:center;">🟠 ' +
               (isEn ? 'Reserved Now (' + safe(curBooking.user) + ' · ' + safe(curBooking.range) + ')' : '현재 예약된 시간입니다 (' + safe(curBooking.user) + ' · ' + safe(curBooking.range) + ')') +
             '</div>'
-          : '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:14px;font-weight:700;text-align:center;">🟢 ' + (isEn ? 'Available Now' : '현재 사용 가능한 장비입니다') + '</div>');
+          : (isXrdAfterHoursBlocked
+              ? '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;font-size:14px;font-weight:700;text-align:center;">🔒 ' +
+                  (isEn ? 'After-hours use (outside 10:00~17:00) is restricted to designated users' : '10:00~17:00 외 시간대는 지정사용자만 사용 가능합니다') +
+                '</div>'
+              : '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:14px;font-weight:700;text-align:center;">🟢 ' + (isEn ? 'Available Now' : '현재 사용 가능한 장비입니다') + '</div>'));
 
     bar.innerHTML =
       statusHtml +
@@ -21363,6 +21425,12 @@ function renderInvSubLoans(){
       if(!curUser){
         toast('🔒 로그인한 회원만 장비를 사용할 수 있습니다.');
         if(typeof openModal === 'function') openModal('login');
+        return;
+      }
+      const clickNow = new Date();
+      const clickMin = clickNow.getHours() * 60 + clickNow.getMinutes();
+      if(eqId === 'EQ-XRD-01' && (clickMin < 600 || clickMin >= 1020) && !(typeof window.isHrxrdAfterHoursAllowed === 'function' && window.isHrxrdAfterHoursAllowed(curUser))){
+        toast('🔒 HRXRD는 10:00~17:00 외 시간대에 지정사용자만 사용 가능합니다.');
         return;
       }
       const map = getActiveMap();
@@ -21877,20 +21945,31 @@ function renderInvSubLoans(){
         '</div>' +
       '</div>';
 
-    // 로그인 시에만 24시간 시작/종료 시간 선택 UI 노출
+    // HRXRD(EQ-XRD-01)는 지정사용자 외 10:00~17:00만 예약 허용
+    const isXrdRestricted = (eqId === 'EQ-XRD-01') && !(typeof window.isHrxrdAfterHoursAllowed === 'function' && window.isHrxrdAfterHoursAllowed(curUser));
+    const minStartM = isXrdRestricted ? 600 : 0;
+    const maxStartM = isXrdRestricted ? 990 : 1410;
+    const minEndM = isXrdRestricted ? 630 : 30;
+    const maxEndM = isXrdRestricted ? 1020 : 1440;
+
     let timeOptions = '';
-    for(let m = 0; m <= 1410; m += 30){
+    for(let m = minStartM; m <= maxStartM; m += 30){
       const t = minToTime(m);
       timeOptions += '<option value="' + t + '"' + (t === '10:00' ? ' selected' : '') + '>' + t + '</option>';
     }
     let endOptions = '';
-    for(let m = 30; m <= 1440; m += 30){
+    for(let m = minEndM; m <= maxEndM; m += 30){
       const t = minToTime(m);
       endOptions += '<option value="' + t + '"' + (t === '12:00' ? ' selected' : '') + '>' + t + '</option>';
     }
 
+    const xrdNoticeHtml = isXrdRestricted
+      ? '<div style="width:100%;font-size:11.5px;color:#b45309;font-weight:700;margin-bottom:2px;">🔒 ' + (isEn ? 'Hours outside 10:00~17:00 are restricted to designated users.' : '10:00~17:00 외 시간대는 지정사용자만 예약 가능합니다.') + '</div>'
+      : '';
+
     const bookingInputHtml = curUser
       ? '<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--bg-subtle,#f8fafc);border:1px solid var(--border);margin-bottom:10px;">' +
+          xrdNoticeHtml +
           '<div style="flex:1;min-width:110px;"><label style="display:block;font-size:11.5px;font-weight:700;margin-bottom:3px;">' + (isEn ? 'Start' : '시작 시간') + '</label><select id="gbStartTime" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--border);padding:0 8px;background:var(--bg-card,#fff);color:var(--ink);">' + timeOptions + '</select></div>' +
           '<div style="flex:1;min-width:110px;"><label style="display:block;font-size:11.5px;font-weight:700;margin-bottom:3px;">' + (isEn ? 'End' : '종료 시간') + '</label><select id="gbEndTime" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--border);padding:0 8px;background:var(--bg-card,#fff);color:var(--ink);">' + endOptions + '</select></div>' +
           '<button type="button" id="gbSubmitBooking" class="btn primary" style="height:38px;padding:0 16px;background:#2563eb;border-color:#2563eb;color:#fff;font-weight:800;border-radius:8px;white-space:nowrap;">' + (isEn ? '✓ Book' : '✓ 예약 확정') + '</button>' +
@@ -21988,6 +22067,12 @@ function renderInvSubLoans(){
           toast('종료 시간은 시작 시간보다 뒤여야 합니다.');
           return;
         }
+        if(eqId === 'EQ-XRD-01' && !(typeof window.isHrxrdAfterHoursAllowed === 'function' && window.isHrxrdAfterHoursAllowed(curUser))){
+          if(timeToMin(sTm) < 600 || timeToMin(eTm) > 1020){
+            toast('🔒 HRXRD는 10:00~17:00 외 시간대 예약이 지정사용자만 가능합니다.');
+            return;
+          }
+        }
         const newSlots = expandSlots(sTm, eTm);
         const occupied = {};
         dayBookings.forEach(function(b){ (b.slots || []).forEach(function(s){ occupied[s] = b.user; }); });
@@ -22072,9 +22157,15 @@ async function renderAdminMembersPanel(){
     } catch(_) {}
   }
 
+  if(typeof window.syncHrxrdVipFromSupabase === 'function') await window.syncHrxrdVipFromSupabase();
+  const xrdVipList = (typeof window.getHrxrdVipList === 'function') ? window.getHrxrdVipList().map(function(x){ return x.toLowerCase(); }) : [];
   const rowsHtml = list.map(function(u){
     const uname = u.username || '';
     const isAdminAcc = (u.role === 'admin' || uname.toLowerCase() === '2dqh' || uname.toLowerCase() === 'admin');
+    const isXrdVip = isAdminAcc || (uname && xrdVipList.indexOf(uname.toLowerCase()) >= 0) || (u.name && xrdVipList.indexOf(String(u.name).trim().toLowerCase()) >= 0);
+    const xrdVipCell = isAdminAcc
+      ? '<span style="font-size:11.5px;color:#15803d;font-weight:700;">항상 허용(관리자)</span>'
+      : '<button type="button" class="btn-table-action" data-toggle-xrd-vip="' + safe(uname) + '" data-vip-name="' + safe(u.name || uname) + '" style="padding:3px 8px;border-radius:6px;border:1px solid ' + (isXrdVip ? '#86efac' : '#cbd5e1') + ';background:' + (isXrdVip ? '#f0fdf4' : '#f8fafc') + ';color:' + (isXrdVip ? '#15803d' : '#64748b') + ';font-weight:700;font-size:11.5px;">' + (isXrdVip ? '✅ 지정됨' : '10~17시만') + '</button>';
     return '<tr>' +
       '<td style="font-weight:700;white-space:nowrap;">' + safe(u.name || '-') + '</td>' +
       '<td style="font-family:monospace;font-size:12px;">' + safe(uname) + '</td>' +
@@ -22083,6 +22174,7 @@ async function renderAdminMembersPanel(){
       '<td>' + safe(u.is_center || '연구단 소속') + '</td>' +
       '<td>' + safe(u.campus_type || '교내') + '</td>' +
       '<td>' + safe(u.is_energy_dept || '에너지과학과') + '</td>' +
+      '<td style="text-align:center;white-space:nowrap;">' + xrdVipCell + '</td>' +
       '<td style="text-align:center;white-space:nowrap;">' +
         '<button type="button" class="btn-table-action" data-edit-member="' + safe(uname) + '" style="color:#0284c7;font-weight:700;">수정</button>' +
         (!isAdminAcc ? '<button type="button" class="btn-table-action" data-del-member="' + safe(uname) + '" style="margin-left:4px;color:#dc2626;">삭제</button>' : '') +
@@ -22106,12 +22198,32 @@ async function renderAdminMembersPanel(){
             '<th style="padding:8px;text-align:left;">연구단</th>' +
             '<th style="padding:8px;text-align:left;">교내/교외</th>' +
             '<th style="padding:8px;text-align:left;">에너지과학과</th>' +
+            '<th style="padding:8px;text-align:center;">HRXRD 시간외</th>' +
             '<th style="padding:8px;text-align:center;">관리</th>' +
           '</tr></thead>' +
-          '<tbody>' + (rowsHtml || '<tr><td colspan="8" style="text-align:center;padding:16px;">등록된 회원이 없습니다.</td></tr>') + '</tbody>' +
+          '<tbody>' + (rowsHtml || '<tr><td colspan="9" style="text-align:center;padding:16px;">등록된 회원이 없습니다.</td></tr>') + '</tbody>' +
         '</table>' +
       '</div>' +
     '</details>';
+
+  panel.querySelectorAll('[data-toggle-xrd-vip]').forEach(function(btn){
+    btn.onclick = async function(){
+      const uname = btn.dataset.toggleXrdVip;
+      const dname = btn.dataset.vipName || uname;
+      if(!uname) return;
+      const cur = (typeof window.getHrxrdVipList === 'function') ? window.getHrxrdVipList() : [];
+      const lowerU = uname.toLowerCase();
+      const exists = cur.some(function(x){ return x.toLowerCase() === lowerU; });
+      const next = exists
+        ? cur.filter(function(x){ return x.toLowerCase() !== lowerU; })
+        : cur.concat([uname]);
+      if(typeof window.setHrxrdVipList === 'function') await window.setHrxrdVipList(next);
+      toast(exists ? ('✓ ' + dname + ' 님의 HRXRD 시간외 권한을 해제했습니다.') : ('✓ ' + dname + ' 님을 HRXRD 시간외 지정사용자로 등록했습니다.'));
+      if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar('EQ-XRD-01');
+      if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel('EQ-XRD-01');
+      renderAdminMembersPanel();
+    };
+  });
 
   panel.querySelectorAll('[data-edit-member]').forEach(function(btn){
     btn.onclick = async function(){
