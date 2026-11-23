@@ -21392,7 +21392,7 @@ function renderInvSubLoans(){
     const myName = curUser ? (curUser.name || curUser.username || '연구원') : '연구원';
     const isBusyByOther = curUse && curUse.user !== myName;
     const curBooking = !curUse ? findCurrentSlotBooking(eqId) : null;
-    const isBookedByOther = curBooking && (curBooking.rawUser || curBooking.user) !== myName && !(typeof isAdmin === 'function' && isAdmin());
+    const isBookedByOther = !!(curBooking && (curBooking.rawUser || curBooking.user) !== myName);
     const nowObj = new Date();
     const nowMin = nowObj.getHours() * 60 + nowObj.getMinutes();
     const isXrdAfterHoursBlocked = (eqId === 'EQ-XRD-01') && !!curUser && (nowMin < 600 || nowMin >= 1020) && !(typeof window.isHrxrdAfterHoursAllowed === 'function' && window.isHrxrdAfterHoursAllowed(curUser));
