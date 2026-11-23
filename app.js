@@ -21213,6 +21213,50 @@ function renderInvSubLoans(){
     return bar;
   }
 
+  async function syncActiveFromSupabase(eqId){
+    if(typeof db === 'undefined' || !db) return;
+    try {
+      const { data, error } = await db.from('equipment_sessions')
+        .select('*')
+        .eq('equipment_code', 'ACTIVE_USE')
+        .eq('equipment_id', eqId);
+      if(!error && Array.isArray(data)){
+        const map = getActiveMap();
+        if(data.length > 0){
+          const row = data[0];
+          let meta = {};
+          try { meta = JSON.parse(row.notes || '{}'); } catch(_) {}
+          map[eqId] = {
+            remoteId: row.id,
+            user: row.user_name || '연구원',
+            affiliation: row.affiliation || '2DQH',
+            startMs: meta.startMs || Date.now(),
+            startTimeText: meta.startTimeText || '',
+            logId: meta.logId || ''
+          };
+        } else {
+          delete map[eqId];
+        }
+        saveActiveMap(map);
+      if(typeof db !== 'undefined' && db){
+        db.from('equipment_sessions').insert({
+          equipment_id: eqId,
+          equipment_code: 'ACTIVE_USE',
+          used_on: today(),
+          user_name: myName,
+          affiliation: affilStr,
+          notes: JSON.stringify({ startMs: map[eqId].startMs, startTimeText: map[eqId].startTimeText, logId: logId })
+        }).select().then(function(r){
+          if(r && r.data && r.data[0]){
+            const m2 = getActiveMap();
+            if(m2[eqId]){ m2[eqId].remoteId = r.data[0].id; saveActiveMap(m2); }
+          }
+        });
+      }
+      }
+    } catch(_) {}
+  }
+
   window.renderQuickEquipTwoBtnBar = function(eqId){
     eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
     const bar = ensureQuickBar();
@@ -21494,8 +21538,13 @@ function renderInvSubLoans(){
       }
 
       const am = getActiveMap();
+      const remoteId = am[eqId] && am[eqId].remoteId;
       delete am[eqId];
       saveActiveMap(am);
+      if(typeof db !== 'undefined' && db){
+        if(remoteId) db.from('equipment_sessions').delete().eq('id', remoteId).then(function(){});
+        else db.from('equipment_sessions').delete().eq('equipment_code', 'ACTIVE_USE').eq('equipment_id', eqId).then(function(){});
+      }
 
       modal.classList.remove('open');
       toast('✓ 사용 종료 (' + mins + '분) 및 로그북이 저장되었습니다.');
@@ -21508,6 +21557,7 @@ function renderInvSubLoans(){
     window.selectResearchEquipment = function(eqId){
       const res = origSelect.apply(this, arguments);
       renderQuickEquipTwoBtnBar(eqId);
+      syncActiveFromSupabase(eqId).then(function(){ renderQuickEquipTwoBtnBar(eqId); });
       return res;
     };
   }
@@ -21537,6 +21587,32 @@ function renderInvSubLoans(){
   }
   function saveBookings(list){
     try { localStorage.setItem(BOOKING_KEY, JSON.stringify(list)); } catch(_) {}
+  }
+
+  async function syncBookingsFromSupabase(eqId){
+    if(typeof db === 'undefined' || !db) return;
+    try {
+      const { data, error } = await db.from('equipment_sessions')
+        .select('*')
+        .eq('equipment_code', 'BOOKING')
+        .eq('equipment_id', eqId);
+      if(!error && Array.isArray(data)){
+        const remoteList = data.map(function(row){
+          let slots = [];
+          try { slots = JSON.parse(row.notes || '[]'); } catch(_) {}
+          return {
+            id: String(row.id),
+            remoteId: row.id,
+            eqId: row.equipment_id,
+            date: row.used_on,
+            slots: Array.isArray(slots) ? slots : [],
+            user: row.user_name || '연구원'
+          };
+        });
+        const others = getBookings().filter(function(b){ return b.eqId !== eqId; });
+        saveBookings(others.concat(remoteList));
+      }
+    } catch(_) {}
   }
 
   window.renderGenbaroBookingPanel = function(eqId){
@@ -21681,6 +21757,9 @@ function renderInvSubLoans(){
         if(!canCancel){ toast('본인의 예약만 취소할 수 있습니다.'); return; }
         if(!confirm(target.date + ' 예약을 취소할까요?')) return;
         saveBookings(list.filter(function(x){ return x.id !== bid; }));
+        if(typeof db !== 'undefined' && db && target.remoteId){
+          db.from('equipment_sessions').delete().eq('id', target.remoteId).then(function(){});
+        }
         toast('✓ 예약이 취소되었습니다.');
         renderGenbaroBookingPanel(eqId);
       };
@@ -21696,15 +21775,27 @@ function renderInvSubLoans(){
         }
         if(!pickedSlots.length) return;
         const list = getBookings();
-        list.push({
-          id: 'BK-' + Date.now(),
-          eqId: eqId,
-          date: selectedDate,
-          slots: pickedSlots.slice().sort(),
-          user: myName
-        });
+        const sortedSlots = pickedSlots.slice().sort();
+        const localId = 'BK-' + Date.now();
+        list.push({ id: localId, eqId: eqId, date: selectedDate, slots: sortedSlots, user: myName });
         saveBookings(list);
         pickedSlots = [];
+        if(typeof db !== 'undefined' && db){
+          db.from('equipment_sessions').insert({
+            equipment_id: eqId,
+            equipment_code: 'BOOKING',
+            used_on: selectedDate,
+            duration_min: sortedSlots.length * 30,
+            user_name: myName,
+            notes: JSON.stringify(sortedSlots)
+          }).select().then(function(r){
+            if(r && r.error){
+              toast('⚠️ 서버 동기화 실패: ' + r.error.message);
+            } else {
+              syncBookingsFromSupabase(eqId).then(function(){ renderGenbaroBookingPanel(eqId); });
+            }
+          });
+        }
         toast('✓ ' + selectedDate + ' 장비 예약이 완료되었습니다.');
         renderGenbaroBookingPanel(eqId);
       };
@@ -21717,6 +21808,7 @@ function renderInvSubLoans(){
       const r = prevSelect.apply(this, arguments);
       pickedSlots = [];
       renderGenbaroBookingPanel(eqId);
+      syncBookingsFromSupabase(eqId).then(function(){ renderGenbaroBookingPanel(eqId); });
       return r;
     };
   }
