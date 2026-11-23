@@ -21239,6 +21239,11 @@ function renderInvSubLoans(){
 
     const btnStart = $('btnQuickEquipStart');
     if(btnStart) btnStart.onclick = function(){
+      if(!curUser){
+        toast('🔒 로그인한 회원만 장비를 사용할 수 있습니다.');
+        if(typeof openModal === 'function') openModal('login');
+        return;
+      }
       const map = getActiveMap();
       if(map[eqId]){ toast('이미 사용 중인 장비입니다.'); return; }
       const now = new Date();
@@ -21300,7 +21305,14 @@ function renderInvSubLoans(){
     };
 
     const btnEnd = $('btnQuickEquipEnd');
-    if(btnEnd) btnEnd.onclick = function(){ openQuickEndPopup(eqId); };
+    if(btnEnd) btnEnd.onclick = function(){
+      if(!curUser){
+        toast('🔒 로그인한 회원만 사용할 수 있습니다.');
+        if(typeof openModal === 'function') openModal('login');
+        return;
+      }
+      openQuickEndPopup(eqId);
+    };
   };
 
   function openQuickEndPopup(eqId){
@@ -21677,6 +21689,11 @@ function renderInvSubLoans(){
     const subBtn = $('gbSubmitBooking');
     if(subBtn){
       subBtn.onclick = function(){
+        if(!curUser){
+          toast('🔒 로그인한 회원만 장비를 예약할 수 있습니다.');
+          if(typeof openModal === 'function') openModal('login');
+          return;
+        }
         if(!pickedSlots.length) return;
         const list = getBookings();
         list.push({
