@@ -5298,6 +5298,7 @@ function renderEquipmentAnalyticsScopeChips(){
 
   const allSessions = getUnifiedEquipmentSessions();
   renderEquipmentUtilizationPanel(allSessions);
+  if(typeof renderAdminMembersPanel === 'function') renderAdminMembersPanel();
 
   // 1. 드롭다운 <select id="eqAnalyticsSelect"> 옵션 갱신 및 체인지 이벤트 바인딩
   if(selEl){
@@ -21847,3 +21848,139 @@ function renderInvSubLoans(){
     };
   }
 })();
+
+
+// ==========================================================================
+// [관리자 전용 👥 회원 관리 패널 (Supabase user_profiles 조회/수정/삭제)]
+// ==========================================================================
+async function renderAdminMembersPanel(){
+  if(typeof isAdmin === 'function' && !isAdmin()) return;
+  const host = $('equipmentAnalyticsDashboard');
+  if(!host) return;
+
+  let panel = $('adminMembersPanel');
+  if(!panel){
+    panel = document.createElement('section');
+    panel.id = 'adminMembersPanel';
+    panel.className = 'panel';
+    panel.style.cssText = 'margin-top:16px;padding:16px;border-radius:12px;';
+    host.appendChild(panel);
+  }
+
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem('labstock_users_v1') || '[]');
+  } catch(_) { list = []; }
+
+  if(typeof db !== 'undefined' && db){
+    try {
+      const { data, error } = await db.from('user_profiles').select('*').order('name');
+      if(!error && Array.isArray(data) && data.length > 0){
+        const map = {};
+        list.forEach(function(u){ if(u && u.username) map[u.username] = u; });
+        data.forEach(function(r){
+          if(r && r.username) map[r.username] = Object.assign({}, map[r.username] || {}, r);
+        });
+        list = Object.values(map);
+      }
+    } catch(_) {}
+  }
+
+  const rowsHtml = list.map(function(u){
+    const uname = u.username || '';
+    const isAdminAcc = (u.role === 'admin' || uname.toLowerCase() === '2dqh' || uname.toLowerCase() === 'admin');
+    return '<tr>' +
+      '<td style="font-weight:700;white-space:nowrap;">' + safe(u.name || '-') + '</td>' +
+      '<td style="font-family:monospace;font-size:12px;">' + safe(uname) + '</td>' +
+      '<td>' + safe(u.advisor || '-') + '</td>' +
+      '<td>' + safe(u.affiliation || '-') + '</td>' +
+      '<td>' + safe(u.is_center || '연구단 소속') + '</td>' +
+      '<td>' + safe(u.campus_type || '교내') + '</td>' +
+      '<td>' + safe(u.is_energy_dept || '에너지과학과') + '</td>' +
+      '<td style="text-align:center;white-space:nowrap;">' +
+        '<button type="button" class="btn-table-action" data-edit-member="' + safe(uname) + '" style="color:#0284c7;font-weight:700;">수정</button>' +
+        (!isAdminAcc ? '<button type="button" class="btn-table-action" data-del-member="' + safe(uname) + '" style="margin-left:4px;color:#dc2626;">삭제</button>' : '') +
+      '</td>' +
+    '</tr>';
+  }).join('');
+
+  panel.innerHTML =
+    '<details>' +
+      '<summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">' +
+        '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">👥 회원 관리 (클릭하여 펼치기 · ' + list.length + '명)</h3>' +
+        '<span style="font-size:12px;color:var(--ink-light);">Supabase(user_profiles) 및 웹 회원 목록 조회 · 소속 구분 수정 · 삭제</span></div>' +
+      '</summary>' +
+      '<div class="table-wrap" style="margin-top:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
+          '<thead><tr style="border-bottom:1.5px solid var(--border);background:var(--bg-subtle);">' +
+            '<th style="padding:8px;text-align:left;">이름</th>' +
+            '<th style="padding:8px;text-align:left;">아이디</th>' +
+            '<th style="padding:8px;text-align:left;">지도교수</th>' +
+            '<th style="padding:8px;text-align:left;">소속</th>' +
+            '<th style="padding:8px;text-align:left;">연구단</th>' +
+            '<th style="padding:8px;text-align:left;">교내/교외</th>' +
+            '<th style="padding:8px;text-align:left;">에너지과학과</th>' +
+            '<th style="padding:8px;text-align:center;">관리</th>' +
+          '</tr></thead>' +
+          '<tbody>' + (rowsHtml || '<tr><td colspan="8" style="text-align:center;padding:16px;">등록된 회원이 없습니다.</td></tr>') + '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</details>';
+
+  panel.querySelectorAll('[data-edit-member]').forEach(function(btn){
+    btn.onclick = async function(){
+      const uname = btn.dataset.editMember;
+      const target = list.find(function(x){ return x.username === uname; });
+      if(!target) return;
+      const newAffil = prompt('소속 부서명을 입력하세요:', target.affiliation || '');
+      if(newAffil === null) return;
+      const newCenter = confirm('2DQH 연구단 소속입니까?\n[확인] = 연구단 소속 / [취소] = 타 소속') ? '연구단 소속' : '타 소속';
+      const newCampus = (newCenter === '연구단 소속') ? '교내' : (confirm('교내(성균관대) 소속입니까?\n[확인] = 교내 / [취소] = 교외') ? '교내' : '교외');
+      const newEnergy = (newCenter === '연구단 소속') ? '에너지과학과' : (confirm('에너지과학과 소속입니까?\n[확인] = 에너지과학과 / [취소] = 타학과/기타') ? '에너지과학과' : '타학과/기타');
+
+      try {
+        const localList = JSON.parse(localStorage.getItem('labstock_users_v1') || '[]');
+        const idx = localList.findIndex(function(x){ return x.username === uname; });
+        if(idx >= 0){
+          localList[idx].affiliation = newAffil.trim();
+          localList[idx].is_center = newCenter;
+          localList[idx].campus_type = newCampus;
+          localList[idx].is_energy_dept = newEnergy;
+          localStorage.setItem('labstock_users_v1', JSON.stringify(localList));
+        }
+      } catch(_) {}
+
+      if(typeof db !== 'undefined' && db){
+        await db.from('user_profiles').upsert({
+          id: uname,
+          username: uname,
+          name: target.name || '',
+          advisor: target.advisor || '',
+          affiliation: newAffil.trim(),
+          is_center: newCenter,
+          campus_type: newCampus,
+          is_energy_dept: newEnergy,
+          role: target.role || 'researcher'
+        }, { onConflict: 'username' });
+      }
+      toast('✓ 회원 정보가 수정되었습니다.');
+      renderAdminMembersPanel();
+    };
+  });
+
+  panel.querySelectorAll('[data-del-member]').forEach(function(btn){
+    btn.onclick = async function(){
+      const uname = btn.dataset.delMember;
+      if(!confirm('회원 [' + uname + ']을(를) 삭제하시겠습니까?')) return;
+      try {
+        const localList = JSON.parse(localStorage.getItem('labstock_users_v1') || '[]');
+        localStorage.setItem('labstock_users_v1', JSON.stringify(localList.filter(function(x){ return x.username !== uname; })));
+      } catch(_) {}
+      if(typeof db !== 'undefined' && db){
+        await db.from('user_profiles').delete().eq('username', uname);
+      }
+      toast('✓ 회원이 삭제되었습니다.');
+      renderAdminMembersPanel();
+    };
+  });
+}
