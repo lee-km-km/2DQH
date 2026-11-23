@@ -5087,6 +5087,10 @@ function renderEquipmentPortalGrid(){
     toggleWrap.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;';
     grid.parentNode.insertBefore(toggleWrap, grid);
   }
+  const eqCatFilterBar = document.querySelector('#eqCatalogViewContainer .eq-portal-filter-bar, #eqCatalogViewContainer .toolbar');
+  if(eqCatFilterBar){
+    eqCatFilterBar.style.display = window._showAllPortalEquips ? '' : 'none';
+  }
   if(toggleWrap){
     toggleWrap.innerHTML = '<span style="font-size:12.5px;color:var(--ink-light);font-weight:600;">' +
       (window._showAllPortalEquips ? '전체 연구장비 (' + allEquips.length + '대)' : '⭐ 핵심 예약 장비 4종 (HR-XRD · OM · UV-Vis · FT-IR)') + '</span>' +
@@ -21307,9 +21311,9 @@ function renderInvSubLoans(){
 
     bar.innerHTML =
       statusHtml +
-      '<div style="display:grid;grid-template-columns:1fr;gap:12px;">' +
-        '<button type="button" id="btnQuickEquipStart" ' + (curUse ? 'disabled' : '') + ' style="width:100%;min-height:88px;font-size:20px;font-weight:800;border:none;border-radius:14px;cursor:' + (curUse ? 'not-allowed' : 'pointer') + ';background:' + (curUse ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;box-shadow:0 4px 14px rgba(37,99,235,0.22);">▶ 사용 시작</button>' +
-        '<button type="button" id="btnQuickEquipEnd" ' + (!curUse ? 'disabled' : '') + ' style="width:100%;min-height:88px;font-size:20px;font-weight:800;border:none;border-radius:14px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#cbd5e1' : '#dc2626') + ';color:#ffffff;box-shadow:0 4px 14px rgba(220,38,38,0.22);">⏹ 사용 종료</button>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+        '<button type="button" id="btnQuickEquipStart" ' + (curUse ? 'disabled' : '') + ' style="width:100%;min-height:92px;font-size:17px;font-weight:800;border:none;border-radius:14px;cursor:' + (curUse ? 'not-allowed' : 'pointer') + ';background:' + (curUse ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;box-shadow:0 4px 14px rgba(37,99,235,0.22);">▶ 사용 시작</button>' +
+        '<button type="button" id="btnQuickEquipEnd" ' + (!curUse ? 'disabled' : '') + ' style="width:100%;min-height:92px;font-size:17px;font-weight:800;border:none;border-radius:14px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#cbd5e1' : '#dc2626') + ';color:#ffffff;box-shadow:0 4px 14px rgba(220,38,38,0.22);">⏹ 사용 종료</button>' +
       '</div>';
 
     const btnStart = $('btnQuickEquipStart');
@@ -21769,7 +21773,7 @@ function renderInvSubLoans(){
       const owner = slotOwner[t];
       if(owner){
         const isMine = !owner.isSess && ((owner.user === myName) || (typeof isAdmin === 'function' && isAdmin()));
-        return '<button type="button" class="gb-slot booked' + (isMine ? ' mine' : '') + '" data-gb-cancel="' + safe(owner.id) + '" title="' + safe(owner.user) + '">' +
+        return '<button type="button" class="gb-slot booked' + (owner.isSess ? ' sess-booked' : '') + (isMine ? ' mine' : '') + '" data-gb-cancel="' + safe(owner.id) + '" title="' + safe(owner.user) + '">' +
           '<span class="gb-slot-time">' + t + '</span>' +
           '<span class="gb-slot-user">' + safe(owner.user) + '</span>' +
         '</button>';
@@ -21790,7 +21794,7 @@ function renderInvSubLoans(){
           const isMine = !b.isSess && ((b.user === myName) || (typeof isAdmin === 'function' && isAdmin()));
           const sList = (b.slots || []).slice().sort();
           const rangeText = sList.length ? (sList[0] + ' ~ ' + sList[sList.length - 1] + ' (+30m)') : '';
-          return '<div class="gb-booking-card">' +
+          return '<div class="gb-booking-card' + (b.isSess ? ' is-sess' : '') + '">' +
             '<div><b>' + (gbViewMode === 'all' ? safe(b.date) + ' · ' : '') + safe(b.user) + '</b> <span style="color:var(--ink-light);font-size:12px;">· ' + safe(rangeText) + ' (' + (sList.length * 30) + (isEn ? 'min' : '분') + ')</span></div>' +
             (isMine ? '<button type="button" class="btn btn-sm" data-gb-cancel="' + safe(b.id) + '" style="color:#dc2626;border:1px solid #fecaca;background:#fef2f2;padding:4px 8px;border-radius:6px;font-size:11.5px;">' + (isEn ? 'Cancel' : '취소') + '</button>' : '') +
           '</div>';

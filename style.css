@@ -13951,3 +13951,35 @@ html:not(.is-admin) #btnHelpTabAdmin {
 [data-theme="dark"] .gb-cal-day:hover {
   background: #1e293b !important;
 }
+
+/* ==========================================================================
+   [연구장비 UI 다이어트 & SESS 예약 구분 배지 스타일]
+   ========================================================================== */
+#equipmentDetailHub .xrd-kpi-grid {
+  display: none !important;
+}
+.gb-slot.sess-booked {
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
+  opacity: 1 !important;
+}
+.gb-slot.sess-booked .gb-slot-time {
+  color: #b45309 !important;
+}
+.gb-slot.sess-booked .gb-slot-user {
+  color: #92400e !important;
+  font-weight: 700 !important;
+}
+.gb-booking-card.is-sess {
+  background: #fffbeb !important;
+  border-color: #fcd34d !important;
+}
+[data-theme="dark"] .gb-slot.sess-booked,
+[data-theme="dark"] .gb-booking-card.is-sess {
+  background: rgba(180, 83, 9, 0.25) !important;
+  border-color: #f59e0b !important;
+}
+[data-theme="dark"] .gb-slot.sess-booked .gb-slot-time,
+[data-theme="dark"] .gb-slot.sess-booked .gb-slot-user {
+  color: #fcd34d !important;
+}
