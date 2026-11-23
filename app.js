@@ -5087,10 +5087,11 @@ function renderEquipmentPortalGrid(){
     toggleWrap.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap;';
     grid.parentNode.insertBefore(toggleWrap, grid);
   }
-  const eqCatFilterBar = document.querySelector('#eqCatalogViewContainer .eq-portal-filter-bar, #eqCatalogViewContainer .toolbar');
-  if(eqCatFilterBar){
-    eqCatFilterBar.style.display = window._showAllPortalEquips ? '' : 'none';
-  }
+  const eqSearchBox = document.querySelector('#eqCatalogViewContainer .eq-search-box');
+  const eqCatToolbar = document.querySelector('#eqCatalogViewContainer .eq-catalog-toolbar');
+  if(eqSearchBox) eqSearchBox.style.display = window._showAllPortalEquips ? '' : 'none';
+  if(eqCatToolbar) eqCatToolbar.classList.toggle('hidden', !window._showAllPortalEquips);
+  grid.classList.toggle('core-4-grid', !window._showAllPortalEquips && !q && selectedEquipmentCategory === 'all');
   if(toggleWrap){
     toggleWrap.innerHTML = '<span style="font-size:12.5px;color:var(--ink-light);font-weight:600;">' +
       (window._showAllPortalEquips ? '전체 연구장비 (' + allEquips.length + '대)' : '⭐ 핵심 예약 장비 4종 (HR-XRD · OM · UV-Vis · FT-IR)') + '</span>' +
@@ -21682,6 +21683,32 @@ function renderInvSubLoans(){
       if(d && Array.isArray(d.items)){
         sessMonthCache[mKey] = d.items;
         if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
+      }
+    } catch(_) {}
+  }
+
+  async function syncBookingsFromSupabase(eqId){
+    if(typeof db === 'undefined' || !db) return;
+    try {
+      const { data, error } = await db.from('equipment_sessions')
+        .select('*')
+        .eq('equipment_code', 'BOOKING')
+        .eq('equipment_id', eqId);
+      if(!error && Array.isArray(data)){
+        const remoteList = data.map(function(row){
+          let slots = [];
+          try { slots = JSON.parse(row.notes || '[]'); } catch(_) {}
+          return {
+            id: String(row.id),
+            remoteId: row.id,
+            eqId: row.equipment_id,
+            date: row.used_on,
+            slots: Array.isArray(slots) ? slots : [],
+            user: row.user_name || '연구원'
+          };
+        });
+        const others = getBookings().filter(function(b){ return b.eqId !== eqId; });
+        saveBookings(others.concat(remoteList));
       }
     } catch(_) {}
   }

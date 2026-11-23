@@ -13983,3 +13983,35 @@ html:not(.is-admin) #btnHelpTabAdmin {
 [data-theme="dark"] .gb-slot.sess-booked .gb-slot-user {
   color: #fcd34d !important;
 }
+
+/* ==========================================================================
+   [PC UI 수정: 2x2 핵심 4종 그리드 + XRD 빈 왼쪽 패널 껍데기 완전 숨김 + 1열 풀폭]
+   ========================================================================== */
+@media (min-width: 769px) {
+  #equipmentPortalGrid.core-4-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+#equipmentDetailHub .xrd-layout {
+  display: block !important;
+  grid-template-columns: 1fr !important;
+}
+#equipmentDetailHub .xrd-layout > .panel:first-child,
+#equipmentDetailHub .xrd-layout > section:has(#xrdForm),
+#equipmentDetailHub .xrd-layout > div:has(#xrdForm),
+#equipmentDetailHub .xrd-notice-details {
+  display: none !important;
+}
+#equipmentDetailHub .xrd-table-panel {
+  width: 100% !important;
+  margin-top: 12px !important;
+}
+
+#equipmentDetailHub .xrd-workstation-grid {
+  display: block !important;
+  grid-template-columns: 1fr !important;
+}
+#equipmentDetailHub .xrd-form-col {
+  display: none !important;
+}
+.eq-catalog-toolbar.hidden { display: none !important; }
