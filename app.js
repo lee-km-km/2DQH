@@ -21500,3 +21500,207 @@ function renderInvSubLoans(){
     };
   }
 })();
+
+
+// ==========================================================================
+// [겐바로 스타일 날짜 선택 캘린더 & 30분 단위 예약 타임슬롯 (핵심 4종 장비)]
+// ==========================================================================
+(function initGenbaroBookingModule(){
+  const TARGET_IDS = ['EQ-XRD-01', 'EQ-OM-ZEISS', 'EQ-UVVIS-01', 'EQ-FTIR-01'];
+  const BOOKING_KEY = 'labstock_equip_bookings_v1';
+  const TIME_SLOTS = [
+    '09:00','09:30','10:00','10:30','11:00','11:30',
+    '12:00','12:30','13:00','13:30','14:00','14:30',
+    '15:00','15:30','16:00','16:30','17:00','17:30'
+  ];
+
+  const now0 = new Date();
+  let viewYear = now0.getFullYear();
+  let viewMonth = now0.getMonth() + 1;
+  let selectedDate = today();
+  let pickedSlots = [];
+
+  function getBookings(){
+    try { return JSON.parse(localStorage.getItem(BOOKING_KEY) || '[]'); } catch(_) { return []; }
+  }
+  function saveBookings(list){
+    try { localStorage.setItem(BOOKING_KEY, JSON.stringify(list)); } catch(_) {}
+  }
+
+  window.renderGenbaroBookingPanel = function(eqId){
+    eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
+    const hub = $('equipmentDetailHub');
+    if(!hub) return;
+
+    let panel = $('genbaroBookingPanel');
+    if(TARGET_IDS.indexOf(eqId) < 0){
+      if(panel) panel.style.display = 'none';
+      return;
+    }
+
+    if(!panel){
+      panel = document.createElement('section');
+      panel.id = 'genbaroBookingPanel';
+      panel.className = 'panel genbaro-booking-panel';
+      const twoBtnBar = $('quickEquipTwoBtnBar');
+      if(twoBtnBar) twoBtnBar.insertAdjacentElement('afterend', panel);
+      else hub.appendChild(panel);
+    }
+    panel.style.display = 'block';
+
+    const all = getBookings().filter(function(b){ return b.eqId === eqId; });
+    const dayMap = {};
+    all.forEach(function(b){ dayMap[b.date] = (dayMap[b.date] || 0) + 1; });
+
+    // 달력 생성
+    const firstDay = new Date(viewYear, viewMonth - 1, 1).getDay();
+    const lastDate = new Date(viewYear, viewMonth, 0).getDate();
+    const todayStr = today();
+
+    let calCells = '';
+    for(let i = 0; i < firstDay; i++) calCells += '<div class="gb-cal-empty"></div>';
+    for(let d = 1; d <= lastDate; d++){
+      const dStr = viewYear + '-' + pad(viewMonth) + '-' + pad(d);
+      const isSel = (dStr === selectedDate);
+      const isToday = (dStr === todayStr);
+      const cnt = dayMap[dStr] || 0;
+      calCells += '<button type="button" class="gb-cal-day' + (isSel ? ' selected' : '') + (isToday ? ' is-today' : '') + '" data-gb-date="' + dStr + '">' +
+        '<span>' + d + '</span>' +
+        (cnt > 0 ? '<span class="gb-cal-dot"></span>' : '') +
+      '</button>';
+    }
+
+    // 선택된 날짜의 슬롯 상태
+    const dayBookings = all.filter(function(b){ return b.date === selectedDate; });
+    const slotOwner = {};
+    dayBookings.forEach(function(b){
+      (b.slots || []).forEach(function(s){ slotOwner[s] = b; });
+    });
+
+    const curUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const myName = curUser ? (curUser.name || curUser.username || '연구원') : '연구원';
+
+    const slotsHtml = TIME_SLOTS.map(function(t){
+      const owner = slotOwner[t];
+      if(owner){
+        const isMine = (owner.user === myName) || (typeof isAdmin === 'function' && isAdmin());
+        return '<button type="button" class="gb-slot booked' + (isMine ? ' mine' : '') + '" data-gb-cancel="' + safe(owner.id) + '" title="' + safe(owner.user) + ' 예약' + (isMine ? ' (클릭 시 취소)' : '') + '">' +
+          '<span class="gb-slot-time">' + t + '</span>' +
+          '<span class="gb-slot-user">' + safe(owner.user) + '</span>' +
+        '</button>';
+      }
+      const isPicked = pickedSlots.indexOf(t) >= 0;
+      return '<button type="button" class="gb-slot' + (isPicked ? ' picked' : '') + '" data-gb-slot="' + t + '">' +
+        '<span class="gb-slot-time">' + t + '</span>' +
+        '<span class="gb-slot-user">' + (isPicked ? '선택됨' : '예약가능') + '</span>' +
+      '</button>';
+    }).join('');
+
+    const dayListHtml = dayBookings.length
+      ? dayBookings.map(function(b){
+          const isMine = (b.user === myName) || (typeof isAdmin === 'function' && isAdmin());
+          const sList = (b.slots || []).slice().sort();
+          const rangeText = sList.length ? (sList[0] + ' ~ ' + sList[sList.length - 1] + ' (+30분)') : '';
+          return '<div class="gb-booking-card">' +
+            '<div><b>' + safe(b.user) + '</b> <span style="color:var(--ink-light);font-size:12px;">· ' + safe(rangeText) + ' (' + (sList.length * 30) + '분)</span></div>' +
+            (isMine ? '<button type="button" class="btn btn-sm" data-gb-cancel="' + safe(b.id) + '" style="color:#dc2626;border:1px solid #fecaca;background:#fef2f2;padding:4px 8px;border-radius:6px;font-size:11.5px;">취소</button>' : '') +
+          '</div>';
+        }).join('')
+      : '<div style="font-size:12.5px;color:var(--ink-light);padding:8px 0;">선택한 날짜에 등록된 예약이 없습니다.</div>';
+
+    panel.innerHTML =
+      '<div class="gb-header">' +
+        '<div><h3 style="margin:0;font-size:15.5px;font-weight:800;color:var(--ink);">📅 날짜별 장비 예약 (30분 단위)</h3>' +
+        '<span style="font-size:12px;color:var(--ink-light);">날짜와 시간대를 선택해 예약하세요</span></div>' +
+        '<div class="gb-month-nav">' +
+          '<button type="button" id="gbPrevMonth" class="gb-nav-btn">‹</button>' +
+          '<span style="font-weight:800;font-size:14px;min-width:84px;text-align:center;">' + viewYear + '.' + pad(viewMonth) + '</span>' +
+          '<button type="button" id="gbNextMonth" class="gb-nav-btn">›</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="gb-cal-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>' +
+      '<div class="gb-cal-grid">' + calCells + '</div>' +
+      '<div class="gb-day-section">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+          '<b style="font-size:13.5px;">🗓️ ' + safe(selectedDate) + ' 타임슬롯 (09:00 ~ 18:00)</b>' +
+          (pickedSlots.length ? '<button type="button" id="gbSubmitBooking" class="btn primary" style="background:#2563eb;border-color:#2563eb;color:#fff;font-weight:800;padding:7px 14px;border-radius:8px;">✓ ' + (pickedSlots.length * 30) + '분 예약 확정</button>' : '') +
+        '</div>' +
+        '<div class="gb-slots-grid">' + slotsHtml + '</div>' +
+        '<div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:10px;">' +
+          '<div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">📌 이날의 예약 목록</div>' +
+          dayListHtml +
+        '</div>' +
+      '</div>';
+
+    $('gbPrevMonth').onclick = function(){
+      viewMonth--; if(viewMonth < 1){ viewMonth = 12; viewYear--; }
+      renderGenbaroBookingPanel(eqId);
+    };
+    $('gbNextMonth').onclick = function(){
+      viewMonth++; if(viewMonth > 12){ viewMonth = 1; viewYear++; }
+      renderGenbaroBookingPanel(eqId);
+    };
+
+    panel.querySelectorAll('[data-gb-date]').forEach(function(btn){
+      btn.onclick = function(){
+        selectedDate = btn.dataset.gbDate;
+        pickedSlots = [];
+        renderGenbaroBookingPanel(eqId);
+      };
+    });
+
+    panel.querySelectorAll('[data-gb-slot]').forEach(function(btn){
+      btn.onclick = function(){
+        const s = btn.dataset.gbSlot;
+        const idx = pickedSlots.indexOf(s);
+        if(idx >= 0) pickedSlots.splice(idx, 1);
+        else pickedSlots.push(s);
+        renderGenbaroBookingPanel(eqId);
+      };
+    });
+
+    panel.querySelectorAll('[data-gb-cancel]').forEach(function(btn){
+      btn.onclick = function(){
+        const bid = btn.dataset.gbCancel;
+        const list = getBookings();
+        const target = list.find(function(x){ return x.id === bid; });
+        if(!target) return;
+        const canCancel = (target.user === myName) || (typeof isAdmin === 'function' && isAdmin());
+        if(!canCancel){ toast('본인의 예약만 취소할 수 있습니다.'); return; }
+        if(!confirm(target.date + ' 예약을 취소할까요?')) return;
+        saveBookings(list.filter(function(x){ return x.id !== bid; }));
+        toast('✓ 예약이 취소되었습니다.');
+        renderGenbaroBookingPanel(eqId);
+      };
+    });
+
+    const subBtn = $('gbSubmitBooking');
+    if(subBtn){
+      subBtn.onclick = function(){
+        if(!pickedSlots.length) return;
+        const list = getBookings();
+        list.push({
+          id: 'BK-' + Date.now(),
+          eqId: eqId,
+          date: selectedDate,
+          slots: pickedSlots.slice().sort(),
+          user: myName
+        });
+        saveBookings(list);
+        pickedSlots = [];
+        toast('✓ ' + selectedDate + ' 장비 예약이 완료되었습니다.');
+        renderGenbaroBookingPanel(eqId);
+      };
+    }
+  };
+
+  const prevSelect = window.selectResearchEquipment;
+  if(typeof prevSelect === 'function'){
+    window.selectResearchEquipment = function(eqId){
+      const r = prevSelect.apply(this, arguments);
+      pickedSlots = [];
+      renderGenbaroBookingPanel(eqId);
+      return r;
+    };
+  }
+})();
