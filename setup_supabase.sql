@@ -38,9 +38,16 @@ CREATE TABLE IF NOT EXISTS public.equipment_sessions (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS equipment_code TEXT;
+ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS used_on TEXT;
 ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS start_time TEXT;
 ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS end_time TEXT;
+ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS duration_min INTEGER DEFAULT 0;
+ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS sample_count INTEGER DEFAULT 1;
+ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS user_name TEXT;
+ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS affiliation TEXT;
 ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'completed';
+ALTER TABLE public.equipment_sessions ADD COLUMN IF NOT EXISTS notes TEXT;
 
 -- 3. HR-XRD 전용 로그북 테이블
 CREATE TABLE IF NOT EXISTS public.xrd_logs (
