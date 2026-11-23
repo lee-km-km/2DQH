@@ -11199,12 +11199,14 @@ function handleUrlFastTrack(){
     const qrMode = searchParams.get('qr');
     if(qrMode === 'equip'){
       const eqId = searchParams.get('eq') || 'EQ-XRD-01';
+      window._pendingQrEquipId = eqId;
       setPortalModule('logbook', { switchView: false });
       showView('logbook', { updateUrl: false });
       try { history.replaceState(null, '', location.pathname + '#logbook'); } catch(_){}
+      if(typeof selectResearchEquipment === 'function') selectResearchEquipment(eqId);
       setTimeout(function(){
         if(typeof selectResearchEquipment === 'function') selectResearchEquipment(eqId);
-      }, 150);
+      }, 300);
       return;
     }
     if(qrMode === 'chem'){
