@@ -3511,6 +3511,11 @@ function renderXrdAdminKpis(){
 }
 
 function renderXrdLogs(){
+  if(!window._xrdYearSessTriggered && typeof window.ensureSessBookingsForAnalytics === 'function'){
+    window._xrdYearSessTriggered = true;
+    const nowD = new Date();
+    window.ensureSessBookingsForAnalytics(nowD.getFullYear(), nowD.getMonth() + 1, 'year');
+  }
   renderXrdAdminKpis();
   const searchInput = $('xrdSearch');
   const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
@@ -22009,6 +22014,7 @@ function renderInvSubLoans(){
     }
     if(fetchedAny){
       await window.syncUnloggedBookingsToSupabase();
+      if(typeof renderXrdLogs === 'function') renderXrdLogs();
       if(typeof renderEquipmentAnalyticsDashboard === 'function'){
         renderEquipmentAnalyticsDashboard();
       }
