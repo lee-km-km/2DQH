@@ -21323,6 +21323,25 @@ function renderInvSubLoans(){
           status: 'in_use',
           notes: '사용 중'
         });
+        if(typeof db !== 'undefined' && db){
+          db.from('xrd_logs').insert({
+            used_on: today(),
+            start_time: curUse.startTimeText || '',
+            end_time: endTimeText,
+            duration_min: mins,
+            sample_count: samples,
+            chiller_start: Number(chillerStart),
+            chiller_end: Number(chillerEnd),
+            vacuum_start: Number(vacStart),
+            vacuum_end: Number(vacEnd),
+            alignment: align,
+            scan_type: scanType,
+            user_name: curUse.user,
+            affiliation: affilStr,
+            status: 'completed',
+            notes: noteStr
+          }).then(function(r){ if(r && r.error) console.warn('xrd_logs insert:', r.error.message); });
+        }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
         if(typeof renderXrdLogs === 'function') renderXrdLogs();
       } else if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
@@ -21340,6 +21359,21 @@ function renderInvSubLoans(){
           status: 'in_use',
           notes: '사용 중'
         });
+        if(typeof db !== 'undefined' && db){
+          db.from('equipment_sessions').insert({
+            equipment_id: eqId,
+            equipment_code: eqCode,
+            used_on: today(),
+            start_time: curUse.startTimeText || '',
+            end_time: endTimeText,
+            duration_min: mins,
+            sample_count: samples,
+            user_name: curUse.user,
+            affiliation: affilStr,
+            status: 'completed',
+            notes: noteStr
+          }).then(function(r){ if(r && r.error) console.warn('equipment_sessions insert:', r.error.message); });
+        }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
         if(typeof renderEquipmentTestSessions === 'function') renderEquipmentTestSessions(eqCode);
       }
