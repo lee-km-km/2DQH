@@ -21293,6 +21293,39 @@ function renderInvSubLoans(){
     } catch(_) {}
   }
 
+  function findCurrentSlotBooking(eqId){
+    const now = new Date();
+    const curMin = now.getHours() * 60 + now.getMinutes();
+    const todayStr = today();
+    const toMin = function(s){ const p = String(s || '00:00').split(':'); return (parseInt(p[0],10)||0)*60 + (parseInt(p[1],10)||0); };
+
+    // 1. 연구실 로컬/Supabase 예약 확인
+    let all = [];
+    try { all = JSON.parse(localStorage.getItem('labstock_equip_bookings_v1') || '[]'); } catch(_) {}
+    for(let i = 0; i < all.length; i++){
+      const b = all[i];
+      if(b.eqId !== eqId || b.date !== todayStr) continue;
+      const sl = (b.slots || []).slice().sort();
+      if(!sl.length) continue;
+      const sMin = toMin(sl[0]), eMin = toMin(sl[sl.length - 1]) + 30;
+      if(curMin >= sMin && curMin < eMin){
+        return { user: b.user || '예약자', range: sl[0] + '~' + String(Math.floor(eMin/60)).padStart(2,'0') + ':' + String(eMin%60).padStart(2,'0'), isSess: false };
+      }
+    }
+    // 2. SESS 캐시 예약 확인
+    if(typeof window._getSessBookingsForEq === 'function'){
+      const sList = window._getSessBookingsForEq(eqId, todayStr) || [];
+      for(let j = 0; j < sList.length; j++){
+        const sb = sList[j];
+        const sMin = toMin(sb.startTm), eMin = toMin(sb.endTm);
+        if(eMin > sMin && curMin >= sMin && curMin < eMin){
+          return { user: sb.user + ' (SESS #' + sb.reservNo + ')', rawUser: sb.user, range: sb.startTm + '~' + sb.endTm, isSess: true };
+        }
+      }
+    }
+    return null;
+  }
+
   window.renderQuickEquipTwoBtnBar = function(eqId){
     eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
     const bar = ensureQuickBar();
@@ -21303,17 +21336,25 @@ function renderInvSubLoans(){
     const curUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
     const myName = curUser ? (curUser.name || curUser.username || '연구원') : '연구원';
     const isBusyByOther = curUse && curUse.user !== myName;
+    const curBooking = !curUse ? findCurrentSlotBooking(eqId) : null;
+    const isBookedByOther = curBooking && (curBooking.rawUser || curBooking.user) !== myName && !(typeof isAdmin === 'function' && isAdmin());
+    const disableStart = !!(curUse || isBookedByOther);
+    const isEn = (localStorage.getItem('labstock_lang') === 'en');
 
     const statusHtml = curUse
       ? '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:' + (isBusyByOther ? '#fef2f2' : '#eff6ff') + ';border:1px solid ' + (isBusyByOther ? '#fecaca' : '#bfdbfe') + ';color:' + (isBusyByOther ? '#b91c1c' : '#1d4ed8') + ';font-size:14px;font-weight:700;text-align:center;">' +
           (isBusyByOther ? '🔴 이미 사용 중인 장비 (' + safe(curUse.user) + ' · ' + safe(curUse.startTimeText) + ' 시작)' : '🔵 현재 사용 중 (' + safe(curUse.user) + ' · ' + safe(curUse.startTimeText) + ' 시작)') +
         '</div>'
-      : '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:14px;font-weight:700;text-align:center;">🟢 현재 사용 가능한 장비입니다</div>';
+      : (curBooking
+          ? '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#fffbeb;border:1px solid #fcd34d;color:#b45309;font-size:14px;font-weight:700;text-align:center;">🟠 ' +
+              (isEn ? 'Reserved Now (' + safe(curBooking.user) + ' · ' + safe(curBooking.range) + ')' : '현재 예약된 시간입니다 (' + safe(curBooking.user) + ' · ' + safe(curBooking.range) + ')') +
+            '</div>'
+          : '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:14px;font-weight:700;text-align:center;">🟢 ' + (isEn ? 'Available Now' : '현재 사용 가능한 장비입니다') + '</div>');
 
     bar.innerHTML =
       statusHtml +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
-        '<button type="button" id="btnQuickEquipStart" ' + (curUse ? 'disabled' : '') + ' style="width:100%;min-height:92px;font-size:17px;font-weight:800;border:none;border-radius:14px;cursor:' + (curUse ? 'not-allowed' : 'pointer') + ';background:' + (curUse ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;box-shadow:0 4px 14px rgba(37,99,235,0.22);">▶ 사용 시작</button>' +
+        '<button type="button" id="btnQuickEquipStart" ' + (disableStart ? 'disabled' : '') + ' style="width:100%;min-height:92px;font-size:17px;font-weight:800;border:none;border-radius:14px;cursor:' + (disableStart ? 'not-allowed' : 'pointer') + ';background:' + (disableStart ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;box-shadow:0 4px 14px rgba(37,99,235,0.22);">' + (isEn ? '▶ Start Use' : '▶ 사용 시작') + '</button>' +
         '<button type="button" id="btnQuickEquipEnd" ' + (!curUse ? 'disabled' : '') + ' style="width:100%;min-height:92px;font-size:17px;font-weight:800;border:none;border-radius:14px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#cbd5e1' : '#dc2626') + ';color:#ffffff;box-shadow:0 4px 14px rgba(220,38,38,0.22);">⏹ 사용 종료</button>' +
       '</div>';
 
@@ -21673,6 +21714,13 @@ function renderInvSubLoans(){
     return false;
   }
 
+  window._getSessBookingsForEq = function(eqId, dateStr){
+    const mKey = String(dateStr || '').slice(0, 7);
+    return (sessMonthCache[mKey] || []).filter(function(it){
+      return it.date === dateStr && matchSessEquipment(eqId, it);
+    });
+  };
+
   async function fetchSessBookings(year, month, eqId){
     const mKey = year + '-' + pad(month);
     if(sessMonthCache[mKey]) return;
@@ -21684,6 +21732,7 @@ function renderInvSubLoans(){
       if(d && Array.isArray(d.items)){
         sessMonthCache[mKey] = d.items;
         if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
+        if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
       }
     } catch(_) {}
   }
