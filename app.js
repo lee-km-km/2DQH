@@ -22129,6 +22129,44 @@ async function renderAdminMembersPanel(){
 (function initMobileSettingsAndLang(){
 
   const KO_EN_PHRASES = [
+    ['전체 장비 보기', 'Show All Equipment'],
+    ['비품 / 자산 관리', 'Lab Assets & Equipment'],
+    ['비품 관리', 'Lab Assets'],
+    ['공용 비품', 'Shared Equipment'],
+    ['관리번호', 'Asset ID'],
+    ['비품명', 'Item Name'],
+    ['제품명', 'Product Name'],
+    ['품명', 'Item Name'],
+    ['모델명', 'Model'],
+    ['규격', 'Spec'],
+    ['분류', 'Category'],
+    ['카테고리', 'Category'],
+    ['전체', 'All'],
+    ['사용가능', 'Available'],
+    ['사용 가능', 'Available'],
+    ['보유', 'In Stock'],
+    ['고장', 'Broken'],
+    ['수리중', 'Repairing'],
+    ['대여자', 'Borrower'],
+    ['대여일', 'Borrowed Date'],
+    ['반납예정일', 'Due Date'],
+    ['반납일', 'Return Date'],
+    ['비고', 'Notes'],
+    ['위치', 'Location'],
+    ['등록', 'Add'],
+    ['다운로드', 'Download'],
+    ['엑셀', 'Excel'],
+    ['인쇄', 'Print'],
+    ['닫기', 'Close'],
+    ['저장', 'Save'],
+    ['확인', 'Confirm'],
+    ['취소', 'Cancel'],
+    ['광학', 'Optics'],
+    ['진공', 'Vacuum'],
+    ['전자계측', 'Electronics'],
+    ['공구', 'Tools'],
+    ['안전', 'Safety'],
+    ['기타', 'Etc'],
     ['연구장비 운영 포털', 'Equipment Reservation & Logbook'],
     ['연구장비 포털', 'Equipment Reservation'],
     ['연구장비 목록', 'Equipment List'],
@@ -22222,6 +22260,10 @@ async function renderAdminMembersPanel(){
     try {
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
       let node;
+      document.querySelectorAll('input[placeholder]').forEach(function(inp){
+        if(!inp._origPh && /[가-힣]/.test(inp.placeholder)) inp._origPh = inp.placeholder;
+        if(inp._origPh) inp.placeholder = isEn ? 'Search...' : inp._origPh;
+      });
       while((node = walker.nextNode())){
         const parent = node.parentElement;
         if(!parent || parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') continue;
@@ -22248,7 +22290,7 @@ async function renderAdminMembersPanel(){
     try { localStorage.setItem('labstock_lang', lang); } catch(_) {}
     const isEn = (lang === 'en');
     const labels = isEn
-      ? { inv: 'Equip', con: 'Supply', chem: 'Chem', log: 'Portal', set: 'Settings' }
+      ? { inv: 'Assets', con: 'Supply', chem: 'Chem', log: 'Booking', set: 'Settings' }
       : { inv: '비품', con: '소모품', chem: '시약', log: '연구장비', set: '설정' };
     const setLbl = function(id, txt){ const el = document.querySelector('#' + id + ' .bottom-tab-label'); if(el) el.textContent = txt; };
     setLbl('bottomTabInventory', labels.inv);
