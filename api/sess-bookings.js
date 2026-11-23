@@ -4,8 +4,8 @@ function toHalfHourSlots(startTm, endTm) {
     const p = String(s).split(':');
     return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0);
   };
-  const sMin = toMin(startTm);
-  const eMin = toMin(endTm);
+  const sMin = Math.floor(toMin(startTm) / 30) * 30;
+  const eMin = Math.ceil(toMin(endTm) / 30) * 30;
   const out = [];
   for (let m = sMin; m < eMin; m += 30) {
     const hh = String(Math.floor(m / 60)).padStart(2, '0');

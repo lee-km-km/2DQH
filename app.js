@@ -21641,9 +21641,10 @@ function renderInvSubLoans(){
   const TARGET_IDS = ['EQ-XRD-01', 'EQ-OM-ZEISS', 'EQ-UVVIS-01', 'EQ-FTIR-01'];
   const BOOKING_KEY = 'labstock_equip_bookings_v1';
   const TIME_SLOTS = [
-    '09:00','09:30','10:00','10:30','11:00','11:30',
+    '08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
     '12:00','12:30','13:00','13:30','14:00','14:30',
-    '15:00','15:30','16:00','16:30','17:00','17:30'
+    '15:00','15:30','16:00','16:30','17:00','17:30',
+    '18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30'
   ];
 
   const now0 = new Date();
@@ -21820,7 +21821,7 @@ function renderInvSubLoans(){
       ? listSource.map(function(b){
           const isMine = !b.isSess && ((b.user === myName) || (typeof isAdmin === 'function' && isAdmin()));
           const sList = (b.slots || []).slice().sort();
-          const rangeText = sList.length ? (sList[0] + ' ~ ' + sList[sList.length - 1] + ' (+30m)') : '';
+          const rangeText = b.timeText ? b.timeText : (sList.length ? (sList[0] + ' ~ ' + sList[sList.length - 1] + ' (+30m)') : '');
           return '<div class="gb-booking-card' + (b.isSess ? ' is-sess' : '') + '">' +
             '<div><b>' + (gbViewMode === 'all' ? safe(b.date) + ' · ' : '') + safe(b.user) + '</b> <span style="color:var(--ink-light);font-size:12px;">· ' + safe(rangeText) + ' (' + (sList.length * 30) + (isEn ? 'min' : '분') + ')</span></div>' +
             (isMine ? '<button type="button" class="btn btn-sm" data-gb-cancel="' + safe(b.id) + '" style="color:#dc2626;border:1px solid #fecaca;background:#fef2f2;padding:4px 8px;border-radius:6px;font-size:11.5px;">' + (isEn ? 'Cancel' : '취소') + '</button>' : '') +
@@ -22117,6 +22118,28 @@ async function renderAdminMembersPanel(){
     setLbl('bottomTabChemicals', labels.chem);
     setLbl('bottomTabLogbook', labels.log);
     setLbl('bottomTabMenu', labels.set);
+
+    const setTxt = function(sel, ko, en){ const el = document.querySelector(sel); if(el) el.textContent = isEn ? en : ko; };
+    setTxt('#sidebarNavInventory span:last-child', '비품', 'Equipment');
+    setTxt('#sidebarNavConsumables span:last-child', '소모품', 'Consumables');
+    setTxt('#sidebarNavChemicals span:last-child', '시약', 'Chemicals');
+    setTxt('#sidebarNavCatalog span:last-child', '연구장비 포털', 'Equipment Portal');
+    setTxt('#sidebarNavHelp span:last-child', '도움말', 'Help & Guide');
+    setTxt('#loginBtn', '로그인 / 회원가입', 'Login / Sign Up');
+    setTxt('#logoutBtn', '로그아웃', 'Logout');
+    setTxt('#btnTopSwitchLogbook .mod-label', '연구장비', 'Equip Portal');
+    setTxt('#btnTopSwitchInventory .mod-label', '비품·소모품', 'Inventory');
+    setTxt('#view-inventory .page-head h1', '비품', 'Equipment');
+    setTxt('#view-consumables .page-head h1', '소모품', 'Consumables');
+    setTxt('#view-chemicals .page-head h1', '특수물질 & 시약', 'Chemicals & Reagents');
+    setTxt('#view-logbook .page-head h1', '연구장비 운영 포털', 'Equipment Portal');
+    setTxt('#view-help .page-head h1', '도움말 & 가이드', 'Help & Guide');
+    setTxt('#mobileSettingsModalBackdrop .modal-head h3', '⚙️ 설정 및 가이드', '⚙️ Settings & Guide');
+    setTxt('#btnMobSetHelp span:first-child', '📖 도움말 & 이용 가이드', '📖 Help & User Guide');
+    setTxt('#btnMobSetMail span:first-child', '✉️ 업무 메일 발송 (관리자)', '✉️ Lab Mail (Admin)');
+    if(typeof renderQuickEquipTwoBtnBar === 'function' && typeof currentSelectedEquipment !== 'undefined'){
+      renderQuickEquipTwoBtnBar(currentSelectedEquipment);
+    }
 
     const bKo = $('btnMobLangKo'), bEn = $('btnMobLangEn');
     if(bKo){ bKo.style.background = !isEn ? '#2563eb' : ''; bKo.style.color = !isEn ? '#fff' : ''; }
