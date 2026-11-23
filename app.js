@@ -22373,3 +22373,93 @@ async function renderAdminMembersPanel(){
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindSettings);
   else bindSettings();
 })();
+
+
+// ==========================================================================
+// [SESS 공식 장비 이미지·목록(place=610) & 공지·세미나 실시간 동기화]
+// ==========================================================================
+(function initSessPortalSync(){
+  let synced = false;
+
+  async function runSessPortalSync(){
+    if(synced) return;
+    synced = true;
+    try {
+      const r = await fetch('/api/sess-sync');
+      if(!r.ok) return;
+      const d = await r.json();
+      if(!d || !d.success) return;
+
+      // 1. SESS 610 장비 사진·위치 동기화 및 미등록 장비 자동 추가
+      if(Array.isArray(d.equipments) && d.equipments.length && typeof researchEquipments !== 'undefined'){
+        d.equipments.forEach(function(se){
+          const sn = (se.name || '').toLowerCase();
+          const match = researchEquipments.find(function(eq){
+            const ec = (eq.code || '').toLowerCase();
+            const en = (eq.name || '').toLowerCase();
+            return (ec && sn.includes(ec)) ||
+              (eq.id === 'EQ-XRD-01' && (sn.includes('hrxrd') || sn.includes('회절'))) ||
+              (eq.id === 'EQ-EBEAM-01' && sn.includes('e-beam')) ||
+              (eq.id === 'EQ-UHVSPUTTER-01' && sn.includes('uhv')) ||
+              (eq.id === 'EQ-TEM-01' && sn.includes('tem 1')) ||
+              (eq.id === 'EQ-TEM-02' && sn.includes('tem 2')) ||
+              (eq.id === 'EQ-XPS-01' && sn.includes('xps')) ||
+              (eq.id === 'EQ-PPMS-9T' && sn.includes('9t'));
+          });
+          if(match){
+            if(se.image && (!match.image || match.type === 'placeholder' || match.image.includes('logo_2dqh'))){
+              match.image = se.image;
+            }
+            if(se.location && !match.location) match.location = se.location;
+          } else {
+            researchEquipments.push({
+              id: 'SESS-' + se.sessEquipId,
+              assetNo: 'SESS-' + se.sessEquipId,
+              code: se.name.split('/')[0].trim().slice(0, 18),
+              name: se.name,
+              category: 'optical',
+              categoryName: 'SESS 610',
+              location: se.location || '양자기술첨단기기센터',
+              status: 'active',
+              statusLabel: '정상',
+              icon: '🔬',
+              image: se.image || 'logo_2dqh.png'
+            });
+          }
+        });
+        if(typeof renderEquipmentPortalGrid === 'function') renderEquipmentPortalGrid();
+      }
+
+      // 2. 도움말 화면(#view-help)에 SESS 공지사항 & 교육/세미나 실시간 카드 렌더링
+      const helpView = $('view-help');
+      if(helpView && ( (d.notices && d.notices.length) || (d.seminars && d.seminars.length) )){
+        let box = $('sessNoticeSeminarPanel');
+        if(!box){
+          box = document.createElement('section');
+          box.id = 'sessNoticeSeminarPanel';
+          box.className = 'panel';
+          box.style.cssText = 'margin-top:16px;padding:16px;border-radius:12px;';
+          helpView.appendChild(box);
+        }
+        const mkList = function(items){
+          if(!items || !items.length) return '<div style="font-size:12.5px;color:var(--ink-light);">게시된 항목이 없습니다.</div>';
+          return '<ul style="margin:6px 0 0;padding-left:16px;font-size:13px;line-height:1.7;">' +
+            items.map(function(it){
+              return '<li><a href="' + safe(it.url) + '" target="_blank" rel="noopener" style="color:#2563eb;text-decoration:none;font-weight:600;">' + safe(it.title) + '</a>' +
+                (it.date ? ' <span style="font-size:11.5px;color:var(--ink-light);">(' + safe(it.date) + ')</span>' : '') + '</li>';
+            }).join('') +
+          '</ul>';
+        };
+        box.innerHTML =
+          '<h3 style="margin:0 0 10px;font-size:15.5px;font-weight:800;color:var(--ink);">📢 SESS 공지사항 &amp; 교육·세미나</h3>' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">' +
+            '<div><b style="font-size:13px;">📌 SESS 공지사항</b>' + mkList(d.notices) + '</div>' +
+            '<div><b style="font-size:13px;">🎓 교육 및 세미나</b>' + mkList(d.seminars) + '</div>' +
+          '</div>';
+      }
+    } catch(_) {}
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runSessPortalSync);
+  else runSessPortalSync();
+})();
