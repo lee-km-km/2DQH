@@ -22130,7 +22130,7 @@ async function renderAdminMembersPanel(){
 
   const KO_EN_PHRASES = [
     ['연구장비 운영 포털', 'Equipment Reservation & Logbook'],
-    ['연구장비 포털', 'Equipment Booking'],
+    ['연구장비 포털', 'Equipment Reservation'],
     ['연구장비 목록', 'Equipment List'],
     ['전체 연구장비 목록', 'All Equipment'],
     ['성균관대 SESS 연구장비', 'SKKU SESS Research Equipment'],
@@ -22141,14 +22141,56 @@ async function renderAdminMembersPanel(){
     ['HR-XRD 전자 로그북 열기', 'Open HR-XRD Logbook & Booking'],
     ['비품 및 소모품', 'Lab Inventory'],
     ['비품·소모품', 'Inventory'],
+    ['비품 목록', 'Equipment List'],
+    ['비품 등록', 'Add Equipment'],
+    ['대여 신청', 'Borrow'],
+    ['대여 현황', 'Active Loans'],
+    ['대여중', 'Borrowed'],
+    ['대여 가능', 'Available'],
+    ['반납하기', 'Return'],
+    ['반납 완료', 'Returned'],
+    ['반납', 'Return'],
+    ['대여', 'Borrow'],
     ['비품', 'Equipment'],
+    ['소모품 목록', 'Consumables List'],
+    ['재발주 요청', 'Reorder Request'],
+    ['재고 부족', 'Low Stock'],
     ['소모품', 'Consumables'],
     ['특수물질 & 시약', 'Chemicals & Reagents'],
+    ['특별관리물질 고지', 'Special Substance Notice'],
+    ['특별관리물질 취급일지', 'Special Substance Log'],
+    ['특별관리물질', 'Special Substance'],
+    ['일반 시약', 'General Reagents'],
+    ['전체 시약', 'All Chemicals'],
+    ['취급일지 작성', 'Write Chem Log'],
+    ['일지작성', 'Write Log'],
+    ['시약 등록', 'Add Chemical'],
+    ['시약등록', 'Add Chemical'],
     ['시약', 'Chemicals'],
+    ['재고현황', 'Inventory Status'],
+    ['취급 이력', 'Usage History'],
+    ['보관위치', 'Location'],
+    ['제조사', 'Manufacturer'],
+    ['담당자', 'Manager'],
+    ['잔량', 'Remaining'],
+    ['수량', 'Qty'],
+    ['상태', 'Status'],
+    ['관리', 'Actions'],
+    ['이력', 'History'],
+    ['수정', 'Edit'],
+    ['폐기', 'Discard'],
+    ['삭제', 'Delete'],
+    ['입고일', 'In Date'],
+    ['유효기간', 'Exp Date'],
+    ['입고', 'In Stock'],
+    ['검색', 'Search'],
+    ['초기화', 'Reset'],
     ['시스템 안내', 'System'],
+    ['도움말 & 이용 가이드', 'Help & User Guide'],
     ['도움말 & 가이드', 'Help & User Guide'],
     ['도움말', 'Help'],
     ['로그인 / 회원가입', 'Login / Sign Up'],
+    ['로그인', 'Login'],
     ['로그아웃', 'Logout'],
     ['현재 사용 가능한 장비입니다', 'Available Now'],
     ['이미 사용 중인 장비', 'Currently In Use'],
@@ -22168,11 +22210,12 @@ async function renderAdminMembersPanel(){
     ['로그인 후 장비 예약 및 로그북 작성 가능', 'Log in to book equipment and write logbooks'],
     ['화면 테마', 'Theme'],
     ['언어 (Language)', 'Language'],
-    ['도움말 & 이용 가이드', 'Help & User Guide'],
     ['업무 메일 발송 (관리자)', 'Lab Mail (Admin Only)'],
     ['직접사용 (자율운영)', 'Self-Service'],
     ['직접사용', 'Self-Service'],
-    ['운영 중', 'Active']
+    ['운영 중', 'Active'],
+    ['정상', 'Normal'],
+    ['점검', 'Check']
   ];
 
   function translateDomTexts(isEn){
@@ -22222,7 +22265,7 @@ async function renderAdminMembersPanel(){
     setTxt('#sidebarNavHelp span:last-child', '도움말', 'Help & Guide');
     setTxt('#loginBtn', '로그인 / 회원가입', 'Login / Sign Up');
     setTxt('#logoutBtn', '로그아웃', 'Logout');
-    setTxt('#btnTopSwitchLogbook .mod-label', '연구장비', 'Equip Booking');
+    setTxt('#btnTopSwitchLogbook .mod-label', '연구장비', 'Reservation');
     setTxt('#btnTopSwitchInventory .mod-label', '비품·소모품', 'Inventory');
     setTxt('#view-inventory .page-head h1', '비품', 'Equipment');
     setTxt('#view-consumables .page-head h1', '소모품', 'Consumables');
@@ -22286,10 +22329,27 @@ async function renderAdminMembersPanel(){
     if(bEn) bEn.onclick = function(){ applyLang('en'); toast('Switched to English.'); };
 
     const hBtn = $('btnMobSetHelp');
-    if(hBtn && modal) hBtn.onclick = function(){ modal.classList.remove('open'); modal.style.display='none'; if(typeof showView === 'function') showView('help'); };
+    if(hBtn && modal) hBtn.onclick = function(){
+      modal.classList.remove('open');
+      modal.style.display = 'none';
+      if(typeof showView === 'function') showView('help', { pushState: true });
+      const hv = $('view-help');
+      if(hv){ hv.classList.remove('hidden'); hv.classList.add('active'); }
+      if(typeof switchHelpTab === 'function') switchHelpTab(typeof isAdmin === 'function' && isAdmin() ? 'admin' : 'user');
+    };
 
     const mBtn = $('btnMobSetMail');
     if(mBtn && modal) mBtn.onclick = function(){ modal.classList.remove('open'); modal.style.display='none'; if(typeof openLabMailModal === 'function') openLabMailModal(); };
+
+    let langTimer = null;
+    try {
+      const mo = new MutationObserver(function(){
+        if((localStorage.getItem('labstock_lang') || 'ko') !== 'en') return;
+        clearTimeout(langTimer);
+        langTimer = setTimeout(function(){ translateDomTexts(true); }, 60);
+      });
+      mo.observe(document.body, { childList: true, subtree: true });
+    } catch(_) {}
 
     applyLang(localStorage.getItem('labstock_lang') || 'ko');
   }
