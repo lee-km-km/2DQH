@@ -21721,6 +21721,21 @@ function renderInvSubLoans(){
     try { localStorage.setItem(BOOKING_KEY, JSON.stringify(list)); } catch(_) {}
   }
 
+  function timeToMin(tm){
+    const p = String(tm || '00:00').split(':');
+    return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0);
+  }
+  function minToTime(m){
+    const hh = String(Math.floor(m / 60)).padStart(2, '0');
+    const mm = String(m % 60).padStart(2, '0');
+    return hh + ':' + mm;
+  }
+  function expandSlots(startTm, endTm){
+    const s = timeToMin(startTm), e = timeToMin(endTm), out = [];
+    for(let m = s; m < e; m += 30) out.push(minToTime(m));
+    return out;
+  }
+
   window.renderGenbaroBookingPanel = function(eqId){
     eqId = eqId || currentSelectedEquipment || 'EQ-XRD-01';
     const hub = $('equipmentDetailHub');
@@ -21757,6 +21772,8 @@ function renderInvSubLoans(){
         user: it.user + ' (SESS #' + it.reservNo + ')',
         isSess: true,
         reservNo: it.reservNo,
+        startTm: it.startTm || '',
+        endTm: it.endTm || '',
         timeText: (it.startTm || '') + '~' + (it.endTm || '')
       };
     });
@@ -21782,36 +21799,54 @@ function renderInvSubLoans(){
     }
 
     const dayBookings = all.filter(function(b){ return b.date === selectedDate; });
-    const slotOwner = {};
-    dayBookings.forEach(function(b){
-      (b.slots || []).forEach(function(s){ slotOwner[s] = b; });
-    });
-
     const curUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
-    const myName = curUser ? (curUser.name || curUser.username || '연구원') : '연구원';
+    const myName = curUser ? (curUser.name || curUser.username || '연구원') : '';
 
-    const filteredSlots = TIME_SLOTS.filter(function(t){
-      const owner = slotOwner[t];
-      if(gbFilter === 'avail') return !owner;
-      if(gbFilter === 'mine') return owner && owner.user === myName;
-      return true;
-    });
-
-    const slotsHtml = filteredSlots.map(function(t){
-      const owner = slotOwner[t];
-      if(owner){
-        const isMine = !owner.isSess && ((owner.user === myName) || (typeof isAdmin === 'function' && isAdmin()));
-        return '<button type="button" class="gb-slot booked' + (owner.isSess ? ' sess-booked' : '') + (isMine ? ' mine' : '') + '" data-gb-cancel="' + safe(owner.id) + '" title="' + safe(owner.user) + '">' +
-          '<span class="gb-slot-time">' + t + '</span>' +
-          '<span class="gb-slot-user">' + safe(owner.user) + '</span>' +
-        '</button>';
-      }
-      const isPicked = pickedSlots.indexOf(t) >= 0;
-      return '<button type="button" class="gb-slot' + (isPicked ? ' picked' : '') + '" data-gb-slot="' + t + '">' +
-        '<span class="gb-slot-time">' + t + '</span>' +
-        '<span class="gb-slot-user">' + (isPicked ? (isEn ? 'Selected' : '선택됨') : (isEn ? 'Open' : '예약가능')) + '</span>' +
-      '</button>';
+    // 24시간(0~1440분) 가로 타임라인 바 블록 생성
+    const timelineBlocks = dayBookings.map(function(b){
+      const sList = (b.slots || []).slice().sort();
+      const sMin = b.startTm ? timeToMin(b.startTm) : (sList.length ? timeToMin(sList[0]) : 0);
+      const eMin = b.endTm ? timeToMin(b.endTm) : (sList.length ? timeToMin(sList[sList.length - 1]) + 30 : 0);
+      if(eMin <= sMin) return '';
+      const leftPct = ((sMin / 1440) * 100).toFixed(2);
+      const widthPct = (((eMin - sMin) / 1440) * 100).toFixed(2);
+      const bg = b.isSess ? '#f59e0b' : '#2563eb';
+      return '<div title="' + safe(b.user + ' (' + minToTime(sMin) + '~' + minToTime(eMin) + ')') + '" style="position:absolute;top:0;bottom:0;left:' + leftPct + '%;width:' + widthPct + '%;background:' + bg + ';border-radius:3px;opacity:0.9;"></div>';
     }).join('');
+
+    const timelineHtml =
+      '<div style="margin:8px 0 12px;">' +
+        '<div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-light);margin-bottom:3px;">' +
+          '<span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>' +
+        '</div>' +
+        '<div style="position:relative;height:18px;background:var(--bg-subtle,#e2e8f0);border-radius:6px;overflow:hidden;border:1px solid var(--border);">' +
+          timelineBlocks +
+        '</div>' +
+        '<div style="display:flex;gap:12px;font-size:11px;color:var(--ink-light);margin-top:4px;">' +
+          '<span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#2563eb;margin-right:4px;"></i>' + (isEn ? 'Lab Booking' : '연구실 예약') + '</span>' +
+          '<span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f59e0b;margin-right:4px;"></i>' + (isEn ? 'SESS Booking' : 'SESS 예약') + '</span>' +
+        '</div>' +
+      '</div>';
+
+    // 로그인 시에만 24시간 시작/종료 시간 선택 UI 노출
+    let timeOptions = '';
+    for(let m = 0; m <= 1410; m += 30){
+      const t = minToTime(m);
+      timeOptions += '<option value="' + t + '"' + (t === '10:00' ? ' selected' : '') + '>' + t + '</option>';
+    }
+    let endOptions = '';
+    for(let m = 30; m <= 1440; m += 30){
+      const t = minToTime(m);
+      endOptions += '<option value="' + t + '"' + (t === '12:00' ? ' selected' : '') + '>' + t + '</option>';
+    }
+
+    const bookingInputHtml = curUser
+      ? '<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--bg-subtle,#f8fafc);border:1px solid var(--border);margin-bottom:10px;">' +
+          '<div style="flex:1;min-width:110px;"><label style="display:block;font-size:11.5px;font-weight:700;margin-bottom:3px;">' + (isEn ? 'Start' : '시작 시간') + '</label><select id="gbStartTime" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--border);padding:0 8px;background:var(--bg-card,#fff);color:var(--ink);">' + timeOptions + '</select></div>' +
+          '<div style="flex:1;min-width:110px;"><label style="display:block;font-size:11.5px;font-weight:700;margin-bottom:3px;">' + (isEn ? 'End' : '종료 시간') + '</label><select id="gbEndTime" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--border);padding:0 8px;background:var(--bg-card,#fff);color:var(--ink);">' + endOptions + '</select></div>' +
+          '<button type="button" id="gbSubmitBooking" class="btn primary" style="height:38px;padding:0 16px;background:#2563eb;border-color:#2563eb;color:#fff;font-weight:800;border-radius:8px;white-space:nowrap;">' + (isEn ? '✓ Book' : '✓ 예약 확정') + '</button>' +
+        '</div>'
+      : '<div style="font-size:12px;color:var(--ink-light);padding:6px 0;">🔒 ' + (isEn ? 'Login required to make a reservation.' : '예약 시간 선택 및 확정은 로그인 후 가능합니다.') + '</div>';
 
     const monthPrefix = viewYear + '-' + pad(viewMonth);
     const monthBookings = all.filter(function(b){ return (b.date || '').startsWith(monthPrefix); }).sort(function(a,b){ return (a.date || '').localeCompare(b.date || ''); });
@@ -21819,11 +21854,12 @@ function renderInvSubLoans(){
 
     const dayListHtml = listSource.length
       ? listSource.map(function(b){
-          const isMine = !b.isSess && ((b.user === myName) || (typeof isAdmin === 'function' && isAdmin()));
+          const isMine = !b.isSess && curUser && ((b.user === myName) || (typeof isAdmin === 'function' && isAdmin()));
           const sList = (b.slots || []).slice().sort();
-          const rangeText = b.timeText ? b.timeText : (sList.length ? (sList[0] + ' ~ ' + sList[sList.length - 1] + ' (+30m)') : '');
+          const rangeText = b.timeText ? b.timeText : (sList.length ? (sList[0] + ' ~ ' + minToTime(timeToMin(sList[sList.length - 1]) + 30)) : '');
+          const durMins = b.isSess ? (timeToMin(b.endTm) - timeToMin(b.startTm)) : (sList.length * 30);
           return '<div class="gb-booking-card' + (b.isSess ? ' is-sess' : '') + '">' +
-            '<div><b>' + (gbViewMode === 'all' ? safe(b.date) + ' · ' : '') + safe(b.user) + '</b> <span style="color:var(--ink-light);font-size:12px;">· ' + safe(rangeText) + ' (' + (sList.length * 30) + (isEn ? 'min' : '분') + ')</span></div>' +
+            '<div><b>' + (gbViewMode === 'all' ? safe(b.date) + ' · ' : '') + safe(b.user) + '</b> <span style="color:var(--ink-light);font-size:12px;">· ' + safe(rangeText) + (durMins > 0 ? ' (' + durMins + (isEn ? 'min' : '분') + ')' : '') + '</span></div>' +
             (isMine ? '<button type="button" class="btn btn-sm" data-gb-cancel="' + safe(b.id) + '" style="color:#dc2626;border:1px solid #fecaca;background:#fef2f2;padding:4px 8px;border-radius:6px;font-size:11.5px;">' + (isEn ? 'Cancel' : '취소') + '</button>' : '') +
           '</div>';
         }).join('')
@@ -21831,7 +21867,7 @@ function renderInvSubLoans(){
 
     panel.innerHTML =
       '<div class="gb-header">' +
-        '<div><h3 style="margin:0;font-size:15.5px;font-weight:800;color:var(--ink);">' + (isEn ? '📅 Equipment Booking (30m)' : '📅 날짜별 장비 예약 (30분 단위)') + '</h3></div>' +
+        '<div><h3 style="margin:0;font-size:15.5px;font-weight:800;color:var(--ink);">' + (isEn ? '📅 24h Equipment Booking' : '📅 24시간 장비 예약 현황') + '</h3></div>' +
         '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
           '<button type="button" class="gb-mode-btn' + (gbViewMode === 'all' ? ' active' : '') + '" data-gb-mode="all">' + (isEn ? 'All' : '전체 보기') + '</button>' +
           '<button type="button" class="gb-mode-btn' + (gbViewMode === 'detail' ? ' active' : '') + '" data-gb-mode="detail">' + (isEn ? 'Detail' : '자세히 보기') + '</button>' +
@@ -21846,18 +21882,9 @@ function renderInvSubLoans(){
       '<div class="gb-cal-grid">' + calCells + '</div>' +
       '<div class="gb-day-section">' +
         (gbViewMode === 'detail'
-          ? '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">' +
-              '<b style="font-size:13.5px;">🗓️ ' + safe(selectedDate) + ' (09:00 ~ 18:00)</b>' +
-              '<div style="display:flex;gap:4px;">' +
-                '<button type="button" class="gb-filter-chip' + (gbFilter === 'all' ? ' active' : '') + '" data-gb-filter="all">' + (isEn ? 'All' : '전체') + '</button>' +
-                '<button type="button" class="gb-filter-chip' + (gbFilter === 'avail' ? ' active' : '') + '" data-gb-filter="avail">' + (isEn ? 'Open' : '예약가능') + '</button>' +
-                '<button type="button" class="gb-filter-chip' + (gbFilter === 'mine' ? ' active' : '') + '" data-gb-filter="mine">' + (isEn ? 'Mine' : '내 예약') + '</button>' +
-              '</div>' +
-            '</div>' +
-            (pickedSlots.length ? '<div style="margin-bottom:8px;"><button type="button" id="gbSubmitBooking" class="btn primary" style="width:100%;min-height:42px;background:#2563eb;border-color:#2563eb;color:#fff;font-weight:800;border-radius:8px;">✓ ' + (pickedSlots.length * 30) + (isEn ? 'm Confirm Booking' : '분 예약 확정') + '</button></div>' : '') +
-            '<div class="gb-slots-grid">' + slotsHtml + '</div>'
+          ? '<b style="font-size:13.5px;">🗓️ ' + safe(selectedDate) + ' (00:00 ~ 24:00)</b>' + timelineHtml + bookingInputHtml
           : '') +
-        '<div style="margin-top:12px;border-top:1px dashed var(--border);padding-top:10px;">' +
+        '<div style="margin-top:8px;">' +
           '<div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">' + (gbViewMode === 'all' ? (isEn ? '📌 Monthly Bookings' : '📌 이번 달 전체 예약 현황') : (isEn ? '📌 Day Bookings' : '📌 이날의 예약 목록')) + '</div>' +
           dayListHtml +
         '</div>' +
@@ -21866,10 +21893,6 @@ function renderInvSubLoans(){
     panel.querySelectorAll('[data-gb-mode]').forEach(function(b){
       b.onclick = function(){ gbViewMode = b.dataset.gbMode; renderGenbaroBookingPanel(eqId); };
     });
-    panel.querySelectorAll('[data-gb-filter]').forEach(function(b){
-      b.onclick = function(){ gbFilter = b.dataset.gbFilter; renderGenbaroBookingPanel(eqId); };
-    });
-
     $('gbPrevMonth').onclick = function(){
       viewMonth--; if(viewMonth < 1){ viewMonth = 12; viewYear--; }
       renderGenbaroBookingPanel(eqId);
@@ -21878,32 +21901,19 @@ function renderInvSubLoans(){
       viewMonth++; if(viewMonth > 12){ viewMonth = 1; viewYear++; }
       renderGenbaroBookingPanel(eqId);
     };
-
     panel.querySelectorAll('[data-gb-date]').forEach(function(btn){
       btn.onclick = function(){
         selectedDate = btn.dataset.gbDate;
-        pickedSlots = [];
         renderGenbaroBookingPanel(eqId);
       };
     });
-
-    panel.querySelectorAll('[data-gb-slot]').forEach(function(btn){
-      btn.onclick = function(){
-        const s = btn.dataset.gbSlot;
-        const idx = pickedSlots.indexOf(s);
-        if(idx >= 0) pickedSlots.splice(idx, 1);
-        else pickedSlots.push(s);
-        renderGenbaroBookingPanel(eqId);
-      };
-    });
-
     panel.querySelectorAll('[data-gb-cancel]').forEach(function(btn){
       btn.onclick = function(){
         const bid = btn.dataset.gbCancel;
         const list = getBookings();
         const target = list.find(function(x){ return x.id === bid; });
         if(!target) return;
-        const canCancel = (target.user === myName) || (typeof isAdmin === 'function' && isAdmin());
+        const canCancel = curUser && ((target.user === myName) || (typeof isAdmin === 'function' && isAdmin()));
         if(!canCancel){ toast('본인의 예약만 취소할 수 있습니다.'); return; }
         if(!confirm(target.date + ' 예약을 취소할까요?')) return;
         saveBookings(list.filter(function(x){ return x.id !== bid; }));
@@ -21923,21 +21933,33 @@ function renderInvSubLoans(){
           if(typeof openModal === 'function') openModal('login');
           return;
         }
-        if(!pickedSlots.length) return;
+        const sTm = $('gbStartTime').value;
+        const eTm = $('gbEndTime').value;
+        if(timeToMin(eTm) <= timeToMin(sTm)){
+          toast('종료 시간은 시작 시간보다 뒤여야 합니다.');
+          return;
+        }
+        const newSlots = expandSlots(sTm, eTm);
+        const occupied = {};
+        dayBookings.forEach(function(b){ (b.slots || []).forEach(function(s){ occupied[s] = b.user; }); });
+        const conflict = newSlots.find(function(s){ return occupied[s]; });
+        if(conflict){
+          toast('⚠️ ' + conflict + ' 시간대에 이미 예약(' + occupied[conflict] + ')이 있습니다.');
+          return;
+        }
+
         const list = getBookings();
-        const sortedSlots = pickedSlots.slice().sort();
         const localId = 'BK-' + Date.now();
-        list.push({ id: localId, eqId: eqId, date: selectedDate, slots: sortedSlots, user: myName });
+        list.push({ id: localId, eqId: eqId, date: selectedDate, slots: newSlots, user: myName });
         saveBookings(list);
-        pickedSlots = [];
         if(typeof db !== 'undefined' && db){
           db.from('equipment_sessions').insert({
             equipment_id: eqId,
             equipment_code: 'BOOKING',
             used_on: selectedDate,
-            duration_min: sortedSlots.length * 30,
+            duration_min: newSlots.length * 30,
             user_name: myName,
-            notes: JSON.stringify(sortedSlots)
+            notes: JSON.stringify(newSlots)
           }).select().then(function(r){
             if(r && r.error){
               toast('⚠️ 서버 동기화 실패: ' + r.error.message);
@@ -21946,7 +21968,7 @@ function renderInvSubLoans(){
             }
           });
         }
-        toast('✓ ' + selectedDate + ' 장비 예약이 완료되었습니다.');
+        toast('✓ ' + selectedDate + ' (' + sTm + '~' + eTm + ') 예약이 완료되었습니다.');
         renderGenbaroBookingPanel(eqId);
       };
     }
