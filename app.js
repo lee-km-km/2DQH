@@ -3514,14 +3514,36 @@ function renderXrdLogs(){
 
   renderXrdInUse();
 
-  const filtered = xrdLogs.filter(function(l){
+  const unloggedXrd = (typeof window.getUnloggedBookingLogs === 'function')
+    ? window.getUnloggedBookingLogs('EQ-XRD-01', xrdLogs)
+    : [];
+  const combinedXrd = xrdLogs.map(function(l){ return Object.assign({}, l, { is_unlogged_booking: false }); })
+    .concat(unloggedXrd)
+    .sort(function(a, b){
+      const da = (a.used_on || '') + ' ' + (a.start_time || '');
+      const dbStr = (b.used_on || '') + ' ' + (b.start_time || '');
+      return dbStr.localeCompare(da);
+    });
+
+  const filterMode = window._xrdLogFilterMode || 'all';
+  const filtered = combinedXrd.filter(function(l){
+    if(filterMode === 'logged' && l.is_unlogged_booking) return false;
+    if(filterMode === 'unlogged' && !l.is_unlogged_booking) return false;
     if(!q) return true;
     const hay = [l.sample_name, l.meas_info, l.user_name, l.affiliation, l.professor, l.scan_type, l.reservation_no, l.memo].join(' ').toLowerCase();
     return hay.includes(q);
   });
 
+  const filterBarHtml =
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">' +
+      '<button type="button" data-xrd-filter="all" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='all'?'#2563eb':'#cbd5e1') + ';background:' + (filterMode==='all'?'#2563eb':'#fff') + ';color:' + (filterMode==='all'?'#fff':'#475569') + ';cursor:pointer;">전체 일지 (' + combinedXrd.length + ')</button>' +
+      '<button type="button" data-xrd-filter="logged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='logged'?'#15803d':'#cbd5e1') + ';background:' + (filterMode==='logged'?'#15803d':'#fff') + ';color:' + (filterMode==='logged'?'#fff':'#475569') + ';cursor:pointer;">📝 로그북 작성분 (' + xrdLogs.length + ')</button>' +
+      '<button type="button" data-xrd-filter="unlogged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='unlogged'?'#d97706':'#cbd5e1') + ';background:' + (filterMode==='unlogged'?'#d97706':'#fff') + ';color:' + (filterMode==='unlogged'?'#fff':'#475569') + ';cursor:pointer;">📅 예약기반 미작성 (' + unloggedXrd.length + ')</button>' +
+    '</div>';
+
   if(filtered.length === 0){
-    rows.innerHTML = '<div style="text-align:center;padding:36px;color:#64748b;font-size:14px;">등록된 HR-XRD 사용일지가 없습니다.</div>';
+    rows.innerHTML = filterBarHtml + '<div style="text-align:center;padding:36px;color:#64748b;font-size:14px;">해당 조건의 HR-XRD 사용일지가 없습니다.</div>';
+    rows.querySelectorAll('[data-xrd-filter]').forEach(function(b){ b.onclick = function(){ window._xrdLogFilterMode = b.dataset.xrdFilter; renderXrdLogs(); }; });
     return;
   }
 
@@ -3554,8 +3576,12 @@ function renderXrdLogs(){
     const isActive = l.status === 'active';
     const durStr = l.duration_min ? formatDurationHoursMinutes(l.duration_min) : '';
 
-    html += '<tr>' +
-      '<td data-l="Time"><b>' + safe(dt) + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + safe(st) + ' ~ ' + (isActive ? '<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-weight:700;font-size:11px;">In progress</span>' : safe(et) + ' (' + durStr + ')') + (l.reservation_no ? ' · #' + safe(l.reservation_no) : '') + '</span></td>' +
+    const isUnlogged = !!l.is_unlogged_booking;
+    const typeBadge = isUnlogged
+      ? '<span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10.5px;margin-left:4px;">미작성(예약)</span>'
+      : '<span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10.5px;margin-left:4px;">로그북 작성</span>';
+    html += '<tr' + (isUnlogged ? ' style="background:#fffbeb;"' : '') + '>' +
+      '<td data-l="Time"><b>' + safe(dt) + '</b>' + typeBadge + '<span class="id" style="font-size:12px;color:#64748b;display:block;">' + safe(st) + ' ~ ' + (isActive ? '<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-weight:700;font-size:11px;">In progress</span>' : safe(et) + ' (' + durStr + ')') + (l.reservation_no ? ' · #' + safe(l.reservation_no) : '') + '</span></td>' +
       '<td data-l="User"><b>' + safe(l.user_name) + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + safe(l.professor || '') + ' · ' + safe(l.affiliation || '') + '</span></td>' +
       '<td data-l="Chiller">' + arrow(l.chiller_start, l.chiller_end) + '</td>' +
       '<td data-l="Vacuum">' + arrow(l.vacuum_start, l.vacuum_end) + '</td>' +
@@ -3564,7 +3590,9 @@ function renderXrdLogs(){
       '<td data-l="Scan">' + (safe(l.scan_type) || '—') + '</td>' +
       '<td data-l="Sample"><b>' + (safe(l.sample_name) || '—') + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + (isActive ? '' : '×' + safe(l.sample_count || 1)) + (l.meas_info ? ' · ' + safe(l.meas_info) : '') + (l.memo ? ' · 📝 ' + safe(l.memo) : '') + '</span></td>' +
       '<td data-l="Action">';
-    if(isActive){
+    if(isUnlogged){
+      html += '<span style="font-size:11.5px;color:#b45309;font-weight:700;background:#fef3c7;padding:2px 7px;border-radius:6px;">예약반영</span>';
+    } else if(isActive){
       html += '<button type="button" class="text-btn" data-xrd-finish="' + l.id + '" style="font-weight:700;color:var(--primary);background:rgba(36,87,214,0.08);padding:4px 8px;border-radius:6px;">Finish</button>';
     } else if(isAdmin()){
       html += '<button type="button" class="text-btn btn-log-edit" data-xrd-edit="' + l.id + '" style="margin-right:6px;">수정</button>' +
@@ -3576,7 +3604,8 @@ function renderXrdLogs(){
   });
 
   html += '</tbody></table>';
-  rows.innerHTML = html;
+  rows.innerHTML = filterBarHtml + html;
+  rows.querySelectorAll('[data-xrd-filter]').forEach(function(b){ b.onclick = function(){ window._xrdLogFilterMode = b.dataset.xrdFilter; renderXrdLogs(); }; });
 }
 
 function finishXrdSession(id){
@@ -5245,6 +5274,42 @@ function getUnifiedEquipmentSessions(){
     });
   }
 
+  // 3. 예약 기반 미작성 세션 자동 포함 (통계에 반영 + 구분 플래그 유지)
+  if(typeof window.getUnloggedBookingLogs === 'function'){
+    ['EQ-XRD-01', 'EQ-OM-ZEISS', 'EQ-UVVIS-01', 'EQ-FTIR-01'].forEach(function(eqId){
+      const eq = (researchEquipments || []).find(function(e){ return e.id === eqId; }) || { id: eqId, code: eqId, name: eqId, icon: '🔬' };
+      const existingForEq = list.filter(function(s){ return s.equipment_id === eqId || s.equipment_code === eq.code; });
+      const unlogged = window.getUnloggedBookingLogs(eqId, existingForEq);
+      unlogged.forEach(function(u){
+        list.push({
+          id: u.id,
+          raw_id: u.id,
+          equipment_id: eq.id,
+          equipment_code: eq.code,
+          equipment_name: eq.name,
+          icon: eq.icon || '🔬',
+          is_live: true,
+          type: 'booking_unlogged',
+          is_unlogged_booking: true,
+          booking_source: u.booking_source,
+          used_on: u.used_on,
+          start_time: u.start_time,
+          end_time: u.end_time,
+          duration_min: u.duration_min || 60,
+          user_name: u.user_name,
+          affiliation: u.affiliation || '2DQH',
+          professor: u.professor || '-',
+          sample_name: u.sample_name,
+          sample_count: u.sample_count || 1,
+          scan_type: '—',
+          parameters: {},
+          memo: u.memo || '',
+          created_at: (u.used_on || today()) + 'T' + (u.start_time || '10:00') + ':00'
+        });
+      });
+    });
+  }
+
   // 최신순 (날짜 desc, 시간 desc) 정렬
   list.sort(function(a, b){
     const dateA = (a.used_on || '') + ' ' + (a.start_time || '');
@@ -5537,11 +5602,16 @@ function exportEquipmentUtilizationExcel(){
   });
 
   const detailSheetData = [
-    ['사용일자', '장비코드', '사용자', '소속(원본)', '소속구분', '가동시간(분)', '가동시간(h)']
+    ['기록구분', '사용일자', '장비코드', '사용자', '소속(원본)', '소속구분', '가동시간(분)', '가동시간(h)']
+  ];
+  const writtenDetailData = [
+    ['기록구분', '사용일자', '장비코드', '사용자', '소속(원본)', '소속구분', '가동시간(분)', '가동시간(h)']
   ];
   allSessions.forEach(function(s){
     const mins = Number(s.duration_min) || 0;
-    detailSheetData.push([
+    const kind = s.is_unlogged_booking ? ('예약기반 미작성(' + (s.booking_source || 'BOOKING') + ')') : '로그북 작성';
+    const row = [
+      kind,
       s.used_on || '',
       s.equipment_code || s.equipment_id || '',
       s.user_name || '',
@@ -5549,7 +5619,9 @@ function exportEquipmentUtilizationExcel(){
       classifyEquipAffiliation(s.affiliation),
       mins,
       Number((mins / 60).toFixed(2))
-    ]);
+    ];
+    detailSheetData.push(row);
+    if(!s.is_unlogged_booking) writtenDetailData.push(row);
   });
 
   const wb = XLSX.utils.book_new();
@@ -5558,8 +5630,12 @@ function exportEquipmentUtilizationExcel(){
   XLSX.utils.book_append_sheet(wb, ws1, '장비별 가동률 요약');
 
   const ws2 = XLSX.utils.aoa_to_sheet(detailSheetData);
-  ws2['!cols'] = [{ wch: 13 }, { wch: 20 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 13 }, { wch: 13 }];
-  XLSX.utils.book_append_sheet(wb, ws2, '상세 로그북 이력');
+  ws2['!cols'] = [{ wch: 22 }, { wch: 13 }, { wch: 20 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 13 }, { wch: 13 }];
+  XLSX.utils.book_append_sheet(wb, ws2, '전체 일지 이력');
+
+  const ws3 = XLSX.utils.aoa_to_sheet(writtenDetailData);
+  ws3['!cols'] = [{ wch: 22 }, { wch: 13 }, { wch: 20 }, { wch: 14 }, { wch: 18 }, { wch: 12 }, { wch: 13 }, { wch: 13 }];
+  XLSX.utils.book_append_sheet(wb, ws3, '로그북 작성분');
 
   XLSX.writeFile(wb, '2DQH_장비가동률_통계_' + today() + '.xlsx');
   toast('✓ 장비별 가동률 엑셀 시트가 다운로드되었습니다.');
@@ -7605,8 +7681,17 @@ function exportEquipmentLogsExcel(){
   };
 
   const isXrd = (selected.type === 'xrd' || selected.code === 'XRD' || selected.code === 'HR-XRD' || selected.id === 'EQ-XRD-01');
-  const logs = isXrd ? xrdLogs : equipmentSessions.filter(function(s){
+  const writtenLogs = (isXrd ? xrdLogs : equipmentSessions.filter(function(s){
     return s.equipment_id === selected.id || s.equipment_code === selected.code;
+  })).map(function(l){ return Object.assign({}, l, { is_unlogged_booking: false }); });
+
+  const unloggedList = (typeof window.getUnloggedBookingLogs === 'function')
+    ? window.getUnloggedBookingLogs(selected.id, writtenLogs)
+    : [];
+  const logs = writtenLogs.concat(unloggedList).sort(function(a, b){
+    const da = (a.used_on || '') + ' ' + (a.start_time || '');
+    const dbStr = (b.used_on || '') + ' ' + (b.start_time || '');
+    return dbStr.localeCompare(da);
   });
 
   if(!logs || logs.length === 0){
@@ -7614,173 +7699,179 @@ function exportEquipmentLogsExcel(){
     return;
   }
 
-  // 1. 통계 집계
-  let totalMins = 0;
-  let totalSamples = 0;
-  const affilMap = {};
-  const userMap = {};
+  function buildLogSheetAoa(targetLogs, sheetTitle){
+    let totalMins = 0;
+    let totalSamples = 0;
+    const affilMap = {};
+    const userMap = {};
 
-  logs.forEach(function(l){
-    const mins = l.duration_min != null ? Number(l.duration_min) : (Number(l.run_hours) ? Math.round(Number(l.run_hours) * 60) : 60);
-    totalMins += mins;
-    const cnt = l.sample_count != null ? Number(l.sample_count) : 1;
-    totalSamples += cnt;
-    const aff = l.affiliation || '2DQH';
-    affilMap[aff] = (affilMap[aff] || 0) + cnt;
-    const u = l.user_name || l.operator_name || '연구원';
-    userMap[u] = (userMap[u] || 0) + 1;
-  });
+    targetLogs.forEach(function(l){
+      const mins = l.duration_min != null ? Number(l.duration_min) : (Number(l.run_hours) ? Math.round(Number(l.run_hours) * 60) : 60);
+      totalMins += mins;
+      const cnt = l.sample_count != null ? Number(l.sample_count) : 1;
+      totalSamples += cnt;
+      const aff = l.affiliation || '2DQH';
+      affilMap[aff] = (affilMap[aff] || 0) + cnt;
+      const u = l.user_name || l.operator_name || '연구원';
+      userMap[u] = (userMap[u] || 0) + 1;
+    });
 
-  let topAffil = '-';
-  let maxAff = 0;
-  for(const a in affilMap){
-    if(affilMap[a] > maxAff){
-      maxAff = affilMap[a];
-      const pct = totalSamples > 0 ? Math.round((maxAff / totalSamples) * 100) : 0;
-      topAffil = a + ' (' + maxAff + '개, ' + pct + '%)';
-    }
-  }
-
-  let topUser = '-';
-  let maxU = 0;
-  for(const u in userMap){
-    if(userMap[u] > maxU){
-      maxU = userMap[u];
-      topUser = u + ' (' + maxU + '건)';
-    }
-  }
-
-  // 2. 워크시트 데이터 배열 (AOA) 생성
-  const aoa = [];
-  aoa.push(['[IBS 2DQH 연구단 연구장비 공식 사용 및 운영일지]']);
-  aoa.push(['장비명: ' + (selected.name || selected.code) + ' (' + (selected.code || '') + ')', '', '설치위치: ' + (selected.location || '-'), '', '출력일자: ' + today()]);
-  aoa.push(['총 가동건수: ' + logs.length + '건', '', '총 가동시간: ' + (totalMins / 60).toFixed(1) + '시간 (' + totalMins + '분)', '', '총 시료수: ' + totalSamples + '개', '', '최다 사용처: ' + topAffil, '', '최다 사용자: ' + topUser]);
-  aoa.push([]); // 빈 줄
-
-  // 헤더 행
-  const headers = [
-    'No',
-    '측정일자 (Date)',
-    '시작시간 (Start)',
-    '종료시간 (End)',
-    '가동시간_분 (Duration)',
-    '사용자 (Operator)',
-    '소속 연구실 (Affiliation)',
-    '지도교수 (Adviser)',
-    '시료/공정명 (Sample)',
-    '시료수량 (Count)',
-    '측정/스캔모드 (Mode)',
-    '장비 파라미터 (Parameters)',
-    'SOP점검 (Safety Check)',
-    '진행상태 (Status)',
-    '비고/특이사항 (Memo)'
-  ];
-  aoa.push(headers);
-
-  // 데이터 행 추가
-  logs.forEach(function(l, idx){
-    const dateStr = normalizeExportDate(l.used_on || l.start_time || '');
-    const startTm = l.start_time ? String(l.start_time).replace(/.*T/, '').slice(0, 5) : '-';
-    let endTm = l.end_time ? String(l.end_time).replace(/.*T/, '').slice(0, 5) : '';
-    if(!endTm && l.duration_min && startTm !== '-'){
-      const parts = startTm.split(':');
-      if(parts.length === 2){
-        const totalStartM = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-        const totalEndM = totalStartM + Number(l.duration_min);
-        const eh = Math.floor(totalEndM / 60) % 24;
-        const em = totalEndM % 60;
-        endTm = String(eh).padStart(2, '0') + ':' + String(em).padStart(2, '0');
+    let topAffil = '-';
+    let maxAff = 0;
+    for(const a in affilMap){
+      if(affilMap[a] > maxAff){
+        maxAff = affilMap[a];
+        const pct = totalSamples > 0 ? Math.round((maxAff / totalSamples) * 100) : 0;
+        topAffil = a + ' (' + maxAff + '개, ' + pct + '%)';
       }
     }
-    const durMin = l.duration_min != null ? Number(l.duration_min) : (Number(l.run_hours) ? Math.round(Number(l.run_hours) * 60) : 60);
-    const userName = l.user_name || l.operator_name || '-';
-    const affil = l.affiliation || '2DQH';
-    const prof = l.professor || '-';
-    const sample = l.sample_name || l.sample_info || '-';
-    const sampleCnt = l.sample_count != null ? Number(l.sample_count) : 1;
-    const scanMode = l.scan_type || (l.parameters && l.parameters.scan_type) || (isXrd ? (l.scan_mode || 'θ/2θ') : '표준');
 
-    // 파라미터 문자열 포맷팅
-    let paramStr = '-';
-    if(l.parameters && typeof l.parameters === 'object'){
-      const pArr = [];
-      for(const k in l.parameters){
-        if(k === 'scan_type' || k.endsWith('_ok')) continue;
-        pArr.push(k + ': ' + l.parameters[k]);
+    let topUser = '-';
+    let maxU = 0;
+    for(const u in userMap){
+      if(userMap[u] > maxU){
+        maxU = userMap[u];
+        topUser = u + ' (' + maxU + '건)';
       }
-      if(pArr.length > 0) paramStr = pArr.join(' | ');
-    } else if(isXrd){
-      const xrdParams = [];
-      if(l.chiller_temp_start != null) xrdParams.push('Chiller: ' + l.chiller_temp_start + '°C');
-      if(l.vacuum_start != null) xrdParams.push('Vac: ' + l.vacuum_start + 'mV');
-      if(xrdParams.length > 0) paramStr = xrdParams.join(' | ');
     }
 
-    // SOP 점검 결과
-    let sopStr = '완료 (Pass)';
-    if(l.parameters){
-      let allOk = true;
-      for(const k in l.parameters){
-        if(k.endsWith('_ok') && l.parameters[k] === false){
-          allOk = false;
-          break;
+    const aoaOut = [];
+    aoaOut.push([sheetTitle]);
+    aoaOut.push(['장비명: ' + (selected.name || selected.code) + ' (' + (selected.code || '') + ')', '', '설치위치: ' + (selected.location || '-'), '', '출력일자: ' + today()]);
+    aoaOut.push(['총 가동건수: ' + targetLogs.length + '건', '', '총 가동시간: ' + (totalMins / 60).toFixed(1) + '시간 (' + totalMins + '분)', '', '총 시료수: ' + totalSamples + '개', '', '최다 사용처: ' + topAffil, '', '최다 사용자: ' + topUser]);
+    aoaOut.push([]);
+
+    const headers = [
+      'No',
+      '기록구분 (Type)',
+      '측정일자 (Date)',
+      '시작시간 (Start)',
+      '종료시간 (End)',
+      '가동시간_분 (Duration)',
+      '사용자 (Operator)',
+      '소속 연구실 (Affiliation)',
+      '지도교수 (Adviser)',
+      '시료/공정명 (Sample)',
+      '시료수량 (Count)',
+      '측정/스캔모드 (Mode)',
+      '장비 파라미터 (Parameters)',
+      'SOP점검 (Safety Check)',
+      '진행상태 (Status)',
+      '비고/특이사항 (Memo)'
+    ];
+    aoaOut.push(headers);
+
+    targetLogs.forEach(function(l, idx){
+      const recordType = l.is_unlogged_booking ? ('예약기반 미작성 (' + (l.booking_source || 'BOOKING') + ')') : '로그북 작성';
+      const dateStr = normalizeExportDate(l.used_on || l.start_time || '');
+      const startTm = l.start_time ? String(l.start_time).replace(/.*T/, '').slice(0, 5) : '-';
+      let endTm = l.end_time ? String(l.end_time).replace(/.*T/, '').slice(0, 5) : '';
+      if(!endTm && l.duration_min && startTm !== '-'){
+        const parts = startTm.split(':');
+        if(parts.length === 2){
+          const totalStartM = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+          const totalEndM = totalStartM + Number(l.duration_min);
+          const eh = Math.floor(totalEndM / 60) % 24;
+          const em = totalEndM % 60;
+          endTm = String(eh).padStart(2, '0') + ':' + String(em).padStart(2, '0');
         }
       }
-      if(!allOk) sopStr = '주의/특이';
-    }
+      const durMin = l.duration_min != null ? Number(l.duration_min) : (Number(l.run_hours) ? Math.round(Number(l.run_hours) * 60) : 60);
+      const userName = l.user_name || l.operator_name || '-';
+      const affil = l.affiliation || '2DQH';
+      const prof = l.professor || '-';
+      const sample = l.sample_name || l.sample_info || '-';
+      const sampleCnt = l.sample_count != null ? Number(l.sample_count) : 1;
+      const scanMode = l.scan_type || (l.parameters && l.parameters.scan_type) || (isXrd ? (l.scan_mode || 'θ/2θ') : '표준');
 
-    const statusText = (l.status === 'active' || l.status === 'in_use') ? '가동중' : '정상완료';
-    const memo = String(l.memo || l.notes || '').replace(/[\r\n]+/g, ' ').trim() || '-';
+      let paramStr = '-';
+      if(l.parameters && typeof l.parameters === 'object'){
+        const pArr = [];
+        for(const k in l.parameters){
+          if(k === 'scan_type' || k.endsWith('_ok')) continue;
+          pArr.push(k + ': ' + l.parameters[k]);
+        }
+        if(pArr.length > 0) paramStr = pArr.join(' | ');
+      } else if(isXrd){
+        const xrdParams = [];
+        if(l.chiller_temp_start != null) xrdParams.push('Chiller: ' + l.chiller_temp_start + '°C');
+        if(l.vacuum_start != null) xrdParams.push('Vac: ' + l.vacuum_start + 'mV');
+        if(xrdParams.length > 0) paramStr = xrdParams.join(' | ');
+      }
 
-    aoa.push([
-      idx + 1,
-      dateStr,
-      startTm,
-      endTm || '-',
-      durMin,
-      userName,
-      affil,
-      prof,
-      sample,
-      sampleCnt,
-      scanMode,
-      paramStr,
-      sopStr,
-      statusText,
-      memo
-    ]);
-  });
+      let sopStr = l.is_unlogged_booking ? '미작성' : '완료 (Pass)';
+      if(l.parameters){
+        let allOk = true;
+        for(const k in l.parameters){
+          if(k.endsWith('_ok') && l.parameters[k] === false){
+            allOk = false;
+            break;
+          }
+        }
+        if(!allOk) sopStr = '주의/특이';
+      }
 
+      const statusText = l.is_unlogged_booking ? '예약반영(미작성)' : ((l.status === 'active' || l.status === 'in_use') ? '가동중' : '정상완료');
+      const memo = String(l.memo || l.notes || '').replace(/[\r\n]+/g, ' ').trim() || '-';
+
+      aoaOut.push([
+        idx + 1,
+        recordType,
+        dateStr,
+        startTm,
+        endTm || '-',
+        durMin,
+        userName,
+        affil,
+        prof,
+        sample,
+        sampleCnt,
+        scanMode,
+        paramStr,
+        sopStr,
+        statusText,
+        memo
+      ]);
+    });
+    return aoaOut;
+  }
+
+  const aoa = buildLogSheetAoa(logs, '[IBS 2DQH 연구단 연구장비 전체 일지 (로그북 작성 + 예약기반 미작성)]');
+  const aoaWritten = buildLogSheetAoa(writtenLogs, '[IBS 2DQH 연구단 연구장비 공식 로그북 작성분]');
   const fileName = '2DQH_' + (selected.code || 'Equipment') + '_사용일지_' + today();
 
-  // 3. SheetJS (.xlsx) 파일 생성 (열 너비 지정으로 ### 짤림 원천 차단)
+  const colWidths = [
+    { wch: 6 },  // No
+    { wch: 22 }, // 기록구분
+    { wch: 15 }, // 날짜
+    { wch: 11 }, // 시작시간
+    { wch: 11 }, // 종료시간
+    { wch: 14 }, // 가동시간
+    { wch: 14 }, // 사용자
+    { wch: 16 }, // 소속
+    { wch: 16 }, // 지도교수
+    { wch: 28 }, // 시료명
+    { wch: 10 }, // 시료수
+    { wch: 16 }, // 모드
+    { wch: 34 }, // 파라미터
+    { wch: 15 }, // SOP 점검
+    { wch: 16 }, // 상태
+    { wch: 32 }  // 메모
+  ];
+
   if(window.XLSX){
     try {
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      const wsAll = XLSX.utils.aoa_to_sheet(aoa);
+      wsAll['!cols'] = colWidths;
+      XLSX.utils.book_append_sheet(wb, wsAll, '전체 일지');
 
-      // 열 너비 지정: 날짜 15, 사용자 14, 샘플명 26, 파라미터 32 등 넉넉하게 보장
-      ws['!cols'] = [
-        { wch: 6 },  // No
-        { wch: 15 }, // 날짜 (### 짤림 절대 방지)
-        { wch: 11 }, // 시작시간
-        { wch: 11 }, // 종료시간
-        { wch: 14 }, // 가동시간
-        { wch: 14 }, // 사용자
-        { wch: 16 }, // 소속
-        { wch: 16 }, // 지도교수
-        { wch: 28 }, // 시료명
-        { wch: 10 }, // 시료수
-        { wch: 16 }, // 모드
-        { wch: 34 }, // 파라미터
-        { wch: 15 }, // SOP 점검
-        { wch: 12 }, // 상태
-        { wch: 32 }  // 메모
-      ];
+      const wsWritten = XLSX.utils.aoa_to_sheet(aoaWritten);
+      wsWritten['!cols'] = colWidths;
+      XLSX.utils.book_append_sheet(wb, wsWritten, '로그북 작성분');
 
-      XLSX.utils.book_append_sheet(wb, ws, '사용일지');
       XLSX.writeFile(wb, fileName + '.xlsx');
-      toast('✓ ' + (selected.name || '장비') + ' 공식 사용일지(' + logs.length + '건) 엑셀 파일이 다운로드되었습니다.');
+      toast('✓ ' + (selected.name || '장비') + ' 엑셀 다운로드 완료 (전체 ' + logs.length + '건 / 로그북 작성 ' + writtenLogs.length + '건)');
       return;
     } catch(err){
       console.warn('XLSX export failed, fallback to CSV:', err);
@@ -21782,6 +21873,117 @@ function renderInvSubLoans(){
     return false;
   }
 
+  window._getAllSessMonthItems = function(){
+    let out = [];
+    Object.keys(sessMonthCache).forEach(function(k){
+      if(Array.isArray(sessMonthCache[k])) out = out.concat(sessMonthCache[k]);
+    });
+    return out;
+  };
+  window._matchSessEq = matchSessEquipment;
+
+  window.getUnloggedBookingLogs = function(eqId, existingLogs){
+    const now = new Date();
+    const todayStr = today();
+    const curMin = now.getHours() * 60 + now.getMinutes();
+    const exList = Array.isArray(existingLogs) ? existingLogs : [];
+
+    const isMatchedInExisting = function(dateStr, startTm, endTm, userName, reservNo){
+      const bStart = timeToMin(startTm);
+      const bEnd = timeToMin(endTm || startTm);
+      return exList.some(function(l){
+        if(reservNo && l.reservation_no && String(l.reservation_no) === String(reservNo)) return true;
+        const lDate = String(l.used_on || (l.created_at ? l.created_at.slice(0, 10) : '')).slice(0, 10);
+        if(lDate !== dateStr) return false;
+        const lUser = String(l.user_name || l.operator_name || '').trim();
+        const bUser = String(userName || '').trim();
+        if(lUser && bUser && lUser === bUser) return true;
+        if(l.start_time){
+          const ls = timeToMin(String(l.start_time).slice(0, 5));
+          const le = l.end_time ? timeToMin(String(l.end_time).slice(0, 5)) : (ls + (Number(l.duration_min) || 60));
+          if(ls < bEnd && le > bStart) return true;
+        }
+        return false;
+      });
+    };
+
+    const out = [];
+    const seenKeys = new Set();
+
+    // A. SESS 예약 (과거 ~ 오늘 이미 시작된 예약만)
+    const sessAll = (typeof window._getAllSessMonthItems === 'function') ? window._getAllSessMonthItems() : [];
+    sessAll.forEach(function(it){
+      if(!matchSessEquipment(eqId, it)) return;
+      if(!it.date) return;
+      const sMin = timeToMin(it.startTm || '00:00');
+      const eMin = timeToMin(it.endTm || it.startTm || '00:00');
+      if(it.date > todayStr) return;
+      if(it.date === todayStr && sMin > curMin) return;
+      const dedupKey = 'SESS-' + (it.reservNo || (it.date + '_' + it.startTm + '_' + it.user));
+      if(seenKeys.has(dedupKey)) return;
+      seenKeys.add(dedupKey);
+      if(isMatchedInExisting(it.date, it.startTm, it.endTm, it.user, it.reservNo)) return;
+      const dur = Math.max(30, eMin - sMin);
+      out.push({
+        id: 'UNLOG-SESS-' + (it.reservNo || (it.date + '-' + sMin)),
+        equipment_id: eqId,
+        used_on: it.date,
+        start_time: it.startTm || '10:00',
+        end_time: it.endTm || '',
+        duration_min: dur,
+        user_name: it.user || 'SESS 예약자',
+        affiliation: 'SESS 예약',
+        professor: '-',
+        sample_name: '(로그북 미작성 · SESS 예약)',
+        sample_count: 1,
+        scan_type: '—',
+        reservation_no: it.reservNo || '',
+        status: 'unlogged_booking',
+        is_unlogged_booking: true,
+        booking_source: 'SESS',
+        memo: 'SESS #' + (it.reservNo || '-') + ' (로그북 미작성 자동반영)'
+      });
+    });
+
+    // B. 연구실 자체 예약 (과거 ~ 오늘 이미 시작된 예약만)
+    const labAll = getBookings().filter(function(b){ return b.eqId === eqId; });
+    labAll.forEach(function(b){
+      if(!b.date || !Array.isArray(b.slots) || !b.slots.length) return;
+      const sl = b.slots.slice().sort();
+      const sTm = sl[0];
+      const eMin = timeToMin(sl[sl.length - 1]) + 30;
+      const eTm = minToTime(eMin);
+      const sMin = timeToMin(sTm);
+      if(b.date > todayStr) return;
+      if(b.date === todayStr && sMin > curMin) return;
+      const dedupKey = 'LAB-' + (b.id || (b.date + '_' + sTm + '_' + b.user));
+      if(seenKeys.has(dedupKey)) return;
+      seenKeys.add(dedupKey);
+      if(isMatchedInExisting(b.date, sTm, eTm, b.user, '')) return;
+      out.push({
+        id: 'UNLOG-LAB-' + (b.id || (b.date + '-' + sMin)),
+        equipment_id: eqId,
+        used_on: b.date,
+        start_time: sTm,
+        end_time: eTm,
+        duration_min: Math.max(30, sl.length * 30),
+        user_name: b.user || '연구원',
+        affiliation: '2DQH',
+        professor: '-',
+        sample_name: '(로그북 미작성 · 연구실 예약)',
+        sample_count: 1,
+        scan_type: '—',
+        reservation_no: '',
+        status: 'unlogged_booking',
+        is_unlogged_booking: true,
+        booking_source: 'LAB',
+        memo: '연구실 예약 (로그북 미작성 자동반영)'
+      });
+    });
+
+    return out;
+  };
+
   window._getSessBookingsForEq = function(eqId, dateStr){
     const mKey = String(dateStr || '').slice(0, 7);
     return (sessMonthCache[mKey] || []).filter(function(it){
@@ -21801,6 +22003,7 @@ function renderInvSubLoans(){
         sessMonthCache[mKey] = d.items;
         if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
         if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
+        if(eqId === 'EQ-XRD-01' && typeof renderXrdLogs === 'function') renderXrdLogs();
       }
     } catch(_) {}
   }
