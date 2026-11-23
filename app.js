@@ -3481,18 +3481,23 @@ function renderXrdInUse(){
 }
 
 function renderXrdAdminKpis(){
-  const totalMin = xrdLogs.reduce(function(acc, l){ return acc + (l.duration_min || 0); }, 0);
+  const unloggedXrd = (typeof window.getUnloggedBookingLogs === 'function')
+    ? window.getUnloggedBookingLogs('EQ-XRD-01', xrdLogs)
+    : [];
+  const allXrdForKpi = xrdLogs.concat(unloggedXrd);
+  const totalMin = allXrdForKpi.reduce(function(acc, l){ return acc + (l.duration_min || 0); }, 0);
   const totalHours = (totalMin / 60).toFixed(1);
   const activeLogs = xrdLogs.filter(function(l){ return l.status === 'active'; });
   const issueLogs = xrdLogs.filter(function(l){
-    return (l.memo && l.memo.trim().length > 0) || !l.xray_max_ok || !l.position_ok;
+    if(l.status === 'unlogged_booking' || l.is_unlogged_booking) return false;
+    return (l.memo && l.memo.trim().length > 0) || l.xray_max_ok === false || l.position_ok === false;
   });
   const kpiHours = $('xrdKpiHours');
   const kpiCount = $('xrdKpiCount');
   const kpiActive = $('xrdKpiActive');
   const kpiIssues = $('xrdKpiIssues');
   if(kpiHours) kpiHours.textContent = totalHours + 'h';
-  if(kpiCount) kpiCount.textContent = xrdLogs.length + '건';
+  if(kpiCount) kpiCount.textContent = allXrdForKpi.length + '건';
   if(kpiActive){
     if(activeLogs.length > 0){
       kpiActive.textContent = activeLogs.length + '건 진행 중';
