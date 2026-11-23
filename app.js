@@ -21649,6 +21649,39 @@ function renderInvSubLoans(){
   let gbViewMode = 'detail'; // 'all' | 'detail'
   let gbFilter = 'all';      // 'all' | 'mine' | 'avail'
 
+  const sessMonthCache = {};
+
+  function matchSessEquipment(eqId, sessItem){
+    const eqObj = (typeof researchEquipments !== 'undefined' && Array.isArray(researchEquipments))
+      ? researchEquipments.find(function(e){ return e.id === eqId; })
+      : null;
+    const eqCode = (eqObj ? eqObj.code : eqId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const eqName = (eqObj ? eqObj.name : '').toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
+    const sHay = ((sessItem.equipShortNm || '') + ' ' + (sessItem.equipEngNm || '') + ' ' + (sessItem.equipKorNm || '')).toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
+    if(!eqCode && !eqName) return false;
+    if(eqCode && sHay.includes(eqCode)) return true;
+    if(eqId === 'EQ-XRD-01' && (sHay.includes('hrxrd') || sHay.includes('diffractometer'))) return true;
+    if(eqId === 'EQ-FTIR-01' && sHay.includes('ftir')) return true;
+    if(eqId === 'EQ-UVVIS-01' && sHay.includes('uvvis')) return true;
+    if(eqId === 'EQ-OM-ZEISS' && (sHay.includes('zeiss') || sHay.includes('opticalmicroscope'))) return true;
+    return false;
+  }
+
+  async function fetchSessBookings(year, month, eqId){
+    const mKey = year + '-' + pad(month);
+    if(sessMonthCache[mKey]) return;
+    sessMonthCache[mKey] = [];
+    try {
+      const r = await fetch('/api/sess-bookings?month=' + encodeURIComponent(mKey));
+      if(!r.ok) return;
+      const d = await r.json();
+      if(d && Array.isArray(d.items)){
+        sessMonthCache[mKey] = d.items;
+        if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
+      }
+    } catch(_) {}
+  }
+
   function getBookings(){
     try { return JSON.parse(localStorage.getItem(BOOKING_KEY) || '[]'); } catch(_) { return []; }
   }
@@ -21679,7 +21712,23 @@ function renderInvSubLoans(){
 
     const lang = (localStorage.getItem('labstock_lang') || 'ko');
     const isEn = (lang === 'en');
-    const all = getBookings().filter(function(b){ return b.eqId === eqId; });
+    fetchSessBookings(viewYear, viewMonth, eqId);
+    const mKey = viewYear + '-' + pad(viewMonth);
+    const sessItems = (sessMonthCache[mKey] || []).filter(function(it){
+      return matchSessEquipment(eqId, it);
+    }).map(function(it){
+      return {
+        id: 'SESS-' + it.reservNo,
+        eqId: eqId,
+        date: it.date,
+        slots: it.slots || [],
+        user: it.user + ' (SESS #' + it.reservNo + ')',
+        isSess: true,
+        reservNo: it.reservNo,
+        timeText: (it.startTm || '') + '~' + (it.endTm || '')
+      };
+    });
+    const all = getBookings().filter(function(b){ return b.eqId === eqId; }).concat(sessItems);
     const dayMap = {};
     all.forEach(function(b){ dayMap[b.date] = (dayMap[b.date] || 0) + 1; });
 
@@ -21719,7 +21768,7 @@ function renderInvSubLoans(){
     const slotsHtml = filteredSlots.map(function(t){
       const owner = slotOwner[t];
       if(owner){
-        const isMine = (owner.user === myName) || (typeof isAdmin === 'function' && isAdmin());
+        const isMine = !owner.isSess && ((owner.user === myName) || (typeof isAdmin === 'function' && isAdmin()));
         return '<button type="button" class="gb-slot booked' + (isMine ? ' mine' : '') + '" data-gb-cancel="' + safe(owner.id) + '" title="' + safe(owner.user) + '">' +
           '<span class="gb-slot-time">' + t + '</span>' +
           '<span class="gb-slot-user">' + safe(owner.user) + '</span>' +
@@ -21738,7 +21787,7 @@ function renderInvSubLoans(){
 
     const dayListHtml = listSource.length
       ? listSource.map(function(b){
-          const isMine = (b.user === myName) || (typeof isAdmin === 'function' && isAdmin());
+          const isMine = !b.isSess && ((b.user === myName) || (typeof isAdmin === 'function' && isAdmin()));
           const sList = (b.slots || []).slice().sort();
           const rangeText = sList.length ? (sList[0] + ' ~ ' + sList[sList.length - 1] + ' (+30m)') : '';
           return '<div class="gb-booking-card">' +
