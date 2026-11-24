@@ -5268,7 +5268,7 @@ function getUnifiedEquipmentSessions(){
   // 2. 범용 장비 시험/운영 세션 (equipmentSessions)
   if(Array.isArray(equipmentSessions)){
     equipmentSessions.forEach(function(s){
-      if(s.equipment_code === 'BOOKING' || s.equipment_code === 'ACTIVE_USE' || s.equipment_code === 'VIP_CONFIG') return;
+      if(s.equipment_code === 'BOOKING' || s.equipment_code === 'ACTIVE_USE' || s.equipment_code === 'VIP_CONFIG' || s.equipment_code === 'SESS_MONTH_CACHE') return;
       const eq = researchEquipments.find(function(e){ return e.id === s.equipment_id || e.code === s.equipment_code; }) || {};
       const isUnloggedRow = (s.status === 'unlogged_booking' || !!s.is_unlogged_booking);
       list.push({
@@ -7710,7 +7710,7 @@ function exportEquipmentLogsExcel(){
 
   const isXrd = (selected.type === 'xrd' || selected.code === 'XRD' || selected.code === 'HR-XRD' || selected.id === 'EQ-XRD-01');
   const baseLogs = (isXrd ? xrdLogs : equipmentSessions.filter(function(s){
-    if(s.equipment_code === 'BOOKING' || s.equipment_code === 'ACTIVE_USE' || s.equipment_code === 'VIP_CONFIG') return false;
+    if(s.equipment_code === 'BOOKING' || s.equipment_code === 'ACTIVE_USE' || s.equipment_code === 'VIP_CONFIG' || s.equipment_code === 'SESS_MONTH_CACHE') return false;
     return s.equipment_id === selected.id || s.equipment_code === selected.code;
   })).map(function(l){
     return Object.assign({}, l, { is_unlogged_booking: (l.status === 'unlogged_booking' || !!l.is_unlogged_booking) });
@@ -21890,16 +21890,83 @@ function renderInvSubLoans(){
   let gbFilter = 'all';      // 'all' | 'mine' | 'avail'
 
   const SESS_CACHE_KEY = 'labstock_sess_cache_v1';
+  const SESS_META_KEY = 'labstock_sess_meta_v1';
   const sessMonthCache = (function(){
     try {
       const saved = JSON.parse(localStorage.getItem(SESS_CACHE_KEY) || '{}');
       return (saved && typeof saved === 'object') ? saved : {};
     } catch(_) { return {}; }
   })();
+  const sessMonthMeta = (function(){
+    try {
+      const saved = JSON.parse(localStorage.getItem(SESS_META_KEY) || '{}');
+      return (saved && typeof saved === 'object') ? saved : {};
+    } catch(_) { return {}; }
+  })();
   function saveSessMonthCache(){
-    try { localStorage.setItem(SESS_CACHE_KEY, JSON.stringify(sessMonthCache)); } catch(_) {}
+    try {
+      localStorage.setItem(SESS_CACHE_KEY, JSON.stringify(sessMonthCache));
+      localStorage.setItem(SESS_META_KEY, JSON.stringify(sessMonthMeta));
+    } catch(_) {}
   }
   const sessRefreshedThisSession = {};
+
+  async function saveSessMonthToSupabase(mKey, items, updatedAt){
+    if(typeof db === 'undefined' || !db) return;
+    try {
+      await db.from('equipment_sessions')
+        .delete()
+        .eq('equipment_code', 'SESS_MONTH_CACHE')
+        .eq('used_on', mKey + '-01');
+      await db.from('equipment_sessions').insert({
+        equipment_id: 'SESS',
+        equipment_code: 'SESS_MONTH_CACHE',
+        used_on: mKey + '-01',
+        duration_min: Array.isArray(items) ? items.length : 0,
+        user_name: 'SYSTEM',
+        notes: JSON.stringify({ updatedAt: updatedAt || Date.now(), items: items || [] })
+      });
+    } catch(_) {}
+  }
+
+  let _sessSupaLoaded = false;
+  window.syncAllSessCacheFromSupabase = async function(){
+    if(_sessSupaLoaded || typeof db === 'undefined' || !db) return;
+    _sessSupaLoaded = true;
+    try {
+      const { data, error } = await db.from('equipment_sessions')
+        .select('used_on, notes')
+        .eq('equipment_code', 'SESS_MONTH_CACHE');
+      if(!error && Array.isArray(data) && data.length > 0){
+        let changed = false;
+        data.forEach(function(row){
+          const mKey = String(row.used_on || '').slice(0, 7);
+          if(!mKey || mKey.length !== 7) return;
+          try {
+            const parsed = JSON.parse(row.notes || '{}');
+            const items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : null);
+            const updatedAt = (parsed && parsed.updatedAt) ? Number(parsed.updatedAt) : 0;
+            if(items && (!Array.isArray(sessMonthCache[mKey]) || updatedAt > (sessMonthMeta[mKey] || 0))){
+              sessMonthCache[mKey] = items;
+              sessMonthMeta[mKey] = updatedAt || Date.now();
+              changed = true;
+            }
+          } catch(_) {}
+        });
+        if(changed){
+          saveSessMonthCache();
+          const activeEq = (typeof currentSelectedEquipment !== 'undefined' && currentSelectedEquipment) ? currentSelectedEquipment : 'EQ-XRD-01';
+          if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(activeEq);
+          if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(activeEq);
+          if(typeof renderXrdLogs === 'function') renderXrdLogs();
+          if(typeof renderEquipmentAnalyticsDashboard === 'function' && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
+            renderEquipmentAnalyticsDashboard();
+          }
+        }
+      }
+    } catch(_) {}
+  };
+  setTimeout(function(){ if(typeof window.syncAllSessCacheFromSupabase === 'function') window.syncAllSessCacheFromSupabase(); }, 300);
 
   function matchSessEquipment(eqId, sessItem){
     const eqObj = (typeof researchEquipments !== 'undefined' && Array.isArray(researchEquipments))
@@ -21975,7 +22042,7 @@ function renderInvSubLoans(){
       } else if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
         const eqObj = (researchEquipments || []).find(function(e){ return e.id === eqId; }) || { id: eqId, code: eqId };
         const existingForEq = equipmentSessions.filter(function(s){
-          return s.equipment_code !== 'BOOKING' && s.equipment_code !== 'ACTIVE_USE' && s.equipment_code !== 'VIP_CONFIG' &&
+          return s.equipment_code !== 'BOOKING' && s.equipment_code !== 'ACTIVE_USE' && s.equipment_code !== 'VIP_CONFIG' && s.equipment_code !== 'SESS_MONTH_CACHE' &&
             (s.equipment_id === eqId || s.equipment_code === eqObj.code);
         });
         const unlogged = window.getUnloggedBookingLogs(eqId, existingForEq);
@@ -22170,13 +22237,18 @@ function renderInvSubLoans(){
   };
 
   const sessInFlight = {};
+  const SESS_TTL_MS = 5 * 60 * 1000;
   async function fetchSessBookings(year, month, eqId){
     const mKey = year + '-' + pad(month);
+    if(typeof window.syncAllSessCacheFromSupabase === 'function'){
+      await window.syncAllSessCacheFromSupabase();
+    }
     const nowD = new Date();
     const curMonthKey = nowD.getFullYear() + '-' + pad(nowD.getMonth() + 1);
     const hasCached = Array.isArray(sessMonthCache[mKey]);
-    // 과거 월은 이미 캐시되어 있으면 재조회 생략 (로딩 지연 방지), 이번 달/미래 월은 세션당 1회만 백그라운드 갱신
-    if(hasCached && (mKey < curMonthKey || sessRefreshedThisSession[mKey])) return;
+    const isFresh = (Date.now() - (sessMonthMeta[mKey] || 0)) < SESS_TTL_MS;
+    // 과거 월은 캐시 있으면 생략, 이번 달/미래 월은 5분 이내 캐시 또는 세션 내 갱신 완료 시 생략
+    if(hasCached && (mKey < curMonthKey || isFresh || sessRefreshedThisSession[mKey])) return;
     if(sessInFlight[mKey]) return sessInFlight[mKey];
     sessInFlight[mKey] = (async function(){
       try {
@@ -22184,9 +22256,12 @@ function renderInvSubLoans(){
         if(!r.ok) return;
         const d = await r.json();
         if(d && Array.isArray(d.items)){
+          const nowTs = Date.now();
           sessMonthCache[mKey] = d.items;
+          sessMonthMeta[mKey] = nowTs;
           sessRefreshedThisSession[mKey] = true;
           saveSessMonthCache();
+          saveSessMonthToSupabase(mKey, d.items, nowTs).catch(function(){});
           if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
           if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
           if(typeof renderXrdLogs === 'function') renderXrdLogs();
