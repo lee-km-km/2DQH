@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261124_1716';
+const APP_DATA_VERSION = '20261124_1720';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -5440,7 +5440,7 @@ function renderEquipmentAnalyticsScopeChips(precomputedSessions){
 
   const allSessions = precomputedSessions || getUnifiedEquipmentSessions();
   renderEquipmentUtilizationPanel(allSessions);
-  if(typeof renderAdminMembersPanel === 'function') renderAdminMembersPanel();
+  // moved to view-admin
 
   // 1. 드롭다운 <select id="eqAnalyticsSelect"> 옵션 갱신 및 체인지 이벤트 바인딩
   if(selEl){
@@ -5697,7 +5697,7 @@ function exportEquipmentUtilizationExcel(){
 }
 
 function renderEquipmentUtilizationPanel(allSessions){
-  const host = $('equipmentAnalyticsDashboard');
+  const host = $('adminConsoleHost') || $('view-admin');
   if(!host) return;
   let panel = $('eqUtilizationPanel');
   if(!panel){
@@ -8824,7 +8824,7 @@ function nextAssetId(){
   return 'EQ-' + String(max + 1).padStart(3, '0');
 }
 
-const VALID_VIEWS = ['inventory', 'consumables', 'chemicals', 'loans', 'dashboard', 'history', 'logbook', 'help'];
+const VALID_VIEWS = ['inventory', 'consumables', 'chemicals', 'loans', 'dashboard', 'history', 'logbook', 'help', 'admin'];
 
 function isValidView(name){
   return VALID_VIEWS.includes(name);
@@ -8885,7 +8885,7 @@ function showView(name, options){
 
   if(name === 'equipment') name = 'inventory';
 
-  if((name === 'dashboard' || name === 'history' || name === 'analytics') && !isAdmin()){
+  if((name === 'dashboard' || name === 'history' || name === 'analytics' || name === 'admin') && !isAdmin()){
     toast('관리자 전용 화면입니다. 관리자로 로그인해주세요.');
     name = 'inventory';
   }
@@ -8927,7 +8927,7 @@ function showView(name, options){
   // 활성 모듈 동기화 (로그북 뷰이면 연구장비 모듈, 아니면 비품·소모품 모듈)
   if(name === 'logbook'){
     setPortalModule('lims', { switchView: false });
-  } else if(name !== 'help'){
+  } else if(name !== 'help' && name !== 'admin'){
     setPortalModule('inventory', { switchView: false });
   }
 
@@ -9006,7 +9006,7 @@ function showView(name, options){
   } else if(name === 'inventory'){
     renderInventory();
   } else if(name === 'logbook'){
-    renderLogbook();
+    renderLogbook(); } else if(name === 'admin'){ if(typeof renderAdminMembersPanel === 'function') renderAdminMembersPanel();
   }
 
   // 뷰 전환 시 최상단으로 깔끔하게 이동 (모바일/PC 하단 묻힘 현상 방지)
@@ -22873,7 +22873,7 @@ function renderInvSubLoans(){
 // ==========================================================================
 async function renderAdminMembersPanel(){
   if(typeof isAdmin === 'function' && !isAdmin()) return;
-  const host = $('equipmentAnalyticsDashboard');
+  const host = $('adminConsoleHost') || $('view-admin');
   if(!host) return;
 
   let panel = $('adminMembersPanel');

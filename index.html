@@ -156,6 +156,10 @@
         <span class="nav-icon" aria-hidden="true">📊</span>
         <span>비품 통계</span>
       </button>
+      <button class="nav" data-view="admin" id="sidebarNavAdmin">
+        <span class="nav-icon" aria-hidden="true">🛡️</span>
+        <span>관리자 관리</span>
+      </button>
     </div>
 
     <!-- D. 시스템 이용 안내 및 도움말 센터 -->
@@ -2143,6 +2147,17 @@
     </div>
   </section>
 
+  <!-- 관리자 전용 관리 콘솔 뷰 -->
+  <section class="view hidden" id="view-admin">
+    <div class="view-head">
+      <div>
+        <h1>🛡️ 관리자 관리</h1>
+        <p class="subtitle">가입 회원 관리, 관리자 권한 설정 및 HRXRD 야간·주말 예외자(VIP) 지정</p>
+      </div>
+    </div>
+    <div id="adminConsoleHost"></div>
+  </section>
+
 
 
   <div id="modalTestDriveBackdrop" class="backdrop">
@@ -2454,6 +2469,6 @@
 </nav>
 
 <script src="consumables_catalog.js?v=20261111_1350_mobile_ui"></script>
-<script src="app.js?v=20261124_1716"></script>
+<script src="app.js?v=20261124_1720"></script>
 </body>
 </html>
