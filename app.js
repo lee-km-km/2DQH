@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261124_1720';
+const APP_DATA_VERSION = '20261124_1723';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -5697,7 +5697,7 @@ function exportEquipmentUtilizationExcel(){
 }
 
 function renderEquipmentUtilizationPanel(allSessions){
-  const host = $('adminConsoleHost') || $('view-admin');
+  const host = $('equipmentAnalyticsDashboard');
   if(!host) return;
   let panel = $('eqUtilizationPanel');
   if(!panel){
@@ -23322,6 +23322,7 @@ async function renderAdminMembersPanel(){
     ['사용일지 엑셀 다운로드', 'Download Logbook Excel'],
     ['관리자 전용', 'Admin Only'],
     ['연구원', 'Researcher'],
+    ['관리자 메뉴', 'Admin Menu'],
     ['관리자', 'Admin'],
     ['카드', 'Cards'],
     ['컴팩트', 'Compact'],
