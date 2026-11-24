@@ -3484,7 +3484,8 @@ function renderXrdAdminKpis(){
   const unloggedXrd = (typeof window.getUnloggedBookingLogs === 'function')
     ? window.getUnloggedBookingLogs('EQ-XRD-01', xrdLogs)
     : [];
-  const allXrdForKpi = xrdLogs.concat(unloggedXrd);
+  const allXrdRaw = xrdLogs.concat(unloggedXrd);
+  const allXrdForKpi = (typeof window.filterOutSupersededUnlogged === 'function') ? window.filterOutSupersededUnlogged(allXrdRaw) : allXrdRaw;
   const totalMin = allXrdForKpi.reduce(function(acc, l){
     let m = Number(l.duration_min) || 0;
     if(!m && l.start_time && l.end_time && typeof minutesBetween === 'function'){
@@ -3533,10 +3534,11 @@ function renderXrdLogs(){
   const unloggedXrd = (typeof window.getUnloggedBookingLogs === 'function')
     ? window.getUnloggedBookingLogs('EQ-XRD-01', xrdLogs)
     : [];
-  const combinedXrd = xrdLogs.map(function(l){
+  const combinedXrdRaw = xrdLogs.map(function(l){
       return Object.assign({}, l, { is_unlogged_booking: (l.status === 'unlogged_booking' || !!l.is_unlogged_booking) });
     })
-    .concat(unloggedXrd)
+    .concat(unloggedXrd);
+  const combinedXrd = ((typeof window.filterOutSupersededUnlogged === 'function') ? window.filterOutSupersededUnlogged(combinedXrdRaw) : combinedXrdRaw)
     .sort(function(a, b){
       const da = (a.used_on || '') + ' ' + (a.start_time || '');
       const dbStr = (b.used_on || '') + ' ' + (b.start_time || '');
@@ -3769,6 +3771,9 @@ async function handleXrdFormSubmit(e){
     } else {
       logEntry.id = Date.now();
       logEntry.created_at = new Date().toISOString();
+      if(typeof window.dedupeUnloggedBookingsForRealLog === 'function'){
+        window.dedupeUnloggedBookingsForRealLog('EQ-XRD-01', logEntry);
+      }
       xrdLogs.unshift(logEntry);
 
       if(db && !isLocalMode){
@@ -5022,6 +5027,9 @@ async function handleTestDriveFormSubmit(e){
     created_at: new Date().toISOString()
   };
 
+  if(typeof window.dedupeUnloggedBookingsForRealLog === 'function'){
+    window.dedupeUnloggedBookingsForRealLog(sessionEntry.equipment_id, sessionEntry);
+  }
   equipmentSessions.unshift(sessionEntry);
   try {
     localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions));
@@ -5333,6 +5341,12 @@ function getUnifiedEquipmentSessions(){
         });
       });
     });
+  }
+
+  if(typeof window.filterOutSupersededUnlogged === 'function'){
+    const dedupedList = window.filterOutSupersededUnlogged(list);
+    list.length = 0;
+    dedupedList.forEach(function(item){ list.push(item); });
   }
 
   // 최신순 (날짜 desc, 시간 desc) 정렬
@@ -7720,7 +7734,8 @@ function exportEquipmentLogsExcel(){
   const unloggedList = (typeof window.getUnloggedBookingLogs === 'function')
     ? window.getUnloggedBookingLogs(selected.id, baseLogs)
     : [];
-  const logs = baseLogs.concat(unloggedList).sort(function(a, b){
+  const logsRaw = baseLogs.concat(unloggedList);
+  const logs = ((typeof window.filterOutSupersededUnlogged === 'function') ? window.filterOutSupersededUnlogged(logsRaw) : logsRaw).sort(function(a, b){
     const da = (a.used_on || '') + ' ' + (a.start_time || '');
     const dbStr = (b.used_on || '') + ' ' + (b.start_time || '');
     return dbStr.localeCompare(da);
@@ -21792,7 +21807,7 @@ function renderInvSubLoans(){
           existing.status = 'completed';
           existing.notes = noteStr;
         } else {
-          xrdLogs.unshift({
+          const newXrdObj = {
             id: 'LOG-' + nowMs,
             used_on: today(),
             start_time: curUse.startTimeText || '',
@@ -21809,7 +21824,11 @@ function renderInvSubLoans(){
             affiliation: affilStr,
             status: 'completed',
             notes: noteStr
-          });
+          };
+          if(typeof window.dedupeUnloggedBookingsForRealLog === 'function'){
+            window.dedupeUnloggedBookingsForRealLog('EQ-XRD-01', newXrdObj);
+          }
+          xrdLogs.unshift(newXrdObj);
         }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
         if(typeof renderXrdLogs === 'function') renderXrdLogs();
@@ -21822,7 +21841,7 @@ function renderInvSubLoans(){
           existing.status = 'completed';
           existing.notes = noteStr;
         } else {
-          equipmentSessions.unshift({
+          const newSesObj = {
             id: 'SES-' + nowMs,
             equipment_id: eqId,
             equipment_code: eqCode,
@@ -21835,7 +21854,11 @@ function renderInvSubLoans(){
             affiliation: affilStr,
             status: 'completed',
             notes: noteStr
-          });
+          };
+          if(typeof window.dedupeUnloggedBookingsForRealLog === 'function'){
+            window.dedupeUnloggedBookingsForRealLog(eqId, newSesObj);
+          }
+          equipmentSessions.unshift(newSesObj);
         }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
         if(typeof renderEquipmentTestSessions === 'function') renderEquipmentTestSessions(eqCode);
@@ -22108,6 +22131,78 @@ function renderInvSubLoans(){
     }
     if(typeof window.syncUnloggedBookingsToSupabase === 'function'){
       window.syncUnloggedBookingsToSupabase().catch(function(){});
+    }
+  };
+
+  window.isBookingMatchedByRealLog = function(unloggedRow, realLog){
+    if(!unloggedRow || !realLog) return false;
+    const rNo1 = String(unloggedRow.reservation_no || '').trim();
+    const rNo2 = String(realLog.reservation_no || '').trim();
+    if(rNo1 && rNo2 && rNo1 === rNo2) return true;
+    const d1 = String(unloggedRow.used_on || '').slice(0, 10);
+    const d2 = String(realLog.used_on || (realLog.created_at ? realLog.created_at.slice(0, 10) : '')).slice(0, 10);
+    if(!d1 || !d2 || d1 !== d2) return false;
+    const u1 = String(unloggedRow.user_name || '').trim();
+    const u2 = String(realLog.user_name || realLog.operator_name || '').trim();
+    if(u1 && u2 && u1 === u2) return true;
+    const s1 = timeToMin(String(unloggedRow.start_time || '00:00').slice(0, 5));
+    const e1 = unloggedRow.end_time ? timeToMin(String(unloggedRow.end_time).slice(0, 5)) : (s1 + (Number(unloggedRow.duration_min) || 60));
+    const s2 = timeToMin(String(realLog.start_time || '00:00').slice(0, 5));
+    const e2 = realLog.end_time ? timeToMin(String(realLog.end_time).slice(0, 5)) : (s2 + (Number(realLog.duration_min) || 60));
+    return (s1 < e2 && e1 > s2);
+  };
+
+  window.filterOutSupersededUnlogged = function(logs){
+    const arr = Array.isArray(logs) ? logs : [];
+    const realLogs = arr.filter(function(l){ return l && l.status !== 'unlogged_booking' && !l.is_unlogged_booking; });
+    return arr.filter(function(l){
+      if(!l) return false;
+      if(l.status !== 'unlogged_booking' && !l.is_unlogged_booking) return true;
+      return !realLogs.some(function(r){
+        if(l.equipment_id && r.equipment_id && l.equipment_id !== r.equipment_id) return false;
+        return window.isBookingMatchedByRealLog(l, r);
+      });
+    });
+  };
+
+  window.dedupeUnloggedBookingsForRealLog = function(eqId, realLog){
+    if(!realLog) return;
+    if(eqId === 'EQ-XRD-01' && typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
+      const toRemoveIds = [];
+      for(let i = xrdLogs.length - 1; i >= 0; i--){
+        const row = xrdLogs[i];
+        if(row && row.status === 'unlogged_booking' && window.isBookingMatchedByRealLog(row, realLog)){
+          if(!realLog.reservation_no && row.reservation_no) realLog.reservation_no = row.reservation_no;
+          if(row.id) toRemoveIds.push(row.id);
+          xrdLogs.splice(i, 1);
+        }
+      }
+      if(toRemoveIds.length){
+        try { localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs)); } catch(_) {}
+        if(typeof db !== 'undefined' && db){
+          toRemoveIds.forEach(function(rid){
+            db.from('xrd_logs').delete().eq('id', rid).then(function(){});
+          });
+        }
+      }
+    } else if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
+      const toRemoveIds = [];
+      for(let i = equipmentSessions.length - 1; i >= 0; i--){
+        const row = equipmentSessions[i];
+        if(row && row.status === 'unlogged_booking' && (!eqId || row.equipment_id === eqId) && window.isBookingMatchedByRealLog(row, realLog)){
+          if(!realLog.reservation_no && row.reservation_no) realLog.reservation_no = row.reservation_no;
+          if(row.id) toRemoveIds.push(row.id);
+          equipmentSessions.splice(i, 1);
+        }
+      }
+      if(toRemoveIds.length){
+        try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions)); } catch(_) {}
+        if(typeof db !== 'undefined' && db){
+          toRemoveIds.forEach(function(rid){
+            db.from('equipment_sessions').delete().eq('id', rid).then(function(){});
+          });
+        }
+      }
     }
   };
 
