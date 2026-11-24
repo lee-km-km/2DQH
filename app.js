@@ -1,10 +1,10 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261124_1800';
+const APP_DATA_VERSION = '20261124_1815';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
-      ['labstock_sess_cache_v1', 'labstock_sess_meta_v1', 'labstock_en_auto_cache_v1', 'labstock_xrd_logs', 'labstock_equipment_sessions'].forEach(function(k){
+      ['labstock_sess_cache_v1', 'labstock_sess_meta_v1', 'labstock_en_auto_cache_v1', 'labstock_xrd_logs', 'labstock_equipment_sessions', 'labstock_research_equipments'].forEach(function(k){
         try { localStorage.removeItem(k); } catch(_) {}
       });
       localStorage.setItem('labstock_data_version', APP_DATA_VERSION);
@@ -23646,6 +23646,7 @@ window.renderAdminUnloggedPanel = function(){
     ['관리자 전용', 'Admin Only'],
     ['연구원', 'Researcher'],
     ['관리자 메뉴', 'Admin Menu'],
+    ['비품·소모품 관리', 'Inventory & Supply'],
     ['관리자', 'Admin'],
     ['카드', 'Cards'],
     ['컴팩트', 'Compact'],
@@ -23756,6 +23757,8 @@ window.renderAdminUnloggedPanel = function(){
     const rawTrim = String(str || '').trim();
     if(rawTrim === '표') return str.replace('표', 'Table');
     if(rawTrim === '단위') return str.replace('단위', 'Unit');
+    if(rawTrim === '총') return str.replace('총', 'Total');
+    if(rawTrim === '건') return str.replace('건', 'items');
     if(rawTrim && autoEnCache[rawTrim]){
       return str.replace(rawTrim, autoEnCache[rawTrim]);
     }

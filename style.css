@@ -13283,10 +13283,10 @@ html:not(.is-admin) #btnHelpTabAdmin {
   #chemMobileCardList.mobile-view-table {
     display: none !important;
   }
-  .chem-official-inventory-table-wrap:not(.mobile-view-table) {
+  #chemTablePanel:not(.mobile-view-table) .chem-official-inventory-table-wrap {
     display: none !important;
   }
-  .chem-official-inventory-table-wrap.mobile-view-table {
+  #chemTablePanel.mobile-view-table .chem-official-inventory-table-wrap {
     display: block !important;
   }
 
