@@ -1,5 +1,16 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
+const APP_DATA_VERSION = '20261124_1656';
+(function syncAppDataVersion(){
+  try {
+    if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
+      ['labstock_sess_cache_v1', 'labstock_sess_meta_v1', 'labstock_en_auto_cache_v1', 'labstock_xrd_logs', 'labstock_equipment_sessions'].forEach(function(k){
+        try { localStorage.removeItem(k); } catch(_) {}
+      });
+      localStorage.setItem('labstock_data_version', APP_DATA_VERSION);
+    }
+  } catch(_) {}
+})();
 const SUPABASE_URL = 'https://nngownhoxrtymzvwscyc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_ijsPGWswYcZKdhrjoy4hSw_9jRaQGbv';
 const configured = SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('YOUR_') && !SUPABASE_ANON_KEY.includes('YOUR_');
@@ -21957,8 +21968,8 @@ function renderInvSubLoans(){
   }
 
   let _sessSupaLoaded = false;
-  window.syncAllSessCacheFromSupabase = async function(){
-    if(_sessSupaLoaded || typeof db === 'undefined' || !db) return;
+  window.syncAllSessCacheFromSupabase = async function(force){
+    if((_sessSupaLoaded && !force) || typeof db === 'undefined' || !db) return;
     _sessSupaLoaded = true;
     try {
       const { data, error } = await db.from('equipment_sessions')
@@ -21973,7 +21984,7 @@ function renderInvSubLoans(){
             const parsed = JSON.parse(row.notes || '{}');
             const items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : null);
             const updatedAt = (parsed && parsed.updatedAt) ? Number(parsed.updatedAt) : 0;
-            if(items && (!Array.isArray(sessMonthCache[mKey]) || updatedAt > (sessMonthMeta[mKey] || 0))){
+            if(items && (!Array.isArray(sessMonthCache[mKey]) || updatedAt >= (sessMonthMeta[mKey] || 0))){
               sessMonthCache[mKey] = items;
               sessMonthMeta[mKey] = updatedAt || Date.now();
               changed = true;
@@ -23086,6 +23097,7 @@ async function renderAdminMembersPanel(){
     ['시약', 'Chemicals'],
     ['재고현황', 'Inventory Status'],
     ['취급 이력', 'Usage History'],
+    ['보관 위치', 'Storage Location'],
     ['보관위치', 'Location'],
     ['제조사', 'Manufacturer'],
     ['담당자', 'Manager'],
