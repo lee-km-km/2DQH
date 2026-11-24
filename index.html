@@ -26,7 +26,7 @@
     })();
   </script>
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-  <link rel="stylesheet" href="style.css?v=20261124_1656">
+  <link rel="stylesheet" href="style.css?v=20261124_1800">
   <script>
     (function(){
       try {
@@ -179,7 +179,7 @@
     </div>
 
     <!-- D. 사이드바 하단 관리자 로그인/로그아웃 바 (모바일 및 데스크톱 공통) -->
-    <div class="sidebar-auth-box" style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
+    <div class="sidebar-auth-box mobile-only" style="margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
       <div class="sidebar-auth-row" style="display:flex;align-items:stretch;gap:8px;width:100%;">
         <div class="sidebar-auth-content" style="flex:1;min-width:0;">
           <button id="sidebarLoginBtn" class="btn btn-sidebar-login" type="button" style="width:100%;height:100%;min-height:38px;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;font-size:13px;font-weight:700;border-radius:8px;background:#2563eb;border:1px solid #2563eb;color:#ffffff;box-shadow:0 2px 6px rgba(37,99,235,0.25);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -828,7 +828,10 @@
           <div class="modal-body" style="padding:18px;">
             <div id="chemHistoryMetaBox" style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
               <div>초기 입고량: <b id="histInitialStock">500.0 mL</b> · <b>현재 잔여량: <span id="histCurrentStock" style="color:#059669;font-size:15px;">450.0 mL</span></b></div>
-              <button type="button" class="btn primary btn-sm" id="btnHistWriteLog">📝 이 시약 취급일지 작성</button>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <button type="button" class="btn btn-sm" id="btnHistViewMsds" style="background:#059669;color:#fff;font-weight:700;border:none;">📋 MSDS 요약</button>
+                <button type="button" class="btn primary btn-sm" id="btnHistWriteLog">📝 이 시약 취급일지 작성</button>
+              </div>
             </div>
             <div id="chemHistoryTableWrap" class="table-wrap" style="max-height:360px;overflow-y:auto;">
               <!-- History table populated by JS -->
@@ -866,7 +869,7 @@
             <div class="chem-handler-date-row" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;">
               <div>
                 <label for="modalChemHandler" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급자 성명 *</label>
-                <input type="text" id="modalChemHandler" class="form-control" placeholder="성명 (예: 이강민)" value="이강민" required style="width:100%;height:40px;padding:8px 12px;font-size:13.5px;font-weight:600;border-radius:8px;box-sizing:border-box;">
+                <input type="text" id="modalChemHandler" class="form-control" placeholder="작업자 성명 입력" required style="width:100%;height:40px;padding:8px 12px;font-size:13.5px;font-weight:600;border-radius:8px;box-sizing:border-box;">
               </div>
               <div>
                 <label for="modalChemDate" style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ink);">취급 일시 *</label>
@@ -1295,7 +1298,7 @@
               <div class="kpi-info">
                 <span class="kpi-label" id="kpiEqLabel">선택 장비</span>
                 <div class="kpi-num" id="kpiEqTotal">정밀 연구장비</div>
-                <span class="kpi-sub" id="kpiEqSub">분석 5 · 증착 4 · 공정 1</span>
+                <span class="kpi-sub" id="kpiEqSub">전체 등록 연구장비 통합 통계</span>
               </div>
             </div>
             <div class="eq-kpi-card">
@@ -2037,7 +2040,7 @@
               <span class="faq-accordion-chevron">▼</span>
             </button>
             <div class="faq-accordion-answer">
-              <p>좌측 사이드바의 <code>[특별관리물질]</code> 메뉴로 진입하면 N센터 86291호 연구실 보유 시약 목록이 표시됩니다.</p>
+              <p>좌측 사이드바의 <code>[시약]</code> 메뉴로 진입하면 N센터 86291호 연구실 보유 시약 목록이 표시됩니다.</p>
               <p>사용 전/후 본인이 취급한 시약 행의 <code>[📝 취급일지 작성]</code> 버튼을 누르고 사용량(g 또는 mL)을 입력하면, <b>현재 재고량에서 사용량이 실시간 자동 차감</b>되어 남은 잔여량이 계산됩니다. 필수 개인보호구(방독마스크, 보안경, 내화학장갑) 착용을 체크하고 등록하면 산업안전보건법 제439조에 따라 30년간 보존됩니다.</p>
             </div>
           </div>
@@ -2149,10 +2152,10 @@
 
   <!-- 관리자 전용 관리 콘솔 뷰 -->
   <section class="view hidden" id="view-admin">
-    <div class="view-head">
-      <div>
+    <div class="page-head" style="flex-wrap:wrap;gap:10px;">
+      <div class="head-title">
         <h1>🛡️ 관리자 메뉴</h1>
-        <p class="subtitle">회원·권한 관리 및 HRXRD 야간·주말 예외자(VIP) 지정</p>
+        <span class="count-badge">회원·권한 · HRXRD VIP · 미작성 일지 정리</span>
       </div>
     </div>
     <div id="adminConsoleHost"></div>
@@ -2469,6 +2472,6 @@
 </nav>
 
 <script src="consumables_catalog.js?v=20261111_1350_mobile_ui"></script>
-<script src="app.js?v=20261124_1728"></script>
+<script src="app.js?v=20261124_1800"></script>
 </body>
 </html>

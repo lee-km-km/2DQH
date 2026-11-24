@@ -23,7 +23,8 @@ function parseSessEquipments(html) {
     const titleM = block.match(/<a[^>]*class="title"[^>]*>([\s\S]*?)<\/a>/i);
     const placeM = block.match(/<span[^>]*class="place"[^>]*>([\s\S]*?)<\/span>/i);
     const rawImg = imgM ? imgM[1] : '';
-    const imgUrl = rawImg ? (rawImg.startsWith('http') ? rawImg : 'https://sess.skku.edu' + (rawImg.startsWith('/') ? '' : '/') + rawImg) : '';
+    const isJunkIcon = /top_ico|sns|facebook|twitter|logo|icon|btn_/i.test(rawImg);
+    const imgUrl = (rawImg && !isJunkIcon) ? (rawImg.startsWith('http') ? rawImg : 'https://sess.skku.edu' + (rawImg.startsWith('/') ? '' : '/') + rawImg) : '';
     const title = titleM ? stripTags(titleM[1]) : '';
     const place = placeM ? stripTags(placeM[1]) : '';
     if (title) {

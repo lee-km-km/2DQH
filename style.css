@@ -4184,8 +4184,14 @@ tr.row-overdue:hover {
   width: 100%;
 }
 .xrd-input-wrap input {
-  padding-right: 36px !important;
+  padding-right: 54px !important;
   width: 100%;
+  -moz-appearance: textfield;
+}
+.xrd-input-wrap input::-webkit-outer-spin-button,
+.xrd-input-wrap input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .xrd-unit {
   position: absolute;
@@ -8751,9 +8757,12 @@ body:not(.is-admin) .admin-only {
 
 .help-feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 24px;
+}
+@media (max-width: 768px) {
+  .help-feature-grid { grid-template-columns: 1fr; }
 }
 .help-card {
   padding: 18px 20px;
@@ -11986,15 +11995,9 @@ html:not(.is-admin) #btnHelpTabAdmin {
     display: block !important;
   }
 
-  /* 시약 테이블 패널은 모바일에서 항상 기본 표시 (세로 카드 뷰 완전 대체) */
-  #chemTablePanel {
-    display: block !important;
-  }
-  #chemMobileCardList {
-    display: none !important;
-  }
+  /* 모바일 카드/표 전환 스위처 활성화 (10248행 규칙 준수) */
   .chem-view-mode-toggle {
-    display: none !important;
+    display: inline-flex !important;
   }
 
   /* [핵심] 모바일 table-wrap flex flex-direction:column 규칙이 시약 테이블을 덮어쓰지 못하도록 엄격히 테이블 모드 유지 */
@@ -12371,6 +12374,8 @@ html:not(.is-admin) #btnHelpTabAdmin {
   border-radius: 4px;
   background: #2563eb;
   color: #ffffff;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ==========================================================================
@@ -14019,3 +14024,168 @@ html:not(.is-admin) #btnHelpTabAdmin {
   display: none !important;
 }
 .eq-catalog-toolbar.hidden { display: none !important; }
+
+/* ==========================================================================
+   [2026-11-24 UI/UX 전수 점검 일괄 개선 패치 (P1/P2)]
+   ========================================================================== */
+/* 1. 시약 검색 필터/정렬 체크박스·라디오 기형 확대 및 라벨 줄바꿈 방지 */
+#view-chemicals input[type="checkbox"],
+#view-chemicals input[type="radio"],
+.filter-check-group input,
+.filter-radio-group input,
+.filter-cond-group input,
+.chem-sort-group input {
+  width: 16px !important;
+  min-width: 16px !important;
+  max-width: 16px !important;
+  height: 16px !important;
+  min-height: 16px !important;
+  max-height: 16px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 16px !important;
+}
+.filter-check-group label,
+.filter-radio-group label,
+.filter-cond-group label,
+.chem-sort-group label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  width: auto !important;
+}
+.filter-check-group,
+.filter-radio-group,
+.filter-cond-group {
+  flex-wrap: wrap !important;
+  gap: 8px 12px !important;
+}
+#view-chemicals .search-field label {
+  width: auto !important;
+  min-width: 72px !important;
+  white-space: nowrap !important;
+}
+#view-chemicals .chem-inventory-table td span[style*="특별관리"] {
+  white-space: nowrap !important;
+  display: inline-block !important;
+}
+
+/* 2. 시약 연간 누적 통계 테이블 모바일 가로 스크롤 및 잘림 방지 */
+#yearlyStatTableWrap,
+#monthlyStatTableWrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+.cal-stat-table {
+  min-width: 560px;
+}
+.cal-stat-table th,
+.cal-stat-table td {
+  white-space: nowrap;
+}
+
+/* 3. 비품 상태 필터(#assetFilter) 화살표 줄바꿈 방지 및 반응형 테이블 스크롤 */
+#assetFilter,
+#invSubLoanFilter,
+#dashLoanFilter {
+  min-width: 118px !important;
+  width: auto !important;
+  height: 38px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+.search-input-box {
+  min-width: 0 !important;
+}
+#inventoryRows.table-wrap {
+  overflow-x: auto !important;
+  max-width: 100% !important;
+}
+
+/* 4. 로그인/회원가입 모달 가로 스크롤 제거 */
+.auth-modal-box,
+.auth-modal-box .modal-body {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+.auth-login-brand-banner {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+.auth-login-brand-text {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+.auth-login-brand-title,
+.auth-login-brand-sub {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* 5. 연구장비 카드 설명 박스 반잘림 제거 */
+.eq-compact-spec-line {
+  line-height: 1.5 !important;
+  padding: 7px 10px !important;
+  max-height: none !important;
+  -webkit-line-clamp: 3 !important;
+}
+.eq-category-tabs {
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+}
+
+/* 6. 다크모드 가독성 및 대비 일괄 보완 */
+[data-theme="dark"] .nav.active,
+[data-theme="dark"] .sidebar .nav.active {
+  background: #1e293b !important;
+  color: #f87171 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .sidebar-info {
+  background: #111827 !important;
+  border-color: #232f46 !important;
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .sidebar-info-title { color: #f8fafc !important; }
+[data-theme="dark"] .sidebar-info-desc { color: #94a3b8 !important; }
+[data-theme="dark"] .card-badge.bg-blue {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #93c5fd !important;
+  border: 1px solid rgba(59, 130, 246, 0.35) !important;
+}
+[data-theme="dark"] .quick-eq-btn.is-disabled {
+  background: #1e293b !important;
+  color: #64748b !important;
+  border: 1px solid #334155 !important;
+}
+[data-theme="dark"] #quickEquipTwoBtnBar > div:first-child {
+  filter: brightness(0.92);
+}
+[data-theme="dark"] .xrd-filter-pill:not(.active) {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] .xrd-row-unlogged {
+  background: rgba(245, 158, 11, 0.10) !important;
+}
+[data-theme="dark"] .xrd-badge-unlogged {
+  background: rgba(245, 158, 11, 0.22) !important;
+  color: #fbbf24 !important;
+}
+[data-theme="dark"] .xrd-badge-logged {
+  background: rgba(34, 197, 94, 0.2) !important;
+  color: #4ade80 !important;
+}
+[data-theme="dark"] #btnMobLangKo.is-active-lang,
+[data-theme="dark"] #btnMobLangEn.is-active-lang {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}

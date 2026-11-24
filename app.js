@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261124_1728';
+const APP_DATA_VERSION = '20261124_1800';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -256,7 +256,7 @@ const DEFAULT_RESEARCH_EQUIPMENTS = [
   }
 ,
   { id: 'EQ-UVVIS-01', code: 'UV-Vis', name: 'UV-Vis', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '🌈' },
-  { id: 'EQ-PLASER-01', code: 'Potable laser', name: 'Potable laser', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '🔦' },
+  { id: 'EQ-PLASER-01', code: 'Portable laser', name: 'Portable laser', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '🔦' },
   { id: 'EQ-EL-01', code: 'EL', name: 'EL', category: 'optical', categoryName: '광학·분광', status: 'standby', statusLabel: '점검(비활용)', icon: '💡' },
   { id: 'EQ-TRPL-02', code: 'TRPL 2', name: 'TRPL 2', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '⏱️' },
   { id: 'EQ-FEMTO-02', code: 'Femto 2', name: 'Femto 2', category: 'optical', categoryName: '광학·분광', status: 'active', statusLabel: '정상', icon: '⚡' },
@@ -578,7 +578,7 @@ const DEFAULT_2DQH_ASSETS = [
     id: 'EQ-001',
     name: '디지털 멀티미터',
     category: '측정공구',
-    location: '분석실 캐비넷 A',
+    location: '분석실 캐비닛 A',
     status: 'available',
     note: 'Fluke 87V 트루 RMS 정밀 멀티미터'
   },
@@ -586,7 +586,7 @@ const DEFAULT_2DQH_ASSETS = [
     id: 'EQ-002',
     name: '버니어 캘리퍼스',
     category: '측정공구',
-    location: '분석실 캐비넷 B',
+    location: '분석실 캐비닛 B',
     status: 'available',
     note: 'Mitutoyo 500-196-30 150mm 디지털 캘리퍼스'
   },
@@ -690,7 +690,7 @@ const DEFAULT_2DQH_ASSETS = [
     id: 'EQ-015',
     name: '비접촉 적외선 레이저 온도계',
     category: '측정공구',
-    location: '분석실 캐비넷 B',
+    location: '분석실 캐비닛 B',
     status: 'available',
     note: 'Fluke 62 MAX+ 듀얼 레이저 적외선 온도계 (-30°C~650°C)'
   },
@@ -1894,6 +1894,8 @@ function renderInventory(){
     const matchSearch = matchesSmartSearch(a, q);
 
     return matchCategory && matchFilter && matchSearch;
+  }).sort(function(a, b){
+    return String(a.id || '').localeCompare(String(b.id || ''), undefined, { numeric: true });
   });
 
   const categoryHost = $('inventoryCategories');
@@ -3565,11 +3567,11 @@ function renderXrdLogs(){
     return hay.includes(q);
   });
 
-  const filterBarHtml =
-    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">' +
-      '<button type="button" data-xrd-filter="all" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='all'?'#2563eb':'#cbd5e1') + ';background:' + (filterMode==='all'?'#2563eb':'#fff') + ';color:' + (filterMode==='all'?'#fff':'#475569') + ';cursor:pointer;">전체 일지 (' + combinedXrd.length + ')</button>' +
-      '<button type="button" data-xrd-filter="logged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='logged'?'#15803d':'#cbd5e1') + ';background:' + (filterMode==='logged'?'#15803d':'#fff') + ';color:' + (filterMode==='logged'?'#fff':'#475569') + ';cursor:pointer;">📝 로그북 작성분 (' + combinedXrd.filter(function(x){ return !x.is_unlogged_booking; }).length + ')</button>' +
-      '<button type="button" data-xrd-filter="unlogged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='unlogged'?'#d97706':'#cbd5e1') + ';background:' + (filterMode==='unlogged'?'#d97706':'#fff') + ';color:' + (filterMode==='unlogged'?'#fff':'#475569') + ';cursor:pointer;">📅 예약기반 미작성 (' + combinedXrd.filter(function(x){ return x.is_unlogged_booking; }).length + ')</button>' +
+  const isEnXrd = (localStorage.getItem('labstock_lang') === 'en');
+  const filterBarHtml = '<div class="xrd-log-filter-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">' +
+      '<button type="button" class="xrd-filter-pill' + (filterMode==='all'?' active':'') + '" data-xrd-filter="all" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='all'?'#2563eb':'#cbd5e1') + ';background:' + (filterMode==='all'?'#2563eb':'#fff') + ';color:' + (filterMode==='all'?'#fff':'#475569') + ';cursor:pointer;">' + (isEnXrd ? 'All Logs' : '전체 일지') + ' (' + combinedXrd.length + ')</button>' +
+      '<button type="button" class="xrd-filter-pill' + (filterMode==='logged'?' active':'') + '" data-xrd-filter="logged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='logged'?'#15803d':'#cbd5e1') + ';background:' + (filterMode==='logged'?'#15803d':'#fff') + ';color:' + (filterMode==='logged'?'#fff':'#475569') + ';cursor:pointer;">📝 ' + (isEnXrd ? 'Logged' : '로그북 작성분') + ' (' + combinedXrd.filter(function(x){ return !x.is_unlogged_booking; }).length + ')</button>' +
+      '<button type="button" class="xrd-filter-pill' + (filterMode==='unlogged'?' active':'') + '" data-xrd-filter="unlogged" style="padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid ' + (filterMode==='unlogged'?'#d97706':'#cbd5e1') + ';background:' + (filterMode==='unlogged'?'#d97706':'#fff') + ';color:' + (filterMode==='unlogged'?'#fff':'#475569') + ';cursor:pointer;">📅 ' + (isEnXrd ? 'Unlogged Bookings' : '예약기반 미작성') + ' (' + combinedXrd.filter(function(x){ return x.is_unlogged_booking; }).length + ')</button>' +
     '</div>';
 
   if(filtered.length === 0){
@@ -3589,15 +3591,15 @@ function renderXrdLogs(){
   };
 
   let html = '<table><thead><tr>' +
-    '<th>Date / Time</th>' +
-    '<th>User / Adviser</th>' +
-    '<th>Chiller [°C]</th>' +
-    '<th>Vacuum [mV]</th>' +
-    '<th>Checks</th>' +
-    '<th>Align.</th>' +
-    '<th>Scan type</th>' +
-    '<th>Sample</th>' +
-    '<th>Action</th>' +
+    '<th>' + (isEnXrd ? 'Date / Time' : '일시 / 예약') + '</th>' +
+    '<th>' + (isEnXrd ? 'User / Adviser' : '사용자 / 지도교수') + '</th>' +
+    '<th>' + (isEnXrd ? 'Chiller [°C]' : '칠러 [°C]') + '</th>' +
+    '<th>' + (isEnXrd ? 'Vacuum [mV]' : '진공 [mV]') + '</th>' +
+    '<th>' + (isEnXrd ? 'Checks' : '점검') + '</th>' +
+    '<th>' + (isEnXrd ? 'Align.' : '정렬') + '</th>' +
+    '<th>' + (isEnXrd ? 'Scan type' : '스캔 모드') + '</th>' +
+    '<th>' + (isEnXrd ? 'Sample' : '시료 정보') + '</th>' +
+    '<th>' + (isEnXrd ? 'Action' : '상태/관리') + '</th>' +
     '</tr></thead><tbody>';
 
   filtered.forEach(function(l){
@@ -3609,9 +3611,9 @@ function renderXrdLogs(){
 
     const isUnlogged = !!l.is_unlogged_booking;
     const typeBadge = isUnlogged
-      ? '<span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10.5px;margin-left:4px;">미작성(예약)</span>'
-      : '<span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10.5px;margin-left:4px;">로그북 작성</span>';
-    html += '<tr' + (isUnlogged ? ' style="background:#fffbeb;"' : '') + '>' +
+      ? '<span class="xrd-badge-unlogged" style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10.5px;margin-left:4px;">' + (isEnXrd ? 'Unlogged' : '미작성(예약)') + '</span>'
+      : '<span class="xrd-badge-logged" style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10.5px;margin-left:4px;">' + (isEnXrd ? 'Logged' : '로그북 작성') + '</span>';
+    html += '<tr' + (isUnlogged ? ' class="xrd-row-unlogged" style="background:#fffbeb;"' : '') + '>' +
       '<td data-l="Time"><b>' + safe(dt) + '</b>' + typeBadge + '<span class="id" style="font-size:12px;color:#64748b;display:block;">' + safe(st) + ' ~ ' + (isActive ? '<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-weight:700;font-size:11px;">In progress</span>' : safe(et) + ' (' + durStr + ')') + (l.reservation_no ? ' · #' + safe(l.reservation_no) : '') + '</span></td>' +
       '<td data-l="User"><b>' + safe(l.user_name || '—') + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + [l.professor, l.affiliation].filter(Boolean).map(safe).join(' · ') + '</span></td>' +
       '<td data-l="Chiller">' + (isUnlogged && l.chiller_start == null && l.chiller_end == null ? '—' : arrow(l.chiller_start, l.chiller_end)) + '</td>' +
@@ -4001,7 +4003,8 @@ function toggleTheme(){
   const next = (current === 'dark') ? 'light' : 'dark';
   try { localStorage.setItem('labstock_theme', next); } catch(_) {}
   applyTheme(next);
-  toast(next === 'dark' ? '🌙 암실 전용 다크모드가 적용되었습니다.' : '☀️ 일반 라이트모드가 적용되었습니다.');
+  const isEnTheme = (localStorage.getItem('labstock_lang') === 'en');
+  toast(next === 'dark' ? (isEnTheme ? '🌙 Dark mode enabled.' : '🌙 암실 전용 다크모드가 적용되었습니다.') : (isEnTheme ? '☀️ Light mode enabled.' : '☀️ 일반 라이트모드가 적용되었습니다.'));
 }
 
 // ========================================================
@@ -5128,15 +5131,24 @@ function renderEquipmentPortalGrid(){
   // SESS 9대 전체 연구장비 통합 포털 (XRD 별도 분리/편애 제거)
   const allEquips = researchEquipments;
 
-  const cntAll = allEquips.length;
-  const cntStructural = allEquips.filter(function(e){ return e.category === 'structural'; }).length;
-  const cntOptical = allEquips.filter(function(e){ return e.category === 'optical'; }).length;
-  const cntDeposition = allEquips.filter(function(e){ return e.category === 'deposition'; }).length;
-  if($('catCntAll')) $('catCntAll').textContent = cntAll;
-  if($('catCntStructural')) $('catCntStructural').textContent = cntStructural;
-  if($('catCntOptical')) $('catCntOptical').textContent = cntOptical;
-  if($('catCntDeposition')) $('catCntDeposition').textContent = cntDeposition;
-  if($('eqSecondaryCountBadge')) $('eqSecondaryCountBadge').textContent = '정밀 분석장비';
+  const isEnCat = (localStorage.getItem('labstock_lang') === 'en');
+  const catTabsEl = $('eqCategoryTabs');
+  if(catTabsEl){
+    const cats = [
+      { key: 'all', ko: '전체 장비', en: 'All Equipment', count: allEquips.length },
+      { key: 'structural', ko: '구조분석', en: 'Structural', count: allEquips.filter(function(e){ return e.category === 'structural'; }).length },
+      { key: 'optical', ko: '광학·분광', en: 'Optical', count: allEquips.filter(function(e){ return e.category === 'optical'; }).length },
+      { key: 'surface', ko: '표면·형상', en: 'Surface/SPM', count: allEquips.filter(function(e){ return e.category === 'surface'; }).length },
+      { key: 'electrical', ko: '물성·전기', en: 'Electrical', count: allEquips.filter(function(e){ return e.category === 'electrical'; }).length },
+      { key: 'deposition', ko: '박막·증착', en: 'Deposition', count: allEquips.filter(function(e){ return e.category === 'deposition'; }).length },
+      { key: 'fabrication', ko: '공정·패키징', en: 'Fabrication', count: allEquips.filter(function(e){ return e.category === 'fabrication'; }).length }
+    ];
+    catTabsEl.innerHTML = cats.map(function(c){
+      return '<button type="button" class="eq-cat-tab' + (selectedEquipmentCategory === c.key ? ' active' : '') + '" data-eq-cat="' + c.key + '">' +
+        (isEnCat ? c.en : c.ko) + ' <span class="tab-cnt">' + c.count + '</span></button>';
+    }).join('');
+  }
+  if($('eqSecondaryCountBadge')) $('eqSecondaryCountBadge').textContent = isEnCat ? 'Precision Equipment' : '정밀 분석장비';
 
   const searchInput = $('eqSearchInput');
   const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
@@ -5158,15 +5170,6 @@ function renderEquipmentPortalGrid(){
   if(eqSearchBox) eqSearchBox.style.display = window._showAllPortalEquips ? '' : 'none';
   if(eqCatToolbar) eqCatToolbar.classList.toggle('hidden', !window._showAllPortalEquips);
   grid.classList.toggle('core-4-grid', !window._showAllPortalEquips && !q && selectedEquipmentCategory === 'all');
-  if(toggleWrap){
-    toggleWrap.innerHTML = '<span style="font-size:12.5px;color:var(--ink-light);font-weight:600;">' +
-      (window._showAllPortalEquips ? '전체 연구장비 (' + allEquips.length + '대)' : '⭐ 핵심 예약 장비 4종 (HR-XRD · OM · UV-Vis · FT-IR)') + '</span>' +
-      '<button type="button" id="btnToggleShowAllEquips" class="btn btn-sm" style="border-radius:8px;font-weight:700;padding:5px 12px;">' +
-      (window._showAllPortalEquips ? '⭐ 핵심 4종만 보기' : '📋 전체 장비 보기 (' + allEquips.length + '대)') + '</button>';
-    const tb = $('btnToggleShowAllEquips');
-    if(tb) tb.onclick = function(){ window._showAllPortalEquips = !window._showAllPortalEquips; renderEquipmentPortalGrid(); };
-  }
-
   const filtered = allEquips.filter(function(eq){
     if(!q && selectedEquipmentCategory === 'all' && !window._showAllPortalEquips){
       if(CORE_4_IDS.indexOf(eq.id) < 0) return false;
@@ -5178,8 +5181,22 @@ function renderEquipmentPortalGrid(){
     return hay.includes(q);
   });
 
+  if(toggleWrap){
+    const isFiltering = !!(q || selectedEquipmentCategory !== 'all');
+    const summaryText = isFiltering
+      ? (isEnCat ? 'Showing ' + filtered.length + ' / ' + allEquips.length + ' units' : '검색/필터 결과 ' + filtered.length + '대 (전체 ' + allEquips.length + '대)')
+      : (window._showAllPortalEquips
+          ? (isEnCat ? 'All Research Equipment (' + allEquips.length + ' units)' : '전체 연구장비 (' + allEquips.length + '대)')
+          : (isEnCat ? '⭐ Core 4 Bookable Instruments (HR-XRD · OM · UV-Vis · FT-IR)' : '⭐ 핵심 예약 장비 4종 (HR-XRD · OM · UV-Vis · FT-IR)'));
+    toggleWrap.innerHTML = '<span style="font-size:12.5px;color:var(--ink-light);font-weight:600;">' + summaryText + '</span>' +
+      '<button type="button" id="btnToggleShowAllEquips" class="btn btn-sm" style="border-radius:8px;font-weight:700;padding:5px 12px;">' +
+      (window._showAllPortalEquips ? (isEnCat ? '⭐ Core 4 Only' : '⭐ 핵심 4종만 보기') : (isEnCat ? '📋 Show All Equipment (' + allEquips.length + ')' : '📋 전체 장비 보기 (' + allEquips.length + '대)')) + '</button>';
+    const tb = $('btnToggleShowAllEquips');
+    if(tb) tb.onclick = function(){ window._showAllPortalEquips = !window._showAllPortalEquips; renderEquipmentPortalGrid(); };
+  }
+
   if(filtered.length === 0){
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:36px 20px;color:#64748b;font-size:14px;">검색 조건에 맞는 SESS 연동 연구장비가 없습니다.</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:36px 20px;color:#64748b;font-size:14px;">' + (isEnCat ? 'No matching research equipment found.' : '검색 조건에 맞는 SESS 연동 연구장비가 없습니다.') + '</div>';
     return;
   }
 
@@ -5191,13 +5208,13 @@ function renderEquipmentPortalGrid(){
     const isXps = (eq.code === 'XPS');
     const isActive = (eq.status === 'active' || isXrd || isBonder || isXps);
 
-    let actionBtnText = '📖 전자 로그북 열기';
+    let actionBtnText = isEnCat ? '📖 Open Logbook' : '📖 전자 로그북 열기';
     if(isXrd){
-      actionBtnText = '📖 HR-XRD 전자 로그북 열기';
+      actionBtnText = isEnCat ? '📖 Open HR-XRD Logbook' : '📖 HR-XRD 전자 로그북 열기';
     } else if(isBonder){
-      actionBtnText = '📖 Wire Bonder 전자 로그북 열기';
+      actionBtnText = isEnCat ? '📖 Open Wire Bonder Logbook' : '📖 Wire Bonder 전자 로그북 열기';
     } else if(isActive){
-      actionBtnText = '📖 ' + safe(eq.code) + ' 전자 로그북 열기';
+      actionBtnText = isEnCat ? ('📖 Open ' + safe(eq.code) + ' Logbook') : ('📖 ' + safe(eq.code) + ' 전자 로그북 열기');
     }
 
     const actionBtnHtml = '<button type="button" class="btn btn-compact-view' + (isActive ? ' btn-view-active' : '') + '" data-select-eq="' + safe(eq.id) + '"' + (isActive ? ' style="background:#2563eb;color:#fff;border-color:#2563eb;font-weight:700;margin-top:8px;"' : ' style="margin-top:8px;"') + '>' + actionBtnText + '</button>';
@@ -5741,9 +5758,9 @@ function renderEquipmentUtilizationPanel(allSessions){
         '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 활용/비활용 통계 ' + (isAll ? '(클릭하여 펼치기 · ' + rows.length + '대)' : '') + '</h3>' +
         '<span style="font-size:12px;color:var(--ink-light);">기준: 최근 4주 160h · 연간(1/1~) 2,000h (소속: 연구단 / 교내 / 외부)</span></div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-          '<label for="inputSessAsisExcel" class="btn btn-sm" style="background:#d97706;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📤 SESS 예약 엑셀(.xlsx/.csv)</label>' +
+          '<label for="inputSessAsisExcel" onclick="event.stopPropagation();" class="btn btn-sm" style="background:#d97706;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📤 SESS 예약 엑셀(.xlsx/.csv)</label>' +
           '<input type="file" id="inputSessAsisExcel" accept=".xlsx,.xls,.csv" style="display:none;">' +
-          '<label for="inputEquipCostCsv" class="btn btn-sm" style="background:#2563eb;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📂 CSV 금액 불러오기</label>' +
+          '<label for="inputEquipCostCsv" onclick="event.stopPropagation();" class="btn btn-sm" style="background:#2563eb;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📂 CSV 금액 불러오기</label>' +
           '<input type="file" id="inputEquipCostCsv" accept=".csv" style="display:none;">' +
           '<button type="button" id="btnExportUtilExcel" class="btn btn-sm" style="background:#059669;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;">📊 가동률 엑셀(.xlsx)</button>' +
         '</div>' +
@@ -5864,7 +5881,15 @@ function renderEquipmentAnalyticsDashboard(){
   if(isAll){
     if(kpiEqLabel) kpiEqLabel.textContent = '대상 연구장비';
     if(kpiEqTotal) kpiEqTotal.textContent = researchEquipments.length + '대 통합 운영';
-    if(kpiEqSub) kpiEqSub.textContent = '구조 2 · 광학 3 · 증착 4 · 공정 1';
+    if(kpiEqSub){
+      const cStruct = researchEquipments.filter(function(e){ return e.category === 'structural'; }).length;
+      const cOpt = researchEquipments.filter(function(e){ return e.category === 'optical'; }).length;
+      const cSurf = researchEquipments.filter(function(e){ return e.category === 'surface'; }).length;
+      const cElec = researchEquipments.filter(function(e){ return e.category === 'electrical'; }).length;
+      const cDep = researchEquipments.filter(function(e){ return e.category === 'deposition'; }).length;
+      const cFab = researchEquipments.filter(function(e){ return e.category === 'fabrication'; }).length;
+      kpiEqSub.textContent = '구조 ' + cStruct + ' · 광학 ' + cOpt + ' · 표면 ' + cSurf + ' · 물성 ' + cElec + ' · 증착 ' + cDep + ' · 공정 ' + cFab;
+    }
     if(kpiSessionsTotal) kpiSessionsTotal.textContent = periodSessions.length + '건';
     if(kpiSessionsSub) kpiSessionsSub.textContent = periodTag + ' 가동 (누적 ' + targetSessions.length + '건)';
     if(kpiRuntimeTotal) kpiRuntimeTotal.textContent = totalPeriodHours + '시간';
@@ -7582,19 +7607,19 @@ function selectResearchEquipment(eqId){
     if(nameEl) nameEl.textContent = selected.name;
     if(assetNoEl) assetNoEl.textContent = selected.assetNo || selected.id;
     if(assetPillEl) assetPillEl.textContent = selected.assetNo || selected.code;
-    if(locEl) locEl.textContent = selected.location;
-    if(modelEl) modelEl.textContent = selected.model;
+    if(locEl) locEl.textContent = selected.location || '성균관대 양자기술첨단기기센터 (AQT)';
+    if(modelEl) modelEl.textContent = selected.model || selected.code || '-';
     if(serviceModeEl) serviceModeEl.textContent = selected.serviceMode || '직접사용 / 측정지원';
-    if(specEl) specEl.textContent = selected.spec || '표준 분석/공정 규격';
-    if(mgrEl) mgrEl.textContent = selected.manager;
-    if(contactEl) contactEl.textContent = selected.contact;
+    if(specEl) specEl.textContent = selected.spec || '표준 분석/공정 규격 (SESS 연동)';
+    if(mgrEl) mgrEl.textContent = selected.manager || 'AQT 전담 오퍼레이터';
+    if(contactEl) contactEl.textContent = selected.contact || '031-299-6512 (AQT 행정실)';
 
     const noticeEl = $('eqStandbyNoticeText');
     if(noticeEl){
       if(isActive){
         noticeEl.innerHTML = '<b>장비 운영 안내:</b><br>하단의 <b>[📝 장비 사용 기록 작성]</b> 버튼을 통해 측정 파라미터 및 세션 일지를 전산으로 등록할 수 있습니다.';
       } else {
-        noticeEl.innerHTML = '<b>장비 사용 및 수기 일지 안내:</b><br>현재 오프라인 현장 일지로 운영되고 있습니다. 장비 사용 예약, 트레이닝 교육 이수 및 로그북 전산화 요청은 담당 오퍼레이터에게 문의 바랍니다.';
+        noticeEl.innerHTML = '<b>장비 사용 안내 (현장 수기 + 전산 보조):</b><br>현장 수기 일지를 병행하며, 필요 시 하단 <b>[📝 장비 사용 기록 작성]</b> 버튼으로 전산 가동 기록을 함께 남길 수 있습니다.';
       }
     }
 
@@ -7602,9 +7627,12 @@ function selectResearchEquipment(eqId){
     renderEquipmentTestSessions(selected.code);
   }
 
-  if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
-  const viewLogbook = $('view-logbook');
-  if(viewLogbook) viewLogbook.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  try {
+    if(typeof window.scrollTo === 'function') window.scrollTo(0, 0);
+    if(document.documentElement) document.documentElement.scrollTop = 0;
+    if(document.body) document.body.scrollTop = 0;
+    setTimeout(function(){ if(typeof window.scrollTo === 'function') window.scrollTo(0, 0); }, 60);
+  } catch(_) {}
 }
 
 function renderLogbook(){
@@ -8640,14 +8668,14 @@ function openModal(mode, id){
     parts.push('<div class="auth-two-col-grid">');
     parts.push('  <label class="field">Advisor (지도교수) *<input name="advisor" required maxlength="50" placeholder="e.g. 신현석 교수님"></label>');
     parts.push('  <label class="field">Department (소속 부서) *<input name="affiliation" required maxlength="80" placeholder="e.g. 2DQH"></label>');
-        parts.push('  <div style="margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-subtle,#f8fafc);display:flex;flex-direction:column;gap:8px;">');
+    parts.push('</div>');
+    parts.push('<div style="margin-top:8px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-subtle,#f8fafc);display:flex;flex-direction:column;gap:8px;">');
     parts.push('    <label class="field" style="font-size:12.5px;margin:0;">2DQH 연구단 소속 여부<select id="regIsCenterSelect" name="is_center" onchange="var ex=document.getElementById(\'regExtraAffilBox\');if(ex)ex.style.display=(this.value===\'타 소속\'?\'grid\':\'none\');"><option value="연구단 소속">예 (2DQH 연구단)</option><option value="타 소속">아니오 (타 소속)</option></select></label>');
     parts.push('    <div id="regExtraAffilBox" style="display:none;grid-template-columns:1fr 1fr;gap:8px;">');
     parts.push('      <label class="field" style="font-size:12px;margin:0;">교내 / 교외<select name="campus_type"><option value="교내">교내 (성균관대)</option><option value="교외">교외 (외부기관)</option></select></label>');
     parts.push('      <label class="field" style="font-size:12px;margin:0;">에너지과학과 여부<select name="is_energy_dept"><option value="에너지과학과">예 (에너지과학과)</option><option value="타학과/기타">아니오 (타학과/기타)</option></select></label>');
     parts.push('    </div>');
     parts.push('  </div>');
-    parts.push('</div>');
 
     parts.push('<div class="auth-switch-link">');
     parts.push('  Already a member? <a id="linkSwitchToLogin" role="button">Log In (로그인)</a>');
@@ -17926,6 +17954,7 @@ function render291InventoryTable(){
     html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.expDate) + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">';
     if(c.isSpecial){ html += '<button type="button" class="btn-table-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '" style="font-weight:700;color:#2563eb;">이력</button>'; }
+    if(c.isSpecial || (typeof CHEMICAL_MSDS_REGISTRY !== 'undefined' && CHEMICAL_MSDS_REGISTRY[c.id])){ html += '<button type="button" class="btn-table-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;font-weight:700;color:#059669;">MSDS</button>'; }
     if(isAdmin()){
       html += '<button type="button" class="btn-table-action btn-chem-edit" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;font-weight:700;color:#0284c7;" title="시약 정보 수정">수정</button>';
       html += '<button type="button" class="btn-table-action btn-chem-discard" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#d97706;" title="시약 폐기 처리">폐기</button>';
@@ -17954,10 +17983,15 @@ function render291InventoryTable(){
     cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">담당자</span><span class="val">👤 ' + safe(c.handler || '-') + '</span></div>';
     cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">수량 / 잔량</span><span class="val stock">' + safe(c.qty) + ' · <b>' + currentStock + ' ' + safe(c.unit) + '</b></span></div>';
     cardsHtml += '  </div>';
-    if(c.isSpecial){
+    if(c.isSpecial || (typeof CHEMICAL_MSDS_REGISTRY !== 'undefined' && CHEMICAL_MSDS_REGISTRY[c.id])){
       cardsHtml += '  <div class="chem-m-card-actions">';
-      cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '">📜 이력</button>';
-      cardsHtml += '    <button type="button" class="btn-m-action primary btn-chem-m-quick-log" data-chem-id="' + safe(c.id) + '">📝 일지작성</button>';
+      if(c.isSpecial){
+        cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '">📜 이력</button>';
+      }
+      cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '" style="color:#059669;font-weight:700;">📋 MSDS</button>';
+      if(c.isSpecial){
+        cardsHtml += '    <button type="button" class="btn-m-action primary btn-chem-m-quick-log" data-chem-id="' + safe(c.id) + '">📝 일지작성</button>';
+      }
       cardsHtml += '  </div>';
     }
     if(isAdmin()){
@@ -18405,6 +18439,14 @@ function openChemHistoryModal(chemId){
     }
   }
 
+  const btnMsds = $('btnHistViewMsds');
+  if(btnMsds){
+    btnMsds.onclick = function(e){
+      e.preventDefault();
+      closeChemHistoryModal();
+      if(typeof openChemMsdsModal === 'function') openChemMsdsModal(c.id);
+    };
+  }
   if(btnWrite){
     btnWrite.onclick = function(e){
       e.preventDefault();
@@ -18449,20 +18491,17 @@ function openChemWriteLogModal(chemId){
 
   const select = $('modalChemSelect');
   if(select){
-    // 특별관리물질 우선 나열하되, 체크된 시약이 일반 시약인 경우에도 select 목록에 포함되도록 구성
-    let targetChems = chemicals.filter(function(c){ return c.isSpecial; });
-    const selectedChem = chemicals.find(function(c){ return c.id === chemId; });
-    if(selectedChem && !targetChems.some(function(c){ return c.id === selectedChem.id; })){
-      targetChems.unshift(selectedChem); // 체크된 일반 시약을 맨 앞에 배치
-    }
-
-    select.innerHTML = targetChems.map(function(c){
+    const specialList = chemicals.filter(function(c){ return c.isSpecial; });
+    const generalList = chemicals.filter(function(c){ return !c.isSpecial; });
+    const optHtml = function(c){
       return '<option value="' + safe(c.id) + '" ' + (c.id === chemId ? 'selected' : '') + '>' +
-        safe(c.name) + ' [' + safe(c.cas) + ']' + (c.isSpecial ? ' (특별관리)' : '') +
+        safe(c.name) + ' [' + safe(c.cas || '-') + ']' + (c.isSpecial ? ' (특별관리)' : '') +
       '</option>';
-    }).join('');
-
-    select.value = chemId;
+    };
+    select.innerHTML =
+      '<optgroup label="⭐ 특별관리물질 (' + specialList.length + '종)">' + specialList.map(optHtml).join('') + '</optgroup>' +
+      '<optgroup label="🧪 일반 시약 (' + generalList.length + '종)">' + generalList.map(optHtml).join('') + '</optgroup>';
+    if(chemId) select.value = chemId;
   }
 
   const handlerEl = $('modalChemHandler');
@@ -18470,8 +18509,9 @@ function openChemWriteLogModal(chemId){
   if(handlerEl){
     if(curAuth && curAuth.name){
       handlerEl.value = curAuth.name;
-    } else if(!handlerEl.value || handlerEl.value === '이강민'){
-      handlerEl.value = localStorage.getItem('labstock_last_borrower_name') || '이강민';
+    } else {
+      const lastB = localStorage.getItem('labstock_last_borrower_name') || '';
+      handlerEl.value = (lastB && lastB !== '이강민') ? lastB : '';
     }
   }
 
@@ -21576,8 +21616,8 @@ function renderInvSubLoans(){
     bar.innerHTML =
       statusHtml +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
-        '<button type="button" id="btnQuickEquipStart" ' + (disableStart ? 'disabled' : '') + ' style="width:100%;min-height:92px;font-size:17px;font-weight:800;border:none;border-radius:14px;cursor:' + (disableStart ? 'not-allowed' : 'pointer') + ';background:' + (disableStart ? '#cbd5e1' : '#2563eb') + ';color:#ffffff;box-shadow:0 4px 14px rgba(37,99,235,0.22);">' + (isEn ? '▶ Start Use' : '▶ 사용 시작') + '</button>' +
-        '<button type="button" id="btnQuickEquipEnd" ' + (!curUse ? 'disabled' : '') + ' style="width:100%;min-height:92px;font-size:17px;font-weight:800;border:none;border-radius:14px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#cbd5e1' : '#dc2626') + ';color:#ffffff;box-shadow:0 4px 14px rgba(220,38,38,0.22);">⏹ 사용 종료</button>' +
+        '<button type="button" id="btnQuickEquipStart" class="quick-eq-btn' + (disableStart ? ' is-disabled' : ' is-start') + '" ' + (disableStart ? 'disabled' : '') + ' style="width:100%;min-height:92px;font-size:17px;font-weight:800;border:none;border-radius:14px;cursor:' + (disableStart ? 'not-allowed' : 'pointer') + ';background:' + (disableStart ? '#e2e8f0' : '#2563eb') + ';color:' + (disableStart ? '#64748b' : '#ffffff') + ';box-shadow:' + (disableStart ? 'none' : '0 4px 14px rgba(37,99,235,0.22)') + ';">' + (isEn ? '▶ Start Use' : '▶ 사용 시작') + '</button>' +
+        '<button type="button" id="btnQuickEquipEnd" class="quick-eq-btn' + (!curUse ? ' is-disabled' : ' is-end') + '" ' + (!curUse ? 'disabled' : '') + ' style="width:100%;min-height:92px;font-size:17px;font-weight:800;border:none;border-radius:14px;cursor:' + (!curUse ? 'not-allowed' : 'pointer') + ';background:' + (!curUse ? '#e2e8f0' : '#dc2626') + ';color:' + (!curUse ? '#64748b' : '#ffffff') + ';box-shadow:' + (!curUse ? 'none' : '0 4px 14px rgba(220,38,38,0.22)') + ';">' + (isEn ? '⏹ End Use' : '⏹ 사용 종료') + '</button>' +
       '</div>';
 
     const btnStart = $('btnQuickEquipStart');
@@ -21648,7 +21688,9 @@ function renderInvSubLoans(){
           }).then(function(r){ if(r && r.error) console.warn('xrd_logs insert:', r.error.message); });
         }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
-        if(typeof renderXrdLogs === 'function') renderXrdLogs();
+        const xSearch = $('xrdSearch');
+    if(xSearch) xSearch.placeholder = isEn ? 'Search sample, user, adviser, scan type...' : '시료, 사용자, 지도교수, 소속, 스캔 모드 검색...';
+    if(typeof renderXrdLogs === 'function') renderXrdLogs();
       } else if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
         equipmentSessions.unshift({
           id: logId,
@@ -22029,19 +22071,21 @@ function renderInvSubLoans(){
   setTimeout(function(){ if(typeof window.syncAllSessCacheFromSupabase === 'function') window.syncAllSessCacheFromSupabase(); }, 300);
 
   function matchSessEquipment(eqId, sessItem){
+    const rawStr = ((sessItem.equipShortNm || '') + ' ' + (sessItem.equipEngNm || '') + ' ' + (sessItem.equipKorNm || '')).toLowerCase();
+    const sHay = rawStr.replace(/[^a-z0-9가-힣]/g, '');
+    if(!sHay) return false;
+    if(eqId === 'EQ-XRD-01') return sHay.includes('hrxrd') || sHay.includes('diffractometer') || rawStr.includes('x-선 회절') || rawStr.includes('smartlab');
+    if(eqId === 'EQ-FTIR-01') return sHay.includes('ftir') || sHay.includes('vertex');
+    if(eqId === 'EQ-UVVIS-01') return sHay.includes('uvvis') || /\buv[-\s]?vis\b/i.test(rawStr);
+    if(eqId === 'EQ-OM-ZEISS') return sHay.includes('zeiss') || sHay.includes('opticalmicroscope') || /\bom\b/i.test(rawStr);
     const eqObj = (typeof researchEquipments !== 'undefined' && Array.isArray(researchEquipments))
       ? researchEquipments.find(function(e){ return e.id === eqId; })
       : null;
     const eqCode = (eqObj ? eqObj.code : eqId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const eqName = (eqObj ? eqObj.name : '').toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
-    const sHay = ((sessItem.equipShortNm || '') + ' ' + (sessItem.equipEngNm || '') + ' ' + (sessItem.equipKorNm || '')).toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
-    if(!eqCode && !eqName) return false;
-    if(eqCode && sHay.includes(eqCode)) return true;
-    if(eqId === 'EQ-XRD-01' && (sHay.includes('hrxrd') || sHay.includes('diffractometer'))) return true;
-    if(eqId === 'EQ-FTIR-01' && sHay.includes('ftir')) return true;
-    if(eqId === 'EQ-UVVIS-01' && sHay.includes('uvvis')) return true;
-    if(eqId === 'EQ-OM-ZEISS' && (sHay.includes('zeiss') || sHay.includes('opticalmicroscope'))) return true;
-    return false;
+    if(!eqCode) return false;
+    const tokens = rawStr.split(/[^a-z0-9가-힣]+/).filter(Boolean);
+    if(tokens.indexOf(eqCode) >= 0) return true;
+    return eqCode.length >= 5 && sHay.includes(eqCode);
   }
 
   window._getAllSessMonthItems = function(){
@@ -22947,7 +22991,7 @@ async function renderAdminMembersPanel(){
   }).join('');
 
   panel.innerHTML =
-    '<details>' +
+    '<details open>' +
       '<summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">' +
         '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">👥 회원 관리 (클릭하여 펼치기 · ' + list.length + '명)</h3>' +
         '<span style="font-size:12px;color:var(--ink-light);">Supabase(user_profiles) 및 웹 회원 목록 조회 · 소속 구분 수정 · 삭제</span></div>' +
@@ -22990,43 +23034,56 @@ async function renderAdminMembersPanel(){
   });
 
   panel.querySelectorAll('[data-edit-member]').forEach(function(btn){
-    btn.onclick = async function(){
+    btn.onclick = function(){
       const uname = btn.dataset.editMember;
       const target = list.find(function(x){ return x.username === uname; });
       if(!target) return;
-      const newAffil = prompt('소속 부서명을 입력하세요:', target.affiliation || '');
-      if(newAffil === null) return;
-      const newCenter = confirm('2DQH 연구단 소속입니까?\n[확인] = 연구단 소속 / [취소] = 타 소속') ? '연구단 소속' : '타 소속';
-      const newCampus = (newCenter === '연구단 소속') ? '교내' : (confirm('교내(성균관대) 소속입니까?\n[확인] = 교내 / [취소] = 교외') ? '교내' : '교외');
-      const newEnergy = (newCenter === '연구단 소속') ? '에너지과학과' : (confirm('에너지과학과 소속입니까?\n[확인] = 에너지과학과 / [취소] = 타학과/기타') ? '에너지과학과' : '타학과/기타');
-
-      try {
-        const localList = JSON.parse(localStorage.getItem('labstock_users_v1') || '[]');
-        const idx = localList.findIndex(function(x){ return x.username === uname; });
-        if(idx >= 0){
-          localList[idx].affiliation = newAffil.trim();
-          localList[idx].is_center = newCenter;
-          localList[idx].campus_type = newCampus;
-          localList[idx].is_energy_dept = newEnergy;
-          localStorage.setItem('labstock_users_v1', JSON.stringify(localList));
-        }
-      } catch(_) {}
-
-      if(typeof db !== 'undefined' && db){
-        await db.from('user_profiles').upsert({
-          id: uname,
-          username: uname,
-          name: target.name || '',
-          advisor: target.advisor || '',
-          affiliation: newAffil.trim(),
-          is_center: newCenter,
-          campus_type: newCampus,
-          is_energy_dept: newEnergy,
-          role: target.role || 'researcher'
-        }, { onConflict: 'username' });
+      let ed = $('admMemberInlineEditor');
+      if(!ed){
+        ed = document.createElement('div');
+        ed.id = 'admMemberInlineEditor';
+        ed.style.cssText = 'margin-top:12px;padding:12px 14px;border:1.5px solid #3b82f6;border-radius:10px;background:var(--bg-subtle,#f8fafc);display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;';
+        const det = panel.querySelector('details');
+        if(det) det.insertBefore(ed, det.querySelector('.table-wrap'));
+        else panel.prepend(ed);
       }
-      toast('✓ 회원 정보가 수정되었습니다.');
-      renderAdminMembersPanel();
+      ed.innerHTML =
+        '<div style="width:100%;font-size:13px;font-weight:800;color:var(--ink);">✏️ 회원 정보 수정: ' + safe(target.name || uname) + ' (' + safe(uname) + ')</div>' +
+        '<label style="display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;">소속 부서<input id="admEdAffil" value="' + safe(target.affiliation || '') + '" style="height:34px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;"></label>' +
+        '<label style="display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;">연구단 소속<select id="admEdCenter" style="height:34px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;"><option value="연구단 소속"' + ((target.is_center || '연구단 소속') === '연구단 소속' ? ' selected' : '') + '>연구단 소속</option><option value="타 소속"' + (target.is_center === '타 소속' ? ' selected' : '') + '>타 소속</option></select></label>' +
+        '<label style="display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;">교내/교외<select id="admEdCampus" style="height:34px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;"><option value="교내"' + ((target.campus_type || '교내') === '교내' ? ' selected' : '') + '>교내</option><option value="교외"' + (target.campus_type === '교외' ? ' selected' : '') + '>교외</option></select></label>' +
+        '<label style="display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;">학과 구분<select id="admEdEnergy" style="height:34px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;"><option value="에너지과학과"' + ((target.is_energy_dept || '에너지과학과') === '에너지과학과' ? ' selected' : '') + '>에너지과학과</option><option value="타학과/기타"' + (target.is_energy_dept === '타학과/기타' ? ' selected' : '') + '>타학과/기타</option></select></label>' +
+        '<div style="display:flex;gap:6px;">' +
+          '<button type="button" id="btnAdmSaveMemberEd" class="btn primary btn-sm" style="height:34px;font-weight:700;">저장</button>' +
+          '<button type="button" id="btnAdmCancelMemberEd" class="btn btn-sm" style="height:34px;">취소</button>' +
+        '</div>';
+      $('btnAdmCancelMemberEd').onclick = function(){ if(ed) ed.remove(); };
+      $('btnAdmSaveMemberEd').onclick = async function(){
+        const newAffil = ($('admEdAffil').value || '').trim();
+        const newCenter = $('admEdCenter').value;
+        const newCampus = (newCenter === '연구단 소속') ? '교내' : $('admEdCampus').value;
+        const newEnergy = (newCenter === '연구단 소속') ? '에너지과학과' : $('admEdEnergy').value;
+        try {
+          const localList = JSON.parse(localStorage.getItem('labstock_users_v1') || '[]');
+          const idx = localList.findIndex(function(x){ return x.username === uname; });
+          if(idx >= 0){
+            localList[idx].affiliation = newAffil;
+            localList[idx].is_center = newCenter;
+            localList[idx].campus_type = newCampus;
+            localList[idx].is_energy_dept = newEnergy;
+            localStorage.setItem('labstock_users_v1', JSON.stringify(localList));
+          }
+        } catch(_) {}
+        if(typeof db !== 'undefined' && db){
+          await db.from('user_profiles').upsert({
+            id: uname, username: uname, name: target.name || '', advisor: target.advisor || '',
+            affiliation: newAffil, is_center: newCenter, campus_type: newCampus, is_energy_dept: newEnergy,
+            role: target.role || 'researcher'
+          }, { onConflict: 'username' });
+        }
+        toast('✓ 회원 정보가 수정되었습니다.');
+        renderAdminMembersPanel();
+      };
     };
   });
 
@@ -23448,8 +23505,8 @@ window.renderAdminUnloggedPanel = function(){
     ['순환식 저온 냉각 칠러', 'Recirculating Low-Temp Chiller'],
     ['측정공구', 'Measuring Tools'],
     ['실험장비', 'Lab Equipment'],
-    ['분석실 캐비넷 A', 'Analysis Lab Cabinet A'],
-    ['분석실 캐비넷 B', 'Analysis Lab Cabinet B'],
+    ['분석실 캐비닛 A', 'Analysis Lab Cabinet A'],
+    ['분석실 캐비닛 B', 'Analysis Lab Cabinet B'],
     ['공용 공구함', 'Shared Toolbox'],
     ['장비실 서랍 2', 'Equipment Room Drawer 2'],
     ['클린룸 글러브박스 앞', 'In Front of Cleanroom Glovebox'],
@@ -23668,7 +23725,20 @@ window.renderAdminUnloggedPanel = function(){
     ['연구실 비치 시약', 'Lab Chemicals'],
     ['시약 취급 이력 및 잔여량 추적', 'Chemical Usage History & Remaining Tracking'],
     ['좌우로 스크롤하여 상세 정보(MSDS, 수량, 잔량 등)를 확인하세요', 'Scroll horizontally for MSDS, Qty & Remaining details'],
-    ['원자단위', 'Atomic-scale']
+    ['원자단위', 'Atomic-scale'],
+    ['한국어', 'Korean'],
+    ['전체 장비', 'All Equipment'],
+    ['비품 대여 신청', 'Borrow Equipment'],
+    ['대여자 이름 *', 'Borrower Name *'],
+    ['대여자 이름', 'Borrower Name'],
+    ['사용 목적 / 메모 (선택)', 'Purpose / Note (Optional)'],
+    ['대여 가능', 'Available'],
+    ['마감임박', 'Due Soon'],
+    ['특별관리물질', 'Controlled Substance'],
+    ['일반 시약', 'General Reagents'],
+    ['전체 시약', 'All Chemicals'],
+    ['대여 내역이 없습니다.', 'No active loans found.'],
+    ['모든 상태', 'All Statuses']
   ];
   KO_EN_PHRASES.sort(function(a, b){ return b[0].length - a[0].length; });
 
@@ -23690,9 +23760,9 @@ window.renderAdminUnloggedPanel = function(){
       return str.replace(rawTrim, autoEnCache[rawTrim]);
     }
     let txt = str;
-    txt = txt.replace(/총s*(d+)s*건/g, 'Total $1 items');
-    txt = txt.replace(/(d+)s*건/g, '$1 items');
-    txt = txt.replace(/(d+)s*개/g, '$1 pcs');
+    txt = txt.replace(/총\s*(\d+)\s*건/g, 'Total $1 items');
+    txt = txt.replace(/(\d+)\s*건/g, '$1 items');
+    txt = txt.replace(/(\d+)\s*개/g, '$1 pcs');
     for(let i = 0; i < KO_EN_PHRASES.length; i++){
       const ko = KO_EN_PHRASES[i][0], en = KO_EN_PHRASES[i][1];
       if(txt.indexOf(ko) >= 0) txt = txt.split(ko).join(en);
@@ -23815,8 +23885,10 @@ window.renderAdminUnloggedPanel = function(){
     translateDomTexts(isEn);
 
     const bKo = $('btnMobLangKo'), bEn = $('btnMobLangEn');
-    if(bKo){ bKo.style.background = !isEn ? '#2563eb' : ''; bKo.style.color = !isEn ? '#fff' : ''; }
-    if(bEn){ bEn.style.background = isEn ? '#2563eb' : ''; bEn.style.color = isEn ? '#fff' : ''; }
+    if(bKo){ bKo.classList.toggle('is-active-lang', !isEn); bKo.style.background = !isEn ? '#2563eb' : ''; bKo.style.color = !isEn ? '#fff' : ''; }
+    if(bEn){ bEn.classList.toggle('is-active-lang', isEn); bEn.style.background = isEn ? '#2563eb' : ''; bEn.style.color = isEn ? '#fff' : ''; }
+    if(typeof renderEquipmentPortalGrid === 'function') renderEquipmentPortalGrid();
+    if(typeof renderXrdLogs === 'function') renderXrdLogs();
     if(typeof renderGenbaroBookingPanel === 'function' && typeof currentSelectedEquipment !== 'undefined'){
       renderGenbaroBookingPanel(currentSelectedEquipment);
     }
@@ -23949,7 +24021,8 @@ window.renderAdminUnloggedPanel = function(){
               (eq.id === 'EQ-PPMS-9T' && sn.includes('9t'));
           });
           if(match){
-            if(se.image && (!match.image || match.type === 'placeholder' || match.image.includes('logo_2dqh'))){
+            const isBadSessImg = !se.image || /top_ico|sns|facebook|twitter|logo|icon|btn_/i.test(se.image);
+            if(!isBadSessImg && (!match.image || match.image.includes('logo_2dqh'))){
               match.image = se.image;
             }
             if(se.location && !match.location) match.location = se.location;
