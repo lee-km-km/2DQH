@@ -10394,7 +10394,9 @@ function bindEvents(){
       return;
     }
 
-    if(target.id === 'btnExportEquipmentLogs' || target.closest('#btnExportEquipmentLogs')){
+    if(target.id === 'btnExportEquipmentLogs' || target.closest('#btnExportEquipmentLogs') || target.closest('[data-export-equip-logs]')){
+      e.preventDefault();
+      e.stopPropagation();
       exportEquipmentLogsExcel();
       return;
     }

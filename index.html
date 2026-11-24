@@ -1386,7 +1386,6 @@
             <span class="count-badge" id="logbookCountBadge">SmartLab · Rigaku</span>
           </div>
           <div class="head-actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-            <button class="btn primary admin-only hidden" id="btnExportEquipmentLogs" title="연구장비 공식 사용일지(Excel) 다운로드" style="display:inline-flex;align-items:center;gap:4px;font-weight:700;">📥 사용일지 다운로드</button>
           </div>
         </div>
 
@@ -1761,7 +1760,10 @@
             <!-- 5. XRD 로그 내역 테이블 (기본 접힘) -->
             <section class="panel xrd-table-panel">
               <details>
-                <summary style="cursor:pointer;font-weight:800;font-size:14px;color:var(--ink);padding:4px 0;list-style:none;">📋 이전 로그북 검색 및 기록 보기 (클릭하여 펼치기)</summary>
+                <summary style="cursor:pointer;font-weight:800;font-size:14px;color:var(--ink);padding:4px 0;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span>📋 이전 로그북 검색 및 기록 보기 (클릭하여 펼치기)</span>
+                  <button type="button" class="btn primary admin-only hidden" id="btnExportEquipmentLogs" data-export-equip-logs="1" title="전체 일지 및 로그북 작성분 엑셀 다운로드" style="padding:5px 12px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:4px;">📥 사용일지 엑셀 다운로드</button>
+                </summary>
                 <div class="toolbar" style="margin-top:12px;margin-bottom:12px;">
                   <div class="search-input-box" style="flex:1;">
                     <span class="search-input-icon">🔍</span>
@@ -2448,6 +2450,6 @@
 </nav>
 
 <script src="consumables_catalog.js?v=20261111_1350_mobile_ui"></script>
-<script src="app.js?v=20261111_1350_mobile_ui"></script>
+<script src="app.js?v=20261124_1523"></script>
 </body>
 </html>
