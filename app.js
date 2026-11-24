@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261124_1723';
+const APP_DATA_VERSION = '20261124_1728';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -9006,7 +9006,7 @@ function showView(name, options){
   } else if(name === 'inventory'){
     renderInventory();
   } else if(name === 'logbook'){
-    renderLogbook(); } else if(name === 'admin'){ if(typeof renderAdminMembersPanel === 'function') renderAdminMembersPanel();
+    renderLogbook(); } else if(name === 'admin'){ if(typeof renderAdminMembersPanel === 'function') renderAdminMembersPanel(); if(typeof renderAdminUnloggedPanel === 'function') renderAdminUnloggedPanel();
   }
 
   // 뷰 전환 시 최상단으로 깔끔하게 이동 (모바일/PC 하단 묻힘 현상 방지)
@@ -21971,6 +21971,23 @@ function renderInvSubLoans(){
       });
     } catch(_) {}
   }
+  window.removeSessBookingFromCache = async function(dateStr, reservNo){
+    const mKey = String(dateStr || '').slice(0, 7);
+    if(!mKey || !Array.isArray(sessMonthCache[mKey])) return;
+    const targetNo = String(reservNo || '').trim();
+    const next = sessMonthCache[mKey].filter(function(it){
+      if(!it) return false;
+      if(targetNo && String(it.reservNo || '').trim() === targetNo) return false;
+      return true;
+    });
+    if(next.length !== sessMonthCache[mKey].length){
+      sessMonthCache[mKey] = next;
+      const nowTs = Date.now();
+      sessMonthMeta[mKey] = nowTs;
+      saveSessMonthCache();
+      await saveSessMonthToSupabase(mKey, next, nowTs);
+    }
+  };
 
   let _sessSupaLoaded = false;
   window.syncAllSessCacheFromSupabase = async function(force){
@@ -23029,6 +23046,255 @@ async function renderAdminMembersPanel(){
     };
   });
 }
+
+let _adminUnloggedEqFilter = 'all';
+let _adminUnloggedMonthFilter = 'all';
+let _adminUnloggedQuery = '';
+window.renderAdminUnloggedPanel = function(){
+  if(typeof isAdmin === 'function' && !isAdmin()) return;
+  const host = $('adminConsoleHost') || $('view-admin');
+  if(!host) return;
+
+  let panel = $('adminUnloggedPanel');
+  if(!panel){
+    panel = document.createElement('section');
+    panel.id = 'adminUnloggedPanel';
+    panel.className = 'panel';
+    panel.style.cssText = 'margin-top:16px;padding:16px;border-radius:12px;';
+    host.appendChild(panel);
+  }
+
+  const targetEqs = ['EQ-XRD-01', 'EQ-OM-ZEISS', 'EQ-UVVIS-01', 'EQ-FTIR-01'];
+  const eqNameMap = {};
+  (researchEquipments || []).forEach(function(e){ eqNameMap[e.id] = e.code || e.name; });
+
+  const allUnlogged = [];
+  const seen = new Set();
+
+  // A. DB에 이미 unlogged_booking 상태로 저장된 항목
+  if(typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
+    xrdLogs.forEach(function(l){
+      if(l.status === 'unlogged_booking' || l.is_unlogged_booking){
+        const k = 'EQ-XRD-01|' + (l.reservation_no || (l.used_on + '|' + (l.start_time || '') + '|' + (l.user_name || '')));
+        if(seen.has(k)) return;
+        seen.add(k);
+        allUnlogged.push({
+          key: k, eqId: 'EQ-XRD-01', eqCode: eqNameMap['EQ-XRD-01'] || 'HR-XRD',
+          dbId: l.id || null, isVirtual: false,
+          used_on: String(l.used_on || '').slice(0, 10),
+          start_time: l.start_time || '', end_time: l.end_time || '',
+          duration_min: l.duration_min || 60,
+          user_name: l.user_name || 'SESS 예약자',
+          reservation_no: l.reservation_no || '',
+          memo: l.memo || ''
+        });
+      }
+    });
+  }
+  if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
+    equipmentSessions.forEach(function(s){
+      if(s.status === 'unlogged_booking' || s.is_unlogged_booking){
+        const eqId = s.equipment_id || '';
+        const k = eqId + '|' + (s.reservation_no || (s.used_on + '|' + (s.start_time || '') + '|' + (s.user_name || '')));
+        if(seen.has(k)) return;
+        seen.add(k);
+        allUnlogged.push({
+          key: k, eqId: eqId, eqCode: eqNameMap[eqId] || s.equipment_code || eqId,
+          dbId: s.id || null, isVirtual: false,
+          used_on: String(s.used_on || '').slice(0, 10),
+          start_time: s.start_time || '', end_time: s.end_time || '',
+          duration_min: s.duration_min || 60,
+          user_name: s.user_name || 'SESS 예약자',
+          reservation_no: s.reservation_no || '',
+          memo: s.memo || ''
+        });
+      }
+    });
+  }
+
+  // B. SESS/Lab 예약 기반 가상 미작성 항목
+  if(typeof window.getUnloggedBookingLogs === 'function'){
+    targetEqs.forEach(function(eqId){
+      const existing = (eqId === 'EQ-XRD-01')
+        ? (typeof xrdLogs !== 'undefined' ? xrdLogs : [])
+        : (typeof equipmentSessions !== 'undefined' ? equipmentSessions.filter(function(s){ return s.equipment_id === eqId; }) : []);
+      window.getUnloggedBookingLogs(eqId, existing).forEach(function(u){
+        const k = eqId + '|' + (u.reservation_no || (u.used_on + '|' + (u.start_time || '') + '|' + (u.user_name || '')));
+        if(seen.has(k)) return;
+        seen.add(k);
+        allUnlogged.push({
+          key: k, eqId: eqId, eqCode: eqNameMap[eqId] || eqId,
+          dbId: null, isVirtual: true,
+          used_on: String(u.used_on || '').slice(0, 10),
+          start_time: u.start_time || '', end_time: u.end_time || '',
+          duration_min: u.duration_min || 60,
+          user_name: u.user_name || 'SESS 예약자',
+          reservation_no: u.reservation_no || '',
+          memo: u.memo || ''
+        });
+      });
+    });
+  }
+
+  allUnlogged.sort(function(a, b){
+    if(a.used_on !== b.used_on) return b.used_on.localeCompare(a.used_on);
+    return (b.start_time || '').localeCompare(a.start_time || '');
+  });
+
+  const months = Array.from(new Set(allUnlogged.map(function(u){ return u.used_on.slice(0, 7); }).filter(Boolean))).sort().reverse();
+  const filtered = allUnlogged.filter(function(u){
+    if(_adminUnloggedEqFilter !== 'all' && u.eqId !== _adminUnloggedEqFilter) return false;
+    if(_adminUnloggedMonthFilter !== 'all' && u.used_on.slice(0, 7) !== _adminUnloggedMonthFilter) return false;
+    if(_adminUnloggedQuery){
+      const q = _adminUnloggedQuery.toLowerCase();
+      const hit = (u.user_name || '').toLowerCase().includes(q) ||
+        (u.used_on || '').includes(q) ||
+        (u.reservation_no || '').toLowerCase().includes(q) ||
+        (u.eqCode || '').toLowerCase().includes(q);
+      if(!hit) return false;
+    }
+    return true;
+  });
+
+  const shown = filtered.slice(0, 100);
+  const rowsHtml = shown.map(function(u, idx){
+    return '<tr>' +
+      '<td style="text-align:center;"><input type="checkbox" class="adm-unlog-chk" data-idx="' + idx + '" /></td>' +
+      '<td style="white-space:nowrap;font-weight:700;">' + safe(u.eqCode) + '</td>' +
+      '<td style="white-space:nowrap;font-family:monospace;">' + safe(u.used_on) + '</td>' +
+      '<td style="white-space:nowrap;">' + safe((u.start_time || '-') + (u.end_time ? '~' + u.end_time : '')) + '</td>' +
+      '<td style="font-weight:700;">' + safe(u.user_name) + '</td>' +
+      '<td style="font-family:monospace;font-size:12px;">' + safe(u.reservation_no ? '#' + u.reservation_no : '-') + '</td>' +
+      '<td style="white-space:nowrap;">' +
+        '<button type="button" class="btn-table-action" data-confirm-unlog="' + idx + '" style="padding:3px 8px;border-radius:6px;border:1px solid #86efac;background:#f0fdf4;color:#15803d;font-weight:700;font-size:11.5px;margin-right:4px;">✅ 확정</button>' +
+        '<button type="button" class="btn-table-action" data-exclude-unlog="' + idx + '" style="padding:3px 8px;border-radius:6px;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;font-weight:700;font-size:11.5px;">🗑️ 제외</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+
+  panel.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">' +
+      '<div>' +
+        '<h3 style="margin:0;font-size:16px;font-weight:800;">🧹 미작성 예약 일지 일괄 점검·정리 (' + filtered.length + '건)</h3>' +
+        '<p style="margin:4px 0 0;font-size:12.5px;color:var(--ink-light);">SESS/자체 예약 후 일지가 미작성된 내역을 정상 사용으로 확정하거나, 취소/미사용 건을 일괄 제외합니다.</p>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+        '<button type="button" id="btnBatchConfirmUnlog" class="btn btn-sm" style="background:#16a34a;color:#fff;border:none;font-weight:700;">✅ 선택 건 정상 확정</button>' +
+        '<button type="button" id="btnBatchExcludeUnlog" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;font-weight:700;">🗑️ 선택 건 취소/제외</button>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">' +
+      '<select id="admUnlogEqSel" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">' +
+        '<option value="all">전체 장비</option>' +
+        targetEqs.map(function(id){ return '<option value="' + id + '"' + (_adminUnloggedEqFilter === id ? ' selected' : '') + '>' + safe(eqNameMap[id] || id) + '</option>'; }).join('') +
+      '</select>' +
+      '<select id="admUnlogMonthSel" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;">' +
+        '<option value="all">전체 월</option>' +
+        months.map(function(m){ return '<option value="' + m + '"' + (_adminUnloggedMonthFilter === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') +
+      '</select>' +
+      '<input type="search" id="admUnlogSearch" value="' + safe(_adminUnloggedQuery) + '" placeholder="예약자명, 날짜(YYYY-MM-DD), 예약번호 검색..." style="flex:1;min-width:180px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;" />' +
+    '</div>' +
+    (shown.length === 0
+      ? '<div style="padding:24px;text-align:center;color:var(--ink-light);background:var(--bg-subtle);border-radius:8px;">정리할 미작성 예약 일지가 없습니다.</div>'
+      : '<div style="overflow-x:auto;max-height:420px;overflow-y:auto;"><table class="table" style="width:100%;font-size:13px;">' +
+          '<thead><tr><th style="width:36px;text-align:center;"><input type="checkbox" id="chkAllUnlog" /></th><th>장비</th><th>사용일</th><th>시간</th><th>예약자</th><th>예약번호</th><th>처리</th></tr></thead>' +
+          '<tbody>' + rowsHtml + '</tbody>' +
+        '</table></div>' +
+        (filtered.length > 100 ? '<div style="margin-top:8px;font-size:12px;color:var(--ink-light);">* 상위 100건만 표시됩니다 (월별 필터 또는 검색을 이용하세요).</div>' : ''));
+
+  const eqSel = $('admUnlogEqSel');
+  if(eqSel) eqSel.onchange = function(){ _adminUnloggedEqFilter = eqSel.value; renderAdminUnloggedPanel(); };
+  const mSel = $('admUnlogMonthSel');
+  if(mSel) mSel.onchange = function(){ _adminUnloggedMonthFilter = mSel.value; renderAdminUnloggedPanel(); };
+  const sInp = $('admUnlogSearch');
+  if(sInp) sInp.oninput = function(){ _adminUnloggedQuery = sInp.value.trim(); renderAdminUnloggedPanel(); };
+  const chkAll = $('chkAllUnlog');
+  if(chkAll) chkAll.onchange = function(){
+    panel.querySelectorAll('.adm-unlog-chk').forEach(function(c){ c.checked = chkAll.checked; });
+  };
+
+  async function processItems(items, action){
+    if(!items.length){ toast('선택된 항목이 없습니다.'); return; }
+    for(let i = 0; i < items.length; i++){
+      const u = items[i];
+      if(action === 'confirm'){
+        if(u.eqId === 'EQ-XRD-01'){
+          if(u.dbId && typeof db !== 'undefined' && db){
+            await db.from('xrd_logs').update({ status: 'completed', memo: (u.memo ? u.memo + ' · ' : '') + '관리자 확정', updated_at: new Date().toISOString() }).eq('id', u.dbId);
+            const row = (xrdLogs || []).find(function(x){ return x.id === u.dbId; });
+            if(row){ row.status = 'completed'; row.is_unlogged_booking = false; }
+          } else if(typeof db !== 'undefined' && db){
+            const payload = {
+              reservation_no: u.reservation_no || '', used_on: u.used_on, start_time: u.start_time || '10:00',
+              end_time: u.end_time || null, duration_min: u.duration_min || 60, status: 'completed',
+              user_name: u.user_name || '', memo: (u.memo ? u.memo + ' · ' : '') + '관리자 확정',
+              updated_at: new Date().toISOString()
+            };
+            const { data: ins } = await db.from('xrd_logs').insert(payload).select();
+            if(ins && ins[0] && Array.isArray(xrdLogs)) xrdLogs.unshift(ins[0]);
+          }
+        } else {
+          if(u.dbId && typeof db !== 'undefined' && db){
+            await db.from('equipment_sessions').update({ status: 'completed', memo: (u.memo ? u.memo + ' · ' : '') + '관리자 확정' }).eq('id', u.dbId);
+            const row = (equipmentSessions || []).find(function(x){ return x.id === u.dbId; });
+            if(row){ row.status = 'completed'; row.is_unlogged_booking = false; }
+          } else if(typeof db !== 'undefined' && db){
+            const payload = {
+              equipment_id: u.eqId, equipment_code: u.eqCode, used_on: u.used_on,
+              start_time: u.start_time || '10:00', end_time: u.end_time || null,
+              duration_min: u.duration_min || 60, user_name: u.user_name || '',
+              status: 'completed', reservation_no: u.reservation_no || '',
+              memo: (u.memo ? u.memo + ' · ' : '') + '관리자 확정'
+            };
+            const { data: ins } = await db.from('equipment_sessions').insert(payload).select();
+            if(ins && ins[0] && Array.isArray(equipmentSessions)) equipmentSessions.unshift(ins[0]);
+          }
+        }
+      } else if(action === 'exclude'){
+        if(u.dbId && typeof db !== 'undefined' && db){
+          if(u.eqId === 'EQ-XRD-01'){
+            await db.from('xrd_logs').delete().eq('id', u.dbId);
+            if(Array.isArray(xrdLogs)) xrdLogs = xrdLogs.filter(function(x){ return x.id !== u.dbId; });
+          } else {
+            await db.from('equipment_sessions').delete().eq('id', u.dbId);
+            if(Array.isArray(equipmentSessions)) equipmentSessions = equipmentSessions.filter(function(x){ return x.id !== u.dbId; });
+          }
+        }
+        if(u.reservation_no && typeof window.removeSessBookingFromCache === 'function'){
+          await window.removeSessBookingFromCache(u.used_on, u.reservation_no);
+        }
+      }
+    }
+    try { localStorage.setItem('labstock_xrd_logs', JSON.stringify(xrdLogs || [])); } catch(_) {}
+    try { localStorage.setItem('labstock_equipment_sessions', JSON.stringify(equipmentSessions || [])); } catch(_) {}
+    toast(action === 'confirm' ? ('✓ ' + items.length + '건 정상 가동으로 확정했습니다.') : ('✓ ' + items.length + '건 취소/미사용 처리하여 제외했습니다.'));
+    renderAdminUnloggedPanel();
+  }
+
+  panel.querySelectorAll('[data-confirm-unlog]').forEach(function(b){
+    b.onclick = function(){ processItems([shown[Number(b.dataset.confirmUnlog)]], 'confirm'); };
+  });
+  panel.querySelectorAll('[data-exclude-unlog]').forEach(function(b){
+    b.onclick = function(){
+      const it = shown[Number(b.dataset.excludeUnlog)];
+      if(confirm(it.used_on + ' ' + it.user_name + ' 건을 취소/미사용으로 제외할까요?')) processItems([it], 'exclude');
+    };
+  });
+  const btnBC = $('btnBatchConfirmUnlog');
+  if(btnBC) btnBC.onclick = function(){
+    const sel = [];
+    panel.querySelectorAll('.adm-unlog-chk:checked').forEach(function(c){ sel.push(shown[Number(c.dataset.idx)]); });
+    if(!sel.length){ toast('체크박스로 항목을 먼저 선택하세요.'); return; }
+    if(confirm('선택한 ' + sel.length + '건을 모두 정상 가동 일지로 확정할까요?')) processItems(sel, 'confirm');
+  };
+  const btnBE = $('btnBatchExcludeUnlog');
+  if(btnBE) btnBE.onclick = function(){
+    const sel = [];
+    panel.querySelectorAll('.adm-unlog-chk:checked').forEach(function(c){ sel.push(shown[Number(c.dataset.idx)]); });
+    if(!sel.length){ toast('체크박스로 항목을 먼저 선택하세요.'); return; }
+    if(confirm('선택한 ' + sel.length + '건을 취소/미사용으로 일괄 제외할까요?')) processItems(sel, 'exclude');
+  };
+};
 
 
 // ==========================================================================
