@@ -23542,6 +23542,9 @@ async function renderAdminMembersPanel(){
   };
 
   function bindSettings(){
+    const deskSet = $('btnDesktopSettings'), sideSet = $('sidebarNavSettings');
+    if(deskSet) deskSet.onclick = function(e){ if(e){ e.preventDefault(); e.stopPropagation(); } openMobileSettingsModal(); };
+    if(sideSet) sideSet.onclick = function(e){ if(e){ e.preventDefault(); e.stopPropagation(); } openMobileSettingsModal(); };
     const tabBtn = $('bottomTabMenu');
     if(tabBtn){
       tabBtn.addEventListener('click', function(e){

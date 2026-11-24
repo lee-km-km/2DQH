@@ -78,6 +78,9 @@
     <button id="btnToggleTheme" class="icon-btn btn-theme-toggle desktop-only" type="button" title="다크 모드 / 라이트 모드 전환" aria-label="테마 전환" style="width:34px;height:34px;padding:0;font-size:15px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--border);background:var(--bg);">
       <span id="themeToggleIcon">🌙</span>
     </button>
+    <button id="btnDesktopSettings" class="icon-btn desktop-only" type="button" title="설정 (언어·테마·도움말)" aria-label="설정" style="height:34px;padding:0 10px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:4px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--ink);cursor:pointer;">
+      <span>⚙️</span><span>설정</span>
+    </button>
     <span id="connection" class="pill hidden"></span>
     <div id="userProfileBadge" class="user-profile-badge desktop-only hidden" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--bg-subtle);border:1px solid var(--border);font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;" title="클릭하여 회원정보 수정">
       <span class="user-badge-icon">👤</span>
@@ -167,6 +170,10 @@
       <button class="nav" data-view="help" id="sidebarNavHelp">
         <span class="nav-icon" aria-hidden="true">📖</span>
         <span>도움말</span>
+      </button>
+      <button class="nav" type="button" id="sidebarNavSettings">
+        <span class="nav-icon" aria-hidden="true">⚙️</span>
+        <span>설정</span>
       </button>
     </div>
 
@@ -2450,6 +2457,6 @@
 </nav>
 
 <script src="consumables_catalog.js?v=20261111_1350_mobile_ui"></script>
-<script src="app.js?v=20261124_1611"></script>
+<script src="app.js?v=20261124_1630"></script>
 </body>
 </html>
