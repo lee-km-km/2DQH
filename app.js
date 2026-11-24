@@ -23235,17 +23235,153 @@ async function renderAdminMembersPanel(){
     ['재고 수량', 'Stock Qty'],
     ['단위', 'Unit'],
     ['사용 처리', 'Use'],
-    ['입고 처리', 'Restock']
+    ['입고 처리', 'Restock'],
+    // --- 필터 · 검색 · 대시보드 · 모달 · 상태 UI ---
+    ['IBS 2DQH 연구지원 포털', 'IBS 2DQH Research Support Portal'],
+    ['성균관대 양자기술첨단기기센터', 'SKKU Center for Quantum Technology'],
+    ['SESS 연동 정밀기기 운용 및 로그북', 'SESS-Linked Equipment Operation & Logbook'],
+    ['비품 검색 및 상세 필터', 'Equipment Search & Filters'],
+    ['소모품 검색 및 필터', 'Consumables Search & Filters'],
+    ['시약·물질 상세 검색 및 필터', 'Chemicals Search & Filters'],
+    ['▼ 검색 펼치기', '▼ Expand Filters'],
+    ['▲ 검색 접기', '▲ Collapse Filters'],
+    ['▼ 펼치기', '▼ Expand'],
+    ['▲ 접기', '▲ Collapse'],
+    ['상세 필터', 'Detailed Filters'],
+    ['필터', 'Filter'],
+    ['모든 상태', 'All Statuses'],
+    ['전체 상태', 'All Statuses'],
+    ['모든 비품 (전체)', 'All Equipment'],
+    ['전체 비품', 'Total Equipment'],
+    ['보유 비품', 'In Stock'],
+    ['현재 대여 중', 'Currently Borrowed'],
+    ['대여 중', 'Borrowed'],
+    ['수리 중', 'Under Repair'],
+    ['반납 지연 / 임박', 'Overdue / Due Soon'],
+    ['기한 확인 필요', 'Check Due Date'],
+    ['누적 대여 건수', 'Total Loans'],
+    ['실시간 운용', 'Live Operation'],
+    ['실시간 비품 대여 현황', 'Live Equipment Loans'],
+    ['실시간 비품 대여 및 반납 관리', 'Live Equipment Loan & Return Management'],
+    ['비품·대여 종합 현황', 'Equipment & Loan Overview'],
+    ['실시간 대여 현황', 'Live Loans'],
+    ['전체 대여·반납 이력', 'All Loan & Return History'],
+    ['전체 비품 대여 및 반납 히스토리', 'All Equipment Loan & Return History'],
+    ['비품 대여·반납 이력 관리', 'Equipment Loan & Return History'],
+    ['비품 대여 신청', 'Request Loan'],
+    ['새 비품 대여', 'New Loan'],
+    ['비품 통계', 'Equipment Stats'],
+    ['비품 대여 통계', 'Equipment Loan Stats'],
+    ['장비 운영 통계', 'Equipment Analytics'],
+    ['인기 비품 TOP 5 & 누적 대여 빈도', 'Top 5 Equipment & Loan Frequency'],
+    ['대여 기록이 충분하지 않습니다.', 'Not enough loan records yet.'],
+    ['반납 임박 비품', 'Due Soon'],
+    ['대여 현황 바로가기', 'Go to Active Loans'],
+    ['최근 활동 기록', 'Recent Activity'],
+    ['이력 전체보기', 'View All History'],
+    ['이력 CSV 다운로드', 'Download History CSV'],
+    ['사용일지 엑셀 다운로드', 'Download Logbook Excel'],
+    ['관리자 전용', 'Admin Only'],
+    ['연구원', 'Researcher'],
+    ['관리자', 'Admin'],
+    ['카드', 'Cards'],
+    ['컴팩트', 'Compact'],
+    ['월별:', 'Month:'],
+    ['대여 QR', 'Loan QR'],
+    ['안전관리', 'Safety'],
+    ['제품번호', 'Catalog No.'],
+    ['산시약장', 'Acid Cabinet'],
+    ['유기용매장', 'Solvent Cabinet'],
+    ['글러브박스', 'Glovebox'],
+    ['특별시약장', 'Special Substance Cabinet'],
+    ['N센터 86291호', 'N-Center Rm 86291'],
+    ['-- 선택 --', '-- Select --'],
+    ['대기', 'Standby'],
+    ['전체 일지', 'All Logs'],
+    ['로그북 작성분', 'Written Logbooks'],
+    ['예약기반 미작성', 'Unlogged Bookings'],
+    ['미작성(예약)', 'Unlogged (Booking)'],
+    ['로그북 작성', 'Logbook Written'],
+    ['예약반영', 'From Booking'],
+    ['클릭하여 펼치기', 'Click to Expand'],
+    ['총 누적 가동시간', 'Total Runtime'],
+    ['누적 측정 세션', 'Total Sessions'],
+    ['현재 장비 상태', 'Equipment Status'],
+    ['이상/점검 필요', 'Issues / Check'],
+    ['대기 중 (Idle)', 'Idle'],
+    ['건 대여 중', ' borrowed'],
+    ['총 ', 'Total '],
+    ['건', ' items'],
+    ['개', ' pcs']
   ];
   KO_EN_PHRASES.sort(function(a, b){ return b[0].length - a[0].length; });
+
+  const AUTO_EN_CACHE_KEY = 'labstock_en_auto_cache_v1';
+  const autoEnCache = (function(){
+    try {
+      const c = JSON.parse(localStorage.getItem(AUTO_EN_CACHE_KEY) || '{}');
+      return (c && typeof c === 'object') ? c : {};
+    } catch(_) { return {}; }
+  })();
+  const pendingAutoTexts = new Set();
+  let autoTransTimer = null;
+
+  function applyDictAndCache(str){
+    let txt = str;
+    for(let i = 0; i < KO_EN_PHRASES.length; i++){
+      const ko = KO_EN_PHRASES[i][0], en = KO_EN_PHRASES[i][1];
+      if(txt.indexOf(ko) >= 0) txt = txt.split(ko).join(en);
+    }
+    const trimmed = txt.trim();
+    if(trimmed && autoEnCache[trimmed]){
+      txt = txt.replace(trimmed, autoEnCache[trimmed]);
+    }
+    return txt;
+  }
+
+  function flushAutoTranslateQueue(){
+    if((localStorage.getItem('labstock_lang') || 'ko') !== 'en') return;
+    const batch = Array.from(pendingAutoTexts).filter(function(t){ return !autoEnCache[t] && /[가-힣]/.test(t); }).slice(0, 40);
+    if(!batch.length) return;
+    batch.forEach(function(t){ pendingAutoTexts.delete(t); });
+    fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texts: batch })
+    }).then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+      if(!d || !d.translations) return;
+      let updated = false;
+      Object.keys(d.translations).forEach(function(ko){
+        if(d.translations[ko] && d.translations[ko] !== ko){
+          autoEnCache[ko] = d.translations[ko];
+          updated = true;
+        }
+      });
+      if(updated){
+        try { localStorage.setItem(AUTO_EN_CACHE_KEY, JSON.stringify(autoEnCache)); } catch(_) {}
+        if((localStorage.getItem('labstock_lang') || 'ko') === 'en'){
+          translateDomTexts(true);
+        }
+      }
+    }).catch(function(){});
+  }
 
   function translateDomTexts(isEn){
     try {
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
       let node;
-      document.querySelectorAll('input[placeholder]').forEach(function(inp){
+      document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(function(inp){
         if(!inp._origPh && /[가-힣]/.test(inp.placeholder)) inp._origPh = inp.placeholder;
-        if(inp._origPh) inp.placeholder = isEn ? 'Search...' : inp._origPh;
+        if(inp._origPh){
+          if(!isEn){
+            inp.placeholder = inp._origPh;
+          } else {
+            const tr = applyDictAndCache(inp._origPh);
+            inp.placeholder = tr;
+            const trTrim = tr.trim();
+            if(/[가-힣]/.test(trTrim) && !autoEnCache[trTrim]) pendingAutoTexts.add(trTrim);
+          }
+        }
       });
       while((node = walker.nextNode())){
         const parent = node.parentElement;
@@ -23258,13 +23394,17 @@ async function renderAdminMembersPanel(){
         if(!isEn){
           node.nodeValue = node._origKoText;
         } else {
-          let txt = node._origKoText;
-          for(let i = 0; i < KO_EN_PHRASES.length; i++){
-            const ko = KO_EN_PHRASES[i][0], en = KO_EN_PHRASES[i][1];
-            if(txt.indexOf(ko) >= 0) txt = txt.split(ko).join(en);
-          }
+          const txt = applyDictAndCache(node._origKoText);
           node.nodeValue = txt;
+          const trTrim = txt.trim();
+          if(/[가-힣]/.test(trTrim) && trTrim.length <= 120 && !autoEnCache[trTrim]){
+            pendingAutoTexts.add(trTrim);
+          }
         }
+      }
+      if(isEn && pendingAutoTexts.size > 0){
+        clearTimeout(autoTransTimer);
+        autoTransTimer = setTimeout(flushAutoTranslateQueue, 120);
       }
     } catch(_) {}
   }
