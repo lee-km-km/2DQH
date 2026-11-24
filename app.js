@@ -23497,6 +23497,7 @@ async function renderAdminMembersPanel(){
     setTxt('#sidebarNavChemicals span:last-child', '시약', 'Chemicals');
     setTxt('#sidebarNavCatalog span:last-child', '연구장비 포털', 'Equipment Portal');
     setTxt('#sidebarNavHelp span:last-child', '도움말', 'Help & Guide');
+    setTxt('#sidebarNavSettings span:last-child', '설정', 'Settings');
     setTxt('#loginBtn', '로그인 / 회원가입', 'Login / Sign Up');
     setTxt('#logoutBtn', '로그아웃', 'Logout');
     setTxt('#btnTopSwitchLogbook .mod-label', '연구장비', 'Reservation');
