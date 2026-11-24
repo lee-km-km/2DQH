@@ -22491,11 +22491,20 @@ function renderInvSubLoans(){
         if(d && Array.isArray(d.items)){
           if(d.items.length === 0 && ( (d.errors && d.errors.length) || (Array.isArray(sessMonthCache[mKey]) && sessMonthCache[mKey].length > 0) )) return;
           const nowTs = Date.now();
-          sessMonthCache[mKey] = d.items;
+          const prevList = Array.isArray(sessMonthCache[mKey]) ? sessMonthCache[mKey] : [];
+          const asisKept = prevList.filter(function(it){ return it && it.fromAsis; });
+          const seenR = new Set(asisKept.map(function(it){ return String(it.reservNo || ''); }));
+          const mergedItems = asisKept.concat(d.items.filter(function(it){
+            const rNo = String(it.reservNo || '');
+            if(rNo && seenR.has(rNo)) return false;
+            if(rNo) seenR.add(rNo);
+            return true;
+          }));
+          sessMonthCache[mKey] = mergedItems;
           sessMonthMeta[mKey] = nowTs;
           sessRefreshedThisSession[mKey] = true;
           saveSessMonthCache();
-          if(d.items.length > 0) saveSessMonthToSupabase(mKey, d.items, nowTs).catch(function(){});
+          if(mergedItems.length > 0) saveSessMonthToSupabase(mKey, mergedItems, nowTs).catch(function(){});
           if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
           if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
           if(typeof renderXrdLogs === 'function') renderXrdLogs();
@@ -23494,13 +23503,18 @@ async function renderAdminMembersPanel(){
     if(bEn) bEn.onclick = function(){ applyLang('en'); toast('Switched to English.'); };
 
     const hBtn = $('btnMobSetHelp');
-    if(hBtn && modal) hBtn.onclick = function(){
+    if(hBtn && modal) hBtn.onclick = function(e){
+      if(e){ e.preventDefault(); e.stopPropagation(); }
       modal.classList.remove('open');
       modal.style.display = 'none';
       if(typeof showView === 'function') showView('help', { pushState: true });
-      const hv = $('view-help');
-      if(hv){ hv.classList.remove('hidden'); hv.classList.add('active'); }
+      document.querySelectorAll('.view').forEach(function(v){
+        const isHelp = (v.id === 'view-help');
+        v.classList.toggle('active', isHelp);
+        v.classList.toggle('hidden', !isHelp);
+      });
       if(typeof switchHelpTab === 'function') switchHelpTab(typeof isAdmin === 'function' && isAdmin() ? 'admin' : 'user');
+      if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const mBtn = $('btnMobSetMail');
