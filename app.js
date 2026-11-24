@@ -5725,6 +5725,8 @@ function renderEquipmentUtilizationPanel(allSessions){
         '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 활용/비활용 통계 ' + (isAll ? '(클릭하여 펼치기 · ' + rows.length + '대)' : '') + '</h3>' +
         '<span style="font-size:12px;color:var(--ink-light);">기준: 최근 4주 160h · 연간(1/1~) 2,000h (소속: 연구단 / 교내 / 외부)</span></div>' +
         '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+          '<label for="inputSessAsisExcel" class="btn btn-sm" style="background:#d97706;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📤 SESS 예약 엑셀(.xlsx/.csv)</label>' +
+          '<input type="file" id="inputSessAsisExcel" accept=".xlsx,.xls,.csv" style="display:none;">' +
           '<label for="inputEquipCostCsv" class="btn btn-sm" style="background:#2563eb;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📂 CSV 금액 불러오기</label>' +
           '<input type="file" id="inputEquipCostCsv" accept=".csv" style="display:none;">' +
           '<button type="button" id="btnExportUtilExcel" class="btn btn-sm" style="background:#059669;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;">📊 가동률 엑셀(.xlsx)</button>' +
@@ -5748,6 +5750,8 @@ function renderEquipmentUtilizationPanel(allSessions){
       '</div>' +
     '</details>';
 
+  const sessIn = $('inputSessAsisExcel');
+  if(sessIn) sessIn.onchange = function(ev){ if(ev.target.files && ev.target.files[0] && typeof window.handleSessAsisExcelFile === 'function') window.handleSessAsisExcelFile(ev.target.files[0]); ev.target.value = ''; };
   const csvIn = $('inputEquipCostCsv');
   if(csvIn) csvIn.onchange = function(ev){ if(ev.target.files && ev.target.files[0]) handleEquipCostCsvFile(ev.target.files[0]); ev.target.value = ''; };
   const expBtn = $('btnExportUtilExcel');
@@ -22102,6 +22106,140 @@ function renderInvSubLoans(){
     }
   };
 
+  window.importSessAsisRows = async function(rows){
+    if(!Array.isArray(rows) || rows.length < 2){
+      toast('⚠️ 유효한 SESS 예약 데이터가 없습니다.');
+      return;
+    }
+    const hdr = rows[0].map(function(h){ return String(h || '').trim(); });
+    const idx = function(name){ return hdr.indexOf(name); };
+    const iNo = idx('예약번호');
+    const iState = idx('진행상태');
+    const iEqShort = idx('기기명(약자)');
+    const iApplicant = idx('신청자');
+    const iProf = idx('지도교수');
+    const iStartDate = idx('예약확정시작일');
+    const iStartTm = iStartDate >= 0 ? iStartDate + 1 : -1;
+    const iEndDate = idx('예약확정종료일');
+    const iEndTm = iEndDate >= 0 ? iEndDate + 1 : -1;
+    const iScope = idx('구분');
+    const iCompany = idx('회사명');
+    const iRealUser = idx('실이용자명');
+    const iEqName = idx('기기명');
+
+    if(iNo < 0 || iStartDate < 0){
+      toast('⚠️ SESS 관리자 예약 엑셀/CSV 형식(예약번호, 예약확정시작일 헤더)이 아닙니다.');
+      return;
+    }
+
+    let canceled = 0, zeroMin = 0, imported = 0;
+    const byMonth = {};
+    const seenNo = new Set();
+
+    const toSlots = function(sTm, eTm){
+      const sMin = Math.floor(timeToMin(sTm) / 30) * 30;
+      const eMin = Math.ceil(timeToMin(eTm) / 30) * 30;
+      const out = [];
+      for(let m = sMin; m < eMin; m += 30) out.push(minToTime(m));
+      return out;
+    };
+
+    for(let r = 1; r < rows.length; r++){
+      const cols = rows[r];
+      if(!cols || cols.length < 10) continue;
+      const rNo = String(cols[iNo] || '').trim();
+      if(!rNo || seenNo.has(rNo)) continue;
+      seenNo.add(rNo);
+      const state = iState >= 0 ? String(cols[iState] || '').trim() : '';
+      if(state === '예약취소'){ canceled++; continue; }
+
+      const sDate = String(cols[iStartDate] || '').trim().replace(/\//g, '-').slice(0, 10);
+      const eDate = iEndDate >= 0 ? String(cols[iEndDate] || '').trim().replace(/\//g, '-').slice(0, 10) : sDate;
+      const sTm = String(cols[iStartTm] || '').trim().slice(0, 5);
+      let eTm = iEndTm >= 0 ? String(cols[iEndTm] || '').trim().slice(0, 5) : '';
+      if(!sDate || !sTm || !eTm) continue;
+      if(eDate > sDate && eTm === '00:00') eTm = '24:00';
+      if(sDate === eDate && sTm === eTm){ zeroMin++; continue; }
+
+      const realU = iRealUser >= 0 ? String(cols[iRealUser] || '').trim() : '';
+      const appU = iApplicant >= 0 ? String(cols[iApplicant] || '').trim() : '';
+      const user = realU || appU || 'SESS 예약자';
+      const prof = iProf >= 0 ? String(cols[iProf] || '').trim() : '';
+      const scope = iScope >= 0 ? String(cols[iScope] || '').trim() : '';
+      const comp = iCompany >= 0 ? String(cols[iCompany] || '').trim() : '';
+      const eqShort = iEqShort >= 0 ? String(cols[iEqShort] || 'HRXRD').trim() : 'HRXRD';
+      const eqKor = iEqName >= 0 ? String(cols[iEqName] || '고분해능 X-선 회절분석시스템').trim() : '고분해능 X-선 회절분석시스템';
+
+      const mKey = sDate.slice(0, 7);
+      if(!byMonth[mKey]) byMonth[mKey] = [];
+      byMonth[mKey].push({
+        reservNo: rNo,
+        equipEngNm: eqShort.toUpperCase().includes('XRD') ? 'X-Ray Diffractometer System' : eqShort,
+        equipShortNm: eqShort,
+        equipKorNm: eqKor,
+        user: user,
+        professor: prof,
+        affiliation: [comp, scope].filter(Boolean).join(' · '),
+        date: sDate,
+        startTm: sTm,
+        endTm: eTm,
+        slots: toSlots(sTm, eTm),
+        space: '실험실',
+        fromAsis: true
+      });
+      imported++;
+    }
+
+    const nowTs = Date.now();
+    const mKeys = Object.keys(byMonth).sort();
+    for(let i = 0; i < mKeys.length; i++){
+      const mKey = mKeys[i];
+      const newItems = byMonth[mKey];
+      const eqSet = new Set(newItems.map(function(it){ return String(it.equipShortNm || '').toUpperCase(); }));
+      const existing = Array.isArray(sessMonthCache[mKey]) ? sessMonthCache[mKey] : [];
+      const kept = existing.filter(function(it){
+        return !eqSet.has(String(it.equipShortNm || '').toUpperCase());
+      });
+      const merged = kept.concat(newItems);
+      sessMonthCache[mKey] = merged;
+      sessMonthMeta[mKey] = nowTs;
+      sessRefreshedThisSession[mKey] = true;
+      await saveSessMonthToSupabase(mKey, merged, nowTs);
+    }
+    saveSessMonthCache();
+
+    const activeEq = (typeof currentSelectedEquipment !== 'undefined' && currentSelectedEquipment) ? currentSelectedEquipment : 'EQ-XRD-01';
+    if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(activeEq);
+    if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(activeEq);
+    if(typeof renderXrdLogs === 'function') renderXrdLogs();
+    if(typeof renderEquipmentAnalyticsDashboard === 'function') renderEquipmentAnalyticsDashboard();
+    if(typeof window.syncUnloggedBookingsToSupabase === 'function'){
+      window.syncUnloggedBookingsToSupabase().catch(function(){});
+    }
+    toast('✓ SESS 엑셀 반영 완료: ' + imported + '건 (취소 ' + canceled + '건 · 0분 ' + zeroMin + '건 제외)');
+  };
+
+  window.handleSessAsisExcelFile = function(file){
+    if(!file) return;
+    if(typeof XLSX === 'undefined'){
+      toast('엑셀 파서(SheetJS)를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
+        window.importSessAsisRows(rows);
+      } catch(err){
+        toast('⚠️ 파일 파싱 실패: ' + (err && err.message ? err.message : '형식을 확인해주세요.'));
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
   window.ensureSessBookingsForAnalytics = async function(year, month, period){
     const months = [month];
     if(period === 'year'){
@@ -22256,8 +22394,8 @@ function renderInvSubLoans(){
         end_time: it.endTm || '',
         duration_min: dur,
         user_name: it.user || '',
-        affiliation: '',
-        professor: '',
+        affiliation: it.affiliation || '',
+        professor: it.professor || '',
         sample_name: '',
         sample_count: null,
         scan_type: '',
