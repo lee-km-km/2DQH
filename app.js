@@ -3485,7 +3485,13 @@ function renderXrdAdminKpis(){
     ? window.getUnloggedBookingLogs('EQ-XRD-01', xrdLogs)
     : [];
   const allXrdForKpi = xrdLogs.concat(unloggedXrd);
-  const totalMin = allXrdForKpi.reduce(function(acc, l){ return acc + (l.duration_min || 0); }, 0);
+  const totalMin = allXrdForKpi.reduce(function(acc, l){
+    let m = Number(l.duration_min) || 0;
+    if(!m && l.start_time && l.end_time && typeof minutesBetween === 'function'){
+      m = minutesBetween(String(l.start_time).slice(0, 5), String(l.end_time).slice(0, 5)) || 0;
+    }
+    return acc + m;
+  }, 0);
   const totalHours = (totalMin / 60).toFixed(1);
   const activeLogs = xrdLogs.filter(function(l){ return l.status === 'active'; });
   const issueLogs = xrdLogs.filter(function(l){
@@ -21995,29 +22001,33 @@ function renderInvSubLoans(){
   };
 
   window.ensureSessBookingsForAnalytics = async function(year, month, period){
-    const months = [];
+    const months = [month];
     if(period === 'year'){
       const nowY = new Date().getFullYear();
       const maxM = (year === nowY) ? (new Date().getMonth() + 1) : 12;
-      for(let m = 1; m <= maxM; m++) months.push(m);
-    } else {
-      months.push(month);
+      for(let m = maxM; m >= 1; m--){
+        if(m !== month) months.push(m);
+      }
     }
-    let fetchedAny = false;
-    for(let i = 0; i < months.length; i++){
-      const m = months[i];
+    const missing = months.filter(function(m){
       const mKey = year + '-' + pad(m);
-      if(!sessMonthCache[mKey]){
-        fetchedAny = true;
-        await fetchSessBookings(year, m, 'EQ-XRD-01');
-      }
+      return !Array.isArray(sessMonthCache[mKey]);
+    });
+    if(!missing.length) return;
+
+    // 현재 월 우선 조회 후 나머지 월은 병렬 조회
+    await fetchSessBookings(year, missing[0], 'EQ-XRD-01');
+    if(missing.length > 1){
+      await Promise.all(missing.slice(1).map(function(m){
+        return fetchSessBookings(year, m, 'EQ-XRD-01');
+      }));
     }
-    if(fetchedAny){
-      await window.syncUnloggedBookingsToSupabase();
-      if(typeof renderXrdLogs === 'function') renderXrdLogs();
-      if(typeof renderEquipmentAnalyticsDashboard === 'function'){
-        renderEquipmentAnalyticsDashboard();
-      }
+    if(typeof renderXrdLogs === 'function') renderXrdLogs();
+    if(typeof renderEquipmentAnalyticsDashboard === 'function' && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
+      renderEquipmentAnalyticsDashboard();
+    }
+    if(typeof window.syncUnloggedBookingsToSupabase === 'function'){
+      window.syncUnloggedBookingsToSupabase().catch(function(){});
     }
   };
 
@@ -22146,27 +22156,34 @@ function renderInvSubLoans(){
     });
   };
 
+  const sessInFlight = {};
   async function fetchSessBookings(year, month, eqId){
     const mKey = year + '-' + pad(month);
-    if(sessMonthCache[mKey]) return;
-    sessMonthCache[mKey] = [];
-    try {
-      const r = await fetch('/api/sess-bookings?month=' + encodeURIComponent(mKey));
-      if(!r.ok) return;
-      const d = await r.json();
-      if(d && Array.isArray(d.items)){
-        sessMonthCache[mKey] = d.items;
-        if(typeof window.syncUnloggedBookingsToSupabase === 'function'){
-          await window.syncUnloggedBookingsToSupabase(eqId);
+    if(Array.isArray(sessMonthCache[mKey])) return;
+    if(sessInFlight[mKey]) return sessInFlight[mKey];
+    sessInFlight[mKey] = (async function(){
+      try {
+        const r = await fetch('/api/sess-bookings?month=' + encodeURIComponent(mKey));
+        if(!r.ok) return;
+        const d = await r.json();
+        if(d && Array.isArray(d.items)){
+          sessMonthCache[mKey] = d.items;
+          if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
+          if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
+          if(typeof renderXrdLogs === 'function') renderXrdLogs();
+          if(typeof renderEquipmentAnalyticsDashboard === 'function' && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
+            renderEquipmentAnalyticsDashboard();
+          }
+          if(typeof window.syncUnloggedBookingsToSupabase === 'function'){
+            window.syncUnloggedBookingsToSupabase(eqId).catch(function(){});
+          }
         }
-        if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
-        if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
-        if(eqId === 'EQ-XRD-01' && typeof renderXrdLogs === 'function') renderXrdLogs();
-        if(typeof renderEquipmentAnalyticsDashboard === 'function' && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
-          renderEquipmentAnalyticsDashboard();
-        }
+      } catch(_) {
+      } finally {
+        delete sessInFlight[mKey];
       }
-    } catch(_) {}
+    })();
+    return sessInFlight[mKey];
   }
 
   async function syncBookingsFromSupabase(eqId){
