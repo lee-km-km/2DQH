@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261124_1656';
+const APP_DATA_VERSION = '20261124_1708';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -22494,7 +22494,7 @@ function renderInvSubLoans(){
     // 과거 월은 캐시 있으면 생략, 이번 달/미래 월은 5분 이내 캐시 또는 세션 내 갱신 완료 시 생략
     if(hasCached && (mKey < curMonthKey || isFresh || sessRefreshedThisSession[mKey])) return;
     if(sessInFlight[mKey]) return sessInFlight[mKey];
-    sessInFlight[mKey] = (async function(){
+    sessInFlight[mKey] = (async function(){ sessRefreshedThisSession[mKey] = true;
       try {
         const r = await fetch('/api/sess-bookings?month=' + encodeURIComponent(mKey));
         if(!r.ok) return;
@@ -22503,7 +22503,8 @@ function renderInvSubLoans(){
           if(d.items.length === 0 && ( (d.errors && d.errors.length) || (Array.isArray(sessMonthCache[mKey]) && sessMonthCache[mKey].length > 0) )) return;
           const nowTs = Date.now();
           const prevList = Array.isArray(sessMonthCache[mKey]) ? sessMonthCache[mKey] : [];
-          const asisKept = prevList.filter(function(it){ return it && it.fromAsis; });
+          const todayStr = today();
+          const asisKept = prevList.filter(function(it){ return it && (it.fromAsis || (it.date && it.date < todayStr)); });
           const seenR = new Set(asisKept.map(function(it){ return String(it.reservNo || ''); }));
           const mergedItems = asisKept.concat(d.items.filter(function(it){
             const rNo = String(it.reservNo || '');
@@ -22735,7 +22736,7 @@ function renderInvSubLoans(){
           '</div>' +
         '</div>' +
       '</div>' +
-      '<div class="gb-cal-weekdays"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>' +
+      '<div class="gb-cal-weekdays">' + (isEn ? '<span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>' : '<span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>') + '</div>' +
       '<div class="gb-cal-grid">' + calCells + '</div>' +
       '<div class="gb-day-section">' +
         (gbViewMode === 'detail'
@@ -23254,7 +23255,7 @@ async function renderAdminMembersPanel(){
     ['세부 위치', 'Sub-location'],
     ['소모품 등록', 'Add Consumable'],
     ['재고 수량', 'Stock Qty'],
-    ['단위', 'Unit'],
+    ['단위:', 'Unit:'],
     ['사용 처리', 'Use'],
     ['입고 처리', 'Restock'],
     // --- 필터 · 검색 · 대시보드 · 모달 · 상태 UI ---
@@ -23383,7 +23384,7 @@ async function renderAdminMembersPanel(){
     ['연구실 비치 시약', 'Lab Chemicals'],
     ['시약 취급 이력 및 잔여량 추적', 'Chemical Usage History & Remaining Tracking'],
     ['좌우로 스크롤하여 상세 정보(MSDS, 수량, 잔량 등)를 확인하세요', 'Scroll horizontally for MSDS, Qty & Remaining details'],
-    ['표', 'Table']
+    ['원자단위', 'Atomic-scale']
   ];
   KO_EN_PHRASES.sort(function(a, b){ return b[0].length - a[0].length; });
 
@@ -23399,6 +23400,8 @@ async function renderAdminMembersPanel(){
 
   function applyDictAndCache(str){
     const rawTrim = String(str || '').trim();
+    if(rawTrim === '표') return str.replace('표', 'Table');
+    if(rawTrim === '단위') return str.replace('단위', 'Unit');
     if(rawTrim && autoEnCache[rawTrim]){
       return str.replace(rawTrim, autoEnCache[rawTrim]);
     }

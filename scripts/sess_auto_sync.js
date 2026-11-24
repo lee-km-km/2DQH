@@ -72,10 +72,10 @@ async function run() {
     } catch (_) {}
   }
 
-  // Keep all ASIS-verified entries intact; merge new API + day.do entries by reservNo
-  const asisKept = existing.filter(it => it && it.fromAsis);
-  const seen = new Set(asisKept.map(it => String(it.reservNo || '')));
-  const merged = asisKept.slice();
+  // Keep all ASIS-verified entries, all past-date entries (< todayStr), and today's existing entries if day.do returned empty
+  const kept = existing.filter(it => it && (it.fromAsis || (it.date && it.date < todayStr) || (dayItems.length === 0 && it.date === todayStr)));
+  const seen = new Set(kept.map(it => String(it.reservNo || '')));
+  const merged = kept.slice();
 
   const apiItems = (monthRes && Array.isArray(monthRes.items)) ? monthRes.items : [];
   for (const it of apiItems.concat(dayItems)) {
