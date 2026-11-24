@@ -23319,9 +23319,59 @@ async function renderAdminMembersPanel(){
     ['이상/점검 필요', 'Issues / Check'],
     ['대기 중 (Idle)', 'Idle'],
     ['건 대여 중', ' borrowed'],
-    ['총 ', 'Total '],
-    ['건', ' items'],
-    ['개', ' pcs']
+    ['구분:', 'Category:'],
+    ['특성조건:', 'Properties:'],
+    ['위험물', 'Hazardous'],
+    ['비위험물', 'Non-Hazardous'],
+    ['최신순', 'Newest First'],
+    ['제품명순', 'By Name'],
+    ['제품 통합 EXCEL', 'All Chemicals EXCEL'],
+    ['특별관리물질고지', 'Special Substance Notice'],
+    ['특별관리물질취급일지', 'Special Substance Log'],
+    ['유해', 'Hazard'],
+    ['위험성', 'Risk'],
+    ['일자별 취급 이력', 'Daily Usage History'],
+    ['월별 취급 통계', 'Monthly Usage Stats'],
+    ['연간 누적 통계', 'Annual Cumulative Stats'],
+    ['◀ 이전달', '◀ Prev Month'],
+    ['다음달 ▶', 'Next Month ▶'],
+    ['오늘', 'Today'],
+    ['초기 입고량:', 'Initial Qty:'],
+    ['현재 잔여량:', 'Remaining Qty:'],
+    ['이 시약 취급일지 작성', 'Write Log for This Chemical'],
+    ['취급 물질 *', 'Substance *'],
+    ['취급자 성명 *', 'Handler Name *'],
+    ['취급 일시 *', 'Date & Time *'],
+    ['금회 사용량 *', 'Amount Used *'],
+    ['작업 내용 및 실험 목적 *', 'Purpose & Procedure *'],
+    ['필수 안전 수칙 점검', 'Mandatory Safety Checklist'],
+    ['환기설비', 'Ventilation'],
+    ['흄후드 배기 정상 가동 및 풍속 확인', 'Fume hood exhaust & airflow verified'],
+    ['방독마스크·보안경·내화학장갑 착용', 'Respirator, goggles & chemical gloves worn'],
+    ['시약 용기 밀봉 및 누출 이상 없음', 'Container sealed with no leaks'],
+    ['취급일지 등록', 'Submit Usage Log'],
+    ['관계자 외 출입금지', 'Authorized Personnel Only'],
+    ['발암성', 'Carcinogenic'],
+    ['생식세포 변이원성', 'Germ Cell Mutagenicity'],
+    ['생식독성', 'Reproductive Toxicity'],
+    ['물질안전보건자료 (MSDS) 공식 요약 정보', 'Material Safety Data Sheet (MSDS) Summary'],
+    ['제조사 공식 MSDS 16대 필수 항목 요약', 'Official Manufacturer 16-Section MSDS Summary'],
+    ['MSDS 요약 인쇄', 'Print MSDS Summary'],
+    ['법정 서식 인쇄', 'Print Official Form'],
+    ['A4 고지문 인쇄', 'Print A4 Notice'],
+    ['이강민 (책임)', 'Kangmin Lee (Lead)'],
+    ['신현석', 'Hyunseok Shin'],
+    ['취급일자', 'Date'],
+    ['물질명', 'Substance'],
+    ['사용량', 'Used'],
+    ['재고량', 'Remaining'],
+    ['작업내용', 'Task'],
+    ['작업자', 'Handler'],
+    ['착용한 보호구', 'PPE Worn'],
+    ['연구실 비치 시약', 'Lab Chemicals'],
+    ['시약 취급 이력 및 잔여량 추적', 'Chemical Usage History & Remaining Tracking'],
+    ['좌우로 스크롤하여 상세 정보(MSDS, 수량, 잔량 등)를 확인하세요', 'Scroll horizontally for MSDS, Qty & Remaining details'],
+    ['표', 'Table']
   ];
   KO_EN_PHRASES.sort(function(a, b){ return b[0].length - a[0].length; });
 
@@ -23336,14 +23386,21 @@ async function renderAdminMembersPanel(){
   let autoTransTimer = null;
 
   function applyDictAndCache(str){
+    const rawTrim = String(str || '').trim();
+    if(rawTrim && autoEnCache[rawTrim]){
+      return str.replace(rawTrim, autoEnCache[rawTrim]);
+    }
     let txt = str;
+    txt = txt.replace(/총s*(d+)s*건/g, 'Total $1 items');
+    txt = txt.replace(/(d+)s*건/g, '$1 items');
+    txt = txt.replace(/(d+)s*개/g, '$1 pcs');
     for(let i = 0; i < KO_EN_PHRASES.length; i++){
       const ko = KO_EN_PHRASES[i][0], en = KO_EN_PHRASES[i][1];
       if(txt.indexOf(ko) >= 0) txt = txt.split(ko).join(en);
     }
-    const trimmed = txt.trim();
-    if(trimmed && autoEnCache[trimmed]){
-      txt = txt.replace(trimmed, autoEnCache[trimmed]);
+    const postTrim = txt.trim();
+    if(postTrim && autoEnCache[postTrim]){
+      txt = txt.replace(postTrim, autoEnCache[postTrim]);
     }
     return txt;
   }
@@ -23372,6 +23429,9 @@ async function renderAdminMembersPanel(){
           translateDomTexts(true);
         }
       }
+      if(pendingAutoTexts.size > 0){
+        setTimeout(flushAutoTranslateQueue, 80);
+      }
     }).catch(function(){});
   }
 
@@ -23387,8 +23447,8 @@ async function renderAdminMembersPanel(){
           } else {
             const tr = applyDictAndCache(inp._origPh);
             inp.placeholder = tr;
-            const trTrim = tr.trim();
-            if(/[가-힣]/.test(trTrim) && !autoEnCache[trTrim]) pendingAutoTexts.add(trTrim);
+            const origTrim = inp._origPh.trim();
+            if(/[가-힣]/.test(tr) && !autoEnCache[origTrim]) pendingAutoTexts.add(origTrim);
           }
         }
       });
@@ -23405,15 +23465,15 @@ async function renderAdminMembersPanel(){
         } else {
           const txt = applyDictAndCache(node._origKoText);
           node.nodeValue = txt;
-          const trTrim = txt.trim();
-          if(/[가-힣]/.test(trTrim) && trTrim.length <= 120 && !autoEnCache[trTrim]){
-            pendingAutoTexts.add(trTrim);
+          const origTrim = node._origKoText.trim();
+          if(/[가-힣]/.test(txt) && origTrim.length <= 160 && !autoEnCache[origTrim]){
+            pendingAutoTexts.add(origTrim);
           }
         }
       }
       if(isEn && pendingAutoTexts.size > 0){
         clearTimeout(autoTransTimer);
-        autoTransTimer = setTimeout(flushAutoTranslateQueue, 120);
+        autoTransTimer = setTimeout(flushAutoTranslateQueue, 100);
       }
     } catch(_) {}
   }
