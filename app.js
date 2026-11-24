@@ -22256,12 +22256,13 @@ function renderInvSubLoans(){
         if(!r.ok) return;
         const d = await r.json();
         if(d && Array.isArray(d.items)){
+          if(d.items.length === 0 && ( (d.errors && d.errors.length) || (Array.isArray(sessMonthCache[mKey]) && sessMonthCache[mKey].length > 0) )) return;
           const nowTs = Date.now();
           sessMonthCache[mKey] = d.items;
           sessMonthMeta[mKey] = nowTs;
           sessRefreshedThisSession[mKey] = true;
           saveSessMonthCache();
-          saveSessMonthToSupabase(mKey, d.items, nowTs).catch(function(){});
+          if(d.items.length > 0) saveSessMonthToSupabase(mKey, d.items, nowTs).catch(function(){});
           if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
           if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
           if(typeof renderXrdLogs === 'function') renderXrdLogs();

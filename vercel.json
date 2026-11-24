@@ -1,6 +1,7 @@
 {
   "version": 2,
   "name": "labstock-equipment",
+  "regions": ["icn1"],
   "cleanUrls": true,
   "trailingSlash": false,
   "crons": [
