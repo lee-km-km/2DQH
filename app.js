@@ -21889,7 +21889,17 @@ function renderInvSubLoans(){
   let gbViewMode = 'detail'; // 'all' | 'detail'
   let gbFilter = 'all';      // 'all' | 'mine' | 'avail'
 
-  const sessMonthCache = {};
+  const SESS_CACHE_KEY = 'labstock_sess_cache_v1';
+  const sessMonthCache = (function(){
+    try {
+      const saved = JSON.parse(localStorage.getItem(SESS_CACHE_KEY) || '{}');
+      return (saved && typeof saved === 'object') ? saved : {};
+    } catch(_) { return {}; }
+  })();
+  function saveSessMonthCache(){
+    try { localStorage.setItem(SESS_CACHE_KEY, JSON.stringify(sessMonthCache)); } catch(_) {}
+  }
+  const sessRefreshedThisSession = {};
 
   function matchSessEquipment(eqId, sessItem){
     const eqObj = (typeof researchEquipments !== 'undefined' && Array.isArray(researchEquipments))
@@ -22011,18 +22021,19 @@ function renderInvSubLoans(){
         if(m !== month) months.push(m);
       }
     }
-    const missing = months.filter(function(m){
+    const nowD2 = new Date();
+    const curMKey = nowD2.getFullYear() + '-' + pad(nowD2.getMonth() + 1);
+    const toFetch = months.filter(function(m){
       const mKey = year + '-' + pad(m);
-      return !Array.isArray(sessMonthCache[mKey]);
+      if(!Array.isArray(sessMonthCache[mKey])) return true;
+      return (mKey >= curMKey && !sessRefreshedThisSession[mKey]);
     });
-    if(!missing.length) return;
+    if(!toFetch.length) return;
 
-    // 현재 월 우선 조회 후 나머지 월은 병렬 조회
-    await fetchSessBookings(year, missing[0], 'EQ-XRD-01');
-    if(missing.length > 1){
-      await Promise.all(missing.slice(1).map(function(m){
-        return fetchSessBookings(year, m, 'EQ-XRD-01');
-      }));
+    // 현재 월 우선 조회 후 미캐시 과거 월은 순차(부하 방지)로 보충
+    await fetchSessBookings(year, toFetch[0], 'EQ-XRD-01');
+    for(let i = 1; i < toFetch.length; i++){
+      await fetchSessBookings(year, toFetch[i], 'EQ-XRD-01');
     }
     if(typeof renderXrdLogs === 'function') renderXrdLogs();
     if(typeof renderEquipmentAnalyticsDashboard === 'function' && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
@@ -22161,7 +22172,11 @@ function renderInvSubLoans(){
   const sessInFlight = {};
   async function fetchSessBookings(year, month, eqId){
     const mKey = year + '-' + pad(month);
-    if(Array.isArray(sessMonthCache[mKey])) return;
+    const nowD = new Date();
+    const curMonthKey = nowD.getFullYear() + '-' + pad(nowD.getMonth() + 1);
+    const hasCached = Array.isArray(sessMonthCache[mKey]);
+    // 과거 월은 이미 캐시되어 있으면 재조회 생략 (로딩 지연 방지), 이번 달/미래 월은 세션당 1회만 백그라운드 갱신
+    if(hasCached && (mKey < curMonthKey || sessRefreshedThisSession[mKey])) return;
     if(sessInFlight[mKey]) return sessInFlight[mKey];
     sessInFlight[mKey] = (async function(){
       try {
@@ -22170,6 +22185,8 @@ function renderInvSubLoans(){
         const d = await r.json();
         if(d && Array.isArray(d.items)){
           sessMonthCache[mKey] = d.items;
+          sessRefreshedThisSession[mKey] = true;
+          saveSessMonthCache();
           if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
           if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
           if(typeof renderXrdLogs === 'function') renderXrdLogs();

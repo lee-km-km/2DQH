@@ -18,7 +18,7 @@ function toHalfHourSlots(startTm, endTm) {
 async function fetchSessQuery(curDate, extraParams) {
   const url = `https://sess.skku.edu/_custom/shb/_common/sessEquip/reserve/month/getMonthData.jsp?curDate=${encodeURIComponent(curDate)}&${extraParams}`;
   try {
-    const r = await fetch(url, { headers: { 'User-Agent': '2DQH-Lab-Sync/1.0' } });
+    const r = await fetch(url, { headers: { 'User-Agent': '2DQH-Lab-Sync/1.0' }, signal: AbortSignal.timeout ? AbortSignal.timeout(7500) : undefined });
     if (!r.ok) return [];
     const j = await r.json();
     return Array.isArray(j.data) ? j.data : [];
