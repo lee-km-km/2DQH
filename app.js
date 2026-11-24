@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261124_1712';
+const APP_DATA_VERSION = '20261124_1716';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -22521,7 +22521,7 @@ function renderInvSubLoans(){
           const nowTs = Date.now();
           const prevList = Array.isArray(sessMonthCache[mKey]) ? sessMonthCache[mKey] : [];
           const todayStr = today();
-          const asisKept = prevList.filter(function(it){ return it && (it.fromAsis || (it.date && it.date < todayStr)); });
+          const asisKept = prevList.slice();
           const seenR = new Set(asisKept.map(function(it){ return String(it.reservNo || ''); }));
           const mergedItems = asisKept.concat(d.items.filter(function(it){
             const rNo = String(it.reservNo || '');
@@ -22533,7 +22533,7 @@ function renderInvSubLoans(){
           sessMonthMeta[mKey] = nowTs;
           sessRefreshedThisSession[mKey] = true;
           saveSessMonthCache();
-          if(mergedItems.length > 0) saveSessMonthToSupabase(mKey, mergedItems, nowTs).catch(function(){});
+          if(mergedItems.length > prevList.length) saveSessMonthToSupabase(mKey, mergedItems, nowTs).catch(function(){});
           if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
           if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
           if(typeof renderXrdLogs === 'function') renderXrdLogs();
