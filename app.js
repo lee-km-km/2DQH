@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261124_1708';
+const APP_DATA_VERSION = '20261124_1712';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -5433,24 +5433,29 @@ function getMonthWeeks(year, month){
   return weeks;
 }
 
-function renderEquipmentAnalyticsScopeChips(){
+function renderEquipmentAnalyticsScopeChips(precomputedSessions){
   const selEl = $('eqAnalyticsSelect');
   const descEl = $('eqAnalyticsScopeDesc');
   const periodDescEl = $('eqAnalyticsPeriodDesc');
 
-  const allSessions = getUnifiedEquipmentSessions();
+  const allSessions = precomputedSessions || getUnifiedEquipmentSessions();
   renderEquipmentUtilizationPanel(allSessions);
   if(typeof renderAdminMembersPanel === 'function') renderAdminMembersPanel();
 
   // 1. 드롭다운 <select id="eqAnalyticsSelect"> 옵션 갱신 및 체인지 이벤트 바인딩
   if(selEl){
+    const eqStats = {};
+    allSessions.forEach(function(it){
+      const k1 = it.equipment_id || '', k2 = it.equipment_code || '', d = it.duration_min || 0;
+      if(k1){ if(!eqStats[k1]) eqStats[k1] = { c: 0, m: 0 }; eqStats[k1].c++; eqStats[k1].m += d; }
+      if(k2 && k2 !== k1){ if(!eqStats[k2]) eqStats[k2] = { c: 0, m: 0 }; eqStats[k2].c++; eqStats[k2].m += d; }
+    });
     let optHtml = '<option value="all">🌐 전체 연구장비 통합 개요 (' + researchEquipments.length + '대 · ' + allSessions.length + '건)</option>';
     researchEquipments.forEach(function(eq){
       const isSel = (selectedAnalyticsEquipmentId === eq.id);
-      const count = allSessions.filter(function(s){ return s.equipment_id === eq.id || s.equipment_code === eq.code; }).length;
-      const durMins = allSessions.filter(function(s){ return s.equipment_id === eq.id || s.equipment_code === eq.code; })
-                                 .reduce(function(acc, cur){ return acc + (cur.duration_min || 0); }, 0);
-      const durHours = durMins > 0 ? (durMins / 60).toFixed(1) + 'h' : '0h';
+      const st = eqStats[eq.id] || eqStats[eq.code] || { c: 0, m: 0 };
+      const count = st.c;
+      const durHours = st.m > 0 ? (st.m / 60).toFixed(1) + 'h' : '0h';
       optHtml += '<option value="' + safe(eq.id) + '" ' + (isSel ? 'selected' : '') + '>' + (eq.icon || '🔬') + ' ' + safe(eq.code) + ' - ' + safe(eq.name.split('(')[0].trim()) + ' (' + count + '건 · ' + durHours + ')</option>';
     });
     selEl.innerHTML = optHtml;
@@ -5775,7 +5780,7 @@ function renderEquipmentAnalyticsDashboard(){
   }
   const allSessions = getUnifiedEquipmentSessions();
 
-  renderEquipmentAnalyticsScopeChips();
+  renderEquipmentAnalyticsScopeChips(allSessions);
 
   const isAll = (selectedAnalyticsEquipmentId === 'all');
   const mainDet = document.querySelector('#panelAnalyticsMain details');
@@ -22251,7 +22256,11 @@ function renderInvSubLoans(){
     reader.readAsArrayBuffer(file);
   };
 
+  const _analyticsCheckedKeys = {};
   window.ensureSessBookingsForAnalytics = async function(year, month, period){
+    const chkKey = year + '-' + month + '-' + (period || 'month');
+    if(_analyticsCheckedKeys[chkKey]) return;
+    _analyticsCheckedKeys[chkKey] = true;
     const months = [month];
     if(period === 'year'){
       const nowY = new Date().getFullYear();
@@ -22360,25 +22369,33 @@ function renderInvSubLoans(){
     const todayStr = today();
     const curMin = now.getHours() * 60 + now.getMinutes();
     const exList = Array.isArray(existingLogs) ? existingLogs : [];
+    const exResSet = new Set();
+    const exByDate = {};
+    exList.forEach(function(l){
+      if(l.reservation_no) exResSet.add(String(l.reservation_no));
+      const lDate = String(l.used_on || (l.created_at ? l.created_at.slice(0, 10) : '')).slice(0, 10);
+      if(!lDate) return;
+      if(!exByDate[lDate]) exByDate[lDate] = [];
+      const ls = l.start_time ? timeToMin(String(l.start_time).slice(0, 5)) : null;
+      const le = ls !== null ? (l.end_time ? timeToMin(String(l.end_time).slice(0, 5)) : (ls + (Number(l.duration_min) || 60))) : null;
+      exByDate[lDate].push({ user: String(l.user_name || l.operator_name || '').trim(), ls: ls, le: le });
+    });
 
     const isMatchedInExisting = function(dateStr, startTm, endTm, userName, reservNo){
+      if(reservNo && exResSet.has(String(reservNo))) return true;
+      const dayItems = exByDate[dateStr];
+      if(!dayItems || !dayItems.length) return false;
       const bStart = timeToMin(startTm);
       const bEnd = timeToMin(endTm || startTm);
-      return exList.some(function(l){
-        if(reservNo && l.reservation_no && String(l.reservation_no) === String(reservNo)) return true;
-        const lDate = String(l.used_on || (l.created_at ? l.created_at.slice(0, 10) : '')).slice(0, 10);
-        if(lDate !== dateStr) return false;
-        const lUser = String(l.user_name || l.operator_name || '').trim();
-        const bUser = String(userName || '').trim();
-        if(lUser && bUser && lUser === bUser) return true;
-        if(l.start_time){
-          const ls = timeToMin(String(l.start_time).slice(0, 5));
-          const le = l.end_time ? timeToMin(String(l.end_time).slice(0, 5)) : (ls + (Number(l.duration_min) || 60));
-          if(ls < bEnd && le > bStart) return true;
-        }
-        return false;
-      });
+      const bUser = String(userName || '').trim();
+      for(let i = 0; i < dayItems.length; i++){
+        const d = dayItems[i];
+        if(d.user && bUser && d.user === bUser) return true;
+        if(d.ls !== null && d.ls < bEnd && d.le > bStart) return true;
+      }
+      return false;
     };
+
 
     const out = [];
     const seenKeys = new Set();
