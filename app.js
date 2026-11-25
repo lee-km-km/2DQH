@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261125_1740';
+const APP_DATA_VERSION = '20261125_1800';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -3630,7 +3630,7 @@ function renderXrdLogs(){
       : '<span class="xrd-badge-logged" style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;font-weight:700;font-size:10.5px;margin-left:4px;">' + (isEnXrd ? 'Logged' : '로그북 작성') + '</span>';
     html += '<tr' + (isUnlogged ? ' class="xrd-row-unlogged" style="background:#fffbeb;"' : '') + '>' +
       '<td data-l="Time"><b>' + safe(dt) + '</b>' + typeBadge + '<span class="id" style="font-size:12px;color:#64748b;display:block;">' + safe(st) + ' ~ ' + (isActive ? '<span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:4px;font-weight:700;font-size:11px;">In progress</span>' : safe(et) + ' (' + durStr + ')') + (l.reservation_no ? ' · #' + safe(l.reservation_no) : '') + '</span></td>' +
-      '<td data-l="User"><b>' + safe(l.user_name || '—') + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + [l.professor, l.affiliation].filter(Boolean).map(safe).join(' · ') + '</span></td>' +
+      '<td data-l="User"><b class="no-translate" translate="no">' + safe(l.user_name || '—') + '</b> <span class="id" style="font-size:12px;color:#64748b;display:block;">' + [l.professor, l.affiliation].filter(Boolean).map(safe).join(' · ') + '</span></td>' +
       '<td data-l="Chiller">' + (isUnlogged && l.chiller_start == null && l.chiller_end == null ? '—' : arrow(l.chiller_start, l.chiller_end)) + '</td>' +
       '<td data-l="Vacuum">' + (isUnlogged && l.vacuum_start == null && l.vacuum_end == null ? '—' : arrow(l.vacuum_start, l.vacuum_end)) + '</td>' +
       '<td data-l="Checks">' + ((isActive || isUnlogged) ? '—' : checksHtml(l)) + '</td>' +
@@ -5798,7 +5798,7 @@ function renderEquipmentUtilizationPanel(allSessions){
     '<details' + (isAll ? '' : ' open') + '>' +
       '<summary style="font-size:13px;font-weight:700;color:var(--primary);cursor:pointer;padding:4px 0;">' + (isAll ? ('📋 전체 ' + rows.length + '대 가동률 상세표 (클릭하여 펼치기)') : ('📋 선택 장비 가동률 상세표 (' + rows.length + '대)')) + '</summary>' +
       '<div class="table-wrap" style="margin-top:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
-        '<table class="eq-util-table" style="width:100%;border-collapse:collapse;font-size:12.5px;">'
+        '<table class="eq-util-table" style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
           '<thead><tr style="border-bottom:1.5px solid var(--border);background:var(--bg-subtle);">' +
             '<th style="padding:8px;text-align:center;">구분</th>' +
             '<th style="padding:8px;text-align:left;">장비명</th>' +
@@ -7118,7 +7118,7 @@ function renderEquipmentCalendarDateDetail(dateStr, allSessions){
 
       html += '<div class="eq-cal-user-card" style="border-left:3px solid var(--primary);">';
       html += '  <div class="user-top">';
-      html += '    <span class="user-name" style="font-size:13px;">👤 <b style="color:var(--ink);">' + safe(userName) + '</b> <span style="font-size:11.5px;color:var(--ink-light);font-weight:600;">(' + safe(affil) + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span></span>';
+      html += '    <span class="user-name" style="font-size:13px;">👤 <b class="no-translate" translate="no" style="color:var(--ink);">' + safe(userName) + '</b> <span style="font-size:11.5px;color:var(--ink-light);font-weight:600;">(' + safe(affil) + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span></span>';
       html += '    <span style="font-size:12px;font-weight:700;color:var(--primary);">⏱️ ' + durMins + '분' + (timeRange ? ' <span style="font-weight:normal;color:#64748b;font-size:11px;">(' + safe(timeRange) + ')</span>' : '') + '</span>';
       html += '  </div>';
       html += '  <div class="user-meta" style="margin-top:4px;">';
@@ -7349,7 +7349,7 @@ function renderEquipmentRecentTimeline(allSessions){
       html += '    <div style="font-weight:600;color:var(--ink);margin-bottom:3px;font-size:12.5px;">' + safe(s.sample_name || '시료 미지정') + ' <span style="font-weight:400;color:var(--ink-light);font-size:11.5px;">(' + (s.sample_count || 1) + '개)</span></div>';
       html += '    <div style="margin-bottom:4px;"><span class="eq-timeline-param-tag">⚡ ' + safe(paramStr) + '</span></div>';
       html += '    <div style="font-size:11.5px;color:var(--ink-light);display:flex;justify-content:space-between;align-items:center;">';
-      html += '      <span>👤 ' + safe(s.user_name || '연구원') + ' (' + safe(s.affiliation || '2DQH') + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span>';
+      html += '      <span>👤 <span class="no-translate" translate="no">' + safe(s.user_name || '연구원') + '</span> (' + safe(s.affiliation || '2DQH') + (s.professor ? ' · ' + safe(s.professor) : '') + ')</span>';
       html += '      <button type="button" class="text-link" data-select-util-eq="' + safe(s.equipment_id) + '" style="font-size:11.5px;color:var(--primary);background:none;border:0;cursor:pointer;text-decoration:underline;">장비 상세 →</button>';
       html += '    </div>';
       if(s.memo){
@@ -10204,7 +10204,7 @@ function bindEvents(){
         return;
       }
     }
-    const target = el.closest('button, a, [data-select-eq], [data-select-util-eq], [data-analytics-eq], [data-analytics-period], [data-cal-date], [data-timeline-filter], [data-eq-cat], [data-portal-module], [data-lims-nav], [data-main-view], [data-goto], [data-view]') || el;
+    const target = el.closest('button, a, [data-select-eq], [data-select-util-eq], [data-analytics-eq], [data-analytics-period], [data-cal-date], [data-timeline-filter], [data-eq-cat], .portal-module-btn[data-portal-module], [data-lims-nav], [data-main-view], [data-goto], [data-view]') || el;
 
     // 모달 닫기 / 취소 버튼 최우선 처리 (이벤트 트랩 및 무반응 방지)
     if(target.id === 'closeModal' || target.id === 'cancelModal' || target.closest('#closeModal') || target.closest('#cancelModal')){
@@ -10540,8 +10540,8 @@ function bindEvents(){
       return;
     }
 
-    // 2-in-1 연구 포털 모듈 스위처 (연구장비 vs 비품·소모품)
-    const modBtn = target.dataset.portalModule ? target : target.closest('[data-portal-module]');
+    // 2-in-1 연구 포털 모듈 스위처 (연구장비 vs 비품·소모품) — body[data-portal-module] 오매칭 차단
+    const modBtn = target.closest('.portal-module-btn[data-portal-module]');
     if(modBtn){
       setPortalModule(modBtn.dataset.portalModule, { switchView: true });
       return;
@@ -23108,7 +23108,7 @@ async function renderAdminMembersPanel(){
       ? '<span style="font-size:11.5px;color:#15803d;font-weight:700;">항상 허용(관리자)</span>'
       : '<button type="button" class="btn-table-action" data-toggle-xrd-vip="' + safe(uname) + '" data-vip-name="' + safe(u.name || uname) + '" style="padding:3px 8px;border-radius:6px;border:1px solid ' + (isXrdVip ? '#86efac' : '#cbd5e1') + ';background:' + (isXrdVip ? '#f0fdf4' : '#f8fafc') + ';color:' + (isXrdVip ? '#15803d' : '#64748b') + ';font-weight:700;font-size:11.5px;">' + (isXrdVip ? '✅ 지정됨' : '10~17시만') + '</button>';
     return '<tr>' +
-      '<td style="font-weight:700;white-space:nowrap;">' + safe(u.name || '-') + '</td>' +
+      '<td class="no-translate" translate="no" style="font-weight:700;white-space:nowrap;">' + safe(u.name || '-') + '</td>' +
       '<td style="font-family:monospace;font-size:12px;">' + safe(uname) + '</td>' +
       '<td>' + safe(u.advisor || '-') + '</td>' +
       '<td>' + safe(u.affiliation || '-') + '</td>' +
@@ -23353,7 +23353,7 @@ window.renderAdminUnloggedPanel = function(){
       '<td style="white-space:nowrap;font-weight:700;">' + safe(u.eqCode) + '</td>' +
       '<td style="white-space:nowrap;font-family:monospace;">' + safe(u.used_on) + '</td>' +
       '<td style="white-space:nowrap;">' + safe((u.start_time || '-') + (u.end_time ? '~' + u.end_time : '')) + '</td>' +
-      '<td style="font-weight:700;">' + safe(u.user_name) + '</td>' +
+      '<td class="no-translate" translate="no" style="font-weight:700;">' + safe(u.user_name) + '</td>' +
       '<td style="font-family:monospace;font-size:12px;">' + safe(u.reservation_no ? '#' + u.reservation_no : '-') + '</td>' +
       '<td style="white-space:nowrap;">' +
         '<button type="button" class="btn-table-action" data-confirm-unlog="' + idx + '" style="padding:3px 8px;border-radius:6px;border:1px solid #86efac;background:#f0fdf4;color:#15803d;font-weight:700;font-size:11.5px;margin-right:4px;">✅ 확정</button>' +
@@ -23963,7 +23963,7 @@ window.renderAdminUnloggedPanel = function(){
       });
       while((node = walker.nextNode())){
         const parent = node.parentElement;
-        if(!parent || parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE') continue;
+        if(!parent || parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.closest('.no-translate, [data-no-translate="1"], [translate="no"]')) continue;
         if(!node._origKoText){
           const raw = node.nodeValue;
           if(raw && /[가-힣]/.test(raw)) node._origKoText = raw;
@@ -24017,7 +24017,13 @@ window.renderAdminUnloggedPanel = function(){
     setTxt('#view-inventory .page-head h1', '비품', 'Equipment');
     setTxt('#view-consumables .page-head h1', '소모품', 'Consumables');
     setTxt('#view-chemicals .page-head h1', '특수물질 & 시약', 'Chemicals & Reagents');
-    setTxt('#view-logbook .page-head h1', '연구장비 운영 포털', 'Equipment Portal');
+    if(typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
+      setTxt('#view-logbook .page-head h1', '📊 장비 운영 통계', '📊 Equipment Analytics');
+      setTxt('#equipmentTotalBadge', '관리자 통합 통계', 'Admin Analytics');
+    } else {
+      setTxt('#view-logbook .page-head h1', '🔬 연구장비 운영 포털', '🔬 Equipment Portal');
+      setTxt('#equipmentTotalBadge', '연구장비 목록', 'Equipment List');
+    }
     setTxt('#view-help .page-head h1', '도움말 & 가이드', 'Help & Guide');
     setTxt('#mobileSettingsModalBackdrop .modal-head h3', '⚙️ 설정 및 가이드', '⚙️ Settings & Guide');
     setTxt('#btnMobSetHelp span:first-child', '📖 도움말 & 이용 가이드', '📖 Help & User Guide');
@@ -24031,6 +24037,9 @@ window.renderAdminUnloggedPanel = function(){
     if(bKo){ bKo.classList.toggle('is-active-lang', !isEn); bKo.style.background = !isEn ? '#2563eb' : ''; bKo.style.color = !isEn ? '#fff' : ''; }
     if(bEn){ bEn.classList.toggle('is-active-lang', isEn); bEn.style.background = isEn ? '#2563eb' : ''; bEn.style.color = isEn ? '#fff' : ''; }
     if(typeof renderEquipmentPortalGrid === 'function') renderEquipmentPortalGrid();
+    if(typeof currentHubView !== 'undefined' && currentHubView === 'analytics' && typeof renderEquipmentAnalyticsDashboard === 'function'){
+      renderEquipmentAnalyticsDashboard();
+    }
     if(typeof renderXrdLogs === 'function') renderXrdLogs();
     if(typeof renderGenbaroBookingPanel === 'function' && typeof currentSelectedEquipment !== 'undefined'){
       renderGenbaroBookingPanel(currentSelectedEquipment);

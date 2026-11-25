@@ -14551,6 +14551,7 @@ html:not(.is-admin) #btnHelpTabAdmin {
 /* 9. 연구장비 가동률 표/배지 꺾임 & 관리자 미작성 일지 다크모드 + 스크롤바 */
 .eq-util-table th,
 .eq-period-table th,
+.eq-overview-table th,
 .adm-unlogged-table th {
   white-space: nowrap !important;
 }
