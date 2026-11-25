@@ -1,5 +1,15 @@
+function decodeHtmlEntities(s) {
+  return String(s || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ');
+}
+
 function stripTags(s) {
-  return String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return decodeHtmlEntities(String(s || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
 async function fetchText(url) {
@@ -49,7 +59,8 @@ function parseSessBoard(html, basePath) {
     const aM = tr.match(/<a[^>]*href="([^"]*mode=view[^"]*)"[^>]*>([\s\S]*?)<\/a>/i);
     if (!aM) continue;
     const title = stripTags(aM[2]);
-    const href = aM[1].startsWith('http') ? aM[1] : 'https://sess.skku.edu' + basePath + aM[1];
+    const rawHref = decodeHtmlEntities(aM[1]);
+    const href = rawHref.startsWith('http') ? rawHref : 'https://sess.skku.edu' + basePath + rawHref;
     const dateM = tr.match(/\b(20\d{2}[-.]\d{2}[-.]\d{2})\b/);
     rows.push({
       title,

@@ -196,7 +196,7 @@ button { cursor: pointer; }
 }
 
 /* Visibility Helpers */
-@media (min-width: 701px) {
+@media (min-width: 769px) {
   .mobile-only {
     display: none !important;
   }
@@ -14189,3 +14189,394 @@ html:not(.is-admin) #btnHelpTabAdmin {
   border-color: #2563eb !important;
   color: #ffffff !important;
 }
+
+/* ==========================================================================
+   [v3 전수 감사 일괄 수정: 태블릿 768px 붕괴, 다크모드 SOP/MSDS/법정서식/메일,
+    시약 달력 토요일 잘림, .stock-ok 배너, 관리자 미작성 일지, 테이블 배지]
+   ========================================================================== */
+
+/* 1. 태블릿 (701px~768px) 레이아웃 & 드로어 붕괴 해소 */
+@media (max-width: 768px) {
+  .layout {
+    display: block !important;
+  }
+  .btn-hamburger {
+    display: inline-flex !important;
+  }
+  .desktop-only,
+  #loginBtn,
+  #logoutBtn,
+  #connection,
+  .topbar-center,
+  #portalModuleSwitcher,
+  .hide-mobile {
+    display: none !important;
+  }
+  main {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px 14px 86px 14px !important;
+  }
+}
+
+/* 2. 다크모드 장비 로그북 SOP 체크텍스트 1:1 소실 보정 (특이성 상향) */
+[data-theme="dark"] .sop-check-card input[type="checkbox"]:checked + .sop-check-text,
+[data-theme="dark"] .sop-check-card .sop-check-text {
+  color: #f1f5f9 !important;
+}
+
+/* 3. 다크모드 HR-XRD / 장비 가용 상태 배너 가독성 */
+[data-theme="dark"] .quick-eq-status-banner.is-available {
+  background: rgba(22, 163, 74, 0.16) !important;
+  border-color: rgba(74, 222, 128, 0.4) !important;
+  color: #86efac !important;
+}
+[data-theme="dark"] .quick-eq-status-banner.is-reserved {
+  background: rgba(245, 158, 11, 0.16) !important;
+  border-color: rgba(251, 191, 36, 0.45) !important;
+  color: #fde68a !important;
+}
+[data-theme="dark"] .quick-eq-status-banner.is-restricted {
+  background: rgba(234, 88, 12, 0.16) !important;
+  border-color: rgba(251, 146, 60, 0.45) !important;
+  color: #fdba74 !important;
+}
+[data-theme="dark"] .quick-eq-status-banner.is-busy-other {
+  background: rgba(220, 38, 38, 0.18) !important;
+  border-color: rgba(248, 113, 113, 0.45) !important;
+  color: #fca5a5 !important;
+}
+[data-theme="dark"] .quick-eq-status-banner.is-busy-me {
+  background: rgba(37, 99, 235, 0.18) !important;
+  border-color: rgba(96, 165, 250, 0.45) !important;
+  color: #93c5fd !important;
+}
+
+/* 4. 시약 취급 달력 토요일(7열) 우측 잘림 방지 */
+.chem-calendar-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+}
+.chem-cal-cell {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+.cal-today-badge {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* 5. 시약 테이블 [특별관리] 배지 줄바꿈 방지 + 1024px 노트북 열/버튼 튜닝 */
+.chem-special-pill {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  font-size: 10px !important;
+  padding: 1px 6px !important;
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fca5a5 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  vertical-align: middle !important;
+}
+[data-theme="dark"] .chem-special-pill {
+  background: rgba(220, 38, 38, 0.2) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(248, 113, 113, 0.45) !important;
+}
+.chem-official-inventory-table-wrap {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  max-width: 100% !important;
+}
+
+/* 모바일 다크모드 시약 표 thead 시인성 강제 보정 */
+[data-theme="dark"] #chemTablePanel .chem-inventory-table thead,
+[data-theme="dark"] #chemTablePanel.mobile-view-table .chem-inventory-table thead {
+  display: table-header-group !important;
+  background: #1e293b !important;
+}
+[data-theme="dark"] #chemTablePanel .chem-inventory-table thead th,
+[data-theme="dark"] #chemTablePanel.mobile-view-table .chem-inventory-table thead th {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+@media (max-width: 768px) {
+  .chem-quick-scope-bar {
+    padding-right: 16px !important;
+  }
+  .chem-total-count-box {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+}
+
+/* 6. MSDS 모달 다크모드 & 모바일 헤더 7줄 꺾임 해소 */
+.msds-viewer-modal {
+  background: var(--bg-card, #ffffff) !important;
+  color: var(--ink, #0f172a) !important;
+}
+.msds-viewer-modal .msds-modal-head {
+  background: var(--bg-subtle, #f8fafc) !important;
+  border-bottom: 1px solid var(--border, #e2e8f0) !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+.msds-viewer-modal .msds-modal-title-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex: 1 1 220px !important;
+  min-width: 0 !important;
+}
+.msds-viewer-modal #msdsModalTitle {
+  color: var(--ink, #0f172a) !important;
+  line-height: 1.35 !important;
+  word-break: keep-all !important;
+}
+.msds-viewer-modal #msdsModalSub {
+  color: var(--ink-light, #64748b) !important;
+}
+.msds-viewer-modal .msds-modal-actions {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+}
+.msds-viewer-modal .modal-body {
+  background: var(--bg-subtle, #f8fafc) !important;
+  color: var(--ink, #0f172a) !important;
+}
+[data-theme="dark"] .msds-viewer-modal,
+[data-theme="dark"] .msds-viewer-modal .msds-modal-head,
+[data-theme="dark"] .msds-viewer-modal .modal-body {
+  background: #0f172a !important;
+  color: #f1f5f9 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] .msds-info-grid,
+[data-theme="dark"] .msds-ghs-box,
+[data-theme="dark"] .msds-section-block {
+  background: #162032 !important;
+  border-color: #2d3b55 !important;
+  color: #f1f5f9 !important;
+}
+[data-theme="dark"] .msds-info-item .label {
+  color: #94a3b8 !important;
+}
+[data-theme="dark"] .msds-info-item .value,
+[data-theme="dark"] .msds-section-title,
+[data-theme="dark"] .msds-ghs-heading {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .msds-list,
+[data-theme="dark"] .msds-paragraph {
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] .msds-firstaid-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+[data-theme="dark"] .msds-pictogram-badge {
+  background: #1e293b !important;
+  border-color: #f87171 !important;
+  color: #f8fafc !important;
+}
+[data-theme="dark"] .msds-pictogram-badge span.sub {
+  color: #fca5a5 !important;
+}
+
+/* 7. 관리자 법정 A4 인쇄 서식(고지문 & 취급일지) 다크모드 백지화 방지 */
+[data-theme="dark"] #chemNoticePrintArea,
+[data-theme="dark"] #chemNoticePrintArea h1,
+[data-theme="dark"] #chemNoticePrintArea h2 {
+  color: #000000 !important;
+}
+[data-theme="dark"] #chemNoticePrintArea table td {
+  color: #dc2626 !important;
+  background: #ffffff !important;
+  border-color: #000000 !important;
+}
+[data-theme="dark"] #chemNoticePrintArea table tr td:first-child {
+  background: #fff5f5 !important;
+}
+[data-theme="dark"] #ledgerPrintCanvas,
+[data-theme="dark"] #ledgerPrintCanvas h1,
+[data-theme="dark"] #ledgerPrintCanvas div,
+[data-theme="dark"] #ledgerPrintCanvas th,
+[data-theme="dark"] #ledgerPrintCanvas td {
+  color: #0f172a !important;
+  border-color: #000000 !important;
+}
+[data-theme="dark"] #ledgerPrintCanvas thead tr,
+[data-theme="dark"] #ledgerPrintCanvas thead th {
+  background: #f1f5f9 !important;
+  color: #000000 !important;
+}
+[data-theme="dark"] #ledgerPrintCanvas tbody td {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* 8. 비품 통계(.stock-ok) 소모품 재고 양호 배너 & 대시보드/통계 카드 마감 */
+.stock-ok {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  color: #166534;
+}
+.stock-ok > span {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #16a34a;
+  color: #ffffff;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.stock-ok > div {
+  flex: 1;
+  min-width: 0;
+}
+.stock-ok b {
+  display: block;
+  font-size: 13.5px;
+  color: #15803d;
+}
+.stock-ok p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #166534;
+}
+.stock-ok .text-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #86efac;
+  background: #ffffff;
+  color: #15803d;
+  font-weight: 700;
+  font-size: 12px;
+  white-space: nowrap;
+}
+[data-theme="dark"] .stock-ok {
+  background: rgba(22, 163, 74, 0.14);
+  border-color: rgba(74, 222, 128, 0.35);
+  color: #bbf7d0;
+}
+[data-theme="dark"] .stock-ok b { color: #86efac; }
+[data-theme="dark"] .stock-ok p { color: #a7f3d0; }
+[data-theme="dark"] .stock-ok .text-btn {
+  background: #162032;
+  border-color: #22c55e;
+  color: #86efac;
+}
+
+/* 9. 연구장비 가동률 표/배지 꺾임 & 관리자 미작성 일지 다크모드 + 스크롤바 */
+.eq-util-table th,
+.eq-period-table th,
+.adm-unlogged-table th {
+  white-space: nowrap !important;
+}
+.status.available {
+  white-space: nowrap !important;
+  display: inline-block !important;
+}
+.btn-adm-batch-confirm {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 700 !important;
+}
+.btn-adm-batch-exclude {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 700 !important;
+}
+[data-theme="dark"] .adm-unlogged-scroll,
+[data-theme="dark"] #equipmentDetailHub .xrd-list-card,
+[data-theme="dark"] #equipmentDetailHub #xrdRows {
+  scrollbar-color: #475569 #0f172a;
+}
+
+/* 10. 업무 메일 모달 다크모드 통일 & 모바일 390px 입력폭 확장 */
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-modal,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-topbar,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-scroll-area,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-header-rows,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-editor-canvas {
+  background: #0f172a !important;
+  color: #f1f5f9 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-fields-panel,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-toolbar {
+  background: #162032 !important;
+  border-color: #232f46 !important;
+}
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-row-label,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-editable-body,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-sender-badge b {
+  color: #f8fafc !important;
+}
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-sender-badge,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-important-lbl,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-signature,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-signature * {
+  color: #cbd5e1 !important;
+}
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-chipbox,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-subject-input,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-tpl-select,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-btn-toggle,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-attach-btn,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-suggest-dropdown,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-fields-panel input,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-fields-panel textarea {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-inline-input,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-tool-btn,
+[data-theme="dark"] #modalLabMailBackdrop .lab-mail-btn-close {
+  color: #f1f5f9 !important;
+}
+@media (max-width: 720px) {
+  #modalLabMailBackdrop .lab-mail-row-field,
+  #modalLabMailBackdrop .lab-mail-chipbox,
+  #modalLabMailBackdrop .lab-mail-subject-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  #modalLabMailBackdrop .lab-mail-inline-input {
+    min-width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+}
+
+/* 11. 대여현황 필터 select 세로 중앙정렬 & 도움말 3단계 로드맵 화살표 정리 */
+#invSubLoanFilter,
+#assetFilter,
+#dashLoanFilter {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 36px !important;
+}
+@media (max-width: 1080px) {
+  .roadmap-step-arrow {
+    display: none !important;
+  }
+}
+

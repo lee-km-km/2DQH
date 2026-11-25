@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261124_1815';
+const APP_DATA_VERSION = '20261125_1720';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -305,9 +305,12 @@ function setPortalModule(mod, options){
 
   // 2. Body 어트리뷰트 & 브랜드 서브텍스트 갱신
   document.body.setAttribute('data-portal-module', mod);
+  const _isEnMod = (function(){ try { return localStorage.getItem('labstock_lang') === 'en'; } catch(_) { return false; } })();
   const brandSubText = $('brandSubText');
   if(brandSubText){
-    brandSubText.textContent = (mod === 'lims') ? '연구장비 포털' : '비품·소모품 관리';
+    brandSubText.textContent = _isEnMod
+      ? (mod === 'lims' ? 'Equipment Portal' : 'Inventory & Supply')
+      : (mod === 'lims' ? '연구장비 포털' : '비품·소모품 관리');
   }
 
   // 3. 사이드바 메뉴 그룹 가시성: 통합 메뉴로 상시 접근 가능
@@ -322,12 +325,12 @@ function setPortalModule(mod, options){
   const infoDesc = $('sidebarInfoDesc');
   if(mod === 'lims'){
     if(infoBadge) infoBadge.textContent = 'IBS 2DQH';
-    if(infoTitle) infoTitle.textContent = '성균관대 양자기술첨단기기센터';
-    if(infoDesc) infoDesc.textContent = 'SESS 연동 정밀기기 운용 및 로그북';
+    if(infoTitle) infoTitle.textContent = _isEnMod ? 'SKKU Center for Quantum Technology' : '성균관대 양자기술첨단기기센터';
+    if(infoDesc) infoDesc.textContent = _isEnMod ? 'SESS-Linked Equipment Operation & Logbook' : 'SESS 연동 정밀기기 운용 및 로그북';
   } else {
     if(infoBadge) infoBadge.textContent = 'IBS 2DQH';
-    if(infoTitle) infoTitle.textContent = '비품 및 소모품 관리';
-    if(infoDesc) infoDesc.textContent = '공용 비품 & 소모품 실시간 현황';
+    if(infoTitle) infoTitle.textContent = _isEnMod ? 'Inventory & Supply' : '비품 및 소모품 관리';
+    if(infoDesc) infoDesc.textContent = _isEnMod ? 'Shared Lab Equipment & Supply Status' : '공용 비품 & 소모품 실시간 현황';
   }
 
   // 5. 모듈 전환 시 해당 도메인 메인 뷰로 라우팅
@@ -1329,12 +1332,19 @@ async function refreshAdminState(){
   setAdminUI();
 }
 
-async function loadData(){
+let _lastRemoteLoadAt = 0;
+let _loadDataInFlight = null;
+async function loadData(force){
   if(!db){
     loadLocalStorage();
     return;
   }
-
+  if(force === undefined) force = true;
+  if(!force && _lastRemoteLoadAt && (Date.now() - _lastRemoteLoadAt) < 15000){
+    return;
+  }
+  if(_loadDataInFlight) return _loadDataInFlight;
+  _loadDataInFlight = (async function(){
   try{
     const results = await Promise.all([
       db.from('assets').select('*').order('name'),
@@ -1494,6 +1504,7 @@ async function loadData(){
       conn.textContent = '공용 DB 연결됨 (' + assets.length + '개 비품)';
       conn.style.color = '#0284c7';
     }
+    _lastRemoteLoadAt = Date.now();
     render();
   }catch(e){
     // 예외 발생 시 로컬 캐시로 자동 전환 및 배지 갱신
@@ -1504,7 +1515,11 @@ async function loadData(){
       conn.style.color = '#b45309';
     }
     loadLocalStorage();
+  } finally {
+    _loadDataInFlight = null;
   }
+  })();
+  return _loadDataInFlight;
 }
 
 function applyFeatureToggles(){
@@ -5233,7 +5248,7 @@ function renderEquipmentPortalGrid(){
           '<p class="eq-compact-model">' + safe(eq.model) + '</p>' +
           '<p class="eq-compact-spec-line">' + safe(eq.spec) + '</p>' +
           '<div class="eq-compact-footer">' +
-            '<span class="eq-compact-loc">📍 ' + safe(eq.location) + '</span>' +
+            '<span class="eq-compact-loc">📍 ' + safe(eq.location || (isEnCat ? '2DQH Lab' : 'N센터 2DQH 연구실')) + '</span>' +
             '<span class="eq-compact-mode-pill">' + safe(serviceSimple) + '</span>' +
           '</div>' +
           actionBtnHtml +
@@ -5244,12 +5259,15 @@ function renderEquipmentPortalGrid(){
   grid.innerHTML = html;
 }
 
-function showEquipmentCatalogHub(){
+function showEquipmentCatalogHub(opts){
+  opts = opts || {};
   const hub = $('equipmentCatalogHub');
   const detail = $('equipmentDetailHub');
   if(hub) hub.classList.remove('hidden');
   if(detail) detail.classList.add('hidden');
-  switchEquipmentHubView(currentHubView || 'catalog');
+  if(!opts.skipSwitch){
+    switchEquipmentHubView(currentHubView || 'catalog');
+  }
   if(typeof window.scrollTo === 'function') window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -5394,6 +5412,19 @@ function switchEquipmentHubView(mode){
   }
   currentHubView = mode || 'catalog';
   const isCatalog = (currentHubView === 'catalog');
+  const isEnHub = (function(){ try { return localStorage.getItem('labstock_lang') === 'en'; } catch(_) { return false; } })();
+  const hubHeadTitle = document.querySelector('#view-logbook .page-head h1');
+  const hubHeadBadge = $('equipmentTotalBadge');
+  if(hubHeadTitle){
+    hubHeadTitle.textContent = isCatalog
+      ? (isEnHub ? '🔬 Equipment Portal' : '🔬 연구장비 운영 포털')
+      : (isEnHub ? '📊 Equipment Analytics' : '📊 장비 운영 통계');
+  }
+  if(hubHeadBadge){
+    hubHeadBadge.textContent = isCatalog
+      ? (isEnHub ? 'Equipment List' : '연구장비 목록')
+      : (isEnHub ? 'Admin Analytics' : '관리자 통합 통계');
+  }
 
   const hub = $('equipmentCatalogHub');
   const detail = $('equipmentDetailHub');
@@ -5737,10 +5768,10 @@ function renderEquipmentUtilizationPanel(allSessions){
 
   const rowsHtml = rows.map(function(r){
     const badge = r.group === '활용'
-      ? '<span style="padding:2px 7px;border-radius:10px;background:#dcfce7;color:#15803d;font-weight:700;font-size:11px;">활용</span>'
-      : '<span style="padding:2px 7px;border-radius:10px;background:#fee2e2;color:#b91c1c;font-weight:700;font-size:11px;">비활용</span>';
+      ? '<span style="display:inline-block;white-space:nowrap;padding:2px 8px;border-radius:10px;background:#dcfce7;color:#15803d;font-weight:700;font-size:11px;">활용</span>'
+      : '<span style="display:inline-block;white-space:nowrap;padding:2px 8px;border-radius:10px;background:#fee2e2;color:#b91c1c;font-weight:700;font-size:11px;">비활용</span>';
     return '<tr>' +
-      '<td style="text-align:center;">' + badge + '</td>' +
+      '<td style="text-align:center;white-space:nowrap;">' + badge + '</td>' +
       '<td style="font-weight:700;white-space:nowrap;">' + safe(r.name) + '</td>' +
       '<td style="text-align:right;white-space:nowrap;"><b>' + r.h4w.toFixed(1) + 'h</b> <span style="color:#2563eb;font-weight:700;">(' + r.pct4w.toFixed(1) + '%)</span>' + barHtml(r.pct4w, '#2563eb') + '</td>' +
       '<td style="text-align:right;white-space:nowrap;"><b>' + r.h1y.toFixed(1) + 'h</b> <span style="color:#059669;font-weight:700;">(' + r.pct1y.toFixed(1) + '%)</span>' + barHtml(r.pct1y, '#059669') + '</td>' +
@@ -5753,20 +5784,21 @@ function renderEquipmentUtilizationPanel(allSessions){
   }).join('');
 
   panel.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--border);">' +
+      '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 활용/비활용 통계</h3>' +
+      '<span style="font-size:12px;color:var(--ink-light);">기준: 최근 4주 160h · 연간(1/1~) 2,000h (소속: 연구단 / 교내 / 외부)</span></div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+        '<label for="inputSessAsisExcel" class="btn btn-sm" style="background:#d97706;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📤 SESS 예약 엑셀(.xlsx/.csv)</label>' +
+        '<input type="file" id="inputSessAsisExcel" accept=".xlsx,.xls,.csv" style="display:none;">' +
+        '<label for="inputEquipCostCsv" class="btn btn-sm" style="background:#2563eb;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📂 CSV 금액 불러오기</label>' +
+        '<input type="file" id="inputEquipCostCsv" accept=".csv" style="display:none;">' +
+        '<button type="button" id="btnExportUtilExcel" class="btn btn-sm" style="background:#059669;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;">📊 가동률 엑셀(.xlsx)</button>' +
+      '</div>' +
+    '</div>' +
     '<details' + (isAll ? '' : ' open') + '>' +
-      '<summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">' +
-        '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">📊 장비별 가동률 및 활용/비활용 통계 ' + (isAll ? '(클릭하여 펼치기 · ' + rows.length + '대)' : '') + '</h3>' +
-        '<span style="font-size:12px;color:var(--ink-light);">기준: 최근 4주 160h · 연간(1/1~) 2,000h (소속: 연구단 / 교내 / 외부)</span></div>' +
-        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-          '<label for="inputSessAsisExcel" onclick="event.stopPropagation();" class="btn btn-sm" style="background:#d97706;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📤 SESS 예약 엑셀(.xlsx/.csv)</label>' +
-          '<input type="file" id="inputSessAsisExcel" accept=".xlsx,.xls,.csv" style="display:none;">' +
-          '<label for="inputEquipCostCsv" onclick="event.stopPropagation();" class="btn btn-sm" style="background:#2563eb;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;margin:0;">📂 CSV 금액 불러오기</label>' +
-          '<input type="file" id="inputEquipCostCsv" accept=".csv" style="display:none;">' +
-          '<button type="button" id="btnExportUtilExcel" class="btn btn-sm" style="background:#059669;color:#ffffff;border:none;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;">📊 가동률 엑셀(.xlsx)</button>' +
-        '</div>' +
-      '</summary>' +
-      '<div class="table-wrap" style="margin-top:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
-        '<table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
+      '<summary style="font-size:13px;font-weight:700;color:var(--primary);cursor:pointer;padding:4px 0;">' + (isAll ? ('📋 전체 ' + rows.length + '대 가동률 상세표 (클릭하여 펼치기)') : ('📋 선택 장비 가동률 상세표 (' + rows.length + '대)')) + '</summary>' +
+      '<div class="table-wrap" style="margin-top:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
+        '<table class="eq-util-table" style="width:100%;border-collapse:collapse;font-size:12.5px;">'
           '<thead><tr style="border-bottom:1.5px solid var(--border);background:var(--bg-subtle);">' +
             '<th style="padding:8px;text-align:center;">구분</th>' +
             '<th style="padding:8px;text-align:left;">장비명</th>' +
@@ -6967,7 +6999,8 @@ function renderEquipmentCalendar(allSessions){
     timelineDateFilter = null;
   }
 
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  const _isEnCal = (function(){ try { return localStorage.getItem('labstock_lang') === 'en'; } catch(_) { return false; } })();
+  const weekdays = _isEnCal ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['일', '월', '화', '수', '목', '금', '토'];
 
   let html = '<div class="eq-calendar-grid">';
 
@@ -8967,18 +9000,18 @@ function showView(name, options){
     el.classList.toggle('hidden', !isActive);
   });
 
-  document.querySelectorAll('.nav[data-view]').forEach(function(el){
-    if(el.dataset.limsNav){
-      if(name === 'logbook'){
-        const isDetail = $('equipmentDetailHub') && !$('equipmentDetailHub').classList.contains('hidden');
-        const expected = isDetail ? 'catalog' : (currentHubView === 'analytics' ? 'analytics' : 'catalog');
-        el.classList.toggle('active', el.dataset.limsNav === expected);
-      } else {
-        el.classList.remove('active');
-      }
+  document.querySelectorAll('[data-lims-nav]').forEach(function(el){
+    if(name === 'logbook'){
+      const isDetail = $('equipmentDetailHub') && !$('equipmentDetailHub').classList.contains('hidden');
+      const expected = isDetail ? 'catalog' : (currentHubView === 'analytics' ? 'analytics' : 'catalog');
+      el.classList.toggle('active', el.dataset.limsNav === expected);
     } else {
-      el.classList.toggle('active', el.dataset.view === name);
+      el.classList.remove('active');
     }
+  });
+  document.querySelectorAll('.nav[data-view]').forEach(function(el){
+    if(el.dataset.limsNav) return;
+    el.classList.toggle('active', el.dataset.view === name);
   });
 
   // 상단 헤더 메인 탭 활성화 상태 동기화
@@ -10047,12 +10080,17 @@ function bindEvents(){
     e.preventDefault();
     closeMobileDrawer();
   });
+  window.addEventListener('resize', function(){
+    if(window.innerWidth > 768 && typeof closeMobileDrawer === 'function'){
+      closeMobileDrawer();
+    }
+  });
 
   document.querySelectorAll('.nav[data-view]').forEach(function(el){
     el.addEventListener('click', function(){
       if(el.dataset.limsNav) return; // 연구장비 서브 내비게이션은 연구장비 전용 핸들러에서 라우팅
       showView(el.dataset.view, { pushState: true });
-      loadData(); // 탭 클릭 시 최신 DB 데이터 즉시 동기화 새로고침
+      loadData(false); // 최근 15초 이내 로드 시 중복 전체 DB 재조회 생략
     });
   });
 
@@ -10509,16 +10547,19 @@ function bindEvents(){
       return;
     }
 
-    // 연구장비 전용 사이드바 내비게이션
+    // 연구장비 전용 사이드바 내비게이션 (단일 통합 라우팅 - 중복 렌더링 제거)
     const limsNavBtn = target.dataset.limsNav ? target : target.closest('[data-lims-nav]');
     if(limsNavBtn){
+      e.preventDefault();
+      e.stopPropagation();
       const navType = limsNavBtn.dataset.limsNav;
       if(navType === 'catalog'){
         currentHubView = 'catalog';
-        showView('logbook');
-        showEquipmentCatalogHub();
+        showView('logbook', { pushState: true });
+        showEquipmentCatalogHub({ skipSwitch: true });
+        switchEquipmentHubView('catalog');
       } else if(navType === 'xrd'){
-        showView('logbook');
+        showView('logbook', { pushState: true });
         selectResearchEquipment('EQ-XRD-01');
       } else if(navType === 'analytics'){
         if(!isAdmin()){
@@ -10526,8 +10567,8 @@ function bindEvents(){
           return;
         }
         currentHubView = 'analytics';
-        showView('logbook');
-        showEquipmentCatalogHub();
+        showView('logbook', { pushState: true });
+        showEquipmentCatalogHub({ skipSwitch: true });
         switchEquipmentHubView('analytics');
       }
       updateLimsNavActive(navType);
@@ -10717,6 +10758,15 @@ function bindEvents(){
     const periodTab = target.dataset.analyticsPeriod ? target : target.closest('[data-analytics-period]');
     if(periodTab){
       selectedAnalyticsPeriod = periodTab.dataset.analyticsPeriod || 'month';
+      document.querySelectorAll('#eqPeriodSwitcher [data-analytics-period]').forEach(function(b){
+        b.classList.toggle('active', b === periodTab || b.dataset.analyticsPeriod === selectedAnalyticsPeriod);
+      });
+      const pDescEl = $('eqAnalyticsPeriodDesc');
+      if(pDescEl){
+        pDescEl.textContent = selectedAnalyticsPeriod === 'week'
+          ? '주간 가동 추이 분석 모드'
+          : (selectedAnalyticsPeriod === 'month' ? '월별 가동 추이 분석 모드' : '연간 누적 추이 분석 모드');
+      }
       renderEquipmentAnalyticsDashboard();
       return;
     }
@@ -11182,34 +11232,7 @@ function bindEvents(){
     }
   });
 
-  // 연구장비 서브 내비게이션 & 통계 허브 원클릭 즉시 연결
-  const navCatalog = $('sidebarNavCatalog');
-  if(navCatalog){
-    navCatalog.addEventListener('click', function(e){
-      e.preventDefault();
-      currentHubView = 'catalog';
-      showView('logbook');
-      showEquipmentCatalogHub();
-      switchEquipmentHubView('catalog');
-      updateLimsNavActive('catalog');
-    });
-  }
-
-  const navAnalytics = $('sidebarNavAnalytics');
-  if(navAnalytics){
-    navAnalytics.addEventListener('click', function(e){
-      e.preventDefault();
-      if(!isAdmin()){
-        toast('장비 운영 통계는 관리자 로그인 후 조회할 수 있습니다.');
-        return;
-      }
-      currentHubView = 'analytics';
-      showView('logbook');
-      showEquipmentCatalogHub();
-      switchEquipmentHubView('analytics');
-      updateLimsNavActive('analytics');
-    });
-  }
+  // (사이드바 연구장비·통계 내비게이션은 위 document 위임 핸들러에서 단일 처리하여 4중 중복 렌더링 방지)
 
 }
 
@@ -17925,8 +17948,8 @@ function render291InventoryTable(){
 
   filtered.forEach(function(c){
     const chemLogs = logs.filter(function(l){
-      return (l.chemId && l.chemId === c.id) ||
-             (l.materialName && c.name && l.materialName.includes(c.name.split('(')[0].trim()));
+      if(l.chemId && c.id) return l.chemId === c.id;
+      return l.materialName && c.name && l.materialName.includes(c.name.split('(')[0].trim());
     });
     let currentStock = c.stock;
     if(chemLogs.length > 0){
@@ -17940,7 +17963,7 @@ function render291InventoryTable(){
     // 1. 데스크톱 & 모바일 표형 HTML
     html += '<tr data-chem-id="' + safe(c.id) + '">';
     html += '<td style="text-align:center;"><input type="checkbox" class="chem-row-checkbox" value="' + safe(c.id) + '"></td>';
-    html += '<td style="min-width:200px;"><b style="color:var(--ink);">' + safe(c.name) + '</b>' + (c.isSpecial ? ' <span style="font-size:10px;padding:1px 5px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;border-radius:4px;font-weight:700;">특별관리</span>' : '') + '</td>';
+    html += '<td style="min-width:200px;"><b style="color:var(--ink);">' + safe(c.name) + '</b>' + (c.isSpecial ? ' <span class="chem-special-pill">특별관리</span>' : '') + '</td>';
     html += '<td style="white-space:nowrap;color:var(--ink-light);">' + safe(c.mfg) + '</td>';
     html += '<td style="white-space:nowrap;font-family:monospace;font-size:11.5px;">' + safe(c.catNo) + '</td>';
     html += '<td style="white-space:nowrap;font-family:monospace;font-weight:600;font-size:11.5px;">' + safe(c.cas) + '</td>';
@@ -17954,7 +17977,7 @@ function render291InventoryTable(){
     html += '<td style="white-space:nowrap;font-size:11px;color:var(--ink-light);">' + safe(c.expDate) + '</td>';
     html += '<td style="text-align:center;white-space:nowrap;">';
     if(c.isSpecial){ html += '<button type="button" class="btn-table-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '" style="font-weight:700;color:#2563eb;">이력</button>'; }
-    if(c.isSpecial || (typeof CHEMICAL_MSDS_REGISTRY !== 'undefined' && CHEMICAL_MSDS_REGISTRY[c.id])){ html += '<button type="button" class="btn-table-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;font-weight:700;color:#059669;">MSDS</button>'; }
+    html += '<button type="button" class="btn-table-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;font-weight:700;color:#059669;">MSDS</button>';
     if(isAdmin()){
       html += '<button type="button" class="btn-table-action btn-chem-edit" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;font-weight:700;color:#0284c7;" title="시약 정보 수정">수정</button>';
       html += '<button type="button" class="btn-table-action btn-chem-discard" data-chem-id="' + safe(c.id) + '" style="margin-left:3px;color:#d97706;" title="시약 폐기 처리">폐기</button>';
@@ -17983,17 +18006,15 @@ function render291InventoryTable(){
     cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">담당자</span><span class="val">👤 ' + safe(c.handler || '-') + '</span></div>';
     cardsHtml += '    <div class="chem-m-detail-item"><span class="lbl">수량 / 잔량</span><span class="val stock">' + safe(c.qty) + ' · <b>' + currentStock + ' ' + safe(c.unit) + '</b></span></div>';
     cardsHtml += '  </div>';
-    if(c.isSpecial || (typeof CHEMICAL_MSDS_REGISTRY !== 'undefined' && CHEMICAL_MSDS_REGISTRY[c.id])){
-      cardsHtml += '  <div class="chem-m-card-actions">';
-      if(c.isSpecial){
-        cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '">📜 이력</button>';
-      }
-      cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '" style="color:#059669;font-weight:700;">📋 MSDS</button>';
-      if(c.isSpecial){
-        cardsHtml += '    <button type="button" class="btn-m-action primary btn-chem-m-quick-log" data-chem-id="' + safe(c.id) + '">📝 일지작성</button>';
-      }
-      cardsHtml += '  </div>';
+    cardsHtml += '  <div class="chem-m-card-actions">';
+    if(c.isSpecial){
+      cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-history" data-chem-id="' + safe(c.id) + '">📜 이력</button>';
     }
+    cardsHtml += '    <button type="button" class="btn-m-action btn-chem-view-msds" data-chem-id="' + safe(c.id) + '" style="color:#059669;font-weight:700;">📋 MSDS</button>';
+    if(c.isSpecial){
+      cardsHtml += '    <button type="button" class="btn-m-action primary btn-chem-m-quick-log" data-chem-id="' + safe(c.id) + '">📝 일지작성</button>';
+    }
+    cardsHtml += '  </div>';
     if(isAdmin()){
       cardsHtml += '  <div class="chem-m-card-admin-actions" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);display:flex;gap:6px;">';
       cardsHtml += '    <button type="button" class="btn-m-action btn-chem-edit" data-chem-id="' + safe(c.id) + '" style="color:#0284c7;font-weight:700;">✏️ 수정</button>';
@@ -18996,39 +19017,60 @@ function openChemMsdsModal(chemId){
   const modal = $('modalMsdsViewerBackdrop');
   if(!modal) return;
 
-  const msds = CHEMICAL_MSDS_REGISTRY[chemId] || {
+  const CHEM_MSDS_ID_ALIAS = {
+    'CHEM-291-01': 'chem-special-1',
+    'CHEM-291-02': 'chem-special-2',
+    'CHEM-291-03': 'chem-special-3',
+    'CHEM-291-04': 'chem-special-4',
+    'CHEM-291-05': 'chem-special-5',
+    'CHEM-291-06': 'chem-special-6',
+    'CHEM-291-07': 'chem-special-6',
+    'CHEM-291-08': 'chem-special-7',
+    'CHEM-291-09': 'chem-special-8',
+    'CHEM-291-10': 'chem-special-9'
+  };
+  let resolvedMsds = CHEMICAL_MSDS_REGISTRY[chemId] || CHEMICAL_MSDS_REGISTRY[CHEM_MSDS_ID_ALIAS[chemId]];
+  if(!resolvedMsds){
+    const regVals = Object.values(CHEMICAL_MSDS_REGISTRY);
+    const casNorm = String(chem.cas || '').trim();
+    const nmPrefix = String(chem.name || '').split(',')[0].split('(')[0].trim().toLowerCase();
+    resolvedMsds = regVals.find(function(r){ return casNorm && r.cas === casNorm; }) ||
+      regVals.find(function(r){ return nmPrefix && nmPrefix.length >= 4 && String(r.name || '').toLowerCase().includes(nmPrefix); });
+  }
+  const hasCurated = !!resolvedMsds;
+  const casQuery = encodeURIComponent(String(chem.cas || chem.name || '').trim());
+  const msds = resolvedMsds ? Object.assign({}, resolvedMsds, {
+    name: chem.name || resolvedMsds.name,
+    mfg: chem.mfg || resolvedMsds.mfg,
+    catNo: chem.catNo || resolvedMsds.catNo,
+    cas: chem.cas || resolvedMsds.cas
+  }) : {
     name: chem.name,
-    mfg: chem.mfg || 'Sigma-Aldrich / Thermo Fisher',
+    mfg: chem.mfg || '-',
     catNo: chem.catNo || '-',
     cas: chem.cas || '-',
-    formula: chem.formula || '화학식 정보 준비중',
-    molWeight: 'MSDS 요약 참조',
-    signalWord: (chem.hazard === 'D' || chem.isSpecial) ? '위험 (DANGER)' : '경고 (WARNING)',
-    signalClass: (chem.hazard === 'D' || chem.isSpecial) ? 'danger' : 'warning',
-    pictograms: chem.isSpecial ? [
-      { icon: '⚕️', label: '특별관리물질', code: 'GHS08' },
-      { icon: '⚠️', label: '유해성', code: 'GHS07' }
-    ] : [
-      { icon: '⚠️', label: '자극성', code: 'GHS07' }
-    ],
+    formula: chem.formula || (chem.hazardDesc ? chem.hazardDesc : '외부 공식 MSDS 참조'),
+    molWeight: chem.qty ? ('포장 ' + chem.qty + ' (' + (chem.stock || '-') + ' ' + (chem.unit || '') + ')') : '공식 MSDS 참조',
+    signalWord: chem.hazard === 'D' ? '유해·위험물 (D 등급)' : (chem.hazard === 'F' ? '인화성 물질 (F 등급)' : '일반 시약'),
+    signalClass: (chem.hazard === 'D' || chem.hazard === 'F' || chem.isSpecial) ? 'danger' : 'warning',
+    pictograms: chem.hazard === 'F'
+      ? [{ icon: '🔥', label: '인화성', code: 'GHS02' }]
+      : (chem.hazard === 'D' ? [{ icon: '⚠️', label: '유해위험', code: 'GHS07' }] : [{ icon: '🧪', label: '일반시약', code: 'LAB' }]),
     hCodes: [
-      { code: 'H315', desc: '피부에 자극을 일으킴' },
-      { code: 'H319', desc: '눈에 심한 자극을 일으킴' },
-      { code: 'H335', desc: '호흡기계 자극을 유발할 수 있음' }
+      { code: '안전 정보', desc: (chem.hazardDesc ? ('분류: ' + chem.hazardDesc + ' · ') : '') + '정확한 GHS H-Code는 아래 KOSHA / PubChem 원문 조회를 확인하십시오.' }
     ],
     pCodes: [
-      { code: 'P261', desc: '분진·증기의 흡입을 피하시오.' },
-      { code: 'P280', desc: '보호장갑·보안경·마스크를 착용하시오.' },
-      { code: 'P305+P351+P338', desc: '눈에 묻으면 몇 분간 물로 조심해서 씻으시오.' }
+      { code: 'P261', desc: '분진·증기의 흡입을 피하고 흄후드 내부에서 취급하시오.' },
+      { code: 'P280', desc: '내화학 보호장갑·보안경·실험복 등 개인보호구를 착용하시오.' }
     ],
     firstAid: {
-      eye: '즉시 흐르는 물로 15분 이상 세척하고 불편감이 지속되면 안과 진료를 받으십시오.',
-      skin: '오염된 의복을 벗고 비누와 물로 깨끗이 세척하십시오.',
+      eye: '즉시 흐르는 물로 15분 이상 세척하고 필요 시 안과 진료를 받으십시오.',
+      skin: '오염된 의복을 벗고 비누와 물로 깨끗이 씻으십시오.',
       inhalation: '신선한 공기가 있는 장소로 이동하여 안정을 취하십시오.',
-      ingestion: '입을 물로 헹구고 즉시 전문 의료기관의 진료를 받으십시오.'
+      ingestion: '입을 물로 헹구고 즉시 의료진의 진료를 받으십시오.'
     },
-    ppe: '내화학 니트릴 장갑, 화학 보안경, KOSHA 인증 유기용제/방진마스크, 실험복.',
-    spillFire: '적절한 보호구를 착용 후 불활성 흡착포로 회수하고 환기하십시오. 분말 또는 탄산가스 소화기 사용.'
+    ppe: '니트릴/내화학 장갑, 보안경, 실험복 (휘발성/유해물질은 방독마스크 및 국소배기 필수).',
+    spillFire: '보호구 착용 후 흡착포로 회수하고 환기하십시오. 물질 특성에 맞는 소화 약제를 사용하십시오.'
   };
 
   const titleEl = $('msdsModalTitle');
@@ -19068,43 +19110,47 @@ function openChemMsdsModal(chemId){
 
   bodyContent += '<div class="msds-ghs-box">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
-      '<div style="font-size:14px;font-weight:800;color:#0f172a;">GHS 분류 및 위험성 그림문자</div>' +
-      '<span style="padding:3px 10px;border-radius:4px;font-weight:900;font-size:12px;background:' + (msds.signalClass === 'danger' ? '#fee2e2;color:#dc2626;border:1px solid #f87171;' : '#fef3c7;color:#d97706;border:1px solid #fcd34d;') + '">' +
-        '신호어: ' + msds.signalWord +
-      '</span>' +
+      '<div class="msds-ghs-heading" style="font-size:14px;font-weight:800;">GHS 분류 및 위험성 그림문자</div>' +
+      '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
+        '<span style="padding:3px 10px;border-radius:4px;font-weight:900;font-size:12px;background:' + (msds.signalClass === 'danger' ? '#fee2e2;color:#dc2626;border:1px solid #f87171;' : '#fef3c7;color:#d97706;border:1px solid #fcd34d;') + '">' +
+          '신호어: ' + msds.signalWord +
+        '</span>' +
+        (casQuery ? '<a href="https://pubchem.ncbi.nlm.nih.gov/#query=' + casQuery + '" target="_blank" rel="noopener" style="padding:3px 10px;border-radius:4px;font-weight:700;font-size:12px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;text-decoration:none;">🔗 PubChem 원문</a>' : '') +
+      '</div>' +
     '</div>' +
     '<div class="msds-pictograms">' + pictogramsHtml + '</div>' +
+    (!hasCurated ? '<div style="margin-top:6px;font-size:11.5px;color:var(--ink-light);">ℹ️ 일반 시약은 연구실 재고 마스터 정보 및 PubChem 공식 CAS 데이터베이스 연동을 제공합니다.</div>' : '') +
   '</div>';
 
-  bodyContent += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">' +
+  bodyContent += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:14px;">' +
     '<div class="msds-section-block" style="margin-bottom:0;">' +
       '<h4 class="msds-section-title">⚠️ 유해·위험 문구 (H-Code)</h4>' +
-      '<ul style="margin:0;padding-left:18px;font-size:12.5px;color:#334155;line-height:1.6;">' + hCodesHtml + '</ul>' +
+      '<ul class="msds-list" style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.6;">' + hCodesHtml + '</ul>' +
     '</div>' +
     '<div class="msds-section-block" style="margin-bottom:0;">' +
       '<h4 class="msds-section-title">🛡️ 예방조치 문구 (P-Code)</h4>' +
-      '<ul style="margin:0;padding-left:18px;font-size:12.5px;color:#334155;line-height:1.6;">' + pCodesHtml + '</ul>' +
+      '<ul class="msds-list" style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.6;">' + pCodesHtml + '</ul>' +
     '</div>' +
   '</div>';
 
   bodyContent += '<div class="msds-section-block">' +
     '<h4 class="msds-section-title">🚑 응급조치 요령 (4대 분야)</h4>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px;line-height:1.5;">' +
-      '<div style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>👁️ 눈에 들어갔을 때:</b> ' + msds.firstAid.eye + '</div>' +
-      '<div style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>🧤 피부에 접촉했을 때:</b> ' + msds.firstAid.skin + '</div>' +
-      '<div style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>🫁 흡입했을 때:</b> ' + msds.firstAid.inhalation + '</div>' +
-      '<div style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>🍽️ 섭취했을 때:</b> ' + msds.firstAid.ingestion + '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;font-size:12.5px;line-height:1.5;">' +
+      '<div class="msds-firstaid-card" style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>👁️ 눈에 들어갔을 때:</b> ' + msds.firstAid.eye + '</div>' +
+      '<div class="msds-firstaid-card" style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>🧤 피부에 접촉했을 때:</b> ' + msds.firstAid.skin + '</div>' +
+      '<div class="msds-firstaid-card" style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>🫁 흡입했을 때:</b> ' + msds.firstAid.inhalation + '</div>' +
+      '<div class="msds-firstaid-card" style="background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;"><b>🍽️ 섭취했을 때:</b> ' + msds.firstAid.ingestion + '</div>' +
     '</div>' +
   '</div>';
 
-  bodyContent += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
+  bodyContent += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">' +
     '<div class="msds-section-block">' +
       '<h4 class="msds-section-title">🥽 필수 적정 개인보호구</h4>' +
-      '<p style="margin:0;font-size:12.5px;color:#334155;line-height:1.6;">' + msds.ppe + '</p>' +
+      '<p class="msds-paragraph" style="margin:0;font-size:12.5px;line-height:1.6;">' + msds.ppe + '</p>' +
     '</div>' +
     '<div class="msds-section-block">' +
       '<h4 class="msds-section-title">🧯 누출 및 화재 시 대처방법</h4>' +
-      '<p style="margin:0;font-size:12.5px;color:#334155;line-height:1.6;">' + msds.spillFire + '</p>' +
+      '<p class="msds-paragraph" style="margin:0;font-size:12.5px;line-height:1.6;">' + msds.spillFire + '</p>' +
     '</div>' +
   '</div>';
 
@@ -19257,14 +19303,15 @@ function render291Calendar(){
 
   // 7열 그리드의 직접 자식으로 7개 요일 헤더를 배치
   let html = '';
+  const _isEnChemCal = (function(){ try { return localStorage.getItem('labstock_lang') === 'en'; } catch(_) { return false; } })();
   const weekdays = [
-    { label: '일', cls: 'sun' },
-    { label: '월', cls: '' },
-    { label: '화', cls: '' },
-    { label: '수', cls: '' },
-    { label: '목', cls: '' },
-    { label: '금', cls: '' },
-    { label: '토', cls: 'sat' }
+    { label: _isEnChemCal ? 'Sun' : '일', cls: 'sun' },
+    { label: _isEnChemCal ? 'Mon' : '월', cls: '' },
+    { label: _isEnChemCal ? 'Tue' : '화', cls: '' },
+    { label: _isEnChemCal ? 'Wed' : '수', cls: '' },
+    { label: _isEnChemCal ? 'Thu' : '목', cls: '' },
+    { label: _isEnChemCal ? 'Fri' : '금', cls: '' },
+    { label: _isEnChemCal ? 'Sat' : '토', cls: 'sat' }
   ];
   weekdays.forEach(function(w){
     html += '<div class="cal-weekday-header ' + w.cls + '">' + w.label + '</div>';
@@ -19318,16 +19365,43 @@ function showChemDayLogsModal(dateStr){
   const logs = get291UsageLogs().filter(function(l){ return l.date === dateStr; });
   if(logs.length === 0) return;
 
-  let msg = '📅 ' + dateStr + ' 특별관리물질 취급 내역 (' + logs.length + '건)\n\n';
-  logs.forEach(function(l, idx){
-    msg += (idx + 1) + '. ' + l.materialName + '\n';
-    msg += '   - 작업자: ' + l.worker + ' (' + l.affiliation + ')\n';
-    msg += '   - 사용량: ' + (l.usedQty > 0 ? (l.usedQty + ' ' + l.unit) : '0 (입고/점검)') + ' (잔여: ' + l.remainingStock + ' ' + l.unit + ')\n';
-    msg += '   - 작업내용: ' + l.workDesc + '\n';
-    msg += '   - 착용보호구: ' + l.ppe + '\n\n';
-  });
-
-  alert(msg);
+  let bd = $('modalChemDayLogsBackdrop');
+  if(!bd){
+    bd = document.createElement('div');
+    bd.id = 'modalChemDayLogsBackdrop';
+    bd.className = 'backdrop';
+    bd.innerHTML =
+      '<section class="modal" role="dialog" aria-modal="true" style="max-width:600px;width:min(600px,94vw);border-radius:12px;overflow:hidden;">' +
+        '<div class="modal-head" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">' +
+          '<h3 id="chemDayLogsTitle" style="margin:0;font-size:15.5px;font-weight:800;color:var(--ink);"></h3>' +
+          '<button type="button" class="icon-btn" id="btnCloseChemDayLogs" aria-label="닫기"><span aria-hidden="true">×</span></button>' +
+        '</div>' +
+        '<div id="chemDayLogsBody" class="modal-body" style="padding:16px 18px;max-height:70vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;"></div>' +
+      '</section>';
+    document.body.appendChild(bd);
+    bd.addEventListener('click', function(ev){
+      if(ev.target === bd || ev.target.closest('#btnCloseChemDayLogs')) bd.classList.remove('open');
+    });
+  }
+  const titleEl = $('chemDayLogsTitle');
+  if(titleEl) titleEl.textContent = '📅 ' + dateStr + ' 특별관리물질 취급 내역 (' + logs.length + '건)';
+  const bodyEl = $('chemDayLogsBody');
+  if(bodyEl){
+    bodyEl.innerHTML = logs.map(function(l, idx){
+      return '<div style="padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg-subtle);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">' +
+          '<b style="font-size:13.5px;color:var(--ink);">' + (idx + 1) + '. ' + safe(l.materialName) + '</b>' +
+          '<span style="font-size:12px;font-weight:800;color:' + (l.usedQty > 0 ? '#dc2626' : '#2563eb') + ';">' + (l.usedQty > 0 ? ('-' + l.usedQty + ' ' + safe(l.unit)) : '입고/점검') + '</span>' +
+        '</div>' +
+        '<div style="font-size:12.5px;color:var(--ink-light);line-height:1.55;">' +
+          '<div>👤 <b>작업자:</b> ' + safe(l.worker) + (l.affiliation ? ' (' + safe(l.affiliation) + ')' : '') + ' · <b>잔여량:</b> ' + safe(l.remainingStock) + ' ' + safe(l.unit) + '</div>' +
+          '<div>🧪 <b>작업내용:</b> ' + safe(l.workDesc || '-') + '</div>' +
+          '<div>🛡️ <b>착용보호구:</b> ' + safe(l.ppe || '-') + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  bd.classList.add('open');
 }
 
 // -------------------------------------------------------------
@@ -19432,7 +19506,10 @@ function renderChemYearlyStats(){
     let tbl = '<table class="cal-stat-table">';
     tbl += '<thead><tr><th>물질명</th><th>보관 장소</th><th>초기 입고량</th><th>현재 잔여량</th><th>잔여율</th><th>상태</th></tr></thead><tbody>';
     specialChems.forEach(function(c){
-      const cLogs = logs.filter(function(l){ return l.chemId === c.id || l.materialName.includes(c.name.split('(')[0].trim()); });
+      const cLogs = logs.filter(function(l){
+        if(l.chemId && c.id) return l.chemId === c.id;
+        return l.materialName.includes(c.name.split('(')[0].trim());
+      });
       let curStock = c.stock;
       if(cLogs.length > 0){
         cLogs.sort(function(a, b){ return (b.date + ' ' + b.time).localeCompare(a.date + ' ' + a.time); });
@@ -19728,6 +19805,27 @@ function bindChemicalsEvents(){
     currentChemCalYear = now.getFullYear();
     currentChemCalMonth = now.getMonth() + 1;
     render291Calendar();
+  });
+
+  // 월별 취급 통계 탭 내부 이전/다음 월 네비게이션
+  addEvt('btnChemMonthlyPrev', 'click', function(e){
+    e.preventDefault();
+    currentChemCalMonth--;
+    if(currentChemCalMonth < 1){ currentChemCalMonth = 12; currentChemCalYear--; }
+    renderChemMonthlyStats();
+  });
+  addEvt('btnChemMonthlyNext', 'click', function(e){
+    e.preventDefault();
+    currentChemCalMonth++;
+    if(currentChemCalMonth > 12){ currentChemCalMonth = 1; currentChemCalYear++; }
+    renderChemMonthlyStats();
+  });
+  addEvt('btnChemMonthlyToday', 'click', function(e){
+    e.preventDefault();
+    const now = new Date();
+    currentChemCalYear = now.getFullYear();
+    currentChemCalMonth = now.getMonth() + 1;
+    renderChemMonthlyStats();
   });
 
   // E. 검색 필터 액션
@@ -20863,12 +20961,12 @@ function renderInvSubLoans(){
       label: '✈️ 출장 신청 (활동비)',
       defaultTo: ['lee_jh'],
       fields: [
-        { id: 'purpose', label: '출장 목적', value: 'XRD 시료분석' },
-        { id: 'attendee', label: '참석자', value: SENDER.name },
-        { id: 'place', label: '출장지', value: '(주)한국아이티에스, 서울 송파구 위례순환로 472(장지동 904-1) 빌딩904, 3층' },
-        { id: 'date', label: '출장 날짜', value: todayKo }
+        { id: 'purpose', label: '출장 목적', value: '', example: 'XRD 시료분석' },
+        { id: 'attendee', label: '참석자', value: SENDER.name, example: SENDER.name },
+        { id: 'place', label: '출장지', value: '', example: '(주)한국아이티에스, 서울 송파구 위례순환로 472(장지동 904-1) 빌딩904, 3층' },
+        { id: 'date', label: '출장 날짜', value: todayKo, example: todayKo }
       ],
-      subject: function(v){ return '[출장 신청] ' + (v.attendee || SENDER.name) + ' - ' + (v.purpose || ''); },
+      subject: function(v){ return '[출장 신청] ' + (v.attendee || SENDER.name) + (v.purpose ? (' - ' + v.purpose) : ''); },
       lines: function(v, to){
         return [
           '안녕하세요. ' + to + ' 선생님.',
@@ -20892,32 +20990,32 @@ function renderInvSubLoans(){
       label: '📦 재료비 구매 요청',
       defaultTo: ['jeon_hj'],
       fields: [
-        { id: 'intro', label: '요청 문구', type: 'textarea', value: '2층 Glove box 장비의 스크롤 펌프 재료비 구매 요청을 드리고자 메일 드립니다.' },
-        { id: 'itemNo', label: '비품번호', value: '7-2014-0084-1' },
-        { id: 'equip', label: '장비명', value: '1.5pair Glove Box' },
-        { id: 'vendor', label: '업체명', value: '엠아이베큠' },
-        { id: 'amount', label: '금액', value: '1,606,000원 (VAT 포함)' },
-        { id: 'room', label: '호실', value: '86291' },
-        { id: 'content', label: '내용', value: 'Glove box용 Scroll Pump Tip seal 2건 교체' },
-        { id: 'extra', label: '추가 문구 (선택)', type: 'textarea', value: '' }
+        { id: 'intro', label: '요청 문구', type: 'textarea', value: '', example: '2층 Glove box 장비의 스크롤 펌프 재료비 구매 요청을 드리고자 메일 드립니다.' },
+        { id: 'itemNo', label: '비품번호', value: '', example: '7-2014-0084-1' },
+        { id: 'equip', label: '장비명', value: '', example: '1.5pair Glove Box' },
+        { id: 'vendor', label: '업체명', value: '', example: '엠아이베큠' },
+        { id: 'amount', label: '금액', value: '', example: '1,606,000원 (VAT 포함)' },
+        { id: 'room', label: '호실', value: '86291', example: '86291' },
+        { id: 'content', label: '내용', value: '', example: 'Glove box용 Scroll Pump Tip seal 2건 교체' },
+        { id: 'extra', label: '추가 문구 (선택)', type: 'textarea', value: '', example: '' }
       ],
-      subject: function(v){ return '[재료비 구매 요청] ' + (v.equip || '') + ' - ' + (v.amount || ''); },
+      subject: function(v){ return '[재료비 구매 요청]' + (v.equip ? (' ' + v.equip) : '') + (v.amount ? (' - ' + v.amount) : ''); },
       lines: function(v, to){ return itemLines(v, to, '확인 후 진행 부탁드리겠습니다.'); }
     },
     repair: {
       label: '🔧 장비수리비 요청',
       defaultTo: ['park_sy'],
       fields: [
-        { id: 'intro', label: '요청 문구', type: 'textarea', value: '글로브박스 장비의 스크롤펌프 교체 수리가 필요 하여, 단장님께 사전 허락을 받고 진행 요청 메일 드립니다.\n이전 요청드린 Tip seal 구매건이 점검결과 베어링수리까지 필요하여 다시 요청드립니다.' },
-        { id: 'itemNo', label: '비품번호', value: '7-2014-0084-1' },
-        { id: 'equip', label: '장비명', value: '1.5Pair Glove Box' },
-        { id: 'vendor', label: '업체명', value: '엠아이베큠(스크롤 펌프 제작사 에이질런트 테크의 독점계약사)' },
-        { id: 'amount', label: '금액', value: '4,620,000원 (VAT 포함)' },
-        { id: 'room', label: '호실', value: '86291' },
-        { id: 'content', label: '내용', value: '글로브박스 장비의 터보펌프 작동 불능으로 인한 교체 수리' },
-        { id: 'extra', label: '추가 문구 (선택)', type: 'textarea', value: '견적서, 규격서, 사유서, 독점계약서 첨부 드립니다.' }
+        { id: 'intro', label: '요청 문구', type: 'textarea', value: '', example: '글로브박스 장비의 스크롤펌프 교체 수리가 필요 하여, 단장님께 사전 허락을 받고 진행 요청 메일 드립니다.\n이전 요청드린 Tip seal 구매건이 점검결과 베어링수리까지 필요하여 다시 요청드립니다.' },
+        { id: 'itemNo', label: '비품번호', value: '', example: '7-2014-0084-1' },
+        { id: 'equip', label: '장비명', value: '', example: '1.5Pair Glove Box' },
+        { id: 'vendor', label: '업체명', value: '', example: '엠아이베큠(스크롤 펌프 제작사 에이질런트 테크의 독점계약사)' },
+        { id: 'amount', label: '금액', value: '', example: '4,620,000원 (VAT 포함)' },
+        { id: 'room', label: '호실', value: '86291', example: '86291' },
+        { id: 'content', label: '내용', value: '', example: '글로브박스 장비의 터보펌프 작동 불능으로 인한 교체 수리' },
+        { id: 'extra', label: '추가 문구 (선택)', type: 'textarea', value: '', example: '견적서, 규격서, 사유서, 독점계약서 첨부 드립니다.' }
       ],
-      subject: function(v){ return '[장비수리비 요청] ' + (v.equip || '') + ' - ' + (v.amount || ''); },
+      subject: function(v){ return '[장비수리비 요청]' + (v.equip ? (' ' + v.equip) : '') + (v.amount ? (' - ' + v.amount) : ''); },
       lines: function(v, to){ return itemLines(v, to, ''); }
     },
     custom: {
@@ -21131,13 +21229,50 @@ function renderInvSubLoans(){
     const saved = state.values[state.tpl] || {};
     box.innerHTML = t.fields.map(function(f){
       const val = saved[f.id] !== undefined ? saved[f.id] : (typeof f.value === 'function' ? f.value() : f.value);
+      const ph = f.example ? ('예: ' + (typeof f.example === 'function' ? f.example() : f.example)) : '';
       const base = 'width:100%;box-sizing:border-box;padding:5px 8px;font-size:12.5px;border:1px solid #d1d5db;border-radius:6px;background:#ffffff;color:#111827;';
       const input = f.type === 'textarea'
-        ? '<textarea id="lmf_' + f.id + '" rows="2" style="' + base + 'line-height:1.45;">' + esc(val) + '</textarea>'
-        : '<input id="lmf_' + f.id + '" type="text" value="' + esc(val) + '" style="' + base + 'height:32px;">';
+        ? '<textarea id="lmf_' + f.id + '" rows="2" placeholder="' + esc(ph) + '" style="' + base + 'line-height:1.45;">' + esc(val) + '</textarea>'
+        : '<input id="lmf_' + f.id + '" type="text" value="' + esc(val) + '" placeholder="' + esc(ph) + '" style="' + base + 'height:32px;">';
       const span = f.type === 'textarea' ? 'grid-column:1 / -1;' : '';
       return '<div style="' + span + '"><label for="lmf_' + f.id + '" style="display:block;font-size:11.5px;font-weight:700;margin-bottom:2px;color:#374151;">' + esc(f.label) + '</label>' + input + '</div>';
-    }).join('');
+    }).join('') +
+    '<div style="grid-column:1 / -1;display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">' +
+      '<button type="button" id="btnFillMailExample" class="btn btn-sm" style="font-size:11.5px;padding:4px 10px;">📋 예시 문구 채우기</button>' +
+      '<button type="button" id="btnClearMailFields" class="btn btn-sm" style="font-size:11.5px;padding:4px 10px;">🧹 입력 비우기</button>' +
+    '</div>';
+    const fillBtn = $id('btnFillMailExample');
+    if(fillBtn){
+      fillBtn.addEventListener('click', function(){
+        const ex = {};
+        t.fields.forEach(function(f){
+          const ev = f.example !== undefined ? (typeof f.example === 'function' ? f.example() : f.example) : (typeof f.value === 'function' ? f.value() : f.value);
+          ex[f.id] = ev;
+          const inp = $id('lmf_' + f.id);
+          if(inp) inp.value = ev;
+        });
+        state.values[state.tpl] = ex;
+        state.bodyEdited = false;
+        state.subjectEdited = false;
+        refresh();
+      });
+    }
+    const clrBtn = $id('btnClearMailFields');
+    if(clrBtn){
+      clrBtn.addEventListener('click', function(){
+        const emptyVals = {};
+        t.fields.forEach(function(f){
+          const defVal = (f.id === 'room') ? '86291' : '';
+          emptyVals[f.id] = defVal;
+          const inp = $id('lmf_' + f.id);
+          if(inp) inp.value = defVal;
+        });
+        state.values[state.tpl] = emptyVals;
+        state.bodyEdited = false;
+        state.subjectEdited = false;
+        refresh();
+      });
+    }
     box.querySelectorAll('input,textarea').forEach(function(el){
       el.addEventListener('input', function(){
         state.values[state.tpl] = getValues();
@@ -21600,18 +21735,18 @@ function renderInvSubLoans(){
     const isEn = (localStorage.getItem('labstock_lang') === 'en');
 
     const statusHtml = curUse
-      ? '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:' + (isBusyByOther ? '#fef2f2' : '#eff6ff') + ';border:1px solid ' + (isBusyByOther ? '#fecaca' : '#bfdbfe') + ';color:' + (isBusyByOther ? '#b91c1c' : '#1d4ed8') + ';font-size:14px;font-weight:700;text-align:center;">' +
+      ? '<div class="quick-eq-status-banner ' + (isBusyByOther ? 'is-busy-other' : 'is-busy-me') + '" style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:' + (isBusyByOther ? '#fef2f2' : '#eff6ff') + ';border:1px solid ' + (isBusyByOther ? '#fecaca' : '#bfdbfe') + ';color:' + (isBusyByOther ? '#b91c1c' : '#1d4ed8') + ';font-size:14px;font-weight:700;text-align:center;">' +
           (isBusyByOther ? '🔴 이미 사용 중인 장비 (' + safe(curUse.user) + ' · ' + safe(curUse.startTimeText) + ' 시작)' : '🔵 현재 사용 중 (' + safe(curUse.user) + ' · ' + safe(curUse.startTimeText) + ' 시작)') +
         '</div>'
       : (curBooking
-          ? '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#fffbeb;border:1px solid #fcd34d;color:#b45309;font-size:14px;font-weight:700;text-align:center;">🟠 ' +
+          ? '<div class="quick-eq-status-banner is-reserved" style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#fffbeb;border:1px solid #fcd34d;color:#b45309;font-size:14px;font-weight:700;text-align:center;">🟠 ' +
               (isEn ? 'Reserved Now (' + safe(curBooking.user) + ' · ' + safe(curBooking.range) + ')' : '현재 예약된 시간입니다 (' + safe(curBooking.user) + ' · ' + safe(curBooking.range) + ')') +
             '</div>'
           : (isXrdAfterHoursBlocked
-              ? '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;font-size:14px;font-weight:700;text-align:center;">🔒 ' +
+              ? '<div class="quick-eq-status-banner is-restricted" style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;font-size:14px;font-weight:700;text-align:center;">🔒 ' +
                   (isEn ? 'After-hours use (outside 10:00~17:00) is restricted to designated users' : '10:00~17:00 외 시간대는 지정사용자만 사용 가능합니다') +
                 '</div>'
-              : '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:14px;font-weight:700;text-align:center;">🟢 ' + (isEn ? 'Available Now' : '현재 사용 가능한 장비입니다') + '</div>'));
+              : '<div class="quick-eq-status-banner is-available" style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:14px;font-weight:700;text-align:center;">🟢 ' + (isEn ? 'Available Now' : '현재 사용 가능한 장비입니다') + '</div>'));
 
     bar.innerHTML =
       statusHtml +
@@ -22993,8 +23128,8 @@ async function renderAdminMembersPanel(){
   panel.innerHTML =
     '<details open>' +
       '<summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">' +
-        '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">👥 회원 관리 (클릭하여 펼치기 · ' + list.length + '명)</h3>' +
-        '<span style="font-size:12px;color:var(--ink-light);">Supabase(user_profiles) 및 웹 회원 목록 조회 · 소속 구분 수정 · 삭제</span></div>' +
+        '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--ink);">👥 회원 관리 (' + list.length + '명)</h3>' +
+        '<span style="font-size:12px;color:var(--ink-light);">Supabase(user_profiles) 및 웹 가입 회원 조회 · 소속 구분 수정 · HRXRD 시간외 권한</span></div>' +
       '</summary>' +
       '<div class="table-wrap" style="margin-top:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
         '<table style="width:100%;border-collapse:collapse;font-size:12.5px;">' +
@@ -23009,7 +23144,7 @@ async function renderAdminMembersPanel(){
             '<th style="padding:8px;text-align:center;">HRXRD 시간외</th>' +
             '<th style="padding:8px;text-align:center;">관리</th>' +
           '</tr></thead>' +
-          '<tbody>' + (rowsHtml || '<tr><td colspan="9" style="text-align:center;padding:16px;">등록된 회원이 없습니다.</td></tr>') + '</tbody>' +
+          '<tbody>' + (rowsHtml || '<tr><td colspan="9" style="text-align:center;padding:18px;color:var(--ink-light);line-height:1.6;">등록된 일반 회원이 아직 0명입니다.<br><span style="font-size:12px;">(기본 내장 관리자 계정은 제외되며, 연구원이 회원가입 시 이곳에 표시됩니다.)</span></td></tr>') + '</tbody>' +
         '</table>' +
       '</div>' +
     '</details>';
@@ -23236,8 +23371,8 @@ window.renderAdminUnloggedPanel = function(){
         '<p style="margin:4px 0 0;font-size:12.5px;color:var(--ink-light);">SESS/자체 예약 후 일지가 미작성된 내역을 정상 사용으로 확정하거나, 취소/미사용 건을 일괄 제외합니다.</p>' +
       '</div>' +
       '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-        '<button type="button" id="btnBatchConfirmUnlog" class="btn btn-sm" style="background:#16a34a;color:#fff;border:none;font-weight:700;">✅ 선택 건 정상 확정</button>' +
-        '<button type="button" id="btnBatchExcludeUnlog" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;font-weight:700;">🗑️ 선택 건 취소/제외</button>' +
+        '<button type="button" id="btnBatchConfirmUnlog" class="btn btn-sm btn-adm-batch-confirm">✅ 선택 건 정상 확정</button>' +
+        '<button type="button" id="btnBatchExcludeUnlog" class="btn btn-sm btn-adm-batch-exclude">🗑️ 선택 건 취소/제외</button>' +
       '</div>' +
     '</div>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">' +
@@ -23253,7 +23388,7 @@ window.renderAdminUnloggedPanel = function(){
     '</div>' +
     (shown.length === 0
       ? '<div style="padding:24px;text-align:center;color:var(--ink-light);background:var(--bg-subtle);border-radius:8px;">정리할 미작성 예약 일지가 없습니다.</div>'
-      : '<div style="overflow-x:auto;max-height:420px;overflow-y:auto;"><table class="table" style="width:100%;font-size:13px;">' +
+      : '<div class="adm-unlogged-scroll" style="overflow-x:auto;max-height:420px;overflow-y:auto;"><table class="table adm-unlogged-table" style="width:100%;font-size:13px;">' +
           '<thead><tr><th style="width:36px;text-align:center;"><input type="checkbox" id="chkAllUnlog" /></th><th>장비</th><th>사용일</th><th>시간</th><th>예약자</th><th>예약번호</th><th>처리</th></tr></thead>' +
           '<tbody>' + rowsHtml + '</tbody>' +
         '</table></div>' +
@@ -23632,9 +23767,13 @@ window.renderAdminUnloggedPanel = function(){
     ['비품 대여·반납 이력 관리', 'Equipment Loan & Return History'],
     ['비품 대여 신청', 'Request Loan'],
     ['새 비품 대여', 'New Loan'],
-    ['비품 통계', 'Equipment Stats'],
-    ['비품 대여 통계', 'Equipment Loan Stats'],
+    ['비품 통계', 'Asset Stats'],
+    ['비품 대여 통계', 'Asset Loan Stats'],
     ['장비 운영 통계', 'Equipment Analytics'],
+    ['정상 가동', 'Operational'],
+    ['처리', 'Actions'],
+    ['활용', 'Active'],
+    ['비활용', 'Inactive'],
     ['인기 비품 TOP 5 & 누적 대여 빈도', 'Top 5 Equipment & Loan Frequency'],
     ['대여 기록이 충분하지 않습니다.', 'Not enough loan records yet.'],
     ['반납 임박 비품', 'Due Soon'],
@@ -23868,6 +24007,9 @@ window.renderAdminUnloggedPanel = function(){
     setTxt('#sidebarNavConsumables span:last-child', '소모품', 'Consumables');
     setTxt('#sidebarNavChemicals span:last-child', '시약', 'Chemicals');
     setTxt('#sidebarNavCatalog span:last-child', '연구장비 포털', 'Equipment Portal');
+    setTxt('#sidebarNavAnalytics span:last-child', '장비 운영 통계', 'Equipment Analytics');
+    setTxt('#sidebarNavDashboard span:last-child', '비품 통계', 'Asset Stats');
+    setTxt('#sidebarNavAdmin span:last-child', '관리자 메뉴', 'Admin Menu');
     setTxt('#sidebarNavHelp span:last-child', '도움말', 'Help & Guide');
     setTxt('#sidebarNavSettings span:last-child', '설정', 'Settings');
     setTxt('#loginBtn', '로그인 / 회원가입', 'Login / Sign Up');
