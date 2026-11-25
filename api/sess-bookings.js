@@ -38,7 +38,9 @@ const EQUIP_META_DEFAULTS = {
   '184': { equipEngNm: 'NanoBase Confocal Raman Spectrometer', equipShortNm: 'XperRAM 200', equipKorNm: '공초점 레이저 주사 현미경 3' },
   '186': { equipEngNm: 'UV-VIS-NIR Spectrophotometer', equipShortNm: 'UV-3600', equipKorNm: '자외선-가시광선-근적외선 분광광도계' },
   '13210': { equipEngNm: 'Alpha-Step Surface Profiler', equipShortNm: 'Alpha-Step', equipKorNm: '단차측정기' },
-  '13690': { equipEngNm: 'E-Beam Evaporator 2', equipShortNm: 'E-Beam Evaporator 2', equipKorNm: '전자빔 증착기 2' }
+  '13689': { equipEngNm: 'Manual Wire Bonder', equipShortNm: 'Manual Wire Bonder', equipKorNm: '와이어본더' },
+  '13690': { equipEngNm: 'E-Beam Evaporator 2', equipShortNm: 'E-Beam Evaporator 2', equipKorNm: '전자빔 증착기 2' },
+  '13717': { equipEngNm: 'X-ray Photoelectron Spectrometer', equipShortNm: 'XPS', equipKorNm: '광전자분광분석기' }
 };
 
 function expandSessDayRow(d, equipMetaById, equipMetaByShort) {
@@ -49,7 +51,9 @@ function expandSessDayRow(d, equipMetaById, equipMetaByShort) {
   }
   const dateStr = d.startDt || d.start || '';
   const space = d.GK_GU_SPACE_NM || '';
-  const rootUser = d.korNm || 'SESS 예약자';
+  // SKKU getMonthData.jsp only returns root korNm for the first slot (sfx === '') on multi-booking days.
+  // Never copy rootUser onto suffix slots (1..30), or secondary bookings by other users get overwritten.
+  const singleReserv = !d.reservNos || String(d.reservNos).split(',').filter(Boolean).length <= 1;
 
   for (const sfx of suffixes) {
     const rNoRaw = d['reservNo' + sfx];
@@ -65,6 +69,8 @@ function expandSessDayRow(d, equipMetaById, equipMetaByShort) {
       (shortNm && equipMetaByShort[shortNm.toUpperCase()]) ||
       (eqIdStr && EQUIP_META_DEFAULTS[eqIdStr]) ||
       null;
+    const slotKorNm = d['korNm' + sfx];
+    const resolvedUser = slotKorNm || ((sfx === '' || singleReserv) ? (d.korNm || 'SESS 예약자') : 'SESS 예약자');
 
     out.push({
       reservNo: rNo,
@@ -72,7 +78,7 @@ function expandSessDayRow(d, equipMetaById, equipMetaByShort) {
       equipEngNm: (sfx === '' && d.equipEngNm) ? d.equipEngNm : (meta ? meta.equipEngNm : ''),
       equipShortNm: shortNm || (meta ? meta.equipShortNm : ''),
       equipKorNm: (sfx === '' && d.equipKorNm) ? d.equipKorNm : (meta ? meta.equipKorNm : ''),
-      user: d['korNm' + sfx] || rootUser,
+      user: resolvedUser,
       date: dateStr,
       startTm: startTm || '',
       endTm: endTm || '',

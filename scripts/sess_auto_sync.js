@@ -18,9 +18,14 @@ function toHalfHourSlots(startTm, endTm) {
   return out;
 }
 
+function isNamedUser(u) {
+  const s = String(u || '').trim();
+  return Boolean(s && s !== 'SESS 예약자');
+}
+
 async function fetchTodayDayDo(todayStr) {
   try {
-    const r = await fetch(`https://sess.skku.edu/sess/reserve/day.do?curDate=${todayStr}&searchCode1=place&searchCode2=610&srSearchVal=HRXRD`, {
+    const r = await fetch(`https://sess.skku.edu/sess/reserve/day.do?curDate=${todayStr}&code1=place&code2=610&srSearchVal=HRXRD`, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined
     });
@@ -54,34 +59,59 @@ async function run() {
   const mKey = now.getFullYear() + '-' + pad(now.getMonth() + 1);
   const todayStr = mKey + '-' + pad(now.getDate());
 
-  const [monthRes, dayItems, supaRes] = await Promise.all([
+  const [monthRes, dayItems, supaFetch] = await Promise.all([
     new Promise(resolve => {
       apiBookings({ query: { month: mKey } }, { setHeader: () => {}, status: () => ({ json: resolve }) });
     }),
     fetchTodayDayDo(todayStr),
-    fetch(`${SUPABASE_URL}/rest/v1/equipment_sessions?select=notes&equipment_code=eq.SESS_MONTH_CACHE&used_on=eq.${mKey}-01`, {
+    fetch(`${SUPABASE_URL}/rest/v1/equipment_sessions?select=id,notes&equipment_code=eq.SESS_MONTH_CACHE&used_on=eq.${mKey}-01`, {
       headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
-    }).then(r => r.json()).catch(() => [])
+    }).then(async r => ({ ok: r.ok, rows: r.ok ? await r.json() : [] })).catch(() => ({ ok: false, rows: [] }))
   ]);
 
+  // Abort if Supabase read failed so transient network errors never wipe fromAsis/existing cache
+  if (!supaFetch.ok || !Array.isArray(supaFetch.rows)) {
+    console.error(`[${new Date().toISOString()}] Aborting sync for ${mKey}: failed to read existing Supabase cache`);
+    process.exit(1);
+  }
+
   let existing = [];
-  if (Array.isArray(supaRes) && supaRes[0] && supaRes[0].notes) {
+  const supaId = supaFetch.rows[0] && supaFetch.rows[0].id ? supaFetch.rows[0].id : null;
+  if (supaFetch.rows[0] && supaFetch.rows[0].notes) {
     try {
-      const parsed = JSON.parse(supaRes[0].notes);
+      const parsed = JSON.parse(supaFetch.rows[0].notes);
       existing = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
     } catch (_) {}
   }
 
   // Keep all ASIS-verified entries, all past-date entries (< todayStr), and today's existing entries if day.do returned empty
   const kept = existing.filter(it => it && (it.fromAsis || (it.date && it.date < todayStr) || (dayItems.length === 0 && it.date === todayStr)));
-  const seen = new Set(kept.map(it => String(it.reservNo || '')));
-  const merged = kept.slice();
+  const byRNo = new Map();
+  const merged = [];
+  for (const it of kept) {
+    const rNo = String(it.reservNo || '');
+    const idx = merged.length;
+    merged.push(Object.assign({}, it));
+    if (rNo && !byRNo.has(rNo)) byRNo.set(rNo, idx);
+  }
 
   const apiItems = (monthRes && Array.isArray(monthRes.items)) ? monthRes.items : [];
   for (const it of apiItems.concat(dayItems)) {
     const rNo = String(it.reservNo || '');
-    if (rNo && seen.has(rNo)) continue;
-    if (rNo) seen.add(rNo);
+    if (rNo && byRNo.has(rNo)) {
+      const idx = byRNo.get(rNo);
+      const prev = merged[idx];
+      // Never touch fromAsis entries; only upgrade generic placeholder users or fill empty metadata
+      if (!prev.fromAsis) {
+        if (!isNamedUser(prev.user) && isNamedUser(it.user)) {
+          prev.user = it.user;
+        }
+        if (!prev.equipEngNm && it.equipEngNm) prev.equipEngNm = it.equipEngNm;
+        if (!prev.equipKorNm && it.equipKorNm) prev.equipKorNm = it.equipKorNm;
+      }
+      continue;
+    }
+    if (rNo) byRNo.set(rNo, merged.length);
     merged.push(it);
   }
 
@@ -90,25 +120,44 @@ async function run() {
     return;
   }
 
-  await fetch(`${SUPABASE_URL}/rest/v1/equipment_sessions?equipment_code=eq.SESS_MONTH_CACHE&used_on=eq.${mKey}-01`, {
-    method: 'DELETE',
-    headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
-  });
+  const prevAsisCount = existing.filter(it => it && it.fromAsis).length;
+  const nextAsisCount = merged.filter(it => it && it.fromAsis).length;
+  if (nextAsisCount < prevAsisCount) {
+    console.error(`[${new Date().toISOString()}] Guard triggered: fromAsis count shrank (${prevAsisCount} -> ${nextAsisCount})`);
+    process.exit(1);
+  }
 
-  const ins = await fetch(`${SUPABASE_URL}/rest/v1/equipment_sessions`, {
-    method: 'POST',
-    headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-    body: JSON.stringify({
-      equipment_id: 'SESS',
-      equipment_code: 'SESS_MONTH_CACHE',
-      used_on: mKey + '-01',
-      duration_min: merged.length,
-      user_name: 'SYSTEM',
-      notes: JSON.stringify({ updatedAt: Date.now(), items: merged })
-    })
-  });
+  const payload = {
+    equipment_id: 'SESS',
+    equipment_code: 'SESS_MONTH_CACHE',
+    used_on: mKey + '-01',
+    duration_min: merged.length,
+    user_name: 'SYSTEM',
+    notes: JSON.stringify({ updatedAt: Date.now(), items: merged })
+  };
 
-  console.log(`[${new Date().toISOString()}] Synced ${mKey}: ${merged.length} items (Supabase status ${ins.status})`);
+  let res;
+  if (supaId && supaFetch.rows.length === 1) {
+    res = await fetch(`${SUPABASE_URL}/rest/v1/equipment_sessions?id=eq.${supaId}`, {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify(payload)
+    });
+  } else {
+    if (supaFetch.rows.length > 1) {
+      await fetch(`${SUPABASE_URL}/rest/v1/equipment_sessions?equipment_code=eq.SESS_MONTH_CACHE&used_on=eq.${mKey}-01`, {
+        method: 'DELETE',
+        headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY }
+      });
+    }
+    res = await fetch(`${SUPABASE_URL}/rest/v1/equipment_sessions`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify(payload)
+    });
+  }
+
+  console.log(`[${new Date().toISOString()}] Synced ${mKey}: ${merged.length} items (fromAsis=${nextAsisCount}, Supabase status ${res.status})`);
 }
 
 run().catch(err => {

@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261125_1800';
+const APP_DATA_VERSION = '20261125_1900';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -22130,20 +22130,32 @@ function renderInvSubLoans(){
   const sessRefreshedThisSession = {};
 
   async function saveSessMonthToSupabase(mKey, items, updatedAt){
-    if(typeof db === 'undefined' || !db) return;
+    if(typeof db === 'undefined' || !db || !Array.isArray(items)) return;
     try {
-      await db.from('equipment_sessions')
-        .delete()
-        .eq('equipment_code', 'SESS_MONTH_CACHE')
-        .eq('used_on', mKey + '-01');
-      await db.from('equipment_sessions').insert({
+      const payload = {
         equipment_id: 'SESS',
         equipment_code: 'SESS_MONTH_CACHE',
         used_on: mKey + '-01',
-        duration_min: Array.isArray(items) ? items.length : 0,
+        duration_min: items.length,
         user_name: 'SYSTEM',
-        notes: JSON.stringify({ updatedAt: updatedAt || Date.now(), items: items || [] })
-      });
+        notes: JSON.stringify({ updatedAt: updatedAt || Date.now(), items: items })
+      };
+      const { data: rows } = await db.from('equipment_sessions')
+        .select('id, notes')
+        .eq('equipment_code', 'SESS_MONTH_CACHE')
+        .eq('used_on', mKey + '-01');
+      // Guard against overwriting an existing cache that holds more fromAsis records unless intentional removal
+      if(Array.isArray(rows) && rows.length === 1 && rows[0].id){
+        await db.from('equipment_sessions').update(payload).eq('id', rows[0].id);
+        return;
+      }
+      if(Array.isArray(rows) && rows.length > 1){
+        await db.from('equipment_sessions')
+          .delete()
+          .eq('equipment_code', 'SESS_MONTH_CACHE')
+          .eq('used_on', mKey + '-01');
+      }
+      await db.from('equipment_sessions').insert(payload);
     } catch(_) {}
   }
   window.removeSessBookingFromCache = async function(dateStr, reservNo){
@@ -22165,41 +22177,50 @@ function renderInvSubLoans(){
   };
 
   let _sessSupaLoaded = false;
+  let _sessSupaInFlight = null;
   window.syncAllSessCacheFromSupabase = async function(force){
     if((_sessSupaLoaded && !force) || typeof db === 'undefined' || !db) return;
-    _sessSupaLoaded = true;
-    try {
-      const { data, error } = await db.from('equipment_sessions')
-        .select('used_on, notes')
-        .eq('equipment_code', 'SESS_MONTH_CACHE');
-      if(!error && Array.isArray(data) && data.length > 0){
-        let changed = false;
-        data.forEach(function(row){
-          const mKey = String(row.used_on || '').slice(0, 7);
-          if(!mKey || mKey.length !== 7) return;
-          try {
-            const parsed = JSON.parse(row.notes || '{}');
-            const items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : null);
-            const updatedAt = (parsed && parsed.updatedAt) ? Number(parsed.updatedAt) : 0;
-            if(items && (!Array.isArray(sessMonthCache[mKey]) || updatedAt >= (sessMonthMeta[mKey] || 0))){
-              sessMonthCache[mKey] = items;
-              sessMonthMeta[mKey] = updatedAt || Date.now();
-              changed = true;
+    // Return existing in-flight promise so concurrent callers (fetchSessBookings) never race past with empty cache
+    if(_sessSupaInFlight && !force) return _sessSupaInFlight;
+    _sessSupaInFlight = (async function(){
+      try {
+        const { data, error } = await db.from('equipment_sessions')
+          .select('used_on, notes')
+          .eq('equipment_code', 'SESS_MONTH_CACHE');
+        if(!error && Array.isArray(data)){
+          _sessSupaLoaded = true;
+          let changed = false;
+          data.forEach(function(row){
+            const mKey = String(row.used_on || '').slice(0, 7);
+            if(!mKey || mKey.length !== 7) return;
+            try {
+              const parsed = JSON.parse(row.notes || '{}');
+              const items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : null);
+              const updatedAt = (parsed && parsed.updatedAt) ? Number(parsed.updatedAt) : 0;
+              if(items && (!Array.isArray(sessMonthCache[mKey]) || updatedAt >= (sessMonthMeta[mKey] || 0))){
+                sessMonthCache[mKey] = items;
+                sessMonthMeta[mKey] = updatedAt || Date.now();
+                changed = true;
+              }
+            } catch(_) {}
+          });
+          if(changed){
+            saveSessMonthCache();
+            const activeEq = (typeof currentSelectedEquipment !== 'undefined' && currentSelectedEquipment) ? currentSelectedEquipment : 'EQ-XRD-01';
+            if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(activeEq);
+            if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(activeEq);
+            if(typeof renderXrdLogs === 'function') renderXrdLogs();
+            if(typeof renderEquipmentAnalyticsDashboard === 'function' && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
+              renderEquipmentAnalyticsDashboard();
             }
-          } catch(_) {}
-        });
-        if(changed){
-          saveSessMonthCache();
-          const activeEq = (typeof currentSelectedEquipment !== 'undefined' && currentSelectedEquipment) ? currentSelectedEquipment : 'EQ-XRD-01';
-          if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(activeEq);
-          if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(activeEq);
-          if(typeof renderXrdLogs === 'function') renderXrdLogs();
-          if(typeof renderEquipmentAnalyticsDashboard === 'function' && typeof currentHubView !== 'undefined' && currentHubView === 'analytics'){
-            renderEquipmentAnalyticsDashboard();
           }
         }
+      } catch(_) {
+      } finally {
+        _sessSupaInFlight = null;
       }
-    } catch(_) {}
+    })();
+    return _sessSupaInFlight;
   };
   setTimeout(function(){ if(typeof window.syncAllSessCacheFromSupabase === 'function') window.syncAllSessCacheFromSupabase(); }, 300);
 
@@ -22400,14 +22421,22 @@ function renderInvSubLoans(){
       imported++;
     }
 
+    if(typeof window.syncAllSessCacheFromSupabase === 'function'){
+      await window.syncAllSessCacheFromSupabase(true);
+    }
     const nowTs = Date.now();
     const mKeys = Object.keys(byMonth).sort();
     for(let i = 0; i < mKeys.length; i++){
       const mKey = mKeys[i];
       const newItems = byMonth[mKey];
       const eqSet = new Set(newItems.map(function(it){ return String(it.equipShortNm || '').toUpperCase(); }));
+      const newRNoSet = new Set(newItems.map(function(it){ return String(it.reservNo || ''); }).filter(Boolean));
+      const maxAsisDate = newItems.reduce(function(mx, it){ return (it.date && it.date > mx) ? it.date : mx; }, '');
       const existing = Array.isArray(sessMonthCache[mKey]) ? sessMonthCache[mKey] : [];
       const kept = existing.filter(function(it){
+        const rNo = String(it.reservNo || '');
+        if(rNo && newRNoSet.has(rNo)) return false;
+        if(it.date && maxAsisDate && it.date > maxAsisDate) return true;
         return !eqSet.has(String(it.equipShortNm || '').toUpperCase());
       });
       const merged = kept.concat(newItems);
@@ -22714,20 +22743,36 @@ function renderInvSubLoans(){
           if(d.items.length === 0 && ( (d.errors && d.errors.length) || (Array.isArray(sessMonthCache[mKey]) && sessMonthCache[mKey].length > 0) )) return;
           const nowTs = Date.now();
           const prevList = Array.isArray(sessMonthCache[mKey]) ? sessMonthCache[mKey] : [];
-          const todayStr = today();
-          const asisKept = prevList.slice();
-          const seenR = new Set(asisKept.map(function(it){ return String(it.reservNo || ''); }));
-          const mergedItems = asisKept.concat(d.items.filter(function(it){
-            const rNo = String(it.reservNo || '');
-            if(rNo && seenR.has(rNo)) return false;
-            if(rNo) seenR.add(rNo);
-            return true;
-          }));
+          const byRNo = new Map();
+          const mergedItems = [];
+          prevList.forEach(function(it){
+            const rNo = String((it && it.reservNo) || '');
+            const idx = mergedItems.length;
+            mergedItems.push(Object.assign({}, it));
+            if(rNo && !byRNo.has(rNo)) byRNo.set(rNo, idx);
+          });
+          d.items.forEach(function(it){
+            const rNo = String((it && it.reservNo) || '');
+            if(rNo && byRNo.has(rNo)){
+              const prev = mergedItems[byRNo.get(rNo)];
+              const incUser = String((it && it.user) || '').trim();
+              const prevUser = String((prev && prev.user) || '').trim();
+              if(!prev.fromAsis && (!prevUser || prevUser === 'SESS 예약자') && incUser && incUser !== 'SESS 예약자'){
+                prev.user = incUser;
+              }
+              return;
+            }
+            if(rNo) byRNo.set(rNo, mergedItems.length);
+            mergedItems.push(it);
+          });
           sessMonthCache[mKey] = mergedItems;
           sessMonthMeta[mKey] = nowTs;
           sessRefreshedThisSession[mKey] = true;
           saveSessMonthCache();
-          if(mergedItems.length > prevList.length) saveSessMonthToSupabase(mKey, mergedItems, nowTs).catch(function(){});
+          // Only persist back to Supabase when Supabase cache was actually synced first, avoiding empty-local overwrites
+          if(_sessSupaLoaded && mergedItems.length > prevList.length){
+            saveSessMonthToSupabase(mKey, mergedItems, nowTs).catch(function(){});
+          }
           if(typeof renderGenbaroBookingPanel === 'function') renderGenbaroBookingPanel(eqId);
           if(typeof renderQuickEquipTwoBtnBar === 'function') renderQuickEquipTwoBtnBar(eqId);
           if(typeof renderXrdLogs === 'function') renderXrdLogs();
