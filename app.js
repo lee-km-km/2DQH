@@ -1,6 +1,6 @@
 
 /* LabStock v1. Configure SUPABASE_URL and SUPABASE_ANON_KEY below. */
-const APP_DATA_VERSION = '20261125_1720';
+const APP_DATA_VERSION = '20261125_1740';
 (function syncAppDataVersion(){
   try {
     if(localStorage.getItem('labstock_data_version') !== APP_DATA_VERSION){
@@ -10531,12 +10531,12 @@ function bindEvents(){
       }
     }
 
-    // 모바일 하단 탭 내비게이션 (대여현황 / 소모품 / 비품대여 / 연구장비 탭 전환 및 데이터 즉시 새로고침)
-    const bTab = target.dataset.view ? target : target.closest('.bottom-nav-tab[data-view]');
+    // 모바일 하단 탭 내비게이션 (bottom-nav-tab 전용 - 사이드바 [data-lims-nav] 간섭 차단)
+    const bTab = target.closest('.bottom-nav-tab[data-view]');
     if(bTab){
       const nextView = bTab.dataset.view;
       showView(nextView, { pushState: true });
-      loadData(); // 최신 대여현황 및 재고 데이터 즉시 동기화 새로고침
+      loadData(false);
       return;
     }
 
@@ -21609,21 +21609,6 @@ function renderInvSubLoans(){
           delete map[eqId];
         }
         saveActiveMap(map);
-      if(typeof db !== 'undefined' && db){
-        db.from('equipment_sessions').insert({
-          equipment_id: eqId,
-          equipment_code: 'ACTIVE_USE',
-          used_on: today(),
-          user_name: myName,
-          affiliation: affilStr,
-          notes: JSON.stringify({ startMs: map[eqId].startMs, startTimeText: map[eqId].startTimeText, logId: logId })
-        }).select().then(function(r){
-          if(r && r.data && r.data[0]){
-            const m2 = getActiveMap();
-            if(m2[eqId]){ m2[eqId].remoteId = r.data[0].id; saveActiveMap(m2); }
-          }
-        });
-      }
       }
     } catch(_) {}
   }
@@ -21789,6 +21774,21 @@ function renderInvSubLoans(){
         logId: logId
       };
       saveActiveMap(map);
+      if(typeof db !== 'undefined' && db){
+        db.from('equipment_sessions').insert({
+          equipment_id: eqId,
+          equipment_code: 'ACTIVE_USE',
+          used_on: today(),
+          user_name: myName,
+          affiliation: affilStr,
+          notes: JSON.stringify({ startMs: map[eqId].startMs, startTimeText: map[eqId].startTimeText, logId: logId })
+        }).select().then(function(r){
+          if(r && r.data && r.data[0]){
+            const m2 = getActiveMap();
+            if(m2[eqId]){ m2[eqId].remoteId = r.data[0].id; saveActiveMap(m2); }
+          }
+        }, function(){});
+      }
 
       if(eqId === 'EQ-XRD-01' && typeof xrdLogs !== 'undefined' && Array.isArray(xrdLogs)){
         xrdLogs.unshift({
@@ -21803,29 +21803,8 @@ function renderInvSubLoans(){
           status: 'in_use',
           notes: '사용 중'
         });
-        if(typeof db !== 'undefined' && db){
-          db.from('xrd_logs').insert({
-            used_on: today(),
-            start_time: curUse.startTimeText || '',
-            end_time: endTimeText,
-            duration_min: mins,
-            sample_count: samples,
-            chiller_start: Number(chillerStart),
-            chiller_end: Number(chillerEnd),
-            vacuum_start: Number(vacStart),
-            vacuum_end: Number(vacEnd),
-            alignment: align,
-            scan_type: scanType,
-            user_name: curUse.user,
-            affiliation: affilStr,
-            status: 'completed',
-            notes: noteStr
-          }).then(function(r){ if(r && r.error) console.warn('xrd_logs insert:', r.error.message); });
-        }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
-        const xSearch = $('xrdSearch');
-    if(xSearch) xSearch.placeholder = isEn ? 'Search sample, user, adviser, scan type...' : '시료, 사용자, 지도교수, 소속, 스캔 모드 검색...';
-    if(typeof renderXrdLogs === 'function') renderXrdLogs();
+        if(typeof renderXrdLogs === 'function') renderXrdLogs();
       } else if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
         equipmentSessions.unshift({
           id: logId,
@@ -21841,21 +21820,6 @@ function renderInvSubLoans(){
           status: 'in_use',
           notes: '사용 중'
         });
-        if(typeof db !== 'undefined' && db){
-          db.from('equipment_sessions').insert({
-            equipment_id: eqId,
-            equipment_code: eqCode,
-            used_on: today(),
-            start_time: curUse.startTimeText || '',
-            end_time: endTimeText,
-            duration_min: mins,
-            sample_count: samples,
-            user_name: curUse.user,
-            affiliation: affilStr,
-            status: 'completed',
-            notes: noteStr
-          }).then(function(r){ if(r && r.error) console.warn('equipment_sessions insert:', r.error.message); });
-        }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
         if(typeof renderEquipmentTestSessions === 'function') renderEquipmentTestSessions(eqCode);
       }
@@ -22027,6 +21991,25 @@ function renderInvSubLoans(){
           }
           xrdLogs.unshift(newXrdObj);
         }
+        if(typeof db !== 'undefined' && db){
+          db.from('xrd_logs').insert({
+            used_on: today(),
+            start_time: curUse.startTimeText || '',
+            end_time: endTimeText,
+            duration_min: mins,
+            sample_count: samples,
+            chiller_start: Number(chillerStart),
+            chiller_end: Number(chillerEnd),
+            vacuum_start: Number(vacStart),
+            vacuum_end: Number(vacEnd),
+            alignment: align,
+            scan_type: scanType,
+            user_name: curUse.user,
+            affiliation: affilStr,
+            status: 'completed',
+            notes: noteStr
+          }).then(function(r){ if(r && r.error) console.warn('xrd_logs insert:', r.error.message); });
+        }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
         if(typeof renderXrdLogs === 'function') renderXrdLogs();
       } else if(typeof equipmentSessions !== 'undefined' && Array.isArray(equipmentSessions)){
@@ -22056,6 +22039,21 @@ function renderInvSubLoans(){
             window.dedupeUnloggedBookingsForRealLog(eqId, newSesObj);
           }
           equipmentSessions.unshift(newSesObj);
+        }
+        if(typeof db !== 'undefined' && db){
+          db.from('equipment_sessions').insert({
+            equipment_id: eqId,
+            equipment_code: eqCode,
+            used_on: today(),
+            start_time: curUse.startTimeText || '',
+            end_time: endTimeText,
+            duration_min: mins,
+            sample_count: samples,
+            user_name: curUse.user,
+            affiliation: affilStr,
+            status: 'completed',
+            notes: noteStr
+          }).then(function(r){ if(r && r.error) console.warn('equipment_sessions insert:', r.error.message); });
         }
         if(typeof saveLocalStorage === 'function') saveLocalStorage();
         if(typeof renderEquipmentTestSessions === 'function') renderEquipmentTestSessions(eqCode);
